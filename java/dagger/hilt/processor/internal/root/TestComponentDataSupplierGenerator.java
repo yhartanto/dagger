@@ -93,6 +93,7 @@ public final class TestComponentDataSupplierGenerator {
         .writeTo(processingEnv.getFiler());
   }
 
+
   private MethodSpec constructor() {
     MethodSpec.Builder constructor = MethodSpec.constructorBuilder();
     for (RootMetadata rootMetadata : rootMetadatas) {

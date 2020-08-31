@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen;
 
+
 import com.google.googlejavaformat.java.filer.FormattingFiler;
 import dagger.Binds;
 import dagger.Module;
@@ -90,5 +91,4 @@ interface ProcessingEnvironmentModule {
   static ClassLoader processorClassloader(ProcessingEnvironment processingEnvironment) {
     return BindingGraphPlugin.class.getClassLoader();
   }
-
 }

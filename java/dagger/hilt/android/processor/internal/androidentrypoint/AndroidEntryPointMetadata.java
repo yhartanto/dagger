@@ -513,7 +513,7 @@ public abstract class AndroidEntryPointMetadata {
         element,
         isBaseAnnotated
             ? "Classes that extend an @%1$s base class must also be annotated @%1$s"
-            : "Classes that extend a @AndroidEntryPoint base class must not use @%1$s when the "
+                : "Classes that extend a @AndroidEntryPoint base class must not use @%1$s when the "
                     + "base class "
                 + "does not use @%1$s",
         annotationName.simpleName());

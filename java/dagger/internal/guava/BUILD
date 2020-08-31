@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Description:
-#   Aliases from guava libraries to @google_bazel_common//third_party/java/guava.
+#   Aliases from guava libraries to //third_party/java/guava.
 
 package(default_visibility = ["//:src"])
 

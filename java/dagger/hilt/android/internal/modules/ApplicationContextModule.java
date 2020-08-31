@@ -44,5 +44,4 @@ public final class ApplicationContextModule {
   Application provideApplication() {
     return (Application) applicationContext.getApplicationContext();
   }
-
 }

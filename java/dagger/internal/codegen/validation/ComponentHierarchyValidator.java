@@ -186,6 +186,7 @@ final class ComponentHierarchyValidator {
     }
     producerModulesByComponent.removeAll(componentDescriptor);
 
+
     SetMultimap<ComponentDescriptor, ModuleDescriptor> repeatedModules =
         Multimaps.filterValues(producerModulesByComponent, producerModules::contains);
     if (repeatedModules.isEmpty()) {

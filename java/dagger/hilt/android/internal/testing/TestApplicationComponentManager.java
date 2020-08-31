@@ -78,7 +78,7 @@ public final class TestApplicationComponentManager
     if (component.get() == null) {
       Preconditions.checkState(
           hasHiltTestRule(),
-          "The component was not created. Check that you have added the HiltAndroidRule.");
+      "The component was not created. Check that you have added the HiltAndroidRule.");
       if (!registeredModules.keySet().containsAll(requiredModules())) {
         Set<Class<?>> difference = new HashSet<>(requiredModules());
         difference.removeAll(registeredModules.keySet());
@@ -233,7 +233,7 @@ public final class TestApplicationComponentManager
   private Class<?> testClass() {
     Preconditions.checkState(
         hasHiltTestRule(),
-        "Test must have an HiltAndroidRule.");
+    "Test must have an HiltAndroidRule.");
     return hasHiltTestRule.get().getTestClass();
   }
 

@@ -50,4 +50,3 @@ def compiler_test(name, size = "large", compiler_deps = None, **kwargs):
     kwargs["deps"] = kwargs.get("deps", []) + ["//java/dagger/testing/compile"]
 
     native.java_test(name = name, size = size, **kwargs)
-

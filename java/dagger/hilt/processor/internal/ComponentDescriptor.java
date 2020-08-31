@@ -89,6 +89,7 @@ public abstract class ComponentDescriptor {
 
     Builder parent(ComponentDescriptor parent);
 
+
     ComponentDescriptor build();
   }
 }

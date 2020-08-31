@@ -181,6 +181,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     this.compilerOptions = compilerOptions;
   }
 
+
   // TODO(dpb): make the SourceFileGenerators fields so they don't have to be passed in
   @Override
   public void generateSourcesForRequiredBindings(

@@ -65,7 +65,7 @@ tasks.withType(GenerateModuleMetadata) {
   enabled = false
 }
 
-// TODO(danysantiago): Use POM template in tools/ to avoid duplicating lines.
+// TODO(user): Use POM template in tools/ to avoid duplicating lines.
 publishing {
   publications {
     plugin(MavenPublication) {

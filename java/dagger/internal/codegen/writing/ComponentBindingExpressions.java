@@ -259,6 +259,7 @@ public final class ComponentBindingExpressions {
     throw new AssertionError(binding);
   }
 
+
   /**
    * Returns a binding expression that uses a {@link javax.inject.Provider} for provision bindings
    * or a {@link dagger.producers.Producer} for production bindings.

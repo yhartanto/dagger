@@ -91,7 +91,7 @@ dependencies {
   androidTestAnnotationProcessor'com.google.guava:guava:28.1-android'
 
   // To help us catch version skew related issues in hilt extensions.
-  // TODO(bcorso): Add examples testing the actual API.
+  // TODO(user): Add examples testing the actual API.
   implementation 'androidx.hilt:hilt-lifecycle-viewmodel:1.0.0-alpha01'
   implementation 'androidx.hilt:hilt-work:1.0.0-alpha01'
   annotationProcessor 'androidx.hilt:hilt-compiler:1.0.0-alpha01'

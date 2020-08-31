@@ -1808,6 +1808,7 @@ public class MembersInjectionTest {
             "  }",
             "}");
 
+
     Compilation compilation =
         daggerCompiler()
             .withOptions(compilerMode.javacopts())
@@ -1914,6 +1915,7 @@ public class MembersInjectionTest {
             "    ((B) instance).valueB = valueB;",
             "  }",
             "}");
+
 
     Compilation compilation =
         daggerCompiler()

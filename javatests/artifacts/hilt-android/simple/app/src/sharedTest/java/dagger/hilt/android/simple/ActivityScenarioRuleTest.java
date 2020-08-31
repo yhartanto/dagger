@@ -64,6 +64,7 @@ public final class ActivityScenarioRuleTest {
         .onActivity(activity -> assertThat(activity.str).isEqualTo(STR_VALUE));
   }
 
+
   @Test
   public void verifyMainActivity() {
     try (ActivityScenario<TestActivity> scenario =

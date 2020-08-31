@@ -1,8 +1,6 @@
 # Functional tests for Dagger-gRPC
 
 load("@rules_java//java:defs.bzl", "java_proto_library")
-load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "DOCLINT_REFERENCES")
-load("//:test_defs.bzl", "GenJavaTests")
 
 package(default_visibility = ["//:src"])
 

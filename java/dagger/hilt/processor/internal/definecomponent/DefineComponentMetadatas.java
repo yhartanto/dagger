@@ -199,6 +199,5 @@ final class DefineComponentMetadatas {
     boolean isRoot() {
       return !parentMetadata().isPresent();
     }
-
   }
 }

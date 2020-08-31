@@ -100,7 +100,7 @@ public final class RootProcessor extends BaseProcessor {
   @Override
   public void postRoundProcess(RoundEnvironment roundEnv) throws Exception {
     Set<Element> newElements = generatesRootInputs.getElementsToWaitFor(roundEnv);
-    if (!processed.isEmpty()) {
+    if (!processed.isEmpty() ) {
       checkState(
           newElements.isEmpty(),
           "Found extra modules after compilation: %s\n"

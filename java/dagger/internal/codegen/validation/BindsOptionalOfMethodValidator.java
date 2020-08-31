@@ -66,6 +66,7 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
     this.injectionAnnotations = injectionAnnotations;
   }
 
+
   @Override
   protected ElementValidator elementValidator(ExecutableElement element) {
     return new Validator(element);

@@ -92,7 +92,7 @@ class HiltGradlePlugin : Plugin<Project> {
     val dependencies = project.configurations.flatMap { configuration ->
       configuration.dependencies.map { dependency -> dependency.group to dependency.name }
     }
-    // TODO(danysantiago): Consider also validating Dagger compiler dependency.
+    // TODO(user): Consider also validating Dagger compiler dependency.
     listOf(
       LIBRARY_GROUP to "hilt-android",
       LIBRARY_GROUP to "hilt-android-compiler"

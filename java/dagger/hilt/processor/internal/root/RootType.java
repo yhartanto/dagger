@@ -24,7 +24,7 @@ import javax.lang.model.element.TypeElement;
 
 /** The valid root types for Hilt applications. */
 // TODO(user): Fix this class so we don't have to have placeholders
-enum RootType {
+  enum RootType {
     ROOT(ClassNames.HILT_ANDROID_APP),
 
     // Placeholder to make sure @HiltAndroidTest usages get processed

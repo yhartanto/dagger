@@ -95,7 +95,6 @@ final class RootGenerator {
                   componentAnnotation(componentDescriptor),
                   componentBuilder(componentDescriptor))
               .generate().toBuilder().addModifiers(Modifier.STATIC).build());
-
     }
 
     RootFileFormatter.write(
@@ -163,7 +162,8 @@ final class RootGenerator {
   }
 
   private ClassName componentAnnotation(ComponentDescriptor componentDescriptor) {
-    if (!componentDescriptor.isRoot()) {
+    if (!componentDescriptor.isRoot()
+        ) {
       return ClassNames.SUBCOMPONENT;
     } else {
       return ClassNames.COMPONENT;
@@ -189,5 +189,4 @@ final class RootGenerator {
   private ClassName getComponentClassName(ComponentDescriptor componentDescriptor) {
     return ComponentNames.generatedComponent(root.classname(), componentDescriptor.component());
   }
-
 }

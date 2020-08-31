@@ -463,6 +463,8 @@ public class ScopingValidationTest {
     assertThat(compilation).succeededWithoutWarnings();
   }
 
+
+
   // Tests the following component hierarchy:
   //
   //        @ScopeA
@@ -845,6 +847,7 @@ public class ScopingValidationTest {
                 "    @test.ScopeA test.ComponentLong",
                 "    @test.ScopeB test.ComponentMedium",
                 "    @test.ScopeA test.ComponentShort"));
+
 
     // Test that compilation succeeds when transitive validation is disabled because the scope cycle
     // cannot be detected.

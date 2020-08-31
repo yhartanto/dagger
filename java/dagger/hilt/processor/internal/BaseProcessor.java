@@ -133,6 +133,7 @@ public abstract class BaseProcessor extends AbstractProcessor {
     return false;
   }
 
+
   @Override
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
     super.init(processingEnvironment);

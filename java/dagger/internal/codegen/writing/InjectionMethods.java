@@ -448,6 +448,7 @@ final class InjectionMethods {
         : elements.getTypeElement(Object.class).asType();
   }
 
+
   private enum ReceiverAccessibility {
     CAST_IF_NOT_PUBLIC {
       @Override

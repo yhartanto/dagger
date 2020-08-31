@@ -18,7 +18,6 @@ package dagger.internal.codegen.base;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 
-import dagger.Provides;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoMap;
 import dagger.multibindings.IntoSet;

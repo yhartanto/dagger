@@ -261,7 +261,6 @@ public class OptionalBindingRequestFulfillmentTest {
             "  @Override",
             "  public ListenableFuture<Optional<DefinitelyNot>> definitelyNot() {",
             "    return Futures.immediateFuture(Optional.<DefinitelyNot>absent());",
-
             "  }",
             "",
             "  @Override",

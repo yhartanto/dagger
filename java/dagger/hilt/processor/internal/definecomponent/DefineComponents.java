@@ -88,6 +88,7 @@ public final class DefineComponents {
             .component(ClassName.get(metadata.component()))
             .scopes(metadata.scopes().stream().map(ClassName::get).collect(toImmutableSet()));
 
+
     metadata.parentMetadata()
         .map(DefineComponentMetadata::component)
         .map(this::componentDescriptor)
@@ -172,6 +173,7 @@ public final class DefineComponents {
             .component(ClassName.get(componentMetadata.component()))
             .scopes(
                 componentMetadata.scopes().stream().map(ClassName::get).collect(toImmutableSet()));
+
 
     if (builderMap.containsKey(componentMetadata)) {
       builder.creator(ClassName.get(builderMap.get(componentMetadata).builder()));

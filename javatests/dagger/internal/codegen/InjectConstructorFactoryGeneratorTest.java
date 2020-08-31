@@ -1052,6 +1052,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         .hadErrorContaining("Producer may only be injected in @Produces methods");
   }
 
+
   @Test public void injectConstructor() {
     JavaFileObject file = JavaFileObjects.forSourceLines("test.InjectConstructor",
         "package test;",

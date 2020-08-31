@@ -131,7 +131,7 @@ public final class FragmentGenerator {
             AndroidClassNames.FRAGMENT_COMPONENT_MANAGER,
             COMPONENT_CONTEXT_FIELD,
             "onAttach called multiple times with different Context! "
-                + "Hilt Fragments should not be retained.")
+        + "Hilt Fragments should not be retained.")
         .addStatement("initializeComponentContext()")
         .build();
   }

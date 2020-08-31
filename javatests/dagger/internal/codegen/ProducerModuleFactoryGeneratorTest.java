@@ -214,6 +214,7 @@ public class ProducerModuleFactoryGeneratorTest {
         .onLine(6);
   }
 
+
   @Test
   public void enclosedInPrivateModule() {
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.Enclosing",

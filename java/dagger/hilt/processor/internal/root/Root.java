@@ -47,5 +47,4 @@ abstract class Root {
   public final String toString() {
     return element().toString();
   }
-
 }

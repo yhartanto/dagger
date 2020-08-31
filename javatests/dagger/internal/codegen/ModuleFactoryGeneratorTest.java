@@ -724,6 +724,7 @@ public class ModuleFactoryGeneratorTest {
         .onLine(6);
   }
 
+
   @Test
   public void enclosedInPrivateModule() {
     JavaFileObject moduleFile = JavaFileObjects.forSourceLines("test.Enclosing",

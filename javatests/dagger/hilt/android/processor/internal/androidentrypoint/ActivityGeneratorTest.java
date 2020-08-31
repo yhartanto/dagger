@@ -73,5 +73,4 @@ public class ActivityGeneratorTest {
     Compilation compilation = compiler().compile(baseActivity, myActivity);
     assertThat(compilation).succeeded();
   }
-
 }
