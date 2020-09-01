@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import dagger.hilt.android.simple.lib.ThingImpl;
 import dagger.hilt.android.testing.BindValue;
 import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
@@ -82,6 +83,14 @@ public final class SimpleActivityTest {
               .isEqualTo("Hilt_SimpleActivity");
           }
       );
+    }
+  }
+
+  @Test
+  public void verifyThing() {
+    try (ActivityScenario<SimpleActivity> scenario =
+        ActivityScenario.launch(SimpleActivity.class)) {
+      scenario.onActivity(activity -> assertThat(activity.thing).isInstanceOf(ThingImpl.class));
     }
   }
 }

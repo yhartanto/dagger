@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//tools:maven.bzl", "gen_maven_artifact")
+load("//:build_defs.bzl", "POM_VERSION_ALPHA")
+
 # Description:
 #   A library that wraps the Dagger API to make DI usage and testing easier.
 
@@ -100,8 +103,9 @@ java_library(
 filegroup(
     name = "javadoc-srcs",
     srcs = [
+        ":hilt_android_filegroup",
+        ":hilt_android_testing_filegroup",
         ":hilt_filegroup",
-        ":hilt_testing_filegroup",
     ],
 )
 
@@ -115,9 +119,14 @@ filegroup(
         "//java/dagger/hilt/internal/aliasof:srcs_filegroup",
         "//java/dagger/hilt/internal/definecomponent:srcs_filegroup",
         "//java/dagger/hilt/internal/generatesrootinput:srcs_filegroup",
+    ],
+)
+
+filegroup(
+    name = "hilt_android_filegroup",
+    srcs = [
         "//java/dagger/hilt/android:srcs_filegroup",
         "//java/dagger/hilt/android/components:srcs_filegroup",
-        "//java/dagger/hilt/android/qualifiers:srcs_filegroup",
         "//java/dagger/hilt/android/internal:srcs_filegroup",
         "//java/dagger/hilt/android/internal/builders:srcs_filegroup",
         "//java/dagger/hilt/android/internal/lifecycle:srcs_filegroup",
@@ -125,13 +134,14 @@ filegroup(
         "//java/dagger/hilt/android/internal/migration:srcs_filegroup",
         "//java/dagger/hilt/android/internal/modules:srcs_filegroup",
         "//java/dagger/hilt/android/migration:srcs_filegroup",
-        "//java/dagger/hilt/android/scopes:srcs_filegroup",
         "//java/dagger/hilt/android/plugin:srcs_filegroup",
+        "//java/dagger/hilt/android/qualifiers:srcs_filegroup",
+        "//java/dagger/hilt/android/scopes:srcs_filegroup",
     ],
 )
 
 filegroup(
-    name = "hilt_testing_filegroup",
+    name = "hilt_android_testing_filegroup",
     srcs = [
         "//java/dagger/hilt/android/internal/testing:srcs_filegroup",
         "//java/dagger/hilt/android/testing:srcs_filegroup",
@@ -155,5 +165,68 @@ filegroup(
         "//java/dagger/hilt/processor/internal/generatesrootinput:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/originatingelement:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/root:srcs_filegroup",
+    ],
+)
+
+java_library(
+    name = "artifact-core-lib",
+    tags = ["maven_coordinates=com.google.dagger:hilt-core:" + POM_VERSION_ALPHA],
+    exports = [
+        ":package_info",
+        "//java/dagger:core",
+        "//java/dagger/hilt:define_component",
+        "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt:generates_root_input",
+        "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt/components",
+        "//java/dagger/hilt/migration:alias_of",
+        "//java/dagger/hilt/migration:disable_install_in_check",
+    ],
+)
+
+gen_maven_artifact(
+    name = "artifact-core",
+    artifact_coordinates = "com.google.dagger:hilt-core:" + POM_VERSION_ALPHA,
+    artifact_name = "Hilt Core",
+    artifact_target = ":artifact-core-lib",
+    artifact_target_libs = [
+        "//java/dagger/hilt:define_component",
+        "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt:generates_root_input",
+        "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt:package_info",
+        "//java/dagger/hilt/codegen:originating_element",
+        "//java/dagger/hilt/codegen:package_info",
+        "//java/dagger/hilt/components",
+        "//java/dagger/hilt/components:package_info",
+        "//java/dagger/hilt/internal:component_manager",
+        "//java/dagger/hilt/internal:generated_component",
+        "//java/dagger/hilt/internal:preconditions",
+        "//java/dagger/hilt/internal:unsafe_casts",
+        "//java/dagger/hilt/internal/aliasof",
+        "//java/dagger/hilt/internal/definecomponent",
+        "//java/dagger/hilt/internal/generatesrootinput",
+        "//java/dagger/hilt/migration:alias_of",
+        "//java/dagger/hilt/migration:disable_install_in_check",
+        "//java/dagger/hilt/migration:package_info",
+        "//java/dagger/hilt/processor/internal/aggregateddeps:annotation",
+    ],
+    artifact_target_maven_deps = [
+        "com.google.code.findbugs:jsr305",
+        "com.google.dagger:dagger",
+        "javax.annotation:jsr250-api",
+        "javax.inject:javax.inject",
+    ],
+    artifact_target_maven_deps_banned = [
+        "com.google.guava:guava",
+    ],
+    javadoc_exclude_packages = [
+        "dagger.hilt.internal",
+    ],
+    javadoc_root_packages = [
+        "dagger.hilt",
+    ],
+    javadoc_srcs = [
+        "//java/dagger/hilt:hilt_filegroup",
     ],
 )

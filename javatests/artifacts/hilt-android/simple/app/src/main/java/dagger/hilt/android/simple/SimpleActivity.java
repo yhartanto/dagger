@@ -24,6 +24,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import dagger.hilt.android.AndroidEntryPoint;
 import dagger.hilt.android.simple.feature.FeatureActivity;
+import dagger.hilt.android.simple.lib.Thing;
 import javax.inject.Inject;
 
 /** The main activity of the application. */
@@ -33,6 +34,7 @@ public class SimpleActivity extends AppCompatActivity {
 
   @Inject @UserName String userName;
   @Inject @Model String model;
+  @Inject Thing thing;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {

@@ -47,6 +47,12 @@ _deploy \
   java/dagger/hilt/android/processor/artifact-src.jar \
   java/dagger/hilt/android/processor/artifact-javadoc.jar
 
+_deploy \
+  java/dagger/hilt/artifact-core.jar \
+  java/dagger/hilt/pom.xml \
+  java/dagger/hilt/artifact-core-src.jar \
+  java/dagger/hilt/artifact-core-javadoc.jar
+
 # Builds and deploy the Gradle plugin.
 _deploy_plugin() {
   local plugindir=java/dagger/hilt/android/plugin

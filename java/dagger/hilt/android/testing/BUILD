@@ -221,7 +221,7 @@ gen_maven_artifact(
         "dagger.hilt.android.testing",
     ],
     javadoc_srcs = [
-        "//java/dagger/hilt:hilt_testing_filegroup",
+        "//java/dagger/hilt:hilt_android_testing_filegroup",
     ],
     manifest = "AndroidManifest.xml",
     packaging = "aar",
