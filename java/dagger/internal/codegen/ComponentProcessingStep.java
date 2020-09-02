@@ -30,7 +30,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.BindingGraph;
-import dagger.internal.codegen.binding.BindingGraphConverter;
 import dagger.internal.codegen.binding.BindingGraphFactory;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
@@ -59,7 +58,6 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
   private final ComponentDescriptorFactory componentDescriptorFactory;
   private final BindingGraphFactory bindingGraphFactory;
   private final SourceFileGenerator<BindingGraph> componentGenerator;
-  private final BindingGraphConverter bindingGraphConverter;
   private final BindingGraphValidator bindingGraphValidator;
 
   @Inject
@@ -71,7 +69,6 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       ComponentDescriptorFactory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       SourceFileGenerator<BindingGraph> componentGenerator,
-      BindingGraphConverter bindingGraphConverter,
       BindingGraphValidator bindingGraphValidator) {
     super(MoreElements::asType);
     this.messager = messager;
@@ -81,7 +78,6 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
     this.componentDescriptorFactory = componentDescriptorFactory;
     this.bindingGraphFactory = bindingGraphFactory;
     this.componentGenerator = componentGenerator;
-    this.bindingGraphConverter = bindingGraphConverter;
     this.bindingGraphValidator = bindingGraphValidator;
   }
 
@@ -117,7 +113,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       return;
     }
     BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor, false);
-    if (isValid(bindingGraph)) {
+    if (bindingGraphValidator.isValid(bindingGraph.topLevelBindingGraph())) {
       generateComponent(bindingGraph);
     }
   }
@@ -153,7 +149,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
       return true;
     }
     BindingGraph fullBindingGraph = bindingGraphFactory.create(componentDescriptor, true);
-    return isValid(fullBindingGraph);
+    return bindingGraphValidator.isValid(fullBindingGraph.topLevelBindingGraph());
   }
 
   private boolean isValid(ComponentDescriptor componentDescriptor) {
@@ -161,9 +157,5 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<TypeEleme
         componentDescriptorValidator.validate(componentDescriptor);
     componentDescriptorReport.printMessagesTo(messager);
     return componentDescriptorReport.isClean();
-  }
-
-  private boolean isValid(BindingGraph bindingGraph) {
-    return bindingGraphValidator.isValid(bindingGraphConverter.convert(bindingGraph));
   }
 }

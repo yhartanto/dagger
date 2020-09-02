@@ -24,22 +24,25 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.model.BindingKind.SUBCOMPONENT_CREATOR;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
+import com.google.common.graph.ImmutableNetwork;
 import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.Network;
 import com.google.common.graph.NetworkBuilder;
+import dagger.internal.codegen.binding.BindingGraph.TopLevelBindingGraph;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.DependencyEdge;
 import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.MissingBinding;
 import dagger.model.BindingGraph.Node;
-import dagger.model.BindingGraphProxies;
 import dagger.model.ComponentPath;
 import dagger.model.DependencyRequest;
+import dagger.model.Key;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -52,7 +55,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 /** Converts {@link BindingGraph}s to {@link dagger.model.BindingGraph}s. */
-public final class BindingGraphConverter {
+final class BindingGraphConverter {
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
 
   @Inject
@@ -64,20 +67,29 @@ public final class BindingGraphConverter {
    * Creates the external {@link dagger.model.BindingGraph} representing the given internal {@link
    * BindingGraph}.
    */
-  public dagger.model.BindingGraph convert(BindingGraph bindingGraph) {
-    MutableNetwork<Node, Edge> network =
-        Converter.convert(bindingGraph, bindingDeclarationFormatter);
+  BindingGraph convert(LegacyBindingGraph legacyBindingGraph) {
+    MutableNetwork<Node, Edge> network = asNetwork(legacyBindingGraph);
+    ComponentNode rootNode = rootComponentNode(network);
+    boolean isFullBindingGraph = legacyBindingGraph.isFullBindingGraph();
 
     // When bindings are copied down into child graphs because they transitively depend on local
     // multibindings or optional bindings, the parent-owned binding is still there. If that
     // parent-owned binding is not reachable from its component, it doesn't need to be in the graph
     // because it will never be used. So remove all nodes that are not reachable from the root
     // component—unless we're converting a full binding graph.
-    if (!bindingGraph.isFullBindingGraph()) {
-      unreachableNodes(network.asGraph(), rootComponentNode(network)).forEach(network::removeNode);
+    if (!isFullBindingGraph) {
+      unreachableNodes(network.asGraph(), rootNode).forEach(network::removeNode);
     }
 
-    return BindingGraphProxies.bindingGraph(network, bindingGraph.isFullBindingGraph());
+    TopLevelBindingGraph topLevelBindingGraph =
+        TopLevelBindingGraph.create(ImmutableNetwork.copyOf(network), isFullBindingGraph);
+    return BindingGraph.create(rootNode.componentPath(), legacyBindingGraph, topLevelBindingGraph);
+  }
+
+  private MutableNetwork<Node, Edge> asNetwork(LegacyBindingGraph graph) {
+    Converter converter = new Converter(bindingDeclarationFormatter);
+    converter.visitRootComponent(graph);
+    return converter.network;
   }
 
   // TODO(dpb): Example of BindingGraph logic applied to derived networks.
@@ -106,20 +118,8 @@ public final class BindingGraphConverter {
   }
 
   private static final class Converter {
-    /**
-     * Calls {@link #visitComponent(BindingGraph)} for the root component.
-     *
-     * @throws IllegalStateException if a traversal is in progress
-     */
-    private static MutableNetwork<Node, Edge> convert(
-        BindingGraph graph, BindingDeclarationFormatter bindingDeclarationFormatter) {
-      Converter converter = new Converter(bindingDeclarationFormatter);
-      converter.visitRootComponent(graph);
-      return converter.network;
-    }
-
     /** The path from the root graph to the currently visited graph. */
-    private final Deque<BindingGraph> bindingGraphPath = new ArrayDeque<>();
+    private final Deque<LegacyBindingGraph> bindingGraphPath = new ArrayDeque<>();
 
     /** The {@link ComponentPath} for each component in {@link #bindingGraphPath}. */
     private final Deque<ComponentPath> componentPaths = new ArrayDeque<>();
@@ -137,7 +137,7 @@ public final class BindingGraphConverter {
       this.bindingDeclarationFormatter = bindingDeclarationFormatter;
     }
 
-    private void visitRootComponent(BindingGraph graph) {
+    private void visitRootComponent(LegacyBindingGraph graph) {
       visitComponent(graph, null);
     }
 
@@ -152,18 +152,18 @@ public final class BindingGraphConverter {
      *       ExecutableElement)}.
      *   <li>For each entry point in the component, calls {@link #visitEntryPoint(ComponentNode,
      *       DependencyRequest)}.
-     *   <li>For each child component, calls {@link #visitComponent(BindingGraph)}, updating the
-     *       traversal state.
+     *   <li>For each child component, calls {@link #visitComponent(LegacyBindingGraph,
+     *       ComponentNode)}, updating the traversal state.
      * </ol>
      *
      * @param graph the currently visited graph
      */
-    private void visitComponent(BindingGraph graph, ComponentNode parentComponent) {
+    private void visitComponent(LegacyBindingGraph graph, ComponentNode parentComponent) {
       bindingGraphPath.addLast(graph);
       ComponentPath graphPath =
           ComponentPath.create(
               bindingGraphPath.stream()
-                  .map(BindingGraph::componentTypeElement)
+                  .map(LegacyBindingGraph::componentTypeElement)
                   .collect(toImmutableList()));
       componentPaths.addLast(graphPath);
       ComponentNode currentComponent =
@@ -196,7 +196,7 @@ public final class BindingGraphConverter {
       }
 
       if (bindingGraphPath.size() > 1) {
-        BindingGraph parent = Iterators.get(bindingGraphPath.descendingIterator(), 1);
+        LegacyBindingGraph parent = Iterators.get(bindingGraphPath.descendingIterator(), 1);
         parent
             .componentDescriptor()
             .getFactoryMethodForChildComponent(graph.componentDescriptor())
@@ -206,7 +206,7 @@ public final class BindingGraphConverter {
                         parentComponent, currentComponent, childFactoryMethod.methodElement()));
       }
 
-      for (BindingGraph child : graph.subgraphs()) {
+      for (LegacyBindingGraph child : graph.subgraphs()) {
         visitComponent(child, currentComponent);
       }
 
@@ -266,11 +266,11 @@ public final class BindingGraphConverter {
     }
 
     /**
-     * Returns the BindingGraph for {@code ancestor}, where {@code ancestor} is in the component
-     * path of the current traversal.
+     * Returns the LegacyBindingGraph for {@code ancestor}, where {@code ancestor} is in the
+     * component path of the current traversal.
      */
-    private BindingGraph graphForAncestor(TypeElement ancestor) {
-      for (BindingGraph graph : bindingGraphPath) {
+    private LegacyBindingGraph graphForAncestor(TypeElement ancestor) {
+      for (LegacyBindingGraph graph : bindingGraphPath) {
         if (graph.componentTypeElement().equals(ancestor)) {
           return graph;
         }
@@ -366,17 +366,32 @@ public final class BindingGraphConverter {
     private MissingBinding missingBindingNode(ResolvedBindings dependencies) {
       // Put all missing binding nodes in the root component. This simplifies the binding graph
       // and produces better error messages for users since all dependents point to the same node.
-      return BindingGraphProxies.missingBindingNode(
+      return MissingBindingImpl.create(
           ComponentPath.create(ImmutableList.of(componentPath().rootComponent())),
           dependencies.key());
     }
 
-    private ComponentNode subcomponentNode(TypeMirror subcomponentBuilderType, BindingGraph graph) {
+    private ComponentNode subcomponentNode(
+        TypeMirror subcomponentBuilderType, LegacyBindingGraph graph) {
       TypeElement subcomponentBuilderElement = asTypeElement(subcomponentBuilderType);
       ComponentDescriptor subcomponent =
           graph.componentDescriptor().getChildComponentWithBuilderType(subcomponentBuilderElement);
       return ComponentNodeImpl.create(
           componentPath().childPath(subcomponent.typeElement()), subcomponent);
     }
+  }
+
+  @AutoValue
+  abstract static class MissingBindingImpl extends MissingBinding {
+    static MissingBinding create(ComponentPath component, Key key) {
+      return new AutoValue_BindingGraphConverter_MissingBindingImpl(component, key);
+    }
+
+    @Memoized
+    @Override
+    public abstract int hashCode();
+
+    @Override
+    public abstract boolean equals(Object o);
   }
 }

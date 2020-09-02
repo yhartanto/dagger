@@ -70,5 +70,6 @@ java_library(
         ":model",
         "//java/dagger/internal/guava:collect",
         "//java/dagger/internal/guava:graph",
+        "@google_bazel_common//third_party/java/auto:value",
     ],
 )

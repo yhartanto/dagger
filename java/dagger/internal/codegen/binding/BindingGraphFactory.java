@@ -84,6 +84,7 @@ public final class BindingGraphFactory implements ClearableCache {
   private final KeyFactory keyFactory;
   private final BindingFactory bindingFactory;
   private final ModuleDescriptor.Factory moduleDescriptorFactory;
+  private final BindingGraphConverter bindingGraphConverter;
   private final Map<Key, ImmutableSet<Key>> keysMatchingRequestCache = new HashMap<>();
   private final CompilerOptions compilerOptions;
 
@@ -94,12 +95,14 @@ public final class BindingGraphFactory implements ClearableCache {
       KeyFactory keyFactory,
       BindingFactory bindingFactory,
       ModuleDescriptor.Factory moduleDescriptorFactory,
+      BindingGraphConverter bindingGraphConverter,
       CompilerOptions compilerOptions) {
     this.elements = elements;
     this.injectBindingRegistry = injectBindingRegistry;
     this.keyFactory = keyFactory;
     this.bindingFactory = bindingFactory;
     this.moduleDescriptorFactory = moduleDescriptorFactory;
+    this.bindingGraphConverter = bindingGraphConverter;
     this.compilerOptions = compilerOptions;
   }
 
@@ -111,10 +114,11 @@ public final class BindingGraphFactory implements ClearableCache {
    */
   public BindingGraph create(
       ComponentDescriptor componentDescriptor, boolean createFullBindingGraph) {
-    return create(Optional.empty(), componentDescriptor, createFullBindingGraph);
+    return bindingGraphConverter.convert(
+        createLegacyBindingGraph(Optional.empty(), componentDescriptor, createFullBindingGraph));
   }
 
-  private BindingGraph create(
+  private LegacyBindingGraph createLegacyBindingGraph(
       Optional<Resolver> parentResolver,
       ComponentDescriptor componentDescriptor,
       boolean createFullBindingGraph) {
@@ -228,15 +232,17 @@ public final class BindingGraphFactory implements ClearableCache {
     // done in a queue since resolving one subcomponent might resolve a key for a subcomponent
     // from a parent graph. This is done until no more new subcomponents are resolved.
     Set<ComponentDescriptor> resolvedSubcomponents = new HashSet<>();
-    ImmutableList.Builder<BindingGraph> subgraphs = ImmutableList.builder();
+    ImmutableList.Builder<LegacyBindingGraph> subgraphs = ImmutableList.builder();
     for (ComponentDescriptor subcomponent :
         Iterables.consumingIterable(requestResolver.subcomponentsToResolve)) {
       if (resolvedSubcomponents.add(subcomponent)) {
-        subgraphs.add(create(Optional.of(requestResolver), subcomponent, createFullBindingGraph));
+        subgraphs.add(
+            createLegacyBindingGraph(
+                Optional.of(requestResolver), subcomponent, createFullBindingGraph));
       }
     }
 
-    return BindingGraph.create(
+    return LegacyBindingGraph.create(
         componentDescriptor,
         requestResolver.getResolvedContributionBindings(),
         requestResolver.getResolvedMembersInjectionBindings(),

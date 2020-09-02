@@ -24,8 +24,6 @@ import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSetMultimap;
 
-import com.google.auto.value.AutoValue;
-import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.graph.EndpointPair;
@@ -88,13 +86,7 @@ import javax.lang.model.element.TypeElement;
  *
  * <p><b>Note that this API is experimental and will change.</b>
  */
-@AutoValue
 public abstract class BindingGraph {
-
-  static BindingGraph create(Network<Node, Edge> network, boolean isFullBindingGraph) {
-    return new AutoValue_BindingGraph(ImmutableNetwork.copyOf(network), isFullBindingGraph);
-  }
-
   /** Returns the graph in its {@link Network} representation. */
   public abstract ImmutableNetwork<Node, Edge> network();
 
@@ -305,8 +297,7 @@ public abstract class BindingGraph {
   private static final ImmutableSet<Class<? extends Node>> NODE_TYPES =
       ImmutableSet.of(Binding.class, MissingBinding.class, ComponentNode.class);
 
-  @Memoized
-  ImmutableSetMultimap<Class<? extends Node>, ? extends Node> nodesByClass() {
+  protected ImmutableSetMultimap<Class<? extends Node>, ? extends Node> nodesByClass() {
     return network().nodes().stream()
         .collect(
             toImmutableSetMultimap(
@@ -400,12 +391,7 @@ public abstract class BindingGraph {
   }
 
   /** A node in the binding graph that represents a missing binding for a key in a component. */
-  @AutoValue
   public abstract static class MissingBinding implements MaybeBinding {
-    static MissingBinding create(ComponentPath component, Key key) {
-      return new AutoValue_BindingGraph_MissingBinding(component, key);
-    }
-
     /** The component in which the binding is missing. */
     @Override
     public abstract ComponentPath componentPath();
@@ -425,13 +411,6 @@ public abstract class BindingGraph {
     public String toString() {
       return String.format("missing binding for %s in %s", key(), componentPath());
     }
-
-    @Memoized
-    @Override
-    public abstract int hashCode();
-
-    @Override
-    public abstract boolean equals(Object o);
   }
 
   /**

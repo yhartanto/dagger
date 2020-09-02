@@ -57,7 +57,6 @@ import com.google.errorprone.annotations.FormatMethod;
 import dagger.Module;
 import dagger.Subcomponent;
 import dagger.internal.codegen.base.ModuleAnnotation;
-import dagger.internal.codegen.binding.BindingGraphConverter;
 import dagger.internal.codegen.binding.BindingGraphFactory;
 import dagger.internal.codegen.binding.ComponentCreatorAnnotation;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
@@ -126,7 +125,6 @@ public final class ModuleValidator {
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final ComponentDescriptorFactory componentDescriptorFactory;
   private final BindingGraphFactory bindingGraphFactory;
-  private final BindingGraphConverter bindingGraphConverter;
   private final BindingGraphValidator bindingGraphValidator;
   private final KotlinMetadataUtil metadataUtil;
   private final Map<TypeElement, ValidationReport<TypeElement>> cache = new HashMap<>();
@@ -140,7 +138,6 @@ public final class ModuleValidator {
       MethodSignatureFormatter methodSignatureFormatter,
       ComponentDescriptorFactory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
-      BindingGraphConverter bindingGraphConverter,
       BindingGraphValidator bindingGraphValidator,
       KotlinMetadataUtil metadataUtil) {
     this.types = types;
@@ -149,7 +146,6 @@ public final class ModuleValidator {
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.componentDescriptorFactory = componentDescriptorFactory;
     this.bindingGraphFactory = bindingGraphFactory;
-    this.bindingGraphConverter = bindingGraphConverter;
     this.bindingGraphValidator = bindingGraphValidator;
     this.metadataUtil = metadataUtil;
   }
@@ -689,9 +685,9 @@ public final class ModuleValidator {
   private void validateModuleBindings(
       TypeElement module, ValidationReport.Builder<TypeElement> report) {
     BindingGraph bindingGraph =
-        bindingGraphConverter.convert(
-            bindingGraphFactory.create(
-                componentDescriptorFactory.moduleComponentDescriptor(module), true));
+        bindingGraphFactory.create(
+                componentDescriptorFactory.moduleComponentDescriptor(module), true)
+            .topLevelBindingGraph();
     if (!bindingGraphValidator.isValid(bindingGraph)) {
       // Since the validator uses a DiagnosticReporter to report errors, the ValdiationReport won't
       // have any Items for them. We have to tell the ValidationReport that some errors were
