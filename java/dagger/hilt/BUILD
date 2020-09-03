@@ -157,6 +157,7 @@ filegroup(
         "//java/dagger/hilt/android/processor/internal/bindvalue:srcs_filegroup",
         "//java/dagger/hilt/android/processor/internal/customtestapplication:srcs_filegroup",
         "//java/dagger/hilt/android/processor/internal/uninstallmodules:srcs_filegroup",
+        "//java/dagger/hilt/processor:srcs_filegroup",
         "//java/dagger/hilt/processor/internal:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/aggregateddeps:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/aliasof:srcs_filegroup",

@@ -42,6 +42,12 @@ _deploy \
   java/dagger/hilt/android/testing/artifact-javadoc.jar
 
 _deploy \
+  java/dagger/hilt/processor/artifact.jar \
+  java/dagger/hilt/processor/pom.xml \
+  java/dagger/hilt/processor/artifact-src.jar \
+  java/dagger/hilt/processor/artifact-javadoc.jar
+
+_deploy \
   java/dagger/hilt/android/processor/artifact.jar \
   java/dagger/hilt/android/processor/pom.xml \
   java/dagger/hilt/android/processor/artifact-src.jar \

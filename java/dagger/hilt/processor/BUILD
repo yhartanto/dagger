@@ -20,19 +20,37 @@ load("//tools:maven.bzl", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
 
+# TODO(user): merge this into :artifact-lib once we remove hilt-android-compiler artifact.
+java_library(
+    name = "artifact-lib-shared",
+    exports = [
+        "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
+        "//java/dagger/hilt/android/processor/internal/bindvalue:bind_value_processor_lib",
+        "//java/dagger/hilt/android/processor/internal/customtestapplication:processor_lib",
+        "//java/dagger/hilt/android/processor/internal/uninstallmodules:processor_lib",
+        "//java/dagger/hilt/processor/internal/aggregateddeps:processor_lib",
+        "//java/dagger/hilt/processor/internal/aliasof:processor_lib",
+        "//java/dagger/hilt/processor/internal/definecomponent:processor_lib",
+        "//java/dagger/hilt/processor/internal/generatesrootinput:processor_lib",
+        "//java/dagger/hilt/processor/internal/originatingelement:processor_lib",
+        "//java/dagger/hilt/processor/internal/root:processor_lib",
+        "//java/dagger/internal/codegen:processor",
+    ],
+)
+
 java_library(
     name = "artifact-lib",
-    tags = ["maven_coordinates=com.google.dagger:hilt-android-compiler:" + POM_VERSION_ALPHA],
+    tags = ["maven_coordinates=com.google.dagger:hilt-compiler:" + POM_VERSION_ALPHA],
     visibility = ["//visibility:private"],
     exports = [
-        "//java/dagger/hilt/processor:artifact-lib-shared",
+        ":artifact-lib-shared",
     ],
 )
 
 gen_maven_artifact(
     name = "artifact",
-    artifact_coordinates = "com.google.dagger:hilt-android-compiler:" + POM_VERSION_ALPHA,
-    artifact_name = "Hilt Android Processor",
+    artifact_coordinates = "com.google.dagger:hilt-compiler:" + POM_VERSION_ALPHA,
+    artifact_name = "Hilt Processor",
     artifact_target = ":artifact-lib",
     artifact_target_libs = [
         "//java/dagger/hilt/android/processor/internal:android_classnames",

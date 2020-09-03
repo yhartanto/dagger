@@ -84,7 +84,7 @@ public final class MethodSignatureFormatter extends Formatter<ExecutableElement>
   private String format(
       ExecutableElement method, ExecutableType methodType, TypeElement declaringType) {
     StringBuilder builder = new StringBuilder();
-    // TODO(cgruber): AnnotationMirror formatter.
+    // TODO(user): AnnotationMirror formatter.
     List<? extends AnnotationMirror> annotations = method.getAnnotationMirrors();
     if (!annotations.isEmpty()) {
       Iterator<? extends AnnotationMirror> annotationIterator = annotations.iterator();
