@@ -19,7 +19,7 @@
 # Load Dagger repository
 ########################
 
-# TODO(user): Replace with `http_archive` pointing to tagged released.
+# TODO(bcorso): Replace with `http_archive` pointing to tagged released.
 local_repository(
     name = "dagger",
     path = "../../",

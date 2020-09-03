@@ -101,7 +101,7 @@ public final class DiagnosticMessageGenerator {
   private static <K, V> Function<K, V> memoize(Function<K, V> uncached) {
     // If Android Guava is on the processor path, then c.g.c.b.Function (which LoadingCache
     // implements) does not extend j.u.f.Function.
-    // TODO(user): Fix current breakages and try to remove this to enforce not having this on
+    // TODO(erichang): Fix current breakages and try to remove this to enforce not having this on
     // processor path.
 
     // First, explicitly convert uncached to c.g.c.b.Function because CacheLoader.from() expects

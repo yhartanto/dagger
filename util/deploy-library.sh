@@ -22,7 +22,7 @@ deploy_library() {
   bazel build --define=pom_version="$version_name" \
     $library $pomfile
 
-  # TODO(user): Consider moving this into the "gen_maven_artifact" macro, this
+  # TODO(bcorso): Consider moving this into the "gen_maven_artifact" macro, this
   # requires having the version checked-in for the build system.
   add_tracking_version \
     $(bazel_output_file $library) \

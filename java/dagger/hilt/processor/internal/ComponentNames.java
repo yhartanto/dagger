@@ -42,9 +42,9 @@ public final class ComponentNames {
    * <p>This is a hack because nested subcomponents in Dagger generate extremely long class names
    * that hit the 256 character limit.
    */
-  // TODO(user): See if this issue can be fixed in Dagger, e.g. by using static subcomponents.
+  // TODO(bcorso): See if this issue can be fixed in Dagger, e.g. by using static subcomponents.
   private static String componentName(ClassName component) {
-    // TODO(user): How do we want to handle collisions across packages? Currently, we only handle
+    // TODO(bcorso): How do we want to handle collisions across packages? Currently, we only handle
     // collisions across enclosing elements since namespacing by package would likely lead to too
     // long of class names.
     // Note: This uses regex matching so we only match if the name ends in "Component"

@@ -364,7 +364,7 @@ public class MembersInjectionTest {
             "",
             "import dagger.Lazy;",
             "import dagger.MembersInjector;",
-            "import dagger.internal.DoubleCheck;",
+            "import dagger.internal.DoubleChecks;",
             "import dagger.internal.InjectedFieldSignature;",
             IMPORT_GENERATED_ANNOTATION,
             "import javax.inject.Provider;",
@@ -394,7 +394,7 @@ public class MembersInjectionTest {
             "  @Override",
             "  public void injectMembers(FieldInjection instance) {",
             "    injectString(instance, stringProvider.get());",
-            "    injectLazyString(instance, DoubleCheck.lazy(stringProvider2));",
+            "    injectLazyString(instance, DoubleChecks.lazy(stringProvider2));",
             "    injectStringProvider(instance, stringProvider3);",
             "  }",
             "",
@@ -515,7 +515,7 @@ public class MembersInjectionTest {
             "",
             "import dagger.Lazy;",
             "import dagger.MembersInjector;",
-            "import dagger.internal.DoubleCheck;",
+            "import dagger.internal.DoubleChecks;",
             IMPORT_GENERATED_ANNOTATION,
             "import javax.inject.Provider;",
             "",
@@ -553,7 +553,7 @@ public class MembersInjectionTest {
             "    injectManyArgs(",
             "        instance,",
             "        stringProvider2.get(),",
-            "        DoubleCheck.lazy(stringProvider3),",
+            "        DoubleChecks.lazy(stringProvider3),",
             "        stringProvider4);",
             "  }",
             "",
@@ -1565,7 +1565,7 @@ public class MembersInjectionTest {
                 "        if (local instanceof MemoizedSentinel) {",
                 "          local = InaccessiblesModule_InaccessiblesFactory.inaccessibles();",
                 "          listOfInaccessible =",
-                "              DoubleCheck.reentrantCheck(listOfInaccessible, local);",
+                "              DoubleChecks.reentrantCheck(listOfInaccessible, local);",
                 "        }",
                 "      }",
                 "    }",
@@ -1579,7 +1579,7 @@ public class MembersInjectionTest {
                 "  @SuppressWarnings(\"unchecked\")",
                 "  private void initialize() {",
                 "    this.inaccessiblesProvider =",
-                "        DoubleCheck.provider(InaccessiblesModule_InaccessiblesFactory.create());",
+                "        DoubleChecks.provider(InaccessiblesModule_InaccessiblesFactory.create());",
                 "  }")
             .addLines(
                 "",
@@ -1832,7 +1832,7 @@ public class MembersInjectionTest {
   // Shows that we do generate a MembersInjector for a type that has an @Inject
   // constructor and that extends a type with @Inject fields, even if it has no local field
   // injection sites
-  // TODO(user): Are these even used anymore?
+  // TODO(erichang): Are these even used anymore?
   @Test
   public void testConstructorInjectedFieldInjection() {
     JavaFileObject classA =

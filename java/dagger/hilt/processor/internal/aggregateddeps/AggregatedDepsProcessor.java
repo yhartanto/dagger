@@ -297,7 +297,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
   }
 
   private static boolean hasOnlyStaticProvides(TypeElement module) {
-    // TODO(user): Check for @Produces too when we have a producers story
+    // TODO(erichang): Check for @Produces too when we have a producers story
     return ElementFilter.methodsIn(module.getEnclosedElements()).stream()
         .filter(method -> Processors.hasAnnotation(method, ClassNames.PROVIDES))
         .allMatch(method -> method.getModifiers().contains(STATIC));

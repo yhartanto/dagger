@@ -53,7 +53,7 @@ public final class RootProcessor extends BaseProcessor {
   private final List<ClassName> rootNames = new ArrayList<>();
   private final Set<ClassName> processed = new HashSet<>();
   private boolean isTestEnv;
-  // TODO(user): Consider using a Dagger component to create/scope these objects
+  // TODO(bcorso): Consider using a Dagger component to create/scope these objects
   private final DefineComponents defineComponents = DefineComponents.create();
   private GeneratesRootInputs generatesRootInputs;
 
@@ -128,7 +128,7 @@ public final class RootProcessor extends BaseProcessor {
       return;
     }
 
-    // TODO(user): Currently, if there's an exception in any of the roots we stop processing
+    // TODO(bcorso): Currently, if there's an exception in any of the roots we stop processing
     // all roots. We should consider if it's worth trying to continue processing for other
     // roots. At the moment, I think it's rare that if one root failed the others would not.
     try {
@@ -167,7 +167,7 @@ public final class RootProcessor extends BaseProcessor {
   private void generateTestComponentData(ImmutableList<RootMetadata> rootMetadatas)
       throws IOException {
     for (RootMetadata rootMetadata : rootMetadatas) {
-      // TODO(user): Consider moving this check earlier into processEach.
+      // TODO(bcorso): Consider moving this check earlier into processEach.
       TypeElement testElement = rootMetadata.testRootMetadata().testElement();
       ProcessorErrors.checkState(
           testElement.getModifiers().contains(PUBLIC),

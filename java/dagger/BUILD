@@ -18,9 +18,9 @@
 load("@rules_java//java:defs.bzl", "java_library")
 load(
     "//:build_defs.bzl",
-    "DOCLINT_HTML_AND_SYNTAX",
+    "DOCLINT_HTML_AND_SYNTAX",  # @unused
     "POM_VERSION",
-    "SOURCE_7_TARGET_7",
+    "SOURCE_7_TARGET_7",  # @unused
 )
 load("//tools:maven.bzl", "pom_file")
 load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")

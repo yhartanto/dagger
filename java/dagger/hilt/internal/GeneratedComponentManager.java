@@ -17,7 +17,7 @@
 package dagger.hilt.internal;
 
 /** An interface that provides a managed generated component. */
-// TODO(user): Consider either removing type parameter or using actual component type in usages.
+// TODO(bcorso): Consider either removing type parameter or using actual component type in usages.
 public interface GeneratedComponentManager<T> {
   T generatedComponent();
 }

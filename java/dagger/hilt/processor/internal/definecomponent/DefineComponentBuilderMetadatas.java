@@ -68,7 +68,7 @@ final class DefineComponentBuilderMetadatas {
         element,
         element.getAnnotationMirrors());
 
-    // TODO(user): Allow abstract classes?
+    // TODO(bcorso): Allow abstract classes?
     ProcessorErrors.checkState(
         element.getKind().equals(ElementKind.INTERFACE),
         element,
@@ -76,7 +76,7 @@ final class DefineComponentBuilderMetadatas {
         element);
     TypeElement builder = MoreElements.asType(element);
 
-    // TODO(user): Allow extending interfaces?
+    // TODO(bcorso): Allow extending interfaces?
     ProcessorErrors.checkState(
         builder.getInterfaces().isEmpty(),
         builder,
@@ -84,7 +84,7 @@ final class DefineComponentBuilderMetadatas {
         builder,
         builder.getInterfaces());
 
-    // TODO(user): Allow type parameters?
+    // TODO(bcorso): Allow type parameters?
     ProcessorErrors.checkState(
         builder.getTypeParameters().isEmpty(),
         builder,

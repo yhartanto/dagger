@@ -469,8 +469,8 @@ public class SubcomponentValidationTest {
                 DEFAULT_MODE,
                 "  @SuppressWarnings(\"unchecked\")",
                 "  private void initialize() {",
-                "    this.dep1Provider = DoubleCheck.provider(Dep1_Factory.create());",
-                "    this.dep2Provider = DoubleCheck.provider(Dep2_Factory.create());",
+                "    this.dep1Provider = DoubleChecks.provider(Dep1_Factory.create());",
+                "    this.dep2Provider = DoubleChecks.provider(Dep2_Factory.create());",
                 "  }",
                 "")
             .addLines(
@@ -484,7 +484,7 @@ public class SubcomponentValidationTest {
                 "        local = dep1;",
                 "        if (local instanceof MemoizedSentinel) {",
                 "          local = injectDep1(Dep1_Factory.newInstance());",
-                "          dep1 = DoubleCheck.reentrantCheck(dep1, local);",
+                "          dep1 = DoubleChecks.reentrantCheck(dep1, local);",
                 "        }",
                 "      }",
                 "    }",
@@ -505,7 +505,7 @@ public class SubcomponentValidationTest {
                 "        local = dep2;",
                 "        if (local instanceof MemoizedSentinel) {",
                 "          local = injectDep2(Dep2_Factory.newInstance());",
-                "          dep2 = DoubleCheck.reentrantCheck(dep2, local);",
+                "          dep2 = DoubleChecks.reentrantCheck(dep2, local);",
                 "        }",
                 "      }",
                 "    }",
@@ -1019,7 +1019,7 @@ public class SubcomponentValidationTest {
             "    return new B_SubBuilder();",
             "  }",
             "",
-            // TODO(user): Reverse the order of subcomponent and builder so that subcomponent
+            // TODO(bcorso): Reverse the order of subcomponent and builder so that subcomponent
             // comes first.
             "  private final class F_SubBuilder implements C.Foo.Sub.Builder {",
             "    @Override",

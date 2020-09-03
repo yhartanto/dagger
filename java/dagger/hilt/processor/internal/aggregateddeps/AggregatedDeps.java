@@ -20,7 +20,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 
 import java.lang.annotation.Retention;
 
-// TODO(user): Change this API to clearly represent that each AggeregatedDeps should only contain
+// TODO(bcorso): Change this API to clearly represent that each AggeregatedDeps should only contain
 // a single module, entry point, or component entry point.
 /** Annotation for propagating dependency information through javac runs. */
 @Retention(CLASS)

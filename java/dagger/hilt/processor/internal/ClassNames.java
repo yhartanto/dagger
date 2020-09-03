@@ -99,7 +99,7 @@ public final class ClassNames {
 
   public static final ClassName SINGLETON = get("javax.inject", "Singleton");
 
-  // TODO(user): Move these class names out when we factor out the android portion
+  // TODO(erichang): Move these class names out when we factor out the android portion
   public static final ClassName APPLICATION = get("android.app", "Application");
   public static final ClassName MULTI_DEX_APPLICATION =
       get("androidx.multidex", "MultiDexApplication");

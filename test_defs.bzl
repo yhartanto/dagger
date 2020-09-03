@@ -23,7 +23,7 @@ BUILD_VARIANTS = {
 }
 
 # TODO(ronshapiro): convert this to use bazel_common
-# TODO(user): split into two functions for functional vs non-functional tests?
+# TODO(bcorso): split into two functions for functional vs non-functional tests?
 def GenJavaTests(
         name,
         srcs,

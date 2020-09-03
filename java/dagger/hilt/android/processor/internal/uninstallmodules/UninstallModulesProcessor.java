@@ -45,8 +45,8 @@ public final class UninstallModulesProcessor extends BaseProcessor {
 
   @Override
   public void processEach(TypeElement annotation, Element element) throws Exception {
-    // TODO(user): Consider using RootType to check this?
-    // TODO(user): Loosen this restriction to allow defining sets of ignored modules in libraries.
+    // TODO(bcorso): Consider using RootType to check this?
+    // TODO(bcorso): Loosen this restriction to allow defining sets of ignored modules in libraries.
     ProcessorErrors.checkState(
         MoreElements.isType(element)
             && Processors.hasAnnotation(element, ClassNames.HILT_ANDROID_TEST),

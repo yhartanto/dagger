@@ -39,7 +39,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 
 /** Generates a Dagger component or subcomponent interface. */
-// TODO(user): Make this non-public
+// TODO(bcorso): Make this non-public
 public final class ComponentGenerator {
   private static final Joiner JOINER = Joiner.on(".");
   private static final Comparator<ClassName> SIMPLE_NAME_SORTER =
@@ -122,7 +122,7 @@ public final class ComponentGenerator {
     partitionIndexes.add(0);
     for (int i = 0; i < entryPoints.size(); i++) {
       // This over estimates the actual length because it includes the fully qualified name (FQN).
-      // TODO(user): Have a better way to estimate the upper bound. For example, most types will
+      // TODO(bcorso): Have a better way to estimate the upper bound. For example, most types will
       // not include the FQN, but we'll have to consider all of the different subtypes of TypeName,
       // simple name collisions, etc...
       int nextBytes = Utf8.encodedLength(entryPoints.get(i).toString());
@@ -154,7 +154,7 @@ public final class ComponentGenerator {
 
   private ClassName createPartitionInterface(List<TypeName> partition, int partitionIndex)
       throws IOException {
-    // TODO(user): Nest the partion inside the HiltComponents wrapper rather than appending name
+    // TODO(bcorso): Nest the partion inside the HiltComponents wrapper rather than appending name
     ClassName partitionName =
         Processors.append(
             Processors.getEnclosedClassName(name), "_EntryPointPartition" + partitionIndex);

@@ -23,7 +23,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 
 /** The valid root types for Hilt applications. */
-// TODO(user): Fix this class so we don't have to have placeholders
+// TODO(erichang): Fix this class so we don't have to have placeholders
   enum RootType {
     ROOT(ClassNames.HILT_ANDROID_APP),
 

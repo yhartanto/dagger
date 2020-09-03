@@ -27,7 +27,7 @@ package(
         # The dagger/spi should be the only direct dependent on this target.
         # If you need to depend on :model, depend on dagger/spi instead so
         # that pom files correctly pick up the spi maven dependency.
-        # TODO(user): Consider if :model should have its own maven coordinates.
+        # TODO(bcorso): Consider if :model should have its own maven coordinates.
         "//java/dagger/spi:__pkg__",
     ],
 )

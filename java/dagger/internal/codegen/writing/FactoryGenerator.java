@@ -150,7 +150,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
     if (binding.factoryCreationStrategy().equals(SINGLETON_INSTANCE)) {
       return;
     }
-    // TODO(user): Make the constructor private?
+    // TODO(bcorso): Make the constructor private?
     MethodSpec.Builder constructor = constructorBuilder().addModifiers(PUBLIC);
     constructorParams(binding).forEach(
         param -> {
@@ -170,7 +170,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
 
   private Optional<ParameterSpec> moduleParameter(ProvisionBinding binding) {
     if (binding.requiresModuleInstance()) {
-      // TODO(user, dpb): Should this use contributingModule()?
+      // TODO(bcorso, dpb): Should this use contributingModule()?
       TypeName type = TypeName.get(binding.bindingTypeElement().get().asType());
       return Optional.of(ParameterSpec.builder(type, "module").build());
     }
@@ -179,7 +179,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
 
   private ImmutableMap<DependencyRequest, FieldSpec> frameworkFields(ProvisionBinding binding) {
     UniqueNameSet uniqueFieldNames = new UniqueNameSet();
-    // TODO(user, dpb): Add a test for the case when a Factory parameter is named "module".
+    // TODO(bcorso, dpb): Add a test for the case when a Factory parameter is named "module".
     if (binding.requiresModuleInstance()) {
       uniqueFieldNames.claim("module");
     }

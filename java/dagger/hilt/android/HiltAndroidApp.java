@@ -76,7 +76,7 @@ public @interface HiltAndroidApp {
    * The base class for the generated Hilt application. When applying the Hilt Gradle Plugin this
    * value is not necessary and will be inferred from the current superclass.
    */
-  // TODO(user): It would be nice to make this Class<? extends Application> but then the default
+  // TODO(erichang): It would be nice to make this Class<? extends Application> but then the default
   // would have to be Application which would make the default actually valid even without the
   // plugin. Maybe that is a good thing...but might be better to have users be explicit about the
   // base class they want.

@@ -215,7 +215,7 @@ final class ComponentCreatorImplementationFactory {
         case NEEDED:
           return Optional.of(normalSetterMethod(requirement));
         case UNNEEDED:
-          // TODO(user): Don't generate noop setters for any unneeded requirements.
+          // TODO(bcorso): Don't generate noop setters for any unneeded requirements.
           // However, since this is a breaking change we can at least avoid trying
           // to generate noop setters for impossible cases like when the requirement type
           // is in another package. This avoids unnecessary breakages in Dagger's generated

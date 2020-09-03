@@ -60,7 +60,7 @@ public @interface DefineComponent {
    *   }
    * </code></pre>
    */
-  // TODO(user): Consider making this a top-level class to hint that it doesn't need to be nested.
+  // TODO(bcorso): Consider making this a top-level class to hint that it doesn't need to be nested.
   @Retention(CLASS)
   @Target(TYPE)
   @GeneratesRootInput

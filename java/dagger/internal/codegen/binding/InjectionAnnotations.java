@@ -113,7 +113,7 @@ public final class InjectionAnnotations {
    */
   private ImmutableCollection<? extends AnnotationMirror> getQualifiersForKotlinProperty(
       VariableElement fieldElement) {
-    // TODO(user): Consider moving this to KotlinMetadataUtil
+    // TODO(bcorso): Consider moving this to KotlinMetadataUtil
     if (kotlinMetadataUtil.isMissingSyntheticPropertyForAnnotations(fieldElement)) {
       // If we detect that the synthetic method for annotations is missing, possibly due to the
       // element being from a compiled class, then find the MembersInjector that was generated

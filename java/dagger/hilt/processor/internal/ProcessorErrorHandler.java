@@ -86,7 +86,7 @@ final class ProcessorErrorHandler {
                 // If the error type is a TypeElement, get a new one just in case it was thrown in a
                 // previous round we can report the correct instance. Otherwise, this leads to
                 // issues in AndroidStudio when linking an error to the proper element.
-                // TODO(user): Consider only allowing TypeElement errors when delaying errors,
+                // TODO(bcorso): Consider only allowing TypeElement errors when delaying errors,
                 // or maybe even removing delayed errors altogether.
                 element =
                     elements.getTypeElement(

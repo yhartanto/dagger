@@ -21,8 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
-import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
-import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECK;
+import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECKS;
+import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECKS;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.writing.DelegateBindingExpression.isBindsScopeStrongerThanDependencyScope;
@@ -173,7 +173,7 @@ public final class ComponentBindingExpressions {
 
   private static BindingRequest frameworkRequest(
       ContributionBinding binding, DependencyRequest dependency) {
-    // TODO(user): See if we can get rid of FrameworkTypeMatcher
+    // TODO(bcorso): See if we can get rid of FrameworkTypeMatcher
     FrameworkType frameworkType =
         FrameworkTypeMapper.forBindingType(binding.bindingType())
             .getFrameworkType(dependency.kind());
@@ -265,7 +265,7 @@ public final class ComponentBindingExpressions {
    * or a {@link dagger.producers.Producer} for production bindings.
    */
   private BindingExpression frameworkInstanceBindingExpression(ContributionBinding binding) {
-    // TODO(user): Consider merging the static factory creation logic into CreationExpressions?
+    // TODO(bcorso): Consider merging the static factory creation logic into CreationExpressions?
     Optional<MemberSelect> staticMethod =
         useStaticFactoryCreation(binding) ? staticFactoryCreation(binding) : Optional.empty();
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
@@ -295,7 +295,7 @@ public final class ComponentBindingExpressions {
     return () ->
         CodeBlock.of(
             "$T.provider($L)",
-            binding.scope().get().isReusable() ? SINGLE_CHECK : DOUBLE_CHECK,
+            binding.scope().get().isReusable() ? SINGLE_CHECKS : DOUBLE_CHECKS,
             unscoped.creationExpression());
   }
 

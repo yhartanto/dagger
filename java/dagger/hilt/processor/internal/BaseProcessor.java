@@ -61,7 +61,7 @@ public abstract class BaseProcessor extends AbstractProcessor {
   abstract static class ProcessingState {
     private static ProcessingState of(TypeElement annotation, Element element) {
       // We currently only support TypeElements directly annotated with the annotation.
-      // TODO(user): Switch to using BasicAnnotationProcessor if we need more than this.
+      // TODO(bcorso): Switch to using BasicAnnotationProcessor if we need more than this.
       // Note: Switching to BasicAnnotationProcessor is currently not possible because of cyclic
       // references to generated types in our API. For example, an @AndroidEntryPoint annotated
       // element will indefinitely defer its own processing because it extends a generated type

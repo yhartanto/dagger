@@ -60,7 +60,7 @@ final class RootGenerator {
 
   private void generateComponents() throws IOException {
 
-    // TODO(user): Consider moving all of this logic into ComponentGenerator?
+    // TODO(bcorso): Consider moving all of this logic into ComponentGenerator?
     TypeSpec.Builder componentsWrapper =
         TypeSpec.classBuilder(getComponentsWrapperClassName())
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)

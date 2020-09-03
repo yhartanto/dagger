@@ -245,7 +245,7 @@ public abstract class ComponentRequirement {
    * Returns true if and only if a component can instantiate new instances (typically of a module)
    * rather than requiring that they be passed.
    */
-  // TODO(user): Should this method throw if its called knowing that an instance is not needed?
+  // TODO(bcorso): Should this method throw if its called knowing that an instance is not needed?
   public static boolean componentCanMakeNewInstances(
       TypeElement typeElement, KotlinMetadataUtil metadataUtil) {
     switch (typeElement.getKind()) {

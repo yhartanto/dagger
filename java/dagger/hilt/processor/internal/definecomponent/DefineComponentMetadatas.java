@@ -90,7 +90,7 @@ final class DefineComponentMetadatas {
         element,
         element.getAnnotationMirrors());
 
-    // TODO(user): Allow abstract classes?
+    // TODO(bcorso): Allow abstract classes?
     ProcessorErrors.checkState(
         element.getKind().equals(ElementKind.INTERFACE),
         element,
@@ -98,7 +98,7 @@ final class DefineComponentMetadatas {
         element);
     TypeElement component = asType(element);
 
-    // TODO(user): Allow extending interfaces?
+    // TODO(bcorso): Allow extending interfaces?
     ProcessorErrors.checkState(
         component.getInterfaces().isEmpty(),
         component,
@@ -106,14 +106,14 @@ final class DefineComponentMetadatas {
         component,
         component.getInterfaces());
 
-    // TODO(user): Allow type parameters?
+    // TODO(bcorso): Allow type parameters?
     ProcessorErrors.checkState(
         component.getTypeParameters().isEmpty(),
         component,
         "@DefineComponent %s, cannot have type parameters.",
         component.asType());
 
-    // TODO(user): Allow non-static abstract methods (aka EntryPoints)?
+    // TODO(bcorso): Allow non-static abstract methods (aka EntryPoints)?
     List<ExecutableElement> nonStaticMethods =
         ElementFilter.methodsIn(component.getEnclosedElements()).stream()
             .filter(method -> !method.getModifiers().contains(STATIC))
@@ -148,7 +148,7 @@ final class DefineComponentMetadatas {
     AnnotationValue parentValue = getAnnotationElementAndValue(mirror, "parent").getValue();
 
     ProcessorErrors.checkState(
-        // TODO(user): Contribute a check to auto/common AnnotationValues.
+        // TODO(bcorso): Contribute a check to auto/common AnnotationValues.
         !"<error>".contentEquals(parentValue.getValue().toString()),
         component,
         "@DefineComponent %s, references an invalid parent type: %s",

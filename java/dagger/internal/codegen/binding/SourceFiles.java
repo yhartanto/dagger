@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
+import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECKS;
 import static dagger.internal.codegen.javapoet.TypeNames.MAP_FACTORY;
 import static dagger.internal.codegen.javapoet.TypeNames.MAP_OF_PRODUCED_PRODUCER;
 import static dagger.internal.codegen.javapoet.TypeNames.MAP_OF_PRODUCER_PRODUCER;
@@ -106,7 +106,7 @@ public class SourceFiles {
       CodeBlock frameworkTypeMemberSelect, RequestKind dependencyKind) {
     switch (dependencyKind) {
       case LAZY:
-        return CodeBlock.of("$T.lazy($L)", DOUBLE_CHECK, frameworkTypeMemberSelect);
+        return CodeBlock.of("$T.lazy($L)", DOUBLE_CHECKS, frameworkTypeMemberSelect);
       case INSTANCE:
       case FUTURE:
         return CodeBlock.of("$L.get()", frameworkTypeMemberSelect);

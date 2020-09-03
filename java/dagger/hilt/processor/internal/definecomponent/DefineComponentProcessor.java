@@ -56,7 +56,7 @@ public final class DefineComponentProcessor extends BaseProcessor {
   @Override
   protected void processEach(TypeElement annotation, Element element) throws Exception {
     if (ClassName.get(annotation).equals(ClassNames.DEFINE_COMPONENT)) {
-      // TODO(user): For cycles we currently process each element in the cycle. We should skip
+      // TODO(bcorso): For cycles we currently process each element in the cycle. We should skip
       // processing of subsequent elements in a cycle, but this requires ensuring that the first
       // element processed is always the same so that our failure tests are stable.
       DefineComponentMetadata metadata = componentMetadatas.get(element);

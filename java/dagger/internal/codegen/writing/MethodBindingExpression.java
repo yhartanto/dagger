@@ -27,7 +27,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
-import dagger.internal.DoubleCheck;
+import dagger.internal.DoubleChecks;
 import dagger.internal.MemoizedSentinel;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
@@ -261,7 +261,7 @@ abstract class MethodBindingExpression extends BindingExpression {
           .addStatement("local = $L", fieldExpression)
           .beginControlFlow("if (local instanceof $T)", MemoizedSentinel.class)
           .addStatement("local = $L", simpleBindingExpression.get())
-          .addStatement("$1L = $2T.reentrantCheck($1L, local)", fieldExpression, DoubleCheck.class)
+          .addStatement("$1L = $2T.reentrantCheck($1L, local)", fieldExpression, DoubleChecks.class)
           .endControlFlow()
           .endControlFlow()
           .endControlFlow()

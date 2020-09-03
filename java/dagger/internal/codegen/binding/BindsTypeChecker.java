@@ -43,7 +43,7 @@ public final class BindsTypeChecker {
   private final DaggerTypes types;
   private final DaggerElements elements;
 
-  // TODO(user): Make this pkg-private. Used by DelegateBindingExpression.
+  // TODO(bcorso): Make this pkg-private. Used by DelegateBindingExpression.
   @Inject
   public BindsTypeChecker(DaggerTypes types, DaggerElements elements) {
     this.types = types;

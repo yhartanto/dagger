@@ -65,7 +65,7 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
       // Have to set methodName field before implementing the method in order to handle recursion.
       methodName = componentImplementation.getUniqueMethodName(request);
 
-      // TODO(user): Fix the order that these generated methods are written to the component.
+      // TODO(bcorso): Fix the order that these generated methods are written to the component.
       componentImplementation.addMethod(
           PRIVATE_METHOD,
           methodBuilder(methodName)

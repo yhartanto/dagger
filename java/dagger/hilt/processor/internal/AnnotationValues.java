@@ -33,7 +33,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 
 /** A utility class for working with {@link AnnotationValue} instances. */
-// TODO(user): Update auto-common maven import so we can use it rather than this copy.
+// TODO(bcorso): Update auto-common maven import so we can use it rather than this copy.
 public final class AnnotationValues {
 
   private AnnotationValues() {}

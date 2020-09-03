@@ -171,7 +171,7 @@ public class BindsDependsOnSubcomponentValidationTest {
             "}");
     Compilation compilation =
         daggerCompiler()
-            // TODO(user): make this flag the default and remove this
+            // TODO(erichang): make this flag the default and remove this
             .withOptions("-Adagger.strictMultibindingValidation=enabled")
             .compile(parentComponent, parentModule, childComponent, childModule, iface, impl);
     assertThat(compilation).failed();
@@ -329,7 +329,7 @@ public class BindsDependsOnSubcomponentValidationTest {
             "}");
     Compilation compilation =
         daggerCompiler()
-            // TODO(user): make this flag the default and remove this
+            // TODO(erichang): make this flag the default and remove this
             .withOptions("-Adagger.strictMultibindingValidation=enabled")
             .compile(parentComponent, parentModule, childComponent, childModule, iface, impl);
     assertThat(compilation).failed();

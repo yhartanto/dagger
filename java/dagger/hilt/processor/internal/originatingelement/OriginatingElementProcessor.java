@@ -58,7 +58,7 @@ public final class OriginatingElementProcessor extends BaseProcessor {
             Processors.getAnnotationMirror(element, ClassNames.ORIGINATING_ELEMENT),
             "topLevelClass");
 
-    // TODO(user): ProcessorErrors should allow us to point to the annotation too.
+    // TODO(bcorso): ProcessorErrors should allow us to point to the annotation too.
     ProcessorErrors.checkState(
         Processors.isTopLevel(originatingElementValue),
         element,

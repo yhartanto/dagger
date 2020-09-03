@@ -65,7 +65,7 @@ gen_maven_artifact(
     artifact_target_maven_deps = [
         "com.google.dagger:dagger",
         "com.google.guava:failureaccess",
-        "com.google.guava:guava",  # TODO(user): Remove guava dependency and ban it?
+        "com.google.guava:guava",  # TODO(bcorso): Remove guava dependency and ban it?
         "javax.inject:javax.inject",
         "org.checkerframework:checker-compat-qual",
     ],
@@ -75,5 +75,5 @@ gen_maven_artifact(
     ],
     javadoc_root_packages = ["dagger.producers"],
     javadoc_srcs = SRCS,
-    # TODO(user): Look more into why auto/common shading isn't needed here.
+    # TODO(bcorso): Look more into why auto/common shading isn't needed here.
 )

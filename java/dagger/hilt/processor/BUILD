@@ -20,7 +20,7 @@ load("//tools:maven.bzl", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
 
-# TODO(user): merge this into :artifact-lib once we remove hilt-android-compiler artifact.
+# TODO(bcorso): merge this into :artifact-lib once we remove hilt-android-compiler artifact.
 java_library(
     name = "artifact-lib-shared",
     exports = [

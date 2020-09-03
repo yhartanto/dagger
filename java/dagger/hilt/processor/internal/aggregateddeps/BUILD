@@ -17,7 +17,7 @@
 
 package(default_visibility = ["//:src"])
 
-# TODO(user): Remove all AggregatedDeps usage from the processor class path.
+# TODO(bcorso): Remove all AggregatedDeps usage from the processor class path.
 java_library(
     name = "annotation",
     srcs = ["AggregatedDeps.java"],

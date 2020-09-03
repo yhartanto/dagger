@@ -19,7 +19,7 @@ package dagger.producers.internal;
 import static dagger.internal.Preconditions.checkNotNull;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import dagger.internal.DoubleCheck;
+import dagger.internal.DoubleChecks;
 import dagger.producers.Producer;
 import javax.inject.Provider;
 
@@ -93,7 +93,7 @@ public final class DelegateProducer<T> implements CancellableProducer<T> {
 
   private abstract static class ProducerView<T> implements Producer<T> {
     private final Provider<Producer<T>> delegate =
-        DoubleCheck.provider(
+        DoubleChecks.provider(
             new Provider<Producer<T>>() {
               @Override
               public Producer<T> get() {

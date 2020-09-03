@@ -32,7 +32,7 @@ kt_jvm_library(
     ],
 )
 
-# TODO(user): Move this into a subpackage.
+# TODO(bcorso): Move this into a subpackage.
 java_library(
     name = "compilers",
     testonly = 1,

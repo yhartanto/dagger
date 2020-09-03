@@ -86,7 +86,7 @@ public final class ComponentImplementation {
   }
 
   /** A type of method that this component can contain. */
-  // TODO(user, dpb): Change the oder to constructor, initialize, component, then private
+  // TODO(bcorso, dpb): Change the oder to constructor, initialize, component, then private
   // (including MIM and AOM—why treat those separately?).
   public enum MethodSpecKind {
     /** The component constructor. */

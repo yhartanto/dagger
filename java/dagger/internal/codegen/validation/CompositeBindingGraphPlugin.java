@@ -117,7 +117,7 @@ public final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
     return pluginName;
   }
 
-  // TODO(user): This kind of breaks some of the encapsulation by relying on or repeating
+  // TODO(erichang): This kind of breaks some of the encapsulation by relying on or repeating
   // logic within DiagnosticReporterImpl. Hopefully if the experiment for aggregated messages
   // goes well though this can be merged with that implementation.
   private static final class AggregatingDiagnosticReporter implements DiagnosticReporter {
@@ -214,7 +214,7 @@ public final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
         Diagnostic.Kind diagnosticKind,
         ChildFactoryMethodEdge childFactoryMethodEdge,
         String message) {
-      // TODO(user): This repeats some of the logic in DiagnosticReporterImpl. Remove when
+      // TODO(erichang): This repeats some of the logic in DiagnosticReporterImpl. Remove when
       // merged.
       if (elementEncloses(
           graph.rootComponentNode().componentPath().currentComponent(),

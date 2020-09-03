@@ -30,7 +30,7 @@ import javax.lang.model.util.Elements;
 
 /** Helper methods for defining components and the component hierarchy. */
 public final class Components {
-  // TODO(user): Remove this once all usages are replaced with #getComponents().
+  // TODO(bcorso): Remove this once all usages are replaced with #getComponents().
   /**
    * Returns the {@link ComponentDescriptor}s for a given element annotated with {@link
    * dagger.hilt.InstallIn}.

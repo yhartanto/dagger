@@ -18,25 +18,25 @@ package dagger.internal.codegen.binding;
 
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
+import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECKS;
+import static dagger.internal.codegen.javapoet.TypeNames.FUTURES;
+import static dagger.internal.codegen.javapoet.TypeNames.PRODUCED;
+import static dagger.internal.codegen.javapoet.TypeNames.PRODUCERS;
+import static dagger.internal.codegen.javapoet.TypeNames.PROVIDER_OF_LAZY;
 import static dagger.model.RequestKind.INSTANCE;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import dagger.Lazy;
-import dagger.internal.DoubleCheck;
-import dagger.internal.ProviderOfLazy;
 import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;
 import dagger.model.RequestKind;
-import dagger.producers.Produced;
 import dagger.producers.Producer;
-import dagger.producers.internal.Producers;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
@@ -62,22 +62,22 @@ public enum FrameworkType {
           return CodeBlock.of("$L.get()", from);
 
         case LAZY:
-          return CodeBlock.of("$T.lazy($L)", DoubleCheck.class, from);
+          return CodeBlock.of("$T.lazy($L)", DOUBLE_CHECKS, from);
 
         case PROVIDER:
           return from;
 
         case PROVIDER_OF_LAZY:
-          return CodeBlock.of("$T.create($L)", ProviderOfLazy.class, from);
+          return CodeBlock.of("$T.create($L)", PROVIDER_OF_LAZY, from);
 
         case PRODUCER:
-          return CodeBlock.of("$T.producerFromProvider($L)", Producers.class, from);
+          return CodeBlock.of("$T.producerFromProvider($L)", PRODUCERS, from);
 
         case FUTURE:
-          return CodeBlock.of("$T.immediateFuture($L)", Futures.class, to(INSTANCE, from));
+          return CodeBlock.of("$T.immediateFuture($L)", FUTURES, to(INSTANCE, from));
 
         case PRODUCED:
-          return CodeBlock.of("$T.successful($L)", Produced.class, to(INSTANCE, from));
+          return CodeBlock.of("$T.successful($L)", PRODUCED, to(INSTANCE, from));
 
         default:
           throw new IllegalArgumentException(

@@ -27,7 +27,7 @@ java_library(
     ],
 )
 
-# TODO(user): Merge this into other utils
+# TODO(erichang): Merge this into other utils
 java_library(
     name = "utils",
     srcs = [

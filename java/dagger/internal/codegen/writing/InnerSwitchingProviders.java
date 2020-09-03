@@ -29,6 +29,7 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.writing.SwitchingProviders.ProviderType;
 import dagger.model.Key;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
@@ -37,17 +38,24 @@ import javax.lang.model.type.TypeMirror;
  * Generates {@linkplain BindingExpression binding expressions} for a binding that is represented by
  * an inner {@code SwitchingProvider} class.
  */
-final class InnerSwitchingProviders extends SwitchingProviders {
+final class InnerSwitchingProviders {
+  private final ComponentImplementation componentImplementation;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final DaggerTypes types;
+  private final InnerSwitchingProvider doubleCheckSwitchingProviders;
+  private final InnerSwitchingProvider singleCheckSwitchingProviders;
+  private final InnerSwitchingProvider unscopedSwitchingProviders;
 
   InnerSwitchingProviders(
       ComponentImplementation componentImplementation,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types) {
-    super(componentImplementation, types);
+    this.componentImplementation = componentImplementation;
     this.componentBindingExpressions = componentBindingExpressions;
     this.types = types;
+    this.doubleCheckSwitchingProviders = new InnerSwitchingProvider(ProviderType.DOUBLE_CHECK);
+    this.singleCheckSwitchingProviders = new InnerSwitchingProvider(ProviderType.SINGLE_CHECK);
+    this.unscopedSwitchingProviders = new InnerSwitchingProvider(ProviderType.PROVIDER);
   }
 
   /**
@@ -55,53 +63,67 @@ final class InnerSwitchingProviders extends SwitchingProviders {
    * inner {@code SwitchingProvider} class.
    */
   BindingExpression newBindingExpression(ContributionBinding binding) {
-    return new BindingExpression() {
-      @Override
-      Expression getDependencyExpression(ClassName requestingClass) {
-        return getProviderExpression(new SwitchCase(binding, requestingClass));
+    return !binding.scope().isPresent()
+        ? unscopedSwitchingProviders.newBindingExpression(binding)
+        : binding.scope().get().isReusable()
+            ? singleCheckSwitchingProviders.newBindingExpression(binding)
+            : doubleCheckSwitchingProviders.newBindingExpression(binding);
+  }
+
+  private class InnerSwitchingProvider extends SwitchingProviders {
+    private InnerSwitchingProvider(ProviderType providerType) {
+      super(providerType, componentImplementation, types);
+    }
+
+    BindingExpression newBindingExpression(ContributionBinding binding) {
+      return new BindingExpression() {
+        @Override
+        Expression getDependencyExpression(ClassName requestingClass) {
+          return getProviderExpression(new SwitchCase(binding, requestingClass));
+        }
+      };
+    }
+
+    @Override
+    protected TypeSpec createSwitchingProviderType(TypeSpec.Builder builder) {
+      return builder
+          .addModifiers(PRIVATE, FINAL)
+          .addField(TypeName.INT, "id", PRIVATE, FINAL)
+          .addMethod(
+              constructorBuilder()
+                  .addParameter(TypeName.INT, "id")
+                  .addStatement("this.id = id")
+                  .build())
+          .build();
+    }
+
+    private final class SwitchCase implements SwitchingProviders.SwitchCase {
+      private final ContributionBinding binding;
+      private final ClassName requestingClass;
+
+      SwitchCase(ContributionBinding binding, ClassName requestingClass) {
+        this.binding = binding;
+        this.requestingClass = requestingClass;
       }
-    };
-  }
 
-  @Override
-  protected TypeSpec createSwitchingProviderType(TypeSpec.Builder builder) {
-    return builder
-        .addModifiers(PRIVATE, FINAL)
-        .addField(TypeName.INT, "id", PRIVATE, FINAL)
-        .addMethod(
-            constructorBuilder()
-                .addParameter(TypeName.INT, "id")
-                .addStatement("this.id = id")
-                .build())
-        .build();
-  }
+      @Override
+      public Key key() {
+        return binding.key();
+      }
 
-  private final class SwitchCase implements SwitchingProviders.SwitchCase {
-    private final ContributionBinding binding;
-    private final ClassName requestingClass;
+      @Override
+      public Expression getProviderExpression(ClassName switchingProviderClass, int switchId) {
+        TypeMirror instanceType = types.accessibleType(binding.contributedType(), requestingClass);
+        return Expression.create(
+            types.wrapType(instanceType, Provider.class),
+            CodeBlock.of("new $T<>($L)", switchingProviderClass, switchId));
+      }
 
-    SwitchCase(ContributionBinding binding, ClassName requestingClass) {
-      this.binding = binding;
-      this.requestingClass = requestingClass;
-    }
-
-    @Override
-    public Key key() {
-      return binding.key();
-    }
-
-    @Override
-    public Expression getProviderExpression(ClassName switchingProviderClass, int switchId) {
-      TypeMirror instanceType = types.accessibleType(binding.contributedType(), requestingClass);
-      return Expression.create(
-          types.wrapType(instanceType, Provider.class),
-          CodeBlock.of("new $T<>($L)", switchingProviderClass, switchId));
-    }
-
-    @Override
-    public Expression getReturnExpression(ClassName switchingProviderClass) {
-      return componentBindingExpressions.getDependencyExpression(
-          bindingRequest(binding.key(), INSTANCE), switchingProviderClass);
+      @Override
+      public Expression getReturnExpression(ClassName switchingProviderClass) {
+        return componentBindingExpressions.getDependencyExpression(
+            bindingRequest(binding.key(), INSTANCE), switchingProviderClass);
+      }
     }
   }
 }

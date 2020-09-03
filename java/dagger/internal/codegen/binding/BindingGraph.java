@@ -63,7 +63,7 @@ public abstract class BindingGraph {
 
   public abstract ComponentPath componentPath();
 
-  // TODO(user): Delete this after we migrate all usages to the new BindinGraph API.
+  // TODO(bcorso): Delete this after we migrate all usages to the new BindinGraph API.
   abstract LegacyBindingGraph legacyBindingGraph();
 
   public abstract TopLevelBindingGraph topLevelBindingGraph();

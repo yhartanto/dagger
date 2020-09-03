@@ -29,7 +29,7 @@ import javax.lang.model.type.TypeMirror;
  *
  * <pre><code>
  *   {@literal @SuppressWarnings("rawtypes")}
- *   private Provider fooImplProvider = DoubleCheck.provider(FooImpl_Factory.create());
+ *   private Provider fooImplProvider = DoubleChecks.provider(FooImpl_Factory.create());
  * </code></pre>
  *
  * <p>An {@code Expression} for {@code fooImplProvider.get()} would have a {@link #type()} of {@code

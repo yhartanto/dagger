@@ -245,7 +245,7 @@ public final class ComponentDependencies {
 
     // Currently we don't have a good way to throw an error for all tests, so we sort (to keep the
     // error reporting order stable) and then choose the first test.
-    // TODO(user): Consider using ProcessorErrorHandler directly to report all errors at once?
+    // TODO(bcorso): Consider using ProcessorErrorHandler directly to report all errors at once?
     Optional<ClassName> invalidTest =
         invalidTestModules.keySet().stream()
             .min((test1, test2) -> test1.toString().compareTo(test2.toString()));

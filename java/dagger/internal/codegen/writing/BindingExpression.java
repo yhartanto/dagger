@@ -22,7 +22,7 @@ import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescri
 import dagger.internal.codegen.javapoet.Expression;
 
 /** A factory of code expressions used to access a single request for a binding in a component. */
-// TODO(user): Rename this to RequestExpression?
+// TODO(bcorso): Rename this to RequestExpression?
 abstract class BindingExpression {
 
   /**

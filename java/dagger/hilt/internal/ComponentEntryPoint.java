@@ -31,5 +31,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(CLASS)
 @GeneratesRootInput
-// TODO(user): Rename and publicly strip these references out of hilt.
+// TODO(bcorso): Rename and publicly strip these references out of hilt.
 public @interface ComponentEntryPoint {}

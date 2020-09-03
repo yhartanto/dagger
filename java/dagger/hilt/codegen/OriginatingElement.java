@@ -45,7 +45,7 @@ package dagger.hilt.codegen;
  *   }
  * </code></pre>
  */
-// TODO(user): Consider just advising/enforcing that all top-level classes use this annotation.
+// TODO(bcorso): Consider just advising/enforcing that all top-level classes use this annotation.
 public @interface OriginatingElement {
   /** Returns the top-level class enclosing the originating element. */
   Class<?> topLevelClass();

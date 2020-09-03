@@ -215,14 +215,14 @@ public final class RootMetadata {
   }
 
   private static boolean hasNonDaggerAbstractMethod(TypeElement type) {
-    // TODO(user): Actually this isn't really supported b/28989613
+    // TODO(erichang): Actually this isn't really supported b/28989613
     return ElementFilter.methodsIn(type.getEnclosedElements()).stream()
         .filter(method -> method.getModifiers().contains(ABSTRACT))
         .anyMatch(method -> !Processors.hasDaggerAbstractMethodAnnotation(method));
   }
 
   private static boolean hasOnlyStaticProvides(TypeElement type) {
-    // TODO(user): Check for @Produces too when we have a producers story
+    // TODO(erichang): Check for @Produces too when we have a producers story
     return ElementFilter.methodsIn(type.getEnclosedElements()).stream()
         .filter(method -> Processors.hasAnnotation(method, ClassNames.PROVIDES))
         .allMatch(method -> method.getModifiers().contains(STATIC));

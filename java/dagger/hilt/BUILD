@@ -44,7 +44,7 @@ java_library(
     ],
     exported_plugins = [
         # This is required so that we can fail if @InstallIn is missing.
-        # TODO(user): Consider using a separate processor to validate @EntryPoint.
+        # TODO(bcorso): Consider using a separate processor to validate @EntryPoint.
         "//java/dagger/hilt/processor/internal/aggregateddeps:plugin",
     ],
     deps = [

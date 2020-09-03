@@ -21,8 +21,8 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import java.util.Optional;
 
-// TODO(user): Reduce the visibility of this class and return ClassNames instead.
-// TODO(user): Rename this class so it doesn't conflict with
+// TODO(bcorso): Reduce the visibility of this class and return ClassNames instead.
+// TODO(erichang): Rename this class so it doesn't conflict with
 // dagger.internal.codegen.ComponentDescriptor
 /** Represents a single component in the hierarchy. */
 @AutoValue
