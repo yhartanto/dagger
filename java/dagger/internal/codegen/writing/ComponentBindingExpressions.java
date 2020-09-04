@@ -21,8 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
-import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECKS;
-import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECKS;
+import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
+import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.writing.DelegateBindingExpression.isBindsScopeStrongerThanDependencyScope;
@@ -295,7 +295,7 @@ public final class ComponentBindingExpressions {
     return () ->
         CodeBlock.of(
             "$T.provider($L)",
-            binding.scope().get().isReusable() ? SINGLE_CHECKS : DOUBLE_CHECKS,
+            binding.scope().get().isReusable() ? SINGLE_CHECK : DOUBLE_CHECK,
             unscoped.creationExpression());
   }
 

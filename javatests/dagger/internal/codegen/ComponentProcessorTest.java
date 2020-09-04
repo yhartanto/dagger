@@ -181,7 +181,7 @@ public class ComponentProcessorTest {
                 "package test;",
                 "",
                 "import dagger.Lazy;",
-                "import dagger.internal.DoubleChecks;",
+                "import dagger.internal.DoubleCheck;",
                 IMPORT_GENERATED_ANNOTATION,
                 "import javax.inject.Provider;",
                 "",
@@ -210,10 +210,10 @@ public class ComponentProcessorTest {
                 "  public Lazy<SomeInjectableType> lazySomeInjectableType() {")
             .addLinesIn(
                 DEFAULT_MODE, //
-                "    return DoubleChecks.lazy(SomeInjectableType_Factory.create());")
+                "    return DoubleCheck.lazy(SomeInjectableType_Factory.create());")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "    return DoubleChecks.lazy(someInjectableTypeProvider());")
+                "    return DoubleCheck.lazy(someInjectableTypeProvider());")
             .addLines(
                 "  }",
                 "",
@@ -315,7 +315,7 @@ public class ComponentProcessorTest {
                 "  @SuppressWarnings(\"unchecked\")",
                 "  private void initialize() {",
                 "    this.someInjectableTypeProvider =",
-                "        DoubleChecks.provider(SomeInjectableType_Factory.create());",
+                "        DoubleCheck.provider(SomeInjectableType_Factory.create());",
                 "  }",
                 "")
             .addLines(
@@ -330,7 +330,7 @@ public class ComponentProcessorTest {
                 "        if (local instanceof MemoizedSentinel) {",
                 "          local = new SomeInjectableType();",
                 "          someInjectableType =",
-                "              DoubleChecks.reentrantCheck(someInjectableType, local);",
+                "              DoubleCheck.reentrantCheck(someInjectableType, local);",
                 "        }",
                 "      }",
                 "    }",
@@ -345,10 +345,10 @@ public class ComponentProcessorTest {
                 "  public Lazy<SomeInjectableType> lazySomeInjectableType() {")
             .addLinesIn(
                 DEFAULT_MODE, //
-                "    return DoubleChecks.lazy(someInjectableTypeProvider);")
+                "    return DoubleCheck.lazy(someInjectableTypeProvider);")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "    return DoubleChecks.lazy(someInjectableTypeProvider());")
+                "    return DoubleCheck.lazy(someInjectableTypeProvider());")
             .addLines(
                 "  }",
                 "",
@@ -358,7 +358,7 @@ public class ComponentProcessorTest {
                 FAST_INIT_MODE, //
                 "    Object local = someInjectableTypeProvider;",
                 "    if (local == null) {",
-                "      local = new DoubleCheckSwitchingProvider<>(0);",
+                "      local = new SwitchingProvider<>(0);",
                 "      someInjectableTypeProvider = (Provider<SomeInjectableType>) local;",
                 "    }",
                 "    return (Provider<SomeInjectableType>) local;")
@@ -369,7 +369,13 @@ public class ComponentProcessorTest {
                 "  }")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "  private final class DoubleCheckSwitchingProvider<T> implements DoubleCheck<T> {",
+                "  private final class SwitchingProvider<T> implements Provider<T> {",
+                "    private final int id;",
+                "",
+                "    SwitchingProvider(int id) {",
+                "      this.id = id;",
+                "    }",
+                "",
                 "    @SuppressWarnings(\"unchecked\")",
                 "    @Override",
                 "    public T get() {",

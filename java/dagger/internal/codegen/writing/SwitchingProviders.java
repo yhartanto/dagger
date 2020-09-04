@@ -24,6 +24,7 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.suppressWarnings;
+import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
@@ -32,13 +33,11 @@ import com.google.common.collect.Lists;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.Expression;
-import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.Key;
 import java.util.HashMap;
@@ -55,20 +54,6 @@ import java.util.TreeMap;
 // TODO(ronshapiro): either merge this with InnerSwitchingProviders, or repurpose this for
 // SwitchingProducers
 abstract class SwitchingProviders {
-  protected enum ProviderType {
-    PROVIDER("SwitchingProvider", TypeNames.PROVIDER),
-    SINGLE_CHECK("SingleCheckSwitchingProvider", TypeNames.SINGLE_CHECK),
-    DOUBLE_CHECK("DoubleCheckSwitchingProvider", TypeNames.DOUBLE_CHECK);
-
-    private final String name;
-    private final ClassName superinterface;
-
-    ProviderType(String name, ClassName superinterface) {
-      this.name = name;
-      this.superinterface = superinterface;
-    }
-  }
-
   /**
    * Defines the {@linkplain Expression expressions} for a switch case in a {@code SwitchProvider}
    * for a particular binding.
@@ -111,17 +96,12 @@ abstract class SwitchingProviders {
   private final Map<Key, SwitchingProviderBuilder> switchingProviderBuilders =
       new LinkedHashMap<>();
 
-  private final ProviderType providerType;
   private final ComponentImplementation componentImplementation;
   private final ClassName owningComponent;
   private final DaggerTypes types;
   private final UniqueNameSet switchingProviderNames = new UniqueNameSet();
 
-  SwitchingProviders(
-      ProviderType providerType,
-      ComponentImplementation componentImplementation,
-      DaggerTypes types) {
-    this.providerType = checkNotNull(providerType);
+  SwitchingProviders(ComponentImplementation componentImplementation, DaggerTypes types) {
     this.componentImplementation = checkNotNull(componentImplementation);
     this.types = checkNotNull(types);
     this.owningComponent = checkNotNull(componentImplementation).name();
@@ -141,7 +121,7 @@ abstract class SwitchingProviders {
 
   private SwitchingProviderBuilder getSwitchingProviderBuilder() {
     if (switchingProviderBuilders.size() % MAX_CASES_PER_CLASS == 0) {
-      String name = switchingProviderNames.getUniqueName(providerType.name);
+      String name = switchingProviderNames.getUniqueName("SwitchingProvider");
       SwitchingProviderBuilder switchingProviderBuilder =
           new SwitchingProviderBuilder(owningComponent.nestedClass(name));
       componentImplementation.addTypeSupplier(switchingProviderBuilder::build);
@@ -187,7 +167,7 @@ abstract class SwitchingProviders {
       return createSwitchingProviderType(
           classBuilder(switchingProviderType)
               .addTypeVariable(T)
-              .addSuperinterface(ParameterizedTypeName.get(providerType.superinterface, T))
+              .addSuperinterface(providerOf(T))
               .addMethods(getMethods()));
     }
 

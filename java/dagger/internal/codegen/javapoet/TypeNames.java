@@ -24,7 +24,6 @@ import com.squareup.javapoet.TypeName;
 import dagger.Lazy;
 import dagger.MembersInjector;
 import dagger.internal.DoubleCheck;
-import dagger.internal.DoubleChecks;
 import dagger.internal.Factory;
 import dagger.internal.InjectedFieldSignature;
 import dagger.internal.InstanceFactory;
@@ -34,7 +33,6 @@ import dagger.internal.MembersInjectors;
 import dagger.internal.ProviderOfLazy;
 import dagger.internal.SetFactory;
 import dagger.internal.SingleCheck;
-import dagger.internal.SingleChecks;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
 import dagger.producers.ProducerModule;
@@ -59,7 +57,6 @@ public final class TypeNames {
   public static final ClassName DEPENDENCY_METHOD_PRODUCER =
       ClassName.get(DependencyMethodProducer.class);
   public static final ClassName DOUBLE_CHECK = ClassName.get(DoubleCheck.class);
-  public static final ClassName DOUBLE_CHECKS = ClassName.get(DoubleChecks.class);
   public static final ClassName FACTORY = ClassName.get(Factory.class);
   public static final ClassName FUTURES = ClassName.get(Futures.class);
   public static final ClassName INJECTED_FIELD_SIGNATURE =
@@ -92,7 +89,6 @@ public final class TypeNames {
       ClassName.get(SetOfProducedProducer.class);
   public static final ClassName SET_PRODUCER = ClassName.get(SetProducer.class);
   public static final ClassName SINGLE_CHECK = ClassName.get(SingleCheck.class);
-  public static final ClassName SINGLE_CHECKS = ClassName.get(SingleChecks.class);
 
   /**
    * {@link TypeName#VOID} is lowercase-v {@code void} whereas this represents the class, {@link

@@ -42,7 +42,7 @@ public class DoubleCheckTest {
   @Test
   public void provider_nullPointerException() {
     try {
-      DoubleChecks.provider(null);
+      DoubleCheck.provider(null);
       fail();
     } catch (NullPointerException expected) {
     }
@@ -51,24 +51,24 @@ public class DoubleCheckTest {
   @Test
   public void lazy_nullPointerException() {
     try {
-      DoubleChecks.lazy(null);
+      DoubleCheck.lazy(null);
       fail();
     } catch (NullPointerException expected) {
     }
   }
 
   private static final Provider<Object> DOUBLE_CHECK_OBJECT_PROVIDER =
-      DoubleChecks.provider(Object::new);
+      DoubleCheck.provider(Object::new);
 
   @Test
   public void doubleWrapping_provider() {
-    assertThat(DoubleChecks.provider(DOUBLE_CHECK_OBJECT_PROVIDER))
+    assertThat(DoubleCheck.provider(DOUBLE_CHECK_OBJECT_PROVIDER))
         .isSameInstanceAs(DOUBLE_CHECK_OBJECT_PROVIDER);
   }
 
   @Test
   public void doubleWrapping_lazy() {
-    assertThat(DoubleChecks.lazy(DOUBLE_CHECK_OBJECT_PROVIDER))
+    assertThat(DoubleCheck.lazy(DOUBLE_CHECK_OBJECT_PROVIDER))
         .isSameInstanceAs(DOUBLE_CHECK_OBJECT_PROVIDER);
   }
 
@@ -79,7 +79,7 @@ public class DoubleCheckTest {
 
     final CountDownLatch latch = new CountDownLatch(numThreads);
     LatchedProvider provider = new LatchedProvider(latch);
-    final Lazy<Object> lazy = DoubleChecks.lazy(provider);
+    final Lazy<Object> lazy = DoubleCheck.lazy(provider);
 
     List<Callable<Object>> tasks = Lists.newArrayListWithCapacity(numThreads);
     for (int i = 0; i < numThreads; i++) {
@@ -122,7 +122,7 @@ public class DoubleCheckTest {
   @Test public void reentranceWithoutCondition_throwsStackOverflow() {
     final AtomicReference<Provider<Object>> doubleCheckReference =
         new AtomicReference<>();
-    Provider<Object> doubleCheck = DoubleChecks.provider(() -> doubleCheckReference.get().get());
+    Provider<Object> doubleCheck = DoubleCheck.provider(() -> doubleCheckReference.get().get());
     doubleCheckReference.set(doubleCheck);
     try {
       doubleCheck.get();
@@ -135,7 +135,7 @@ public class DoubleCheckTest {
         new AtomicReference<>();
     final AtomicInteger invocationCount = new AtomicInteger();
     final Object object = new Object();
-    Provider<Object> doubleCheck = DoubleChecks.provider(() -> {
+    Provider<Object> doubleCheck = DoubleCheck.provider(() -> {
         if (invocationCount.incrementAndGet() == 1) {
          doubleCheckReference.get().get();
        }
@@ -149,7 +149,7 @@ public class DoubleCheckTest {
     final AtomicReference<Provider<Object>> doubleCheckReference =
         new AtomicReference<>();
     final AtomicInteger invocationCount = new AtomicInteger();
-    Provider<Object> doubleCheck = DoubleChecks.provider(() -> {
+    Provider<Object> doubleCheck = DoubleCheck.provider(() -> {
        if (invocationCount.incrementAndGet() == 1) {
          doubleCheckReference.get().get();
        }
@@ -165,6 +165,6 @@ public class DoubleCheckTest {
   @Test
   public void instanceFactoryAsLazyDoesNotWrap() {
     Factory<Object> factory = InstanceFactory.create(new Object());
-    assertThat(DoubleChecks.lazy(factory)).isSameInstanceAs(factory);
+    assertThat(DoubleCheck.lazy(factory)).isSameInstanceAs(factory);
   }
 }

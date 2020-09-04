@@ -31,13 +31,13 @@ import org.junit.runners.JUnit4;
 public class SingleCheckTest {
   @Test(expected = NullPointerException.class)
   public void create_nullPointerException() {
-    SingleChecks.provider(null);
+    SingleCheck.provider(null);
   }
 
   @Test
   public void get() {
     AtomicInteger integer = new AtomicInteger();
-    Provider<Integer> provider = SingleChecks.provider(integer::getAndIncrement);
+    Provider<Integer> provider = SingleCheck.provider(integer::getAndIncrement);
     assertThat(provider.get()).isEqualTo(0);
     assertThat(provider.get()).isEqualTo(0);
     assertThat(provider.get()).isEqualTo(0);

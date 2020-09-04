@@ -39,7 +39,7 @@ public final class ProviderOfLazy<T> implements Provider<Lazy<T>> {
    */
   @Override
   public Lazy<T> get() {
-    return DoubleChecks.lazy(provider);
+    return DoubleCheck.lazy(provider);
   }
 
   /**
