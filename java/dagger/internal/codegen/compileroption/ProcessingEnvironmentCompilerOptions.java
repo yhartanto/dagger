@@ -30,7 +30,6 @@ import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompil
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.FORMAT_GENERATED_SOURCE;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.IGNORE_PRIVATE_AND_STATIC_INJECTION_FOR_COMPONENT;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.PLUGINS_VISIT_FULL_BINDING_GRAPHS;
-import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.STRICT_MULTIBINDING_VALIDATION;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.VALIDATE_TRANSITIVE_COMPONENT_DEPENDENCIES;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.WARN_IF_INJECTION_FACTORY_NOT_GENERATED_UPSTREAM;
 import static dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions.Feature.WRITE_PRODUCER_NAME_IN_TOKEN;
@@ -176,11 +175,6 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
-  public boolean strictMultibindingValidation() {
-    return isEnabled(STRICT_MULTIBINDING_VALIDATION);
-  }
-
-  @Override
   public int keysPerComponentShard(TypeElement component) {
     if (processingEnvironment.getOptions().containsKey(KEYS_PER_COMPONENT_SHARD)) {
       Preconditions.checkArgument(
@@ -304,8 +298,6 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
     FLOATING_BINDS_METHODS,
 
     EXPERIMENTAL_DAGGER_ERROR_MESSAGES,
-
-    STRICT_MULTIBINDING_VALIDATION,
 
     VALIDATE_TRANSITIVE_COMPONENT_DEPENDENCIES(ENABLED)
     ;
