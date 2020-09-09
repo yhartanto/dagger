@@ -46,8 +46,10 @@ import com.google.common.collect.Sets;
 import dagger.MembersInjector;
 import dagger.Reusable;
 import dagger.internal.codegen.base.ClearableCache;
+import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.model.DependencyRequest;
 import dagger.model.Key;
@@ -84,6 +86,7 @@ public final class BindingGraphFactory implements ClearableCache {
   private final ModuleDescriptor.Factory moduleDescriptorFactory;
   private final BindingGraphConverter bindingGraphConverter;
   private final Map<Key, ImmutableSet<Key>> keysMatchingRequestCache = new HashMap<>();
+  private final CompilerOptions compilerOptions;
 
   @Inject
   BindingGraphFactory(
@@ -92,13 +95,15 @@ public final class BindingGraphFactory implements ClearableCache {
       KeyFactory keyFactory,
       BindingFactory bindingFactory,
       ModuleDescriptor.Factory moduleDescriptorFactory,
-      BindingGraphConverter bindingGraphConverter) {
+      BindingGraphConverter bindingGraphConverter,
+      CompilerOptions compilerOptions) {
     this.elements = elements;
     this.injectBindingRegistry = injectBindingRegistry;
     this.keyFactory = keyFactory;
     this.bindingFactory = bindingFactory;
     this.moduleDescriptorFactory = moduleDescriptorFactory;
     this.bindingGraphConverter = bindingGraphConverter;
+    this.compilerOptions = compilerOptions;
   }
 
   /**
@@ -702,12 +707,25 @@ public final class BindingGraphFactory implements ClearableCache {
 
     /** Returns true if {@code binding} was installed in a module in this resolver's component. */
     private boolean resolverContainsDelegateDeclarationForBinding(ContributionBinding binding) {
-      return binding.kind().equals(DELEGATE)
-          && delegateDeclarations.get(binding.key()).stream()
-              .anyMatch(
-                  declaration ->
-                      declaration.contributingModule().equals(binding.contributingModule())
-                          && declaration.bindingElement().equals(binding.bindingElement()));
+      if (!binding.kind().equals(DELEGATE)) {
+        return false;
+      }
+
+      // Map multibinding key values are wrapped with a framework type. This needs to be undone
+      // to look it up in the delegate declarations map.
+      // TODO(erichang): See if we can standardize the way map keys are used in these data
+      // structures, either always wrapped or unwrapped to be consistent and less errorprone.
+      Key bindingKey = binding.key();
+      if (compilerOptions.strictMultibindingValidation()
+          && binding.contributionType().equals(ContributionType.MAP)) {
+        bindingKey = keyFactory.unwrapMapValueType(bindingKey);
+      }
+
+      return delegateDeclarations.get(bindingKey).stream()
+          .anyMatch(
+              declaration ->
+                  declaration.contributingModule().equals(binding.contributingModule())
+                  && declaration.bindingElement().equals(binding.bindingElement()));
     }
 
     /** Returns the resolver lineage from parent to child. */

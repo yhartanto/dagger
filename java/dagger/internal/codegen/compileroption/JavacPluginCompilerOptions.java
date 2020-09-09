@@ -113,4 +113,9 @@ public final class JavacPluginCompilerOptions extends CompilerOptions {
   public boolean experimentalDaggerErrorMessages() {
     return false;
   }
+
+  @Override
+  public boolean strictMultibindingValidation() {
+    return false;
+  }
 }
