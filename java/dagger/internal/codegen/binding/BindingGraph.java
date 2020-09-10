@@ -16,7 +16,9 @@
 
 package dagger.internal.codegen.binding;
 
+import static com.google.common.graph.Graphs.inducedSubgraph;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -24,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.graph.Graphs;
 import com.google.common.graph.ImmutableNetwork;
 import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.Node;
@@ -125,5 +128,45 @@ public abstract class BindingGraph {
                 subgraph,
                 topLevelBindingGraph()))
         .collect(toImmutableList());
+  }
+
+  @Memoized
+  public ImmutableSet<BindingNode> bindingNodes() {
+    return network().nodes().stream()
+        .filter(node -> node instanceof BindingNode)
+        .map(node -> (BindingNode) node)
+        .collect(toImmutableSet());
+  }
+
+  /**
+   * Returns a network that contains all of the nodes in this component and ancestor components
+   * that are reachable from this component node.
+   *
+   * <p>Note that this is different than the {@link TopLevelBindingGraph#network()} which contains
+   * nodes for all components in the graph.
+   */
+  @Memoized
+  public ImmutableNetwork<Node, Edge> network() {
+    return ImmutableNetwork.copyOf(
+        inducedSubgraph(
+            topLevelBindingGraph().network(),
+            Graphs.reachableNodes(
+                    topLevelBindingGraph().network().asGraph(),
+                    topLevelBindingGraph().componentNode(componentPath()).get()).stream()
+                .filter(node -> isSubpath(componentPath(), node.componentPath()))
+                .collect(toImmutableSet())));
+  }
+
+  // TODO(bcorso): Move this to ComponentPath
+  private static boolean isSubpath(ComponentPath path, ComponentPath subpath) {
+    if (path.components().size() < subpath.components().size()) {
+      return false;
+    }
+    for (int i = 0; i < subpath.components().size(); i++) {
+      if (!path.components().get(i).equals(subpath.components().get(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 }
