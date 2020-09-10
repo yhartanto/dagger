@@ -65,11 +65,11 @@ public abstract class BindingNode implements dagger.model.Binding {
 
   public abstract Binding delegate();
 
-  abstract ImmutableSet<MultibindingDeclaration> multibindingDeclarations();
+  public abstract ImmutableSet<MultibindingDeclaration> multibindingDeclarations();
 
-  abstract ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations();
+  public abstract ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations();
 
-  abstract ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations();
+  public abstract ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations();
 
   /**
    * The {@link Element}s (other than the binding's {@link #bindingElement()}) that are associated

@@ -19,7 +19,6 @@
 // the regular kythe/java tree.
 package dagger.internal.codegen.kythe;
 
-import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 
 import com.google.auto.service.AutoService;
@@ -37,17 +36,17 @@ import dagger.BindsInstance;
 import dagger.Component;
 import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingDeclaration;
-import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.BindingGraphFactory;
-import dagger.internal.codegen.binding.BindingRequest;
-import dagger.internal.codegen.binding.ComponentDescriptor;
+import dagger.internal.codegen.binding.BindingNode;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
 import dagger.internal.codegen.binding.ModuleDescriptor;
-import dagger.internal.codegen.binding.ResolvedBindings;
 import dagger.internal.codegen.javac.JavacPluginModule;
 import dagger.internal.codegen.validation.InjectBindingRegistryModule;
+import dagger.model.BindingGraph;
+import dagger.model.BindingGraph.DependencyEdge;
+import dagger.model.BindingGraph.Edge;
+import dagger.model.BindingGraph.Node;
 import dagger.model.DependencyRequest;
-import dagger.model.Key;
 import dagger.producers.ProductionComponent;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -78,28 +77,19 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     return super.visitClassDef(tree, p);
   }
 
-  private void addNodesForGraph(BindingGraph graph) {
-    addDependencyEdges(graph);
+  private void addNodesForGraph(dagger.internal.codegen.binding.BindingGraph graph) {
+    addDependencyEdges(graph.topLevelBindingGraph());
+
+    // TODO(bcorso): Convert these to use the new BindingGraph
     addModuleEdges(graph);
     addChildComponentEdges(graph);
-
-    graph.subgraphs().forEach(this::addNodesForGraph);
   }
 
   private void addDependencyEdges(BindingGraph graph) {
-    for (ResolvedBindings resolvedBinding : graph.resolvedBindings()) {
-      for (Binding binding : resolvedBinding.bindings()) {
-        for (DependencyRequest dependency : binding.explicitDependencies()) {
-          addEdgesForDependencyRequest(dependency, dependency.key(), graph);
-        }
-      }
-    }
-
-    for (ComponentDescriptor.ComponentMethodDescriptor componentMethod :
-        graph.componentDescriptor().componentMethods()) {
-      componentMethod
-          .dependencyRequest()
-          .ifPresent(request -> addEdgesForDependencyRequest(request, request.key(), graph));
+    for (DependencyEdge dependencyEdge : graph.dependencyEdges()) {
+      DependencyRequest dependency = dependencyEdge.dependencyRequest();
+      Node node = graph.network().incidentNodes(dependencyEdge).target();
+      addEdgesForDependencyRequest(dependency, (BindingNode) node, graph);
     }
   }
 
@@ -113,25 +103,25 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
    * this method, with each dependency's key as the {@code targetKey}.
    */
   private void addEdgesForDependencyRequest(
-      DependencyRequest dependency, Key targetKey, BindingGraph graph) {
+      DependencyRequest dependency, BindingNode bindingNode, BindingGraph graph) {
     if (!dependency.requestElement().isPresent()) {
       return;
     }
-    BindingRequest request = bindingRequest(targetKey, dependency.kind());
-    ResolvedBindings resolvedBindings = graph.resolvedBindings(request);
-    for (Binding binding : resolvedBindings.bindings()) {
-      if (binding.bindingElement().isPresent()) {
-        addDependencyEdge(dependency, binding);
-      } else {
-        for (DependencyRequest subsequentDependency : binding.explicitDependencies()) {
-          addEdgesForDependencyRequest(dependency, subsequentDependency.key(), graph);
+    Binding binding = bindingNode.delegate();
+    if (binding.bindingElement().isPresent()) {
+      addDependencyEdge(dependency, binding);
+    } else {
+      for (Edge outEdge : graph.network().outEdges(bindingNode)) {
+        if (outEdge instanceof DependencyEdge) {
+          Node outNode = graph.network().incidentNodes(outEdge).target();
+          addEdgesForDependencyRequest(dependency, (BindingNode) outNode, graph);
         }
       }
     }
     for (BindingDeclaration bindingDeclaration :
         Iterables.concat(
-            resolvedBindings.multibindingDeclarations(),
-            resolvedBindings.optionalBindingDeclarations())) {
+            bindingNode.multibindingDeclarations(),
+            bindingNode.optionalBindingDeclarations())) {
       addDependencyEdge(dependency, bindingDeclaration);
     }
   }
@@ -146,21 +136,23 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     // TODO(ronshapiro): emit facts about the component that satisfies the edge
   }
 
-  private void addModuleEdges(BindingGraph graph) {
+  private void addModuleEdges(dagger.internal.codegen.binding.BindingGraph graph) {
     Optional<VName> componentNode = jvmNode(graph.componentTypeElement(), "component");
     for (ModuleDescriptor module : graph.componentDescriptor().modules()) {
       Optional<VName> moduleNode = jvmNode(module.moduleElement(), "module");
       emitEdge(componentNode, "/inject/installsmodule", moduleNode);
     }
+    graph.subgraphs().forEach(this::addModuleEdges);
   }
 
-  private void addChildComponentEdges(BindingGraph graph) {
+  private void addChildComponentEdges(dagger.internal.codegen.binding.BindingGraph graph) {
     Optional<VName> componentNode = jvmNode(graph.componentTypeElement(), "component");
-    for (BindingGraph subgraph : graph.subgraphs()) {
+    for (dagger.internal.codegen.binding.BindingGraph subgraph : graph.subgraphs()) {
       Optional<VName> subcomponentNode =
           jvmNode(subgraph.componentTypeElement(), "child component");
       emitEdge(componentNode, "/inject/childcomponent", subcomponentNode);
     }
+    graph.subgraphs().forEach(this::addChildComponentEdges);
   }
 
   private Optional<VName> jvmNode(Element element, String name) {
