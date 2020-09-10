@@ -67,7 +67,7 @@ class HiltGradlePluginTest {
     gradleTransformRunner.addDependencies(
       "implementation 'androidx.appcompat:appcompat:1.1.0'",
       "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      "annotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'"
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
     )
     gradleTransformRunner.addActivities(
       "<activity android:name=\".MainActivity\"/>"
@@ -105,7 +105,7 @@ class HiltGradlePluginTest {
     gradleTransformRunner.addDependencies(
       "implementation 'androidx.appcompat:appcompat:1.1.0'",
       "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      "annotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'"
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
     )
 
     gradleTransformRunner.addSrc(
@@ -141,7 +141,7 @@ class HiltGradlePluginTest {
     gradleTransformRunner.addDependencies(
       "implementation 'androidx.appcompat:appcompat:1.1.0'",
       "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      "annotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'"
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
     )
 
     gradleTransformRunner.addSrc(
@@ -177,7 +177,7 @@ class HiltGradlePluginTest {
     gradleTransformRunner.addDependencies(
       "implementation 'androidx.appcompat:appcompat:1.1.0'",
       "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      "annotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'"
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
     )
 
     gradleTransformRunner.addSrc(
@@ -232,7 +232,7 @@ class HiltGradlePluginTest {
     val result = gradleTransformRunner.buildAndFail()
     assertThat(result.getOutput()).contains(
       "The Hilt Android Gradle plugin is applied but no " +
-        "com.google.dagger:hilt-android-compiler dependency was found."
+        "com.google.dagger:hilt-compiler dependency was found."
     )
   }
 
@@ -242,7 +242,7 @@ class HiltGradlePluginTest {
     gradleTransformRunner.addDependencies(
       "implementation 'androidx.appcompat:appcompat:1.1.0'",
       "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      "annotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'"
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
     )
 
     val srcFile = gradleTransformRunner.addSrc(
@@ -305,7 +305,7 @@ class HiltGradlePluginTest {
     gradleTransformRunner.addDependencies(
       "implementation 'androidx.appcompat:appcompat:1.1.0'",
       "implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'",
-      "annotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'"
+      "annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'"
     )
 
     gradleTransformRunner.addSrcPackage("ui/")

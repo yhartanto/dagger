@@ -92,15 +92,13 @@ class HiltGradlePlugin : Plugin<Project> {
     val dependencies = project.configurations.flatMap { configuration ->
       configuration.dependencies.map { dependency -> dependency.group to dependency.name }
     }
-    // TODO(user): Consider also validating Dagger compiler dependency.
-    listOf(
-      LIBRARY_GROUP to "hilt-android",
-      LIBRARY_GROUP to "hilt-android-compiler"
-    ).filterNot { dependencies.contains(it) }.forEach { (groupId, artifactId) ->
-      error(
-        "The Hilt Android Gradle plugin is applied but no $groupId:$artifactId dependency " +
-          "was found."
-      )
+    if (!dependencies.contains(LIBRARY_GROUP to "hilt-android")) {
+      error(missingDepError("$LIBRARY_GROUP:hilt-android"))
+    }
+    if (!dependencies.contains(LIBRARY_GROUP to "hilt-android-compiler") &&
+      !dependencies.contains(LIBRARY_GROUP to "hilt-compiler")
+    ) {
+      error(missingDepError("$LIBRARY_GROUP:hilt-compiler"))
     }
   }
 
@@ -110,5 +108,8 @@ class HiltGradlePlugin : Plugin<Project> {
       "dagger.fastInit" to "enabled",
       "dagger.hilt.android.internal.disableAndroidSuperclassValidation" to "true"
     )
+    val missingDepError: (String) -> String = { depCoordinate ->
+      "The Hilt Android Gradle plugin is applied but no $depCoordinate dependency was found."
+    }
   }
 }

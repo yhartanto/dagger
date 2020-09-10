@@ -137,7 +137,7 @@ class IncrementalProcessorTest {
         implementation 'com.google.dagger:dagger:LOCAL-SNAPSHOT'
         annotationProcessor 'com.google.dagger:dagger-compiler:LOCAL-SNAPSHOT'
         implementation 'com.google.dagger:hilt-android:LOCAL-SNAPSHOT'
-        annotationProcessor 'com.google.dagger:hilt-android-compiler:LOCAL-SNAPSHOT'
+        annotationProcessor 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
       }
       """.trimIndent()
     )
