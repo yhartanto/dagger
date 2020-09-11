@@ -548,7 +548,7 @@ public final class BindingGraphFactory implements ClearableCache {
               bindingFactory.syntheticOptionalBinding(
                   key,
                   getRequestKind(OptionalType.from(key).valueType()),
-                  lookUpBindings(keyFactory.unwrapOptional(key).get())));
+                  lookUpBindings(keyFactory.unwrapOptional(key).get()).bindings()));
     }
 
     private ImmutableSet<ContributionBinding> createDelegateBindings(

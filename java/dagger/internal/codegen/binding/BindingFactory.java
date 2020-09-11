@@ -47,6 +47,7 @@ import static javax.lang.model.element.ElementKind.METHOD;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
@@ -446,27 +447,29 @@ public final class BindingFactory {
    *     the underlying (non-optional) key
    */
   ContributionBinding syntheticOptionalBinding(
-      Key key, RequestKind requestKind, ResolvedBindings underlyingKeyBindings) {
-    ContributionBinding.Builder<?, ?> builder =
-        syntheticOptionalBindingBuilder(requestKind, underlyingKeyBindings)
-            .contributionType(ContributionType.UNIQUE)
-            .key(key)
-            .kind(OPTIONAL);
-    if (!underlyingKeyBindings.isEmpty()) {
-      builder.dependencies(
-          dependencyRequestFactory.forSyntheticPresentOptionalBinding(key, requestKind));
+      Key key,
+      RequestKind requestKind,
+      ImmutableCollection<? extends Binding> underlyingKeyBindings) {
+    if (underlyingKeyBindings.isEmpty()) {
+      return ProvisionBinding.builder()
+          .contributionType(ContributionType.UNIQUE)
+          .key(key)
+          .kind(OPTIONAL)
+          .build();
     }
-    return builder.build();
-  }
 
-  private ContributionBinding.Builder<?, ?> syntheticOptionalBindingBuilder(
-      RequestKind requestKind, ResolvedBindings underlyingKeyBindings) {
-    return !underlyingKeyBindings.isEmpty()
-            && (underlyingKeyBindings.bindingTypes().contains(BindingType.PRODUCTION)
-                || requestKind.equals(RequestKind.PRODUCER) // handles producerFromProvider cases
-                || requestKind.equals(RequestKind.PRODUCED)) // handles producerFromProvider cases
-        ? ProductionBinding.builder()
-        : ProvisionBinding.builder();
+    boolean requiresProduction =
+        underlyingKeyBindings.stream()
+                .anyMatch(binding -> binding.bindingType() == BindingType.PRODUCTION)
+            || requestKind.equals(RequestKind.PRODUCER) // handles producerFromProvider cases
+            || requestKind.equals(RequestKind.PRODUCED); // handles producerFromProvider cases
+
+    return (requiresProduction ? ProductionBinding.builder() : ProvisionBinding.builder())
+        .contributionType(ContributionType.UNIQUE)
+        .key(key)
+        .kind(OPTIONAL)
+        .dependencies(dependencyRequestFactory.forSyntheticPresentOptionalBinding(key, requestKind))
+        .build();
   }
 
   /** Returns a {@link dagger.model.BindingKind#MEMBERS_INJECTOR} binding. */
@@ -505,8 +508,7 @@ public final class BindingFactory {
     ImmutableSortedSet<InjectionSite> injectionSites =
         injectionSiteFactory.getInjectionSites(declaredType);
     ImmutableSet<DependencyRequest> dependencies =
-        injectionSites
-            .stream()
+        injectionSites.stream()
             .flatMap(injectionSite -> injectionSite.dependencies().stream())
             .collect(toImmutableSet());
 
