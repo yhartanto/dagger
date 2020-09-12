@@ -59,7 +59,6 @@ import dagger.internal.codegen.binding.ComponentCreatorKind;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.FrameworkType;
-import dagger.internal.codegen.binding.MethodSignature;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
