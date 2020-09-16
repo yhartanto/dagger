@@ -17,6 +17,8 @@
 package dagger.internal.codegen.binding;
 
 import static com.google.common.graph.Graphs.inducedSubgraph;
+import static dagger.internal.codegen.extension.DaggerCollectors.onlyElement;
+import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
@@ -79,20 +81,20 @@ public abstract class BindingGraph {
     return legacyBindingGraph().componentDescriptor();
   }
 
-  public final ImmutableMap<Key, ResolvedBindings> contributionBindings() {
-    return legacyBindingGraph().contributionBindings();
+  public final ContributionBinding contributionBinding(Key key) {
+    return bindingNodes(key).stream()
+        .map(BindingNode::delegate)
+        .filter(binding -> binding instanceof ContributionBinding)
+        .map(binding -> (ContributionBinding) binding)
+        .collect(onlyElement());
   }
 
-  public final ImmutableMap<Key, ResolvedBindings> membersInjectionBindings() {
-    return legacyBindingGraph().membersInjectionBindings();
-  }
-
-  public final ResolvedBindings resolvedBindings(BindingRequest request) {
-    return legacyBindingGraph().resolvedBindings(request);
-  }
-
-  public final Iterable<ResolvedBindings> resolvedBindings() {
-    return legacyBindingGraph().resolvedBindings();
+  public final Optional<MembersInjectionBinding> membersInjectionBinding(Key key) {
+    return bindingNodes(key).stream()
+        .map(BindingNode::delegate)
+        .filter(binding -> binding instanceof MembersInjectionBinding)
+        .map(binding -> (MembersInjectionBinding) binding)
+        .collect(toOptional());
   }
 
   public final TypeElement componentTypeElement() {
@@ -130,12 +132,23 @@ public abstract class BindingGraph {
         .collect(toImmutableList());
   }
 
+  public ImmutableSet<BindingNode> bindingNodes(Key key) {
+    return bindingNodesByKey().get(key);
+  }
+
   @Memoized
   public ImmutableSet<BindingNode> bindingNodes() {
-    return network().nodes().stream()
+    return ImmutableSet.copyOf(bindingNodesByKey().values());
+  }
+
+  @Memoized
+  ImmutableSetMultimap<Key, BindingNode> bindingNodesByKey() {
+    ImmutableSetMultimap.Builder<Key, BindingNode> builder = ImmutableSetMultimap.builder();
+    network().nodes().stream()
         .filter(node -> node instanceof BindingNode)
         .map(node -> (BindingNode) node)
-        .collect(toImmutableSet());
+        .forEach(bindingNode -> builder.put(bindingNode.key(), bindingNode));
+    return builder.build();
   }
 
   /**
