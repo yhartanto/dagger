@@ -34,6 +34,7 @@ import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.ProvisionBinding;
+import dagger.internal.codegen.binding.ResolvedBindings;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
@@ -79,10 +80,9 @@ final class MembersInjectionMethods {
   }
 
   private MethodSpec membersInjectionMethod(Key key) {
-    Binding binding =
-        graph.membersInjectionBinding(key).isPresent()
-            ? graph.membersInjectionBinding(key).get()
-            : graph.contributionBinding(key);
+    ResolvedBindings resolvedBindings =
+        graph.membersInjectionBindings().getOrDefault(key, graph.contributionBindings().get(key));
+    Binding binding = resolvedBindings.binding();
     TypeMirror keyType = binding.key().type();
     TypeMirror membersInjectedType =
         isTypeAccessibleFrom(keyType, componentImplementation.name().packageName())

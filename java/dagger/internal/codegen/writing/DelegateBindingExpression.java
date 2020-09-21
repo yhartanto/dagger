@@ -64,7 +64,10 @@ final class DelegateBindingExpression extends BindingExpression {
       ContributionBinding bindsBinding, BindingGraph graph) {
     checkArgument(bindsBinding.kind().equals(DELEGATE));
     Binding dependencyBinding =
-        graph.contributionBinding(getOnlyElement(bindsBinding.dependencies()).key());
+        graph
+            .contributionBindings()
+            .get(getOnlyElement(bindsBinding.dependencies()).key())
+            .binding();
     ScopeKind bindsScope = ScopeKind.get(bindsBinding);
     ScopeKind dependencyScope = ScopeKind.get(dependencyBinding);
     return bindsScope.isStrongerScopeThan(dependencyScope);

@@ -63,7 +63,7 @@ final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpr
 
     for (DependencyRequest dependency : binding.dependencies()) {
       ContributionType contributionType =
-          graph.contributionBinding(dependency.key()).contributionType();
+          graph.contributionBindings().get(dependency.key()).contributionType();
       String methodNamePrefix;
       switch (contributionType) {
         case SET:
