@@ -471,5 +471,18 @@ final class Generators {
         .build();
   }
 
+  /**
+   * Adds the SupressWarnings to supress a warning in the generated code.
+   *
+   * @param keys the string keys of the warnings to suppress, e.g. 'deprecation', 'unchecked', etc.
+   */
+  public static void addSuppressAnnotation(TypeSpec.Builder builder, String... keys) {
+    AnnotationSpec.Builder annotationBuilder = AnnotationSpec.builder(SuppressWarnings.class);
+    for (String key : keys) {
+      annotationBuilder.addMember("value", "$S", key);
+    }
+    builder.addAnnotation(annotationBuilder.build());
+  }
+
   private Generators() {}
 }
