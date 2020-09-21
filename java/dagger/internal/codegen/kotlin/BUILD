@@ -25,8 +25,7 @@ java_library(
     plugins = ["//java/dagger/internal/codegen/bootstrap"],
     tags = ["maven:merged"],
     deps = [
-        "//java/dagger:core",
-        "//java/dagger/internal/codegen/base:shared",
+        "//java/dagger/internal/codegen/base",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/guava:base",
