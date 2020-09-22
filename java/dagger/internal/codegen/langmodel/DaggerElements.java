@@ -291,7 +291,9 @@ public final class DaggerElements implements Elements {
 
         @Override
         public String visitError(ErrorType errorType, Void v) {
-          return visitUnknown(errorType, null);
+          // For descriptor generating purposes we don't need a fully modeled type since we are
+          // only interested in obtaining the class name in its "internal form".
+          return visitDeclared(errorType, v);
         }
 
         @Override
