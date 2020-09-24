@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.extension.DaggerCollectors;
 import java.lang.annotation.Annotation;
-import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -113,15 +112,6 @@ public final class KotlinMetadataUtil {
    */
   public boolean isVisibilityPrivate(TypeElement typeElement) {
     return hasMetadata(typeElement) && metadataFactory.create(typeElement).isPrivate();
-  }
-
-  public Optional<ExecutableElement> getPropertyGetter(VariableElement fieldElement) {
-    return metadataFactory.create(fieldElement).getPropertyGetter(fieldElement);
-  }
-
-  public boolean containsConstructorWithDefaultParam(TypeElement typeElement) {
-    return hasMetadata(typeElement)
-        && metadataFactory.create(typeElement).containsConstructorWithDefaultParam();
   }
 
   /**

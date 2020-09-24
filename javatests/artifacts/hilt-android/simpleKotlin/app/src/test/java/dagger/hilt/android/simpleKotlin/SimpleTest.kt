@@ -44,7 +44,7 @@ import org.robolectric.annotation.Config
 class SimpleTest {
   @get:Rule val rule = HiltAndroidRule(this)
 
-  @BindValue val bindStr = "STRING_BINDING"
+  @BindValue @JvmField val bindStr = "STRING_BINDING"
 
   @Inject @JvmField var str: String? = null
 

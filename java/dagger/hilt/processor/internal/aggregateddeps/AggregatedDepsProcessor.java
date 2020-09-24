@@ -37,10 +37,9 @@ import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Components;
-import dagger.hilt.processor.internal.KotlinMetadataUtils;
+import dagger.hilt.processor.internal.KotlinMetadata;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -291,8 +290,10 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
   }
 
   private static boolean isKotlinObject(TypeElement type) {
-    KotlinMetadataUtil metadataUtil = KotlinMetadataUtils.getMetadataUtil();
-    return metadataUtil.isObjectClass(type) || metadataUtil.isCompanionObjectClass(type);
+    Optional<KotlinMetadata> kotlinMetadata = KotlinMetadata.of(type);
+    return kotlinMetadata
+        .map(metadata -> metadata.isObjectClass() || metadata.isCompanionObjectClass())
+        .orElse(false);
   }
 
   private static boolean hasOnlyStaticProvides(TypeElement module) {
