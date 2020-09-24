@@ -18,7 +18,6 @@ package(default_visibility = ["//:src"])
 
 java_library(
     name = "android_compilers",
-    testonly = 1,
     srcs = ["AndroidCompilers.java"],
     deps = [
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",

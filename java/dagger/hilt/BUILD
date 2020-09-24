@@ -31,8 +31,8 @@ java_library(
         "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
     deps = [
+        ":generates_root_input",
         ":package_info",
-        "//java/dagger/hilt:generates_root_input",
     ],
 )
 
@@ -48,8 +48,8 @@ java_library(
         "//java/dagger/hilt/processor/internal/aggregateddeps:plugin",
     ],
     deps = [
+        ":generates_root_input",
         ":package_info",
-        "//java/dagger/hilt:generates_root_input",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_component",
         "@google_bazel_common//third_party/java/jsr305_annotations",
@@ -86,8 +86,8 @@ java_library(
         "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
     deps = [
+        ":generates_root_input",
         ":package_info",
-        "//java/dagger/hilt:generates_root_input",
         "//java/dagger/hilt/internal/definecomponent",
     ],
 )
@@ -173,12 +173,12 @@ java_library(
     name = "artifact-core-lib",
     tags = ["maven_coordinates=com.google.dagger:hilt-core:" + POM_VERSION_ALPHA],
     exports = [
+        ":define_component",
+        ":entry_point",
+        ":generates_root_input",
+        ":install_in",
         ":package_info",
         "//java/dagger:core",
-        "//java/dagger/hilt:define_component",
-        "//java/dagger/hilt:entry_point",
-        "//java/dagger/hilt:generates_root_input",
-        "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/components",
         "//java/dagger/hilt/migration:alias_of",
         "//java/dagger/hilt/migration:disable_install_in_check",

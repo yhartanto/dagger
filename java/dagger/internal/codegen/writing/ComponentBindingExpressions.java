@@ -268,15 +268,15 @@ public final class ComponentBindingExpressions {
     // TODO(bcorso): Consider merging the static factory creation logic into CreationExpressions?
     Optional<MemberSelect> staticMethod =
         useStaticFactoryCreation(binding) ? staticFactoryCreation(binding) : Optional.empty();
-    FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
-        binding.scope().isPresent()
-            ? scope(binding, frameworkInstanceCreationExpression(binding))
-            : frameworkInstanceCreationExpression(binding);
     FrameworkInstanceSupplier frameworkInstanceSupplier =
         staticMethod.isPresent()
             ? staticMethod::get
             : new FrameworkFieldInitializer(
-                componentImplementation, binding, frameworkInstanceCreationExpression);
+                  componentImplementation,
+                  binding,
+                  binding.scope().isPresent()
+                      ? scope(binding, frameworkInstanceCreationExpression(binding))
+                      : frameworkInstanceCreationExpression(binding));
 
     switch (binding.bindingType()) {
       case PROVISION:

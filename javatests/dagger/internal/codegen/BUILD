@@ -35,7 +35,6 @@ kt_jvm_library(
 # TODO(bcorso): Move this into a subpackage.
 java_library(
     name = "compilers",
-    testonly = 1,
     srcs = [
         "CompilerMode.java",
         "Compilers.java",
