@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.binding;
 
-import static com.google.common.graph.Graphs.inducedSubgraph;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
@@ -32,6 +31,8 @@ import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.Node;
 import dagger.model.ComponentPath;
 import dagger.model.Key;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -59,10 +60,57 @@ public abstract class BindingGraph {
       ComponentPath componentPath,
       LegacyBindingGraph legacyBindingGraph,
       TopLevelBindingGraph topLevelBindingGraph) {
-    return new AutoValue_BindingGraph(componentPath, legacyBindingGraph, topLevelBindingGraph);
+    ImmutableSet<BindingNode> reachableBindingNodes =
+        Graphs.reachableNodes(
+                topLevelBindingGraph.network().asGraph(),
+                topLevelBindingGraph.componentNode(componentPath).get()).stream()
+            .filter(node -> isSubpath(componentPath, node.componentPath()))
+            .filter(node -> node instanceof BindingNode)
+            .map(node -> (BindingNode) node)
+            .collect(toImmutableSet());
+
+    // Construct the maps of the ContributionBindings and MembersInjectionBindings.
+    Map<Key, BindingNode> contributionBindings = new HashMap<>();
+    Map<Key, BindingNode> membersInjectionBindings = new HashMap<>();
+    for (BindingNode bindingNode : reachableBindingNodes) {
+      Map<Key, BindingNode> bindingsMap;
+      if (bindingNode.delegate() instanceof ContributionBinding) {
+        bindingsMap = contributionBindings;
+      } else if (bindingNode.delegate() instanceof MembersInjectionBinding) {
+        bindingsMap = membersInjectionBindings;
+      } else {
+        throw new AssertionError("Unexpected binding node type: " + bindingNode.delegate());
+      }
+
+      // TODO(bcorso): Mapping binding nodes by key is flawed since bindings that depend on local
+      // multibindings can have multiple nodes (one in each component). In this case, we choose the
+      // node in the child-most component since this is likely the node that users of this
+      // BindingGraph will want (and to remain consisted with LegacyBindingGraph). However, ideally
+      // we would avoid this ambiguity by getting dependencies directly from the top-level network.
+      // In particular, rather than using a Binding's list of DependencyRequests (which only
+      // contains the key) we would use the top-level network to find the DependencyEdges for a
+      // particular BindingNode.
+      Key key = bindingNode.key();
+      if (!bindingsMap.containsKey(key)
+          // Always choose the child-most binding node.
+          || bindingNode.componentPath().components().size()
+              > bindingsMap.get(key).componentPath().components().size()) {
+        bindingsMap.put(key, bindingNode);
+      }
+    }
+
+    BindingGraph bindingGraph =
+        new AutoValue_BindingGraph(componentPath, legacyBindingGraph, topLevelBindingGraph);
+    bindingGraph.contributionBindings = ImmutableMap.copyOf(contributionBindings);
+    bindingGraph.membersInjectionBindings = ImmutableMap.copyOf(membersInjectionBindings);
+
+    return bindingGraph;
   }
 
   BindingGraph() {}
+
+  private ImmutableMap<Key, BindingNode> contributionBindings;
+  private ImmutableMap<Key, BindingNode> membersInjectionBindings;
 
   public abstract ComponentPath componentPath();
 
@@ -79,20 +127,14 @@ public abstract class BindingGraph {
     return legacyBindingGraph().componentDescriptor();
   }
 
-  public final ImmutableMap<Key, ResolvedBindings> contributionBindings() {
-    return legacyBindingGraph().contributionBindings();
+  public final ContributionBinding contributionBinding(Key key) {
+    return (ContributionBinding) contributionBindings.get(key).delegate();
   }
 
-  public final ImmutableMap<Key, ResolvedBindings> membersInjectionBindings() {
-    return legacyBindingGraph().membersInjectionBindings();
-  }
-
-  public final ResolvedBindings resolvedBindings(BindingRequest request) {
-    return legacyBindingGraph().resolvedBindings(request);
-  }
-
-  public final Iterable<ResolvedBindings> resolvedBindings() {
-    return legacyBindingGraph().resolvedBindings();
+  public final Optional<MembersInjectionBinding> membersInjectionBinding(Key key) {
+    return membersInjectionBindings.containsKey(key)
+        ? Optional.of((MembersInjectionBinding) membersInjectionBindings.get(key).delegate())
+        : Optional.empty();
   }
 
   public final TypeElement componentTypeElement() {
@@ -122,39 +164,33 @@ public abstract class BindingGraph {
   @Memoized
   public ImmutableList<BindingGraph> subgraphs() {
     return legacyBindingGraph().subgraphs().stream()
-        .map(
-            subgraph -> create(
-                componentPath().childPath(subgraph.componentDescriptor().typeElement()),
-                subgraph,
-                topLevelBindingGraph()))
+        // Filter out any subgraphs that may have been pruned.
+        .filter(subgraph -> topLevelBindingGraph().componentNode(subpathOf(subgraph)).isPresent())
+        .map(subgraph -> create(subpathOf(subgraph), subgraph, topLevelBindingGraph()))
         .collect(toImmutableList());
+  }
+
+  private ComponentPath subpathOf(LegacyBindingGraph subgraph) {
+    return componentPath().childPath(subgraph.componentDescriptor().typeElement());
+  }
+
+  public ImmutableSet<BindingNode> bindingNodes(Key key) {
+    ImmutableSet.Builder<BindingNode> builder = ImmutableSet.builder();
+    if (contributionBindings.containsKey(key)) {
+      builder.add(contributionBindings.get(key));
+    }
+    if (membersInjectionBindings.containsKey(key)) {
+      builder.add(membersInjectionBindings.get(key));
+    }
+    return builder.build();
   }
 
   @Memoized
   public ImmutableSet<BindingNode> bindingNodes() {
-    return network().nodes().stream()
-        .filter(node -> node instanceof BindingNode)
-        .map(node -> (BindingNode) node)
-        .collect(toImmutableSet());
-  }
-
-  /**
-   * Returns a network that contains all of the nodes in this component and ancestor components
-   * that are reachable from this component node.
-   *
-   * <p>Note that this is different than the {@link TopLevelBindingGraph#network()} which contains
-   * nodes for all components in the graph.
-   */
-  @Memoized
-  public ImmutableNetwork<Node, Edge> network() {
-    return ImmutableNetwork.copyOf(
-        inducedSubgraph(
-            topLevelBindingGraph().network(),
-            Graphs.reachableNodes(
-                    topLevelBindingGraph().network().asGraph(),
-                    topLevelBindingGraph().componentNode(componentPath()).get()).stream()
-                .filter(node -> isSubpath(componentPath(), node.componentPath()))
-                .collect(toImmutableSet())));
+    return ImmutableSet.<BindingNode>builder()
+        .addAll(contributionBindings.values())
+        .addAll(membersInjectionBindings.values())
+        .build();
   }
 
   // TODO(bcorso): Move this to ComponentPath
