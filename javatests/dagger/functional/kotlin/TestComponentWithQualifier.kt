@@ -19,6 +19,7 @@ package dagger.functional.kotlin
 import dagger.Component
 import dagger.Module
 import dagger.Provides
+import dagger.functional.kotlin.processor.TriggerGeneratedTypeProcessor
 import javax.inject.Inject
 
 @Component(modules = [TestKotlinModuleWithQualifier::class])
@@ -54,6 +55,7 @@ class TestConstructionInjectedClassWithQualifier @Inject constructor(
   @JavaTestQualifier val data: TestDataA
 )
 
+@TriggerGeneratedTypeProcessor
 class TestMemberInjectedClassWithQualifier {
   @Inject
   @JavaTestQualifier
@@ -76,4 +78,10 @@ class TestMemberInjectedClassWithQualifier {
 
   val noBackingFieldProperty: Int
     get() = 0
+
+  val delegatedProperty by lazy { "" }
+
+  val generatedTypeProperty = dagger.functional.kotlin.GeneratedType()
+
+  val generatedTypeDelegatedProperty by lazy { dagger.functional.kotlin.GeneratedType() }
 }

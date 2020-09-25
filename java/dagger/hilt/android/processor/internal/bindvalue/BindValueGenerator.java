@@ -23,6 +23,7 @@ import static java.util.Comparator.comparing;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
@@ -137,7 +138,11 @@ final class BindValueGenerator {
     } else {
       builder
           .addParameter(testClassName, "test")
-          .addStatement("return test.$L", bindValue.variableElement().getSimpleName());
+          .addStatement(
+              "return $L",
+              bindValue.getterElement().isPresent()
+                  ? CodeBlock.of("test.$L()", bindValue.getterElement().get().getSimpleName())
+                  : CodeBlock.of("test.$L", bindValue.variableElement().getSimpleName()));
     }
 
     ClassName annotationClassName = bindValue.annotationName();

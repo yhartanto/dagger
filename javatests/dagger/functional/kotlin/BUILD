@@ -34,10 +34,13 @@ kt_jvm_library(
             "FooWithInjectedQualifier.kt",
         ],
     ),
+    # TODO(user): Remove 'plugins' once kt_jvm_library supports 'exported_plugins'.
+    plugins = ["//javatests/dagger/functional/kotlin/processor:plugin"],
     deps = [
         ":foo_with_injected_qualifier",
         ":java_qualifier",
         "//:dagger_with_compiler",
+        "//javatests/dagger/functional/kotlin/processor:annotation",
     ],
 )
 
