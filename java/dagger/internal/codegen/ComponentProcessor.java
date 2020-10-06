@@ -23,7 +23,6 @@ import com.google.auto.service.AutoService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.BindsInstance;
@@ -41,8 +40,6 @@ import dagger.internal.codegen.bindinggraphvalidation.BindingGraphValidationModu
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions;
 import dagger.internal.codegen.componentgenerator.ComponentGeneratorModule;
-import dagger.internal.codegen.statistics.DaggerStatisticsCollectingProcessingStep;
-import dagger.internal.codegen.statistics.DaggerStatisticsCollector;
 import dagger.internal.codegen.validation.BindingGraphPlugins;
 import dagger.internal.codegen.validation.BindingMethodProcessingStep;
 import dagger.internal.codegen.validation.BindingMethodValidatorsModule;
@@ -78,7 +75,6 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Inject SourceFileGenerator<MembersInjectionBinding> membersInjectorGenerator;
   @Inject ImmutableList<ProcessingStep> processingSteps;
   @Inject BindingGraphPlugins bindingGraphPlugins;
-  @Inject DaggerStatisticsCollector statisticsCollector;
   @Inject Set<ClearableCache> clearableCaches;
 
   public ComponentProcessor() {
@@ -124,11 +120,9 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   protected Iterable<? extends ProcessingStep> initSteps() {
     ProcessorComponent.factory().create(processingEnv, testingPlugins).inject(this);
 
-    statisticsCollector.processingStarted();
     bindingGraphPlugins.initializePlugins();
-    return Iterables.transform(
-        processingSteps,
-        step -> new DaggerStatisticsCollectingProcessingStep(step, statisticsCollector));
+
+    return processingSteps;
   }
 
   @Singleton
@@ -142,8 +136,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         ProcessingRoundCacheModule.class,
         ProcessingStepsModule.class,
         SourceFileGeneratorsModule.class,
-        SpiModule.class,
-        SystemComponentsModule.class,
+        SpiModule.class
       })
   interface ProcessorComponent {
     void inject(ComponentProcessor processor);
@@ -191,10 +184,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
 
   @Override
   protected void postRound(RoundEnvironment roundEnv) {
-    statisticsCollector.roundFinished();
-    if (roundEnv.processingOver()) {
-      statisticsCollector.processingStopped();
-    } else {
+    if (!roundEnv.processingOver()) {
       try {
         injectBindingRegistry.generateSourcesForRequiredBindings(
             factoryGenerator, membersInjectorGenerator);

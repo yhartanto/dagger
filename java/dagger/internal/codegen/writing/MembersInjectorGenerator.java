@@ -57,7 +57,6 @@ import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.internal.codegen.statistics.DaggerStatisticsCollector;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
 import dagger.model.DependencyRequest;
 import java.util.Map.Entry;
@@ -73,7 +72,6 @@ import javax.lang.model.element.Element;
 public final class MembersInjectorGenerator extends SourceFileGenerator<MembersInjectionBinding> {
   private final DaggerTypes types;
   private final DaggerElements elements;
-  private final DaggerStatisticsCollector statisticsCollector;
   private final KotlinMetadataUtil metadataUtil;
 
   @Inject
@@ -82,12 +80,10 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
       DaggerElements elements,
       DaggerTypes types,
       SourceVersion sourceVersion,
-      DaggerStatisticsCollector statisticsCollector,
       KotlinMetadataUtil metadataUtil) {
     super(filer, elements, sourceVersion);
     this.types = types;
     this.elements = elements;
-    this.statisticsCollector = statisticsCollector;
     this.metadataUtil = metadataUtil;
   }
 
@@ -115,7 +111,6 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
       return Optional.empty();
     }
 
-    statisticsCollector.recordMembersInjectorGenerated();
 
     // We don't want to write out resolved bindings -- we want to write out the generic version.
     checkState(

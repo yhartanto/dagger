@@ -35,7 +35,6 @@ import static dagger.internal.codegen.javapoet.AnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.factoryOf;
 import static dagger.internal.codegen.writing.GwtCompatibility.gwtIncompatibleAnnotation;
-import static dagger.model.BindingKind.INJECTION;
 import static dagger.model.BindingKind.PROVISION;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -61,7 +60,6 @@ import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.internal.codegen.statistics.DaggerStatisticsCollector;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
 import dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod;
 import dagger.model.DependencyRequest;
@@ -80,7 +78,6 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
   private final DaggerTypes types;
   private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
-  private final DaggerStatisticsCollector statisticsCollector;
   private final KotlinMetadataUtil metadataUtil;
 
   @Inject
@@ -90,13 +87,11 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
       DaggerTypes types,
       DaggerElements elements,
       CompilerOptions compilerOptions,
-      DaggerStatisticsCollector statisticsCollector,
       KotlinMetadataUtil metadataUtil) {
     super(filer, elements, sourceVersion);
     this.types = types;
     this.elements = elements;
     this.compilerOptions = compilerOptions;
-    this.statisticsCollector = statisticsCollector;
     this.metadataUtil = metadataUtil;
   }
 
@@ -119,10 +114,6 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
 
     if (binding.factoryCreationStrategy().equals(DELEGATE)) {
       return Optional.empty();
-    }
-
-    if (binding.kind().equals(INJECTION)) {
-      statisticsCollector.recordInjectFactoryGenerated();
     }
 
     return Optional.of(factoryBuilder(binding));
