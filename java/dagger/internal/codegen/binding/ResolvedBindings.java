@@ -17,9 +17,7 @@
 package dagger.internal.codegen.binding;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -27,13 +25,8 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
-import dagger.internal.codegen.base.ContributionType;
-import dagger.internal.codegen.base.ContributionType.HasContributionType;
 import dagger.model.Key;
-import dagger.model.Scope;
-import java.util.Optional;
 import javax.lang.model.element.TypeElement;
 
 /**
@@ -46,9 +39,9 @@ import javax.lang.model.element.TypeElement;
  * component has a members injection method, and the type is also requested normally.)
  */
 @AutoValue
-public abstract class ResolvedBindings implements HasContributionType {
+abstract class ResolvedBindings {
   /** The binding key for which the {@link #bindings()} have been resolved. */
-  public abstract Key key();
+  abstract Key key();
 
   /**
    * The {@link ContributionBinding}s for {@link #key()} indexed by the component that owns the
@@ -63,13 +56,13 @@ public abstract class ResolvedBindings implements HasContributionType {
   abstract ImmutableMap<TypeElement, MembersInjectionBinding> allMembersInjectionBindings();
 
   /** The multibinding declarations for {@link #key()}. */
-  public abstract ImmutableSet<MultibindingDeclaration> multibindingDeclarations();
+  abstract ImmutableSet<MultibindingDeclaration> multibindingDeclarations();
 
   /** The subcomponent declarations for {@link #key()}. */
   abstract ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations();
 
   /** The optional binding declarations for {@link #key()}. */
-  public abstract ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations();
+  abstract ImmutableSet<OptionalBindingDeclaration> optionalBindingDeclarations();
 
   // Computing the hash code is an expensive operation.
   @Memoized
@@ -88,25 +81,15 @@ public abstract class ResolvedBindings implements HasContributionType {
   }
 
   /** All bindings for {@link #key()}, regardless of which component owns them. */
-  public final ImmutableCollection<? extends Binding> bindings() {
+  final ImmutableCollection<? extends Binding> bindings() {
     return allBindings().values();
-  }
-
-  /**
-   * Returns the single binding.
-   *
-   * @throws IllegalStateException if there is not exactly one element in {@link #bindings()}, which
-   *     will never happen for contributions in valid graphs
-   */
-  public final Binding binding() {
-    return getOnlyElement(bindings());
   }
 
   /**
    * {@code true} if there are no {@link #bindings()}, {@link #multibindingDeclarations()}, {@link
    * #optionalBindingDeclarations()}, or {@link #subcomponentDeclarations()}.
    */
-  public final boolean isEmpty() {
+  final boolean isEmpty() {
     return allMembersInjectionBindings().isEmpty()
         && allContributionBindings().isEmpty()
         && multibindingDeclarations().isEmpty()
@@ -115,7 +98,7 @@ public abstract class ResolvedBindings implements HasContributionType {
   }
 
   /** All bindings for {@link #key()} that are owned by a component. */
-  public ImmutableSet<? extends Binding> bindingsOwnedBy(ComponentDescriptor component) {
+  ImmutableSet<? extends Binding> bindingsOwnedBy(ComponentDescriptor component) {
     return allBindings().get(component.typeElement());
   }
 
@@ -124,7 +107,7 @@ public abstract class ResolvedBindings implements HasContributionType {
    * binding.
    */
   @Memoized
-  public ImmutableSet<ContributionBinding> contributionBindings() {
+  ImmutableSet<ContributionBinding> contributionBindings() {
     // TODO(ronshapiro): consider optimizing ImmutableSet.copyOf(Collection) for small immutable
     // collections so that it doesn't need to call toArray(). Even though this method is memoized,
     // toArray() can take ~150ms for large components, and there are surely other places in the
@@ -140,16 +123,6 @@ public abstract class ResolvedBindings implements HasContributionType {
         key(),
         binding);
     return getOnlyElement(allContributionBindings().inverse().get(binding));
-  }
-
-  /**
-   * The members-injection binding, regardless of owning component. Absent if these are contribution
-   * bindings, or if there is no members-injection binding because the type fails validation.
-   */
-  public final Optional<MembersInjectionBinding> membersInjectionBinding() {
-    return allMembersInjectionBindings().isEmpty()
-        ? Optional.empty()
-        : Optional.of(Iterables.getOnlyElement(allMembersInjectionBindings().values()));
   }
 
   /** Creates a {@link ResolvedBindings} for contribution bindings. */
@@ -195,59 +168,5 @@ public abstract class ResolvedBindings implements HasContributionType {
         ImmutableSet.of(),
         ImmutableSet.of(),
         ImmutableSet.of());
-  }
-
-  /**
-   * Returns the single contribution binding.
-   *
-   * @throws IllegalStateException if there is not exactly one element in {@link
-   *     #contributionBindings()}, which will never happen for contributions in valid graphs
-   */
-  public ContributionBinding contributionBinding() {
-    return getOnlyElement(contributionBindings());
-  }
-
-  /**
-   * The binding type for these bindings. If there are {@link #multibindingDeclarations()} or {@link
-   * #subcomponentDeclarations()} but no {@link #bindings()}, returns {@link BindingType#PROVISION}.
-   *
-   * @throws IllegalStateException if {@link #isEmpty()} or the binding types conflict
-   */
-  public final BindingType bindingType() {
-    checkState(!isEmpty(), "empty bindings for %s", key());
-    if (allBindings().isEmpty()
-        && (!multibindingDeclarations().isEmpty() || !subcomponentDeclarations().isEmpty())) {
-      // Only multibinding declarations, so assume provision.
-      return BindingType.PROVISION;
-    }
-    ImmutableSet<BindingType> bindingTypes = bindingTypes();
-    checkState(bindingTypes.size() == 1, "conflicting binding types: %s", bindings());
-    return getOnlyElement(bindingTypes);
-  }
-
-  /** The binding types for {@link #bindings()}. */
-  @Memoized
-  ImmutableSet<BindingType> bindingTypes() {
-    return bindings().stream().map(Binding::bindingType).collect(toImmutableSet());
-  }
-
-  /**
-   * The contribution type for these bindings.
-   *
-   * @throws IllegalStateException if there is not exactly one element in {@link
-   *     #contributionBindings()}, which will never happen for contributions in valid graphs
-   */
-  @Override
-  public ContributionType contributionType() {
-    return contributionBinding().contributionType();
-  }
-
-  /**
-   * The scope associated with the single binding.
-   *
-   * @throws IllegalStateException if {@link #bindings()} does not have exactly one element
-   */
-  public Optional<Scope> scope() {
-    return binding().scope();
   }
 }
