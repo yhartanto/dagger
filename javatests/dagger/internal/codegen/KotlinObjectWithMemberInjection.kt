@@ -19,20 +19,39 @@ package dagger.internal.codegen
 import javax.inject.Inject
 
 object KotlinObjectWithMemberInjection {
+  @Inject
+  lateinit var property: String
+}
+
+object KotlinObjectWithSetterMemberInjection {
   @set:Inject
-  lateinit var someProperty: String
+  lateinit var setterProperty: String
 }
 
 class KotlinClassWithMemberInjectedCompanion {
   companion object {
+    @Inject
+    lateinit var property: String
+  }
+}
+
+class KotlinClassWithSetterMemberInjectedCompanion {
+  companion object {
     @set:Inject
-    lateinit var someProperty: String
+    lateinit var setterProperty: String
   }
 }
 
 class KotlinClassWithMemberInjectedNamedCompanion {
   companion object TheCompanion {
+    @Inject
+    lateinit var property: String
+  }
+}
+
+class KotlinClassWithSetterMemberInjectedNamedCompanion {
+  companion object TheCompanion {
     @set:Inject
-    lateinit var someProperty: String
+    lateinit var setterProperty: String
   }
 }

@@ -737,7 +737,10 @@ public final class Processors {
     ImmutableSet<? extends AnnotationMirror> qualifiers =
         AnnotationMirrors.getAnnotatedAnnotations(element, Qualifier.class);
     KotlinMetadataUtil metadataUtil = KotlinMetadataUtils.getMetadataUtil();
-    if (element.getKind() == ElementKind.FIELD && metadataUtil.hasMetadata(element)) {
+    if (element.getKind() == ElementKind.FIELD
+        // static fields are generally not supported, no need to get qualifier from kotlin metadata
+        && !element.getModifiers().contains(STATIC)
+        && metadataUtil.hasMetadata(element)) {
       VariableElement fieldElement = asVariable(element);
       return Stream.concat(
               qualifiers.stream(),

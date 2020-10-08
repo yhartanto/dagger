@@ -20,6 +20,7 @@ import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.asVariable;
 import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
+import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.WILDCARD;
 
 import com.google.auto.common.MoreTypes;
@@ -70,6 +71,8 @@ final class DependencyRequestValidator {
 
   private void checkQualifiers(ValidationReport.Builder<?> report, Element requestElement) {
     if (requestElement.getKind() == ElementKind.FIELD
+        // static injected fields are not supported, no need to get qualifier from kotlin metadata
+        && !requestElement.getModifiers().contains(STATIC)
         && metadataUtil.hasMetadata(requestElement)
         && metadataUtil.isMissingSyntheticPropertyForAnnotations(asVariable(requestElement))) {
       Optional<TypeElement> membersInjector =

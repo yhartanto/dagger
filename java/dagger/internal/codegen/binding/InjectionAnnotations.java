@@ -24,6 +24,7 @@ import static dagger.internal.codegen.base.MoreAnnotationValues.getStringValue;
 import static dagger.internal.codegen.binding.SourceFiles.memberInjectedFieldSignatureForVariable;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
+import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 import com.google.auto.common.AnnotationMirrors;
@@ -85,6 +86,8 @@ public final class InjectionAnnotations {
     ImmutableSet<? extends AnnotationMirror> qualifiers =
         AnnotationMirrors.getAnnotatedAnnotations(element, Qualifier.class);
     if (element.getKind() == ElementKind.FIELD
+        // static injected fields are not supported, no need to get qualifier from kotlin metadata
+        && !element.getModifiers().contains(STATIC)
         && isAnnotationPresent(element, Inject.class)
         && kotlinMetadataUtil.hasMetadata(element)) {
       return Stream.concat(
