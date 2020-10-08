@@ -18,6 +18,7 @@ package dagger.hilt.processor.internal;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import com.google.auto.common.MoreElements;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
@@ -50,16 +51,29 @@ public final class Components {
     ImmutableSet<ClassName> components;
     if (Processors.hasAnnotation(element, ClassNames.INSTALL_IN)) {
       components = getHiltInstallInComponents(elements, element);
-    } else if (Processors.hasErrorTypeAnnotation(element)) {
-      throw new BadInputException(
-          "Error annotation found on element " + element + ". Look above for compilation errors",
-          element);
     } else {
-      throw new BadInputException(
-          String.format(
-              "An @InstallIn annotation is required for: %s." ,
-              element),
-          element);
+      // Check the enclosing element in case it passed in module is a companion object. This helps
+      // in cases where the element was arrived at by checking a binding method and moving outward.
+      Element enclosing = element.getEnclosingElement();
+      if (enclosing != null
+          && MoreElements.isType(enclosing)
+          && MoreElements.isType(element)
+          && Processors.hasAnnotation(enclosing, ClassNames.MODULE)
+          && KotlinMetadataUtils.getMetadataUtil().isCompanionObjectClass(
+              MoreElements.asType(element))) {
+        return getComponents(elements, enclosing);
+      }
+      if (Processors.hasErrorTypeAnnotation(element)) {
+        throw new BadInputException(
+            "Error annotation found on element " + element + ". Look above for compilation errors",
+            element);
+      } else {
+        throw new BadInputException(
+            String.format(
+                "An @InstallIn annotation is required for: %s." ,
+                element),
+            element);
+      }
     }
 
     return components;

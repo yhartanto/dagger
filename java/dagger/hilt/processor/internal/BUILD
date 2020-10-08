@@ -122,6 +122,7 @@ java_library(
     deps = [
         ":classnames",
         ":component_descriptor",
+        ":kotlin",
         ":processor_errors",
         ":processors",
         "//java/dagger/hilt/processor/internal/definecomponent:define_components",
@@ -129,6 +130,7 @@ java_library(
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/javapoet",
+        "@maven//:com_google_auto_auto_common",
     ],
 )
 
