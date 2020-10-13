@@ -62,11 +62,6 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 @AutoService(Processor.class)
 public final class AggregatedDepsProcessor extends BaseProcessor {
 
-  private static final ImmutableSet<ClassName> INSTALL_IN_ANNOTATIONS =
-      ImmutableSet.<ClassName>builder()
-          .add(ClassNames.INSTALL_IN)
-          .build();
-
   private static final ImmutableSet<ClassName> ENTRY_POINT_ANNOTATIONS =
       ImmutableSet.of(
           ClassNames.ENTRY_POINT,
@@ -79,7 +74,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
   public Set<String> getSupportedAnnotationTypes() {
     return ImmutableSet.builder()
         .add(ClassNames.MODULE)
-        .addAll(INSTALL_IN_ANNOTATIONS)
+        .add(ClassNames.INSTALL_IN)
         .addAll(ENTRY_POINT_ANNOTATIONS)
         .build()
         .stream()
@@ -93,11 +88,6 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
       return;
     }
 
-    ImmutableSet<ClassName> installInAnnotations =
-        INSTALL_IN_ANNOTATIONS.stream()
-            .filter(installIn -> Processors.hasAnnotation(element, installIn))
-            .collect(toImmutableSet());
-
     ImmutableSet<ClassName> entryPointAnnotations =
         ENTRY_POINT_ANNOTATIONS.stream()
             .filter(entryPoint -> Processors.hasAnnotation(element, entryPoint))
@@ -109,7 +99,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
         element,
         entryPointAnnotations);
 
-    boolean hasInstallIn = !installInAnnotations.isEmpty();
+    boolean hasInstallIn = Processors.hasAnnotation(element, ClassNames.INSTALL_IN);
     boolean isEntryPoint = !entryPointAnnotations.isEmpty();
     boolean isModule = Processors.hasAnnotation(element, ClassNames.MODULE);
     ProcessorErrors.checkState(
