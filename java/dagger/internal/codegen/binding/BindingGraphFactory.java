@@ -40,7 +40,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimaps;
-import com.google.common.collect.Sets;
 import dagger.MembersInjector;
 import dagger.Reusable;
 import dagger.internal.codegen.base.ClearableCache;
@@ -112,7 +111,8 @@ public final class BindingGraphFactory implements ClearableCache {
   public BindingGraph create(
       ComponentDescriptor componentDescriptor, boolean createFullBindingGraph) {
     return bindingGraphConverter.convert(
-        createLegacyBindingGraph(Optional.empty(), componentDescriptor, createFullBindingGraph));
+        createLegacyBindingGraph(Optional.empty(), componentDescriptor, createFullBindingGraph),
+        createFullBindingGraph);
   }
 
   private LegacyBindingGraph createLegacyBindingGraph(
@@ -239,14 +239,11 @@ public final class BindingGraphFactory implements ClearableCache {
       }
     }
 
-    return LegacyBindingGraph.create(
+    return new LegacyBindingGraph(
         componentDescriptor,
-        requestResolver.getResolvedContributionBindings(),
-        requestResolver.getResolvedMembersInjectionBindings(),
-        subgraphs.build(),
-        requestResolver.getOwnedModules(),
-        requestResolver.getFactoryMethod(),
-        createFullBindingGraph);
+        ImmutableMap.copyOf(requestResolver.getResolvedContributionBindings()),
+        ImmutableMap.copyOf(requestResolver.getResolvedMembersInjectionBindings()),
+        ImmutableList.copyOf(subgraphs.build()));
   }
 
   /**
@@ -345,15 +342,6 @@ public final class BindingGraphFactory implements ClearableCache {
           componentDescriptor.childComponentsDeclaredByFactoryMethods().values());
       subcomponentsToResolve.addAll(
           componentDescriptor.childComponentsDeclaredByBuilderEntryPoints().values());
-    }
-
-    /** Returns the optional factory method for this component. */
-    Optional<ExecutableElement> getFactoryMethod() {
-      return parentResolver
-          .flatMap(
-              parent ->
-                  parent.componentDescriptor.getFactoryMethodForChildComponent(componentDescriptor))
-          .map(method -> method.methodElement());
     }
 
     /**
@@ -843,19 +831,6 @@ public final class BindingGraphFactory implements ClearableCache {
      */
     ImmutableMap<Key, ResolvedBindings> getResolvedMembersInjectionBindings() {
       return ImmutableMap.copyOf(resolvedMembersInjectionBindings);
-    }
-
-    ImmutableSet<ModuleDescriptor> getInheritedModules() {
-      return parentResolver.isPresent()
-          ? Sets.union(
-                  parentResolver.get().getInheritedModules(),
-                  parentResolver.get().componentDescriptor.modules())
-              .immutableCopy()
-          : ImmutableSet.<ModuleDescriptor>of();
-    }
-
-    ImmutableSet<ModuleDescriptor> getOwnedModules() {
-      return Sets.difference(componentDescriptor.modules(), getInheritedModules()).immutableCopy();
     }
 
     private final class LocalDependencyChecker {

@@ -67,10 +67,9 @@ final class BindingGraphConverter {
    * Creates the external {@link dagger.model.BindingGraph} representing the given internal {@link
    * BindingGraph}.
    */
-  BindingGraph convert(LegacyBindingGraph legacyBindingGraph) {
+  BindingGraph convert(LegacyBindingGraph legacyBindingGraph, boolean isFullBindingGraph) {
     MutableNetwork<Node, Edge> network = asNetwork(legacyBindingGraph);
     ComponentNode rootNode = rootComponentNode(network);
-    boolean isFullBindingGraph = legacyBindingGraph.isFullBindingGraph();
 
     // When bindings are copied down into child graphs because they transitively depend on local
     // multibindings or optional bindings, the parent-owned binding is still there. If that
@@ -83,7 +82,7 @@ final class BindingGraphConverter {
 
     TopLevelBindingGraph topLevelBindingGraph =
         TopLevelBindingGraph.create(ImmutableNetwork.copyOf(network), isFullBindingGraph);
-    return BindingGraph.create(rootNode.componentPath(), legacyBindingGraph, topLevelBindingGraph);
+    return BindingGraph.create(rootNode, topLevelBindingGraph);
   }
 
   private MutableNetwork<Node, Edge> asNetwork(LegacyBindingGraph graph) {
@@ -163,7 +162,8 @@ final class BindingGraphConverter {
       ComponentPath graphPath =
           ComponentPath.create(
               bindingGraphPath.stream()
-                  .map(LegacyBindingGraph::componentTypeElement)
+                  .map(LegacyBindingGraph::componentDescriptor)
+                  .map(ComponentDescriptor::typeElement)
                   .collect(toImmutableList()));
       componentPaths.addLast(graphPath);
       ComponentNode currentComponent =
@@ -271,7 +271,7 @@ final class BindingGraphConverter {
      */
     private LegacyBindingGraph graphForAncestor(TypeElement ancestor) {
       for (LegacyBindingGraph graph : bindingGraphPath) {
-        if (graph.componentTypeElement().equals(ancestor)) {
+        if (graph.componentDescriptor().typeElement().equals(ancestor)) {
           return graph;
         }
       }
