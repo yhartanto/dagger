@@ -67,11 +67,7 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
   static CodeBlock maybeCheckForNull(
       ProvisionBinding binding, CompilerOptions compilerOptions, CodeBlock invocation) {
     return binding.shouldCheckForNull(compilerOptions)
-        ? CodeBlock.of(
-            "$T.checkNotNull($L, $S)",
-            Preconditions.class,
-            invocation,
-            "Cannot return null from a non-@Nullable component method")
+        ? CodeBlock.of("$T.checkNotNullFromComponent($L)", Preconditions.class, invocation)
         : invocation;
   }
 }

@@ -16,10 +16,7 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.javapoet.CodeBlocks.stringLiteral;
-
 import com.google.common.base.Joiner;
-import com.squareup.javapoet.CodeBlock;
 
 /**
  * Common lines outputted during code generation.
@@ -51,10 +48,4 @@ public final class GeneratedLines {
       return true;
     }
   }
-
-  public static final CodeBlock NPE_FROM_PROVIDES_METHOD =
-      stringLiteral("Cannot return null from a non-@Nullable @Provides method");
-
-  public static final CodeBlock NPE_FROM_COMPONENT_METHOD =
-      stringLiteral("Cannot return null from a non-@Nullable component method");
 }

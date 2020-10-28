@@ -23,8 +23,6 @@ import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
-import static dagger.internal.codegen.GeneratedLines.NPE_FROM_COMPONENT_METHOD;
-import static dagger.internal.codegen.GeneratedLines.NPE_FROM_PROVIDES_METHOD;
 
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Predicate;
@@ -1200,9 +1198,7 @@ public class ComponentProcessorTest {
                 "",
                 GENERATED_CODE_ANNOTATIONS,
                 "final class DaggerBComponent implements BComponent {")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "  private Provider<A> aProvider;")
+            .addLinesIn(DEFAULT_MODE, "  private Provider<A> aProvider;")
             .addLinesIn(
                 FAST_INIT_MODE,
                 "  private final AComponent aComponent;",
@@ -1226,16 +1222,9 @@ public class ComponentProcessorTest {
                 "  private void initialize(final AComponent aComponentParam) {",
                 "    this.aProvider = new test_AComponent_a(aComponentParam);",
                 "  }")
-            .addLines(
-                "",
-                "  @Override",
-                "  public B b() {")
-            .addLinesIn(
-                DEFAULT_MODE,
-                "    return new B(aProvider);")
-            .addLinesIn(
-                FAST_INIT_MODE,
-                "    return new B(aProvider());")
+            .addLines("", "  @Override", "  public B b() {")
+            .addLinesIn(DEFAULT_MODE, "    return new B(aProvider);")
+            .addLinesIn(FAST_INIT_MODE, "    return new B(aProvider());")
             .addLines(
                 "  }",
                 "",
@@ -1263,8 +1252,7 @@ public class ComponentProcessorTest {
                 "    ",
                 "    @Override()",
                 "    public A get() {",
-                "      return Preconditions.checkNotNull(",
-                "          aComponent.a(), " + NPE_FROM_COMPONENT_METHOD + ");",
+                "      return Preconditions.checkNotNullFromComponent(aComponent.a());",
                 "    }",
                 "  }",
                 "}")
@@ -1277,9 +1265,8 @@ public class ComponentProcessorTest {
                 "      switch (id) {",
                 "        case 0:",
                 "          return (T)",
-                "              Preconditions.checkNotNull(",
-                "                  DaggerBComponent.this.aComponent.a(),",
-                "                  " + NPE_FROM_COMPONENT_METHOD + ");",
+                "              Preconditions.checkNotNullFromComponent(",
+                "                  DaggerBComponent.this.aComponent.a());",
                 "        default:",
                 "          throw new AssertionError(id);",
                 "      }",
@@ -1480,14 +1467,12 @@ public class ComponentProcessorTest {
             "  @Override",
             "  public InjectedType injectedType() {",
             "    return new InjectedType(",
-            "        Preconditions.checkNotNull(",
-            "            aComponent.someStringInjection(),",
-            "            \"Cannot return null from a non-@Nullable component method\"),",
+            "        Preconditions.checkNotNullFromComponent(",
+            "            aComponent.someStringInjection()),",
             "        aComponent.someIntInjection(),",
             "        aComponent,",
-            "        Preconditions.checkNotNull(",
-            "            aComponent.someClassInjection(),",
-            "            \"Cannot return null from a non-@Nullable component method\"));",
+            "        Preconditions.checkNotNullFromComponent(",
+            "            aComponent.someClassInjection()));",
             "  }",
             "}");
 
@@ -2234,8 +2219,8 @@ public class ComponentProcessorTest {
                 "  }",
                 "",
                 "  public static String nonNullableString() {",
-                "    return Preconditions.checkNotNull(",
-                "        TestModule.nonNullableString(), " + NPE_FROM_PROVIDES_METHOD + ");",
+                "    return Preconditions.checkNotNullFromProvides(",
+                "        TestModule.nonNullableString());",
                 "  }",
                 "}"));
 

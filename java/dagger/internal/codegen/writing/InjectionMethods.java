@@ -489,11 +489,7 @@ final class InjectionMethods {
     CodeBlock checkForNull(CodeBlock maybeNull) {
       return this.equals(IGNORE)
           ? maybeNull
-          : CodeBlock.of(
-              "$T.checkNotNull($L, $S)",
-              Preconditions.class,
-              maybeNull,
-              "Cannot return null from a non-@Nullable @Provides method");
+          : CodeBlock.of("$T.checkNotNullFromProvides($L)", Preconditions.class, maybeNull);
     }
 
     static CheckNotNullPolicy get(ProvisionBinding binding, CompilerOptions compilerOptions) {
