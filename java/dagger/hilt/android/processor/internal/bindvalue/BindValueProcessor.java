@@ -46,6 +46,7 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
 public final class BindValueProcessor extends BaseProcessor {
+
   private static final ImmutableSet<ClassName> SUPPORTED_ANNOTATIONS =
       ImmutableSet.<ClassName>builder()
           .addAll(BindValueMetadata.BIND_VALUE_ANNOTATIONS)
