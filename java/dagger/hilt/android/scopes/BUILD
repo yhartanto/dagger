@@ -40,15 +40,6 @@ android_library(
     ],
 )
 
-android_library(
-    name = "view_model_scoped",
-    srcs = ["ViewModelScoped.java"],
-    deps = [
-        ":package_info",
-        "@google_bazel_common//third_party/java/jsr330_inject",
-    ],
-)
-
 java_library(
     name = "package_info",
     srcs = ["package-info.java"],

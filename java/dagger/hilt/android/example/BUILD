@@ -19,9 +19,5 @@ package(default_visibility = ["//:src"])
 
 filegroup(
     name = "srcs_filegroup",
-    srcs = glob(
-        ["**/*"],
-        # Exclude Gradle build folder to enable working along side Bazel
-        exclude = ["**/build/**"],
-    ),
+    srcs = glob(["**/*"]),
 )
