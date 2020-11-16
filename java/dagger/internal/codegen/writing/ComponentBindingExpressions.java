@@ -588,8 +588,9 @@ public final class ComponentBindingExpressions {
       case COMPONENT_PRODUCTION:
       case PRODUCTION:
         throw new IllegalArgumentException(binding.kind().toString());
+      default:
+        throw new AssertionError("Unexpected binding kind: " + binding.kind());
     }
-    throw new AssertionError();
   }
 
   /**
