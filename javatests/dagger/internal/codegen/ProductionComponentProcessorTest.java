@@ -161,7 +161,7 @@ public class ProductionComponentProcessorTest {
             .compile(moduleFile, producerModuleFile, componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("java.lang.String may not depend on the production executor")
+        .hadErrorContaining("String may not depend on the production executor")
         .inFile(componentFile)
         .onLineContaining("interface SimpleComponent");
 
@@ -171,7 +171,7 @@ public class ProductionComponentProcessorTest {
             .compile(producerModuleFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("java.lang.String may not depend on the production executor")
+        .hadErrorContaining("String may not depend on the production executor")
         .inFile(producerModuleFile)
         .onLineContaining("class SimpleModule");
     // TODO(dpb): Report at the binding if enclosed in the module.

@@ -158,10 +158,10 @@ public class SubcomponentValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "[test.ChildComponent.newGrandchildComponent()] "
-                + "test.GrandchildComponent requires modules which have no visible default "
+            "[ChildComponent.newGrandchildComponent()] "
+                + "GrandchildComponent requires modules which have no visible default "
                 + "constructors. Add the following modules as parameters to this method: "
-                + "test.GrandchildModule")
+                + "GrandchildModule")
         .inFile(component)
         .onLineContaining("interface TestComponent");
   }
@@ -309,7 +309,7 @@ public class SubcomponentValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
-            "java.lang.Integer cannot be provided without an @Inject constructor or an "
+            "Integer cannot be provided without an @Inject constructor or an "
                 + "@Provides-annotated method")
         .inFile(componentFile)
         .onLineContaining("interface TestComponent");
@@ -1101,13 +1101,13 @@ public class SubcomponentValidationTest {
             .withOptions(compilerMode.javacopts())
             .compile(module, component, subcomponent);
     assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("test.Sub.Builder is bound multiple times:");
+    assertThat(compilation).hadErrorContaining("Sub.Builder is bound multiple times:");
     assertThat(compilation)
         .hadErrorContaining(
-            "@Provides test.Sub.Builder "
-                + "test.TestModule.providesConflictsWithModuleSubcomponents()");
+            "@Provides Sub.Builder "
+                + "TestModule.providesConflictsWithModuleSubcomponents()");
     assertThat(compilation)
-        .hadErrorContaining("@Module(subcomponents = test.Sub.class) for test.TestModule");
+        .hadErrorContaining("@Module(subcomponents = Sub.class) for TestModule");
   }
 
   @Test

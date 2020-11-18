@@ -674,19 +674,18 @@ public class SubcomponentCreatorValidationTest extends ComponentCreatorTestHelpe
     Compilation compilation = compile(componentFile, childComponentFile);
     assertThat(compilation).failed();
     String firstBinding = creatorKind.equals(FACTORY)
-        ? "test.ChildComponent.Factory.create(s1, …)"
-        : "@BindsInstance void test.ChildComponent.Builder.set1(String)";
+        ? "ChildComponent.Factory.create(s1, …)"
+        : "@BindsInstance void ChildComponent.Builder.set1(String)";
     String secondBinding = creatorKind.equals(FACTORY)
-        ? "test.ChildComponent.Factory.create(…, s2)"
-        : "@BindsInstance void test.ChildComponent.Builder.set2(String)";
+        ? "ChildComponent.Factory.create(…, s2)"
+        : "@BindsInstance void ChildComponent.Builder.set2(String)";
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "java.lang.String is bound multiple times:",
+                "String is bound multiple times:",
                 "    " + firstBinding,
                 "    " + secondBinding,
-                "    java.lang.String is requested at",
-                "        test.ChildComponent.s() [test.ParentComponent → test.ChildComponent]"))
+                "    in component: [ParentComponent → ChildComponent]"))
         .inFile(componentFile)
         .onLineContaining("interface ParentComponent {");
   }

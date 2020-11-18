@@ -90,9 +90,9 @@ public class DuplicateBindingsValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "test.Outer.A is bound multiple times:",
-                "    @Provides test.Outer.A test.Outer.AModule.provideA(String)",
-                "    test.Outer.A test.Outer.Parent.getA()"))
+                "Outer.A is bound multiple times:",
+                "    @Provides Outer.A Outer.AModule.provideA(String)",
+                "    Outer.A Outer.Parent.getA()"))
         .inFile(component)
         .onLineContaining("interface Child");
   }
@@ -145,9 +145,9 @@ public class DuplicateBindingsValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "test.Outer.A is bound multiple times:",
-                "    @Provides test.Outer.A test.Outer.Module1.provideA1()",
-                "    @Provides test.Outer.A test.Outer.Module2.provideA2(String)"))
+                "Outer.A is bound multiple times:",
+                "    @Provides Outer.A Outer.Module1.provideA1()",
+                "    @Provides Outer.A Outer.Module2.provideA2(String)"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
 
@@ -155,9 +155,9 @@ public class DuplicateBindingsValidationTest {
       assertThat(compilation)
           .hadErrorContaining(
               message(
-                  "test.Outer.A is bound multiple times:",
-                  "    @Provides test.Outer.A test.Outer.Module1.provideA1()",
-                  "    @Provides test.Outer.A test.Outer.Module2.provideA2(String)"))
+                  "Outer.A is bound multiple times:",
+                  "    @Provides Outer.A Outer.Module1.provideA1()",
+                  "    @Provides Outer.A Outer.Module2.provideA2(String)"))
           .inFile(component)
           .onLineContaining("class Module3");
     }
@@ -214,9 +214,9 @@ public class DuplicateBindingsValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "test.Outer.A is bound multiple times:",
-                "    @Provides test.Outer.A test.Outer.Module1.provideA1()",
-                "    @Binds test.Outer.A test.Outer.Module2.bindA2(test.Outer.B)"))
+                "Outer.A is bound multiple times:",
+                "    @Provides Outer.A Outer.Module1.provideA1()",
+                "    @Binds Outer.A Outer.Module2.bindA2(Outer.B)"))
         .inFile(component)
         .onLineContaining("interface TestComponent");
 
@@ -224,9 +224,9 @@ public class DuplicateBindingsValidationTest {
       assertThat(compilation)
           .hadErrorContaining(
               message(
-                  "test.Outer.A is bound multiple times:",
-                  "    @Provides test.Outer.A test.Outer.Module1.provideA1()",
-                  "    @Binds test.Outer.A test.Outer.Module2.bindA2(test.Outer.B)"))
+                  "Outer.A is bound multiple times:",
+                  "    @Provides Outer.A Outer.Module1.provideA1()",
+                  "    @Binds Outer.A Outer.Module2.bindA2(Outer.B)"))
           .inFile(component)
           .onLineContaining("class Module3");
     }
@@ -285,15 +285,15 @@ public class DuplicateBindingsValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "java.util.Set<java.lang.String> has incompatible bindings or declarations:",
+                "Set<String> has incompatible bindings or declarations:",
                 "    Set bindings and declarations:",
                 "        @Binds @IntoSet String "
-                    + "test.Outer.TestModule1.bindStringSetElement(@test.Outer.SomeQualifier "
+                    + "Outer.TestModule1.bindStringSetElement(@Outer.SomeQualifier "
                     + "String)",
                 "        @Provides @IntoSet String "
-                    + "test.Outer.TestModule1.stringSetElement()",
+                    + "Outer.TestModule1.stringSetElement()",
                 "    Unique bindings and declarations:",
-                "        @Provides Set<String> test.Outer.TestModule2.stringSet()"))
+                "        @Provides Set<String> Outer.TestModule2.stringSet()"))
         .inFile(component)
         .onLineContaining(
             fullBindingGraphValidation ? "class TestModule3" : "interface TestComponent");
@@ -357,16 +357,16 @@ public class DuplicateBindingsValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings "
+                "Map<String,String> has incompatible bindings "
                     + "or declarations:",
                 "    Map bindings and declarations:",
                 "        @Binds @IntoMap @StringKey(\"bar\") String"
-                    + " test.Outer.TestModule1.bindStringMapEntry(@test.Outer.SomeQualifier "
+                    + " Outer.TestModule1.bindStringMapEntry(@Outer.SomeQualifier "
                     + "String)",
                 "        @Provides @IntoMap @StringKey(\"foo\") String"
-                    + " test.Outer.TestModule1.stringMapEntry()",
+                    + " Outer.TestModule1.stringMapEntry()",
                 "    Unique bindings and declarations:",
-                "        @Provides Map<String,String> test.Outer.TestModule2.stringMap()"))
+                "        @Provides Map<String,String> Outer.TestModule2.stringMap()"))
         .inFile(component)
         .onLineContaining(
             fullBindingGraphValidation ? "class TestModule3" : "interface TestComponent");
@@ -415,12 +415,12 @@ public class DuplicateBindingsValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "java.util.Set<java.lang.String> has incompatible bindings or declarations:",
+                "Set<String> has incompatible bindings or declarations:",
                 "    Set bindings and declarations:",
                 "        @Multibinds Set<String> "
-                    + "test.Outer.TestModule1.stringSet()",
+                    + "Outer.TestModule1.stringSet()",
                 "    Unique bindings and declarations:",
-                "        @Provides Set<String> test.Outer.TestModule2.stringSet()"))
+                "        @Provides Set<String> Outer.TestModule2.stringSet()"))
         .inFile(component)
         .onLineContaining(
             fullBindingGraphValidation ? "class TestModule3" : "interface TestComponent");
@@ -471,13 +471,13 @@ public class DuplicateBindingsValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "java.util.Map<java.lang.String,java.lang.String> has incompatible bindings "
+                "Map<String,String> has incompatible bindings "
                     + "or declarations:",
                 "    Map bindings and declarations:",
                 "        @Multibinds Map<String,String> "
-                    + "test.Outer.TestModule1.stringMap()",
+                    + "Outer.TestModule1.stringMap()",
                 "    Unique bindings and declarations:",
-                "        @Provides Map<String,String> test.Outer.TestModule2.stringMap()"))
+                "        @Provides Map<String,String> Outer.TestModule2.stringMap()"))
         .inFile(component)
         .onLineContaining(
             fullBindingGraphValidation ? "class TestModule3" : "interface TestComponent");
@@ -601,17 +601,17 @@ public class DuplicateBindingsValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "test.Outer.A is bound multiple times:",
-                "    @Provides test.Outer.A test.Outer.Module01.provideA()",
-                "    @Provides test.Outer.A test.Outer.Module02.provideA()",
-                "    @Provides test.Outer.A test.Outer.Module03.provideA()",
-                "    @Provides test.Outer.A test.Outer.Module04.provideA()",
-                "    @Provides test.Outer.A test.Outer.Module05.provideA()",
-                "    @Provides test.Outer.A test.Outer.Module06.provideA()",
-                "    @Provides test.Outer.A test.Outer.Module07.provideA()",
-                "    @Provides test.Outer.A test.Outer.Module08.provideA()",
-                "    @Provides test.Outer.A test.Outer.Module09.provideA()",
-                "    @Provides test.Outer.A test.Outer.Module10.provideA()",
+                "Outer.A is bound multiple times:",
+                "    @Provides Outer.A Outer.Module01.provideA()",
+                "    @Provides Outer.A Outer.Module02.provideA()",
+                "    @Provides Outer.A Outer.Module03.provideA()",
+                "    @Provides Outer.A Outer.Module04.provideA()",
+                "    @Provides Outer.A Outer.Module05.provideA()",
+                "    @Provides Outer.A Outer.Module06.provideA()",
+                "    @Provides Outer.A Outer.Module07.provideA()",
+                "    @Provides Outer.A Outer.Module08.provideA()",
+                "    @Provides Outer.A Outer.Module09.provideA()",
+                "    @Provides Outer.A Outer.Module10.provideA()",
                 "    and 2 others"))
         .inFile(component)
         .onLineContaining(fullBindingGraphValidation ? "class Modules" : "interface TestComponent");
@@ -676,7 +676,7 @@ public class DuplicateBindingsValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "java.lang.Object is bound multiple times:",
+                "Object is bound multiple times:",
                 "    @Provides Object test.A.AModule.abConflict()",
                 "    @Provides Object test.B.BModule.abConflict()"))
         .inFile(aComponent)
@@ -758,7 +758,7 @@ public class DuplicateBindingsValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "java.lang.Object is bound multiple times:",
+                "Object is bound multiple times:",
                 "    @Provides Object test.A.AModule.acConflict()",
                 "    @Provides Object test.C.CModule.acConflict()"))
         .inFile(aComponent)
@@ -835,7 +835,7 @@ public class DuplicateBindingsValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "java.lang.Object is bound multiple times:",
+                "Object is bound multiple times:",
                 "    @Provides Object test.B.BModule.bcConflict()",
                 "    @Provides Object test.C.CModule.bcConflict()"))
         .inFile(fullBindingGraphValidation ? bComponent : aComponent)
@@ -958,10 +958,10 @@ public class DuplicateBindingsValidationTest {
     assertThat(compilation)
         .hadWarningContaining(
             message(
-                "test.Foo is bound multiple times:",
-                "    @Inject test.Foo(Set<String>) [test.Injected1]",
-                "    @Provides test.Foo test.Provided1.Provided1Module.provideFoo(Set<String>) "
-                    + "[test.Injected1 → test.Injected2 → test.Provided1]"))
+                "Foo is bound multiple times:",
+                "    @Inject Foo(Set<String>) [Injected1]",
+                "    @Provides Foo Provided1.Provided1Module.provideFoo(Set<String>) "
+                    + "[Injected1 → Injected2 → Provided1]"))
         .inFile(injected1)
         .onLineContaining("interface Injected1 {");
   }
@@ -1025,10 +1025,10 @@ public class DuplicateBindingsValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "java.lang.Object is bound multiple times:",
-                "    @Provides Object test.Child.ChildModule.nonNullableParentChildConflict()",
-                "    @Provides @javax.annotation.Nullable Object"
-                    + " test.ParentConflictsWithChild.ParentModule.nullableParentChildConflict()"))
+                "Object is bound multiple times:",
+                "    @Provides Object Child.ChildModule.nonNullableParentChildConflict()",
+                "    @Provides @Nullable Object"
+                    + " ParentConflictsWithChild.ParentModule.nullableParentChildConflict()"))
         .inFile(parentConflictsWithChild)
         .onLineContaining(
             fullBindingGraphValidation
@@ -1102,7 +1102,7 @@ public class DuplicateBindingsValidationTest {
     Compilation compilation = daggerCompiler().compile(parent, parentModule, child, childModule);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("java.lang.String is bound multiple times")
+        .hadErrorContaining("String is bound multiple times")
         .inFile(parent)
         .onLineContaining("interface Parent");
     assertThat(compilation).hadErrorCount(1);

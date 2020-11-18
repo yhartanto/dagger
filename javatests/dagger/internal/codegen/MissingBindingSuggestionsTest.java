@@ -97,7 +97,7 @@ public class MissingBindingSuggestionsTest {
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
-        .hadErrorContaining("A binding with matching key exists in component: test.BarComponent");
+        .hadErrorContaining("A binding with matching key exists in component: BarComponent");
   }
 
   @Test public void suggestsBindingInNestedSubcomponent() {
@@ -158,7 +158,7 @@ public class MissingBindingSuggestionsTest {
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
-        .hadErrorContaining("A binding with matching key exists in component: test.BazComponent");
+        .hadErrorContaining("A binding with matching key exists in component: BazComponent");
   }
 
   @Test
@@ -218,8 +218,8 @@ public class MissingBindingSuggestionsTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "[Dagger/MissingBinding] Baz cannot be provided without an @Inject constructor or "
-                    + "an @Provides-annotated method.",
+                "\033[1;31m[Dagger/MissingBinding]\033[0m Baz cannot be provided without an "
+                    + "@Inject constructor or an @Provides-annotated method.",
                 "A binding with matching key exists in component: Child",
                 "    Baz is injected at",
                 "        Bar(baz)",
@@ -301,8 +301,8 @@ public class MissingBindingSuggestionsTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "[Dagger/MissingBinding] Baz cannot be provided without an @Inject constructor or "
-                    + "an @Provides-annotated method.",
+                "\033[1;31m[Dagger/MissingBinding]\033[0m Baz cannot be provided without an "
+                    + "@Inject constructor or an @Provides-annotated method.",
                 "A binding with matching key exists in component: Child2",
                 "    Baz is injected at",
                 "        Bar(baz)",

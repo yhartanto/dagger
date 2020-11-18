@@ -76,9 +76,9 @@ public class ScopingValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "test.MyComponent (unscoped) may not reference scoped bindings:",
-                "    @Singleton class test.ScopedType",
-                "    @Provides @Singleton String test.ScopedModule.string()"));
+                "MyComponent (unscoped) may not reference scoped bindings:",
+                "    @Singleton class ScopedType",
+                "    @Provides @Singleton String ScopedModule.string()"));
   }
 
   @Test // b/79859714
@@ -157,9 +157,9 @@ public class ScopingValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "test.Parent scoped with @Singleton may not reference bindings with different "
+                "Parent scoped with @Singleton may not reference bindings with different "
                     + "scopes:",
-                "    @Binds @test.ChildScope test.Foo test.ParentModule.bind(test.FooImpl)"));
+                "    @Binds @ChildScope Foo ParentModule.bind(FooImpl)"));
   }
 
   @Test
@@ -232,12 +232,12 @@ public class ScopingValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "test.MyComponent scoped with @Singleton "
+                "MyComponent scoped with @Singleton "
                     + "may not reference bindings with different scopes:",
-                "    @test.PerTest class test.ScopedType",
-                "    @Provides @test.PerTest String test.ScopedModule.string()",
-                "    @Provides @test.Per(test.MyComponent.class) boolean "
-                    + "test.ScopedModule.bool()"))
+                "    @PerTest class ScopedType",
+                "    @Provides @PerTest String ScopedModule.string()",
+                "    @Provides @Per(MyComponent.class) boolean "
+                    + "ScopedModule.bool()"))
         .inFile(componentFile)
         .onLineContaining("interface MyComponent");
 
@@ -249,11 +249,11 @@ public class ScopingValidationTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "test.ScopedModule contains bindings with different scopes:",
-                "    @Provides @test.PerTest String test.ScopedModule.string()",
-                "    @Provides @Singleton float test.ScopedModule.floatingPoint()",
-                "    @Provides @test.Per(test.MyComponent.class) boolean "
-                    + "test.ScopedModule.bool()"))
+                "ScopedModule contains bindings with different scopes:",
+                "    @Provides @PerTest String ScopedModule.string()",
+                "    @Provides @Singleton float ScopedModule.floatingPoint()",
+                "    @Provides @Per(MyComponent.class) boolean "
+                    + "ScopedModule.bool()"))
         .inFile(moduleFile)
         .onLineContaining("class ScopedModule");
   }

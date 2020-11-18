@@ -110,11 +110,11 @@ public class ComponentProcessorTest {
             .compile(parent, child, another, componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("java.util.List<java.lang.Integer> is bound multiple times");
+        .hadErrorContaining("List<Integer> is bound multiple times");
     assertThat(compilation)
-        .hadErrorContaining("@Provides List<Integer> test.ChildNumberModule.provideListB(Integer)");
+        .hadErrorContaining("@Provides List<Integer> ChildNumberModule.provideListB(Integer)");
     assertThat(compilation)
-        .hadErrorContaining("@Provides List<Integer> test.AnotherModule.provideListOfInteger()");
+        .hadErrorContaining("@Provides List<Integer> AnotherModule.provideListOfInteger()");
   }
 
   @Test public void privateNestedClassWithWarningThatIsAnErrorInComponent() {
@@ -2160,7 +2160,7 @@ public class ComponentProcessorTest {
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
-        .hadErrorContaining("java.lang.String is bound multiple times")
+        .hadErrorContaining("String is bound multiple times")
         .inFile(component)
         .onLineContaining("interface TestComponent");
   }

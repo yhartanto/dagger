@@ -100,7 +100,7 @@ public class BindsDependsOnSubcomponentValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
-        .hadErrorContaining("java.lang.Long cannot be provided without an @Inject constructor")
+        .hadErrorContaining("Long cannot be provided without an @Inject constructor")
         .inFile(parentComponent)
         .onLineContaining("interface ParentComponent");
   }
@@ -175,7 +175,7 @@ public class BindsDependsOnSubcomponentValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
-        .hadErrorContaining("java.lang.Long cannot be provided without an @Inject constructor")
+        .hadErrorContaining("Long cannot be provided without an @Inject constructor")
         .inFile(parentComponent)
         .onLineContaining("interface ParentComponent");
   }
@@ -255,7 +255,7 @@ public class BindsDependsOnSubcomponentValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
-        .hadErrorContaining("java.lang.Long cannot be provided without an @Inject constructor")
+        .hadErrorContaining("Long cannot be provided without an @Inject constructor")
         .inFile(parentComponent)
         .onLineContaining("interface ParentComponent");
   }
@@ -333,7 +333,7 @@ public class BindsDependsOnSubcomponentValidationTest {
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
-        .hadErrorContaining("java.lang.Long cannot be provided without an @Inject constructor")
+        .hadErrorContaining("Long cannot be provided without an @Inject constructor")
         .inFile(parentComponent)
         .onLineContaining("interface ParentComponent");
   }

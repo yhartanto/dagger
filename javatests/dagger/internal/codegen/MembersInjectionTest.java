@@ -1182,7 +1182,7 @@ public class MembersInjectionTest {
     Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("javax.inject.Provider cannot be provided")
+        .hadErrorContaining("Provider cannot be provided")
         .inFile(file)
         .onLineContaining("interface C");
   }
@@ -1232,7 +1232,7 @@ public class MembersInjectionTest {
     Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("javax.inject.Provider cannot be provided")
+        .hadErrorContaining("Provider cannot be provided")
         .inFile(file)
         .onLineContaining("interface C");
   }
