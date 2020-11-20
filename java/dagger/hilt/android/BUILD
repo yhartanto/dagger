@@ -158,11 +158,11 @@ gen_maven_artifact(
         "com.google.dagger:dagger-lint-aar",
         "com.google.dagger:dagger",
         "com.google.dagger:hilt-core",
-        "javax.annotation:jsr250-api",
         "javax.inject:javax.inject",
     ],
     artifact_target_maven_deps_banned = [
         "com.google.guava:guava",
+        "javax.annotation:jsr250-api",
     ],
     javadoc_android_api_level = 29,
     javadoc_exclude_packages = [

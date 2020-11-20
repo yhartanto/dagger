@@ -30,7 +30,6 @@ android_library(
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager",
         "//java/dagger/hilt/android/internal/testing:test_application_component_manager_holder",
         "//java/dagger/hilt/internal:component_manager",
-        "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
     deps = [
         ":package_info",
@@ -205,12 +204,12 @@ gen_maven_artifact(
         "com.google.code.findbugs:jsr305",
         "com.google.dagger:dagger",
         "com.google.dagger:hilt-android",
-        "javax.annotation:jsr250-api",
         "javax.inject:javax.inject",
         "junit:junit",
     ],
     artifact_target_maven_deps_banned = [
         "com.google.guava:guava",
+        "javax.annotation:jsr250-api",
     ],
     javadoc_android_api_level = 29,
     javadoc_exclude_packages = [

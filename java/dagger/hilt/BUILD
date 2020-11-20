@@ -28,7 +28,6 @@ java_library(
     ],
     exports = [
         "//java/dagger/hilt/processor/internal/aggregateddeps:annotation",
-        "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
     deps = [
         ":generates_root_input",
@@ -66,7 +65,6 @@ java_library(
     ],
     exports = [
         "//java/dagger/hilt/internal/generatesrootinput",
-        "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
     deps = [
         ":package_info",
@@ -83,7 +81,6 @@ java_library(
     ],
     exports = [
         "//java/dagger/hilt/internal/definecomponent",
-        "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
     deps = [
         ":generates_root_input",
@@ -215,11 +212,11 @@ gen_maven_artifact(
     artifact_target_maven_deps = [
         "com.google.code.findbugs:jsr305",
         "com.google.dagger:dagger",
-        "javax.annotation:jsr250-api",
         "javax.inject:javax.inject",
     ],
     artifact_target_maven_deps_banned = [
         "com.google.guava:guava",
+        "javax.annotation:jsr250-api",
     ],
     javadoc_exclude_packages = [
         "dagger.hilt.internal",

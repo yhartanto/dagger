@@ -38,7 +38,6 @@ import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoMap;
 import dagger.multibindings.IntoSet;
 import java.io.IOException;
-import javax.annotation.Generated;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 
@@ -71,15 +70,13 @@ final class BindValueGenerator {
             .addOriginatingElement(metadata.testElement())
             .addAnnotation(Processors.getOriginatingElementAnnotation(metadata.testElement()))
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-            .addAnnotation(
-                AnnotationSpec.builder(Generated.class)
-                    .addMember("value", "$S", getClass().getName())
-                    .build())
             .addAnnotation(Module.class)
             .addAnnotation(
                 Components.getInstallInAnnotationSpec(
                     ImmutableSet.of(ClassNames.APPLICATION_COMPONENT)))
             .addMethod(providesTestMethod());
+
+    Processors.addGeneratedAnnotation(builder, env, getClass());
 
     metadata.bindValueElements().stream()
         .map(this::providesMethod)

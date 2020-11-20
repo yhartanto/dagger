@@ -26,7 +26,6 @@ android_library(
     ],
     exports = [
         "//java/dagger/hilt/internal/aliasof",
-        "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
     deps = [
         ":package_info",
@@ -41,7 +40,6 @@ java_library(
         "//java/dagger/hilt/processor/internal/disableinstallincheck:processor",
     ],
     exports = [
-        "@google_bazel_common//third_party/java/jsr250_annotations",
     ],
     deps = [
         ":package_info",
