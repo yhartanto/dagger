@@ -58,6 +58,7 @@ public final class TestInjectorGenerator {
                 ParameterizedTypeName.get(ClassNames.TEST_INJECTOR, metadata.testName()))
             .addMethod(
                 MethodSpec.methodBuilder("injectTest")
+                    .addAnnotation(Override.class)
                     .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
                     .addParameter(
                         metadata.testName(),
