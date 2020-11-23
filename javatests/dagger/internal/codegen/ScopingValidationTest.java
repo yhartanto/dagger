@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.TestUtils.message;
 
@@ -242,8 +243,7 @@ public class ScopingValidationTest {
         .onLineContaining("interface MyComponent");
 
     compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(componentFile, scopeFile, scopeWithAttribute, typeFile, moduleFile);
     // The @Inject binding for ScopedType should not appear here, but the @Singleton binding should.
     assertThat(compilation)
@@ -261,8 +261,7 @@ public class ScopingValidationTest {
   @Test
   public void fullBindingGraphValidationDoesNotReportForOneScope() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(
+        compilerWithOptions(
                 "-Adagger.fullBindingGraphValidation=ERROR",
                 "-Adagger.moduleHasDifferentScopesValidation=ERROR")
             .compile(
@@ -286,8 +285,7 @@ public class ScopingValidationTest {
   @Test
   public void fullBindingGraphValidationDoesNotReportInjectBindings() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(
+        compilerWithOptions(
                 "-Adagger.fullBindingGraphValidation=ERROR",
                 "-Adagger.moduleHasDifferentScopesValidation=ERROR")
             .compile(
@@ -852,8 +850,7 @@ public class ScopingValidationTest {
     // Test that compilation succeeds when transitive validation is disabled because the scope cycle
     // cannot be detected.
     compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.validateTransitiveComponentDependencies=DISABLED")
+        compilerWithOptions("-Adagger.validateTransitiveComponentDependencies=DISABLED")
             .compile(type, scopeA, scopeB, longLifetime, mediumLifetime, shortLifetime);
     assertThat(compilation).succeeded();
   }

@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
@@ -122,8 +122,7 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(emptySetModuleFile, setModuleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -217,8 +216,7 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(module, inaccessible, inaccessible2, usesInaccessible, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -285,7 +283,7 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(parent, parentModule, child);
+        compilerWithOptions(compilerMode.javacopts()).compile(parent, parentModule, child);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerParent")
@@ -369,8 +367,7 @@ public class SetBindingRequestFulfillmentWithGuavaTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(emptySetModuleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)

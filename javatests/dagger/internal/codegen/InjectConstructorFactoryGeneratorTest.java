@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
@@ -651,7 +652,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  @Inject CheckedExceptionClass() throws Exception {}",
         "}");
     Compilation compilation =
-        daggerCompiler().withOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
+        compilerWithOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .hadWarningContaining("Dagger does not support checked exceptions on @Inject constructors")
@@ -690,7 +691,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  }",
         "}");
     Compilation compilation =
-        daggerCompiler().withOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
+        compilerWithOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .hadWarningContaining("Dagger does not support injection into private classes")
@@ -733,7 +734,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  }",
         "}");
     Compilation compilation =
-        daggerCompiler().withOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
+        compilerWithOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .hadWarningContaining("Dagger does not support injection into private classes")
@@ -785,7 +786,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  @Inject private String s;",
         "}");
     Compilation compilation =
-        daggerCompiler().withOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
+        compilerWithOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
     assertThat(compilation).succeeded(); // TODO: Verify warning message when supported
   }
 
@@ -816,7 +817,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  @Inject static String s;",
         "}");
     Compilation compilation =
-        daggerCompiler().withOptions("-Adagger.staticMemberValidation=WARNING").compile(file);
+        compilerWithOptions("-Adagger.staticMemberValidation=WARNING").compile(file);
     assertThat(compilation).succeeded(); // TODO: Verify warning message when supported
   }
 
@@ -887,7 +888,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  @Inject private void method(){}",
         "}");
     Compilation compilation =
-        daggerCompiler().withOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
+        compilerWithOptions("-Adagger.privateMemberValidation=WARNING").compile(file);
     assertThat(compilation).succeeded(); // TODO: Verify warning message when supported
   }
 
@@ -918,7 +919,7 @@ public final class InjectConstructorFactoryGeneratorTest {
         "  @Inject static void method(){}",
         "}");
     Compilation compilation =
-        daggerCompiler().withOptions("-Adagger.staticMemberValidation=WARNING").compile(file);
+        compilerWithOptions("-Adagger.staticMemberValidation=WARNING").compile(file);
     assertThat(compilation).succeeded(); // TODO: Verify warning message when supported
   }
 

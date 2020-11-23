@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.COMPONENT_FACTORY;
 import static dagger.internal.codegen.binding.ErrorMessages.creatorMessagesFor;
@@ -98,7 +98,7 @@ public class ComponentFactoryTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(moduleFile, componentFile);
+        compilerWithOptions(compilerMode.javacopts()).compile(moduleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
@@ -124,7 +124,7 @@ public class ComponentFactoryTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(String.format(MSGS.twoFactoryMethods(), "create()"))
@@ -153,7 +153,7 @@ public class ComponentFactoryTest {
             "  interface Factory extends Parent {}",
             "}");
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(String.format(MSGS.twoFactoryMethods(), "create()"))

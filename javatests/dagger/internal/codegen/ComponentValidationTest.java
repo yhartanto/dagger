@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.TestUtils.message;
 
@@ -222,8 +223,7 @@ public final class ComponentValidationTest {
 
     // Test that this also fails when transitive validation is disabled.
     compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.validateTransitiveComponentDependencies=DISABLED")
+        compilerWithOptions("-Adagger.validateTransitiveComponentDependencies=DISABLED")
             .compile(shortLifetime);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -297,8 +297,7 @@ public final class ComponentValidationTest {
     // Test that compilation succeeds when transitive validation is disabled because the cycle
     // cannot be detected.
     compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.validateTransitiveComponentDependencies=DISABLED")
+        compilerWithOptions("-Adagger.validateTransitiveComponentDependencies=DISABLED")
             .compile(longLifetime, mediumLifetime, shortLifetime);
     assertThat(compilation).succeeded();
   }

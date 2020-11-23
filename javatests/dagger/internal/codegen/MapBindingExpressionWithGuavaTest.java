@@ -20,7 +20,6 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.compilerWithOptions;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 
 import com.google.testing.compile.Compilation;
@@ -341,8 +340,7 @@ public class MapBindingExpressionWithGuavaTest {
                 "}")
             .build();
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(mapModuleFile, componentFile, subcomponentModuleFile, subcomponent);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -411,8 +409,7 @@ public class MapBindingExpressionWithGuavaTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(module, inaccessible, usesInaccessible, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -482,7 +479,7 @@ public class MapBindingExpressionWithGuavaTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(parent, parentModule, child);
+        compilerWithOptions(compilerMode.javacopts()).compile(parent, parentModule, child);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerParent")

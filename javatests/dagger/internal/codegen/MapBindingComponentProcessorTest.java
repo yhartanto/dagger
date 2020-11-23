@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 
@@ -234,8 +235,7 @@ public class MapBindingComponentProcessorTest {
                 "}");
     }
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(
                 mapModuleOneFile,
                 mapModuleTwoFile,
@@ -642,8 +642,7 @@ public class MapBindingComponentProcessorTest {
                 "}");
     }
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(
                 mapModuleOneFile,
                 mapModuleTwoFile,
@@ -854,8 +853,7 @@ public class MapBindingComponentProcessorTest {
                 "}");
     }
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(
                 mapModuleOneFile,
                 mapModuleTwoFile,
@@ -1030,8 +1028,7 @@ public class MapBindingComponentProcessorTest {
                 "}");
     }
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(
                 mapModuleOneFile,
                 mapModuleTwoFile,
@@ -1090,8 +1087,7 @@ public class MapBindingComponentProcessorTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(mapModuleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)

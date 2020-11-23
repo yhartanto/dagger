@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.TestUtils.endsWithMessage;
 import static dagger.internal.codegen.TestUtils.message;
@@ -113,8 +114,7 @@ public class DependencyCycleValidationTest {
             "========================");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(SIMPLE_CYCLIC_DEPENDENCY);
     assertThat(compilation).failed();
 

@@ -23,9 +23,9 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.auto.value.processor.AutoAnnotationProcessor;
 import com.google.common.base.Splitter;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compiler;
+import java.util.Arrays;
 import javax.annotation.processing.Processor;
 
 /** {@link Compiler} instances for testing Dagger. */
@@ -39,6 +39,9 @@ public final class Compilers {
               .filter(jar -> !jar.contains(GUAVA))
               .collect(joining(PATH_SEPARATOR.value())));
 
+  static final ImmutableList<String> DEFAULT_JAVACOPTS =
+      ImmutableList.of("-Adagger.experimentalDaggerErrorMessages=enabled");
+
   /**
    * Returns a compiler that runs the Dagger and {@code @AutoAnnotation} processors, along with
    * extras.
@@ -47,15 +50,24 @@ public final class Compilers {
     ImmutableList.Builder<Processor> processors = ImmutableList.builder();
     processors.add(new ComponentProcessor(), new AutoAnnotationProcessor());
     processors.add(extraProcessors);
-    return javac().withProcessors(processors.build());
+    return javac().withProcessors(processors.build()).withOptions(DEFAULT_JAVACOPTS);
   }
 
   public static Compiler compilerWithOptions(CompilerMode... compilerModes) {
-    FluentIterable<String> options = FluentIterable.of();
+    ImmutableList.Builder<String> options = ImmutableList.builder();
     for (CompilerMode compilerMode : compilerModes) {
-      options = options.append(compilerMode.javacopts());
+      options = options.addAll(compilerMode.javacopts());
     }
-    return daggerCompiler().withOptions(options);
+    return compilerWithOptions(options.build());
+  }
+
+  public static Compiler compilerWithOptions(String... options) {
+    return compilerWithOptions(Arrays.asList(options));
+  }
+
+  public static Compiler compilerWithOptions(Iterable<String> options) {
+    return daggerCompiler()
+        .withOptions(ImmutableList.builder().addAll(DEFAULT_JAVACOPTS).addAll(options).build());
   }
 
   private Compilers() {}

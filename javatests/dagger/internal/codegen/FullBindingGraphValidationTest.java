@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.TestUtils.endsWithMessage;
 
@@ -87,8 +88,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void moduleWithErrors_validationTypeError() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(MODULE_WITH_ERRORS);
 
     assertThat(compilation).failed();
@@ -104,8 +104,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void moduleWithErrors_validationTypeWarning() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=WARNING")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=WARNING")
             .compile(MODULE_WITH_ERRORS);
 
     assertThat(compilation).succeeded();
@@ -139,8 +138,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void includesModuleWithErrors_validationTypeError() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(MODULE_WITH_ERRORS, INCLUDES_MODULE_WITH_ERRORS);
 
     assertThat(compilation).failed();
@@ -161,8 +159,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void includesModuleWithErrors_validationTypeWarning() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=WARNING")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=WARNING")
             .compile(MODULE_WITH_ERRORS, INCLUDES_MODULE_WITH_ERRORS);
 
     assertThat(compilation).succeeded();
@@ -234,8 +231,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void moduleIncludingModuleWithCombinedErrors_validationTypeError() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(A_MODULE, COMBINED_WITH_A_MODULE_HAS_ERRORS);
 
     assertThat(compilation).failed();
@@ -251,8 +247,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void moduleIncludingModuleWithCombinedErrors_validationTypeWarning() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=WARNING")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=WARNING")
             .compile(A_MODULE, COMBINED_WITH_A_MODULE_HAS_ERRORS);
 
     assertThat(compilation).succeeded();
@@ -328,8 +323,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void subcomponentWithErrors_validationTypeError() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(SUBCOMPONENT_WITH_ERRORS, A_MODULE);
 
     assertThat(compilation).failed();
@@ -345,8 +339,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void subcomponentWithErrors_validationTypeWarning() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=WARNING")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=WARNING")
             .compile(SUBCOMPONENT_WITH_ERRORS, A_MODULE);
 
     assertThat(compilation).succeeded();
@@ -382,8 +375,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void moduleWithSubcomponentWithErrors_validationTypeError() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(MODULE_WITH_SUBCOMPONENT_WITH_ERRORS, SUBCOMPONENT_WITH_ERRORS, A_MODULE);
 
     assertThat(compilation).failed();
@@ -405,8 +397,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void moduleWithSubcomponentWithErrors_validationTypeWarning() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=WARNING")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=WARNING")
             .compile(MODULE_WITH_SUBCOMPONENT_WITH_ERRORS, SUBCOMPONENT_WITH_ERRORS, A_MODULE);
 
     assertThat(compilation).succeeded();
@@ -483,8 +474,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void moduleWithSubcomponentWithCombinedErrors_validationTypeError() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS, A_SUBCOMPONENT, A_MODULE);
 
     assertThat(compilation).failed();
@@ -500,8 +490,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void moduleWithSubcomponentWithCombinedErrors_validationTypeWarning() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=WARNING")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=WARNING")
             .compile(COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS, A_SUBCOMPONENT, A_MODULE);
 
     assertThat(compilation).succeeded();
@@ -517,8 +506,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void bothAliasesDifferentValues() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(
+        compilerWithOptions(
                 "-Adagger.moduleBindingValidation=NONE",
                 "-Adagger.fullBindingGraphValidation=ERROR")
             .compile(MODULE_WITH_ERRORS);
@@ -537,8 +525,7 @@ public final class FullBindingGraphValidationTest {
   @Test
   public void bothAliasesSameValue() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(
+        compilerWithOptions(
                 "-Adagger.moduleBindingValidation=NONE", "-Adagger.fullBindingGraphValidation=NONE")
             .compile(MODULE_WITH_ERRORS);
 

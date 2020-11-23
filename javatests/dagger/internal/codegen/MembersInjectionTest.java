@@ -22,7 +22,7 @@ import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 import static com.google.testing.compile.JavaSourcesSubjectFactory.javaSources;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
@@ -95,8 +95,7 @@ public class MembersInjectionTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(childFile, parentFile, componentFile);
 
     assertThat(compilation).succeeded();
@@ -161,8 +160,7 @@ public class MembersInjectionTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(childFile, parentFile, depFile, componentFile);
 
     assertThat(compilation).succeeded();
@@ -992,8 +990,7 @@ public class MembersInjectionTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(foo, fooModule, fooComponent);
     assertThat(compilation).succeeded();
     assertThat(compilation).generatedFile(CLASS_OUTPUT, "test", "foo_MembersInjector.class");
@@ -1111,7 +1108,7 @@ public class MembersInjectionTest {
         "    @Inject int field;",
         "  }",
         "}");
-    Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
+    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(file);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining("Dagger does not support injection into private classes")
@@ -1131,8 +1128,7 @@ public class MembersInjectionTest {
         "  }",
         "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(
+        compilerWithOptions(
                 compilerMode.javacopts().append("-Adagger.privateMemberValidation=WARNING"))
             .compile(file);
     assertThat(compilation).succeeded();
@@ -1155,7 +1151,7 @@ public class MembersInjectionTest {
         "    @Inject int field;",
         "  }",
         "}");
-    Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
+    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(file);
     assertThat(compilation).succeeded();
   }
 
@@ -1179,7 +1175,7 @@ public class MembersInjectionTest {
             "  void inject(RawProviderField rawProviderField);",
             "}");
 
-    Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
+    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(file);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining("Provider cannot be provided")
@@ -1200,7 +1196,7 @@ public class MembersInjectionTest {
             "@Inject void inject() throws Exception {}",
             "}");
 
-    Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
+    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(file);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining("Methods with @Inject may not throw checked exceptions. "
@@ -1229,7 +1225,7 @@ public class MembersInjectionTest {
             "  void inject(RawProviderParameter rawProviderParameter);",
             "}");
 
-    Compilation compilation = daggerCompiler().withOptions(compilerMode.javacopts()).compile(file);
+    Compilation compilation = compilerWithOptions(compilerMode.javacopts()).compile(file);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining("Provider cannot be provided")
@@ -1334,7 +1330,7 @@ public class MembersInjectionTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(injectedType);
+        compilerWithOptions(compilerMode.javacopts()).compile(injectedType);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.InjectedType_MembersInjector")
@@ -1392,8 +1388,7 @@ public class MembersInjectionTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(foo, inaccessible, usesInaccessible, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -1534,8 +1529,7 @@ public class MembersInjectionTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(inaccessible, inaccessiblesModule, usesInaccessibles, component);
     assertThat(compilation).succeeded();
     JavaFileObject generatedComponent =
@@ -1664,8 +1658,7 @@ public class MembersInjectionTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(foo, supertype, subtype, injectsSubtype, component);
     assertThat(compilation).succeeded();
     JavaFileObject generatedComponent =
@@ -1810,8 +1803,7 @@ public class MembersInjectionTest {
 
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(classA, classB, classC);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -1918,8 +1910,7 @@ public class MembersInjectionTest {
 
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(classA, classB);
     assertThat(compilation).succeeded();
     assertThat(compilation)

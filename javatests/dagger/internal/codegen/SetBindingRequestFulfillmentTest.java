@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.CLASS_PATH_WITHOUT_GUAVA_OPTION;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
@@ -316,7 +316,6 @@ public class SetBindingRequestFulfillmentTest {
   }
 
   private Compiler daggerCompilerWithoutGuava() {
-    return daggerCompiler()
-        .withOptions(compilerMode.javacopts().append(CLASS_PATH_WITHOUT_GUAVA_OPTION));
+    return compilerWithOptions(compilerMode.javacopts().append(CLASS_PATH_WITHOUT_GUAVA_OPTION));
   }
 }

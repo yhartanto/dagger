@@ -19,7 +19,7 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 
 import com.google.testing.compile.Compilation;
@@ -390,8 +390,7 @@ public class DelegateBindingExpressionTest {
             "  other.Supertype supertype();",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(accessibleSupertype, inaccessibleSubtype, module, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -499,8 +498,7 @@ public class DelegateBindingExpressionTest {
             "  other.UsesSupertype usesSupertype();",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(supertype, subtype, usesSupertype, module, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -590,8 +588,7 @@ public class DelegateBindingExpressionTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(module, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -692,8 +689,7 @@ public class DelegateBindingExpressionTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(module, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -798,8 +794,7 @@ public class DelegateBindingExpressionTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(supertype, injectableSubtype, module, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -891,8 +886,7 @@ public class DelegateBindingExpressionTest {
             "  Provider<Object> object();",
             "}");
 
-    Compilation compilation = daggerCompiler()
-        .withOptions(compilerMode.javacopts())
+    Compilation compilation = compilerWithOptions(compilerMode.javacopts())
         .compile(module, component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -977,8 +971,7 @@ public class DelegateBindingExpressionTest {
 
   private CompilationSubject assertThatCompilationWithModule(JavaFileObject module) {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(
                 module,
                 COMPONENT,

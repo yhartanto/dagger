@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
@@ -69,7 +70,7 @@ public class ProductionComponentProcessorTest {
         "  INSTANCE",
         "}");
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorContaining("interface");
   }
@@ -83,7 +84,7 @@ public class ProductionComponentProcessorTest {
         "@ProductionComponent",
         "@interface NotAComponent {}");
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorContaining("interface");
   }
@@ -97,7 +98,7 @@ public class ProductionComponentProcessorTest {
         "@ProductionComponent(modules = Object.class)",
         "interface NotAComponent {}");
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(componentFile);
+        compilerWithOptions(compilerMode.javacopts()).compile(componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining("is not annotated with one of @Module, @ProducerModule");
@@ -166,8 +167,7 @@ public class ProductionComponentProcessorTest {
         .onLineContaining("interface SimpleComponent");
 
     compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(producerModuleFile);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -592,7 +592,7 @@ public class ProductionComponentProcessorTest {
         "  }",
         "}");
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(component);
+        compilerWithOptions(compilerMode.javacopts()).compile(component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .hadWarningContaining("@Nullable on @Produces methods does not do anything")
@@ -641,8 +641,7 @@ public class ProductionComponentProcessorTest {
             "  ProductionScoped productionScoped();",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(productionScoped, parent, child);
     assertThat(compilation).succeeded();
     assertThat(compilation)

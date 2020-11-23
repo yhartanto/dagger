@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 
 import com.google.testing.compile.Compilation;
@@ -153,8 +154,7 @@ public class ProductionGraphValidationTest {
         .onLineContaining("interface AComponent");
 
     compilation =
-        daggerCompiler()
-            .withOptions("-Adagger.fullBindingGraphValidation=ERROR")
+        compilerWithOptions("-Adagger.fullBindingGraphValidation=ERROR")
             .compile(EXECUTOR_MODULE, component);
     assertThat(compilation).failed();
     assertThat(compilation)

@@ -20,6 +20,7 @@ import static com.google.common.truth.TruthJUnit.assume;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.ComponentCreatorTest.CompilerType.JAVAC;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
@@ -1273,9 +1274,9 @@ public class ComponentCreatorTest extends ComponentCreatorTestHelper {
   /** Compiles the given files with the set compiler mode's javacopts. */
   @Override
   Compilation compile(JavaFileObject... files) {
-    ImmutableList.Builder<Object> options =
-        ImmutableList.builder().addAll(compilerMode.javacopts());
+    ImmutableList.Builder<String> options =
+        ImmutableList.<String>builder().addAll(compilerMode.javacopts());
 
-    return daggerCompiler().withOptions(options.build()).compile(files);
+    return compilerWithOptions(options.build()).compile(files);
   }
 }

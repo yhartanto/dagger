@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
 
@@ -112,8 +112,7 @@ public class ElidedFactoriesTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(injectedType, dependsOnInjected, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -307,8 +306,7 @@ public class ElidedFactoriesTest {
                 "}");
     }
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(scopedType, dependsOnScoped, componentFile, needsProvider);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -486,8 +484,7 @@ public class ElidedFactoriesTest {
                 "}");
     }
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(scopedType, dependsOnScoped, componentFile, subcomponentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)

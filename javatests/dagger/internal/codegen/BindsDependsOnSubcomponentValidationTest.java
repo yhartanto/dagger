@@ -17,6 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 
 import com.google.testing.compile.Compilation;
@@ -326,9 +327,8 @@ public class BindsDependsOnSubcomponentValidationTest {
             "  @Inject FooImpl(Long l) {}",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            // TODO(erichang): make this flag the default and remove this
-            .withOptions("-Adagger.strictMultibindingValidation=enabled")
+        // TODO(erichang): make this flag the default and remove this
+        compilerWithOptions("-Adagger.strictMultibindingValidation=enabled")
             .compile(parentComponent, parentModule, childComponent, childModule, iface, impl);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);

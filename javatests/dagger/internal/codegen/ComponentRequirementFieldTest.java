@@ -17,7 +17,7 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 
 import com.google.testing.compile.Compilation;
@@ -66,7 +66,7 @@ public class ComponentRequirementFieldTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(component);
+        compilerWithOptions(compilerMode.javacopts()).compile(component);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerTestComponent")
@@ -161,8 +161,7 @@ public class ComponentRequirementFieldTest {
             "  long l();",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(module, otherPackageModule, component);
     assertThat(compilation).succeeded();
     JavaFileObject generatedComponent =
@@ -235,8 +234,7 @@ public class ComponentRequirementFieldTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(dependency, component, subcomponent);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -423,8 +421,7 @@ public class ComponentRequirementFieldTest {
                 "}");
     }
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(parentModule, childModule, component, subcomponent);
     assertThat(compilation).succeeded();
     assertThat(compilation)

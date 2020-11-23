@@ -20,6 +20,7 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
 import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
+import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.GeneratedLines.GENERATED_CODE_ANNOTATIONS;
 import static dagger.internal.codegen.GeneratedLines.IMPORT_GENERATED_ANNOTATION;
@@ -105,8 +106,7 @@ public class ComponentProcessorTest {
         "}");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(parent, child, another, componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -140,8 +140,7 @@ public class ComponentProcessorTest {
         "  OuterClass outerClass();",
         "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(
+        compilerWithOptions(
                 compilerMode.javacopts().append("-Adagger.privateMemberValidation=WARNING"))
             .compile(outerClass, componentFile);
     assertThat(compilation).failed();
@@ -259,8 +258,7 @@ public class ComponentProcessorTest {
             .build();
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(injectableTypeFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -385,8 +383,7 @@ public class ComponentProcessorTest {
                 "  }")
             .build();
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(injectableTypeFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -444,7 +441,7 @@ public class ComponentProcessorTest {
             .build();
 
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(nestedTypesFile);
+        compilerWithOptions(compilerMode.javacopts()).compile(nestedTypesFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
         .generatedSourceFile("test.DaggerOuterType_SimpleComponent")
@@ -540,8 +537,7 @@ public class ComponentProcessorTest {
             .build();
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(aFile, bFile, cFile, moduleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -622,8 +618,7 @@ public class ComponentProcessorTest {
             .build();
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(aFile, bFile, cFile, moduleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -752,8 +747,7 @@ public class ComponentProcessorTest {
         "  }",
         "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(
                 always,
                 testModule,
@@ -787,7 +781,7 @@ public class ComponentProcessorTest {
         "@Component(modules = RootModule.class)",
         "interface TestComponent {}");
     assertThat(
-            daggerCompiler().withOptions(compilerMode.javacopts()).compile(rootModule, component))
+            compilerWithOptions(compilerMode.javacopts()).compile(rootModule, component))
         .failed();
     assertThat(
             daggerCompiler(
@@ -826,7 +820,7 @@ public class ComponentProcessorTest {
             "  ChildComponent childComponent();",
             "}");
     assertThat(
-            daggerCompiler().withOptions(compilerMode.javacopts()).compile(subcomponent, component))
+            compilerWithOptions(compilerMode.javacopts()).compile(subcomponent, component))
         .failed();
     assertThat(
             daggerCompiler(
@@ -925,8 +919,7 @@ public class ComponentProcessorTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(component, module, subcomponent);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -960,8 +953,7 @@ public class ComponentProcessorTest {
         "  BClass bClass();",
         "}");
     assertThat(
-            daggerCompiler()
-                .withOptions(compilerMode.javacopts())
+            compilerWithOptions(compilerMode.javacopts())
                 .compile(aModule, aClass, bClass, component))
         .succeeded();
   }
@@ -1027,8 +1019,7 @@ public class ComponentProcessorTest {
             .build();
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(injectableTypeFile, injectedTypeFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -1082,8 +1073,7 @@ public class ComponentProcessorTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(injectableTypeFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -1145,8 +1135,7 @@ public class ComponentProcessorTest {
             .build();
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(injectableTypeFile, injectedTypeFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -1274,8 +1263,7 @@ public class ComponentProcessorTest {
                 "  }")
             .build();
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(aFile, bFile, aComponentFile, bComponentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -1378,8 +1366,7 @@ public class ComponentProcessorTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(aFile, otherAFile, moduleFile, otherModuleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -1477,8 +1464,7 @@ public class ComponentProcessorTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(injectedTypeFile, aComponentFile, bComponentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -1565,8 +1551,7 @@ public class ComponentProcessorTest {
             .build();
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(aFile, bFile, cFile, xFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -1648,8 +1633,7 @@ public class ComponentProcessorTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(
                 injectableTypeFile,
                 componentSupertypeAFile,
@@ -1700,8 +1684,7 @@ public class ComponentProcessorTest {
             "  }",
             "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(injectableTypeFile, componentSupertype, depComponentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -1748,8 +1731,7 @@ public class ComponentProcessorTest {
         "  C c();",
         "}");
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(aFile, bFile, cFile, componentFile);
     assertThat(compilation).failed();
     assertThat(compilation)
@@ -1772,7 +1754,7 @@ public class ComponentProcessorTest {
             "  String[] array();",
             "}");
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(component);
+        compilerWithOptions(compilerMode.javacopts()).compile(component);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining("String[] cannot be provided without an @Provides-annotated method");
@@ -1998,7 +1980,7 @@ public class ComponentProcessorTest {
             "  @Inject @AScope AClass() {}",
             "}");
     Compilation compilation =
-        daggerCompiler().withOptions(compilerMode.javacopts()).compile(aScope, aClass);
+        compilerWithOptions(compilerMode.javacopts()).compile(aScope, aClass);
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining("@Scope annotations are not allowed on @Inject constructors")
@@ -2096,8 +2078,7 @@ public class ComponentProcessorTest {
             "}");
 
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(foo, module, component, prunedSubcomponent);
     assertThat(compilation).succeeded();
     assertThat(compilation)
@@ -2168,8 +2149,7 @@ public class ComponentProcessorTest {
   @Test
   public void nullIncorrectlyReturnedFromNonNullableInlinedProvider() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(
                 JavaFileObjects.forSourceLines(
                     "test.TestModule",
@@ -2259,8 +2239,7 @@ public class ComponentProcessorTest {
   @Test
   public void nullCheckingIgnoredWhenProviderReturnsPrimitive() {
     Compilation compilation =
-        daggerCompiler()
-            .withOptions(compilerMode.javacopts())
+        compilerWithOptions(compilerMode.javacopts())
             .compile(
                 JavaFileObjects.forSourceLines(
                     "test.TestModule",
