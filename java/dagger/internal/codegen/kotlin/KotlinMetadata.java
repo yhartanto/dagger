@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.kotlin;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.base.MoreAnnotationValues.getIntArrayValue;
 import static dagger.internal.codegen.base.MoreAnnotationValues.getIntValue;
 import static dagger.internal.codegen.base.MoreAnnotationValues.getOptionalIntValue;
@@ -32,6 +31,7 @@ import com.google.common.base.Suppliers;
 import dagger.internal.codegen.extension.DaggerCollectors;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.ElementFilter;
@@ -87,12 +86,12 @@ final class KotlinMetadata {
   private final Supplier<Map<String, ExecutableElement>> methodDescriptors;
 
   // Map that associates field elements with its Kotlin synthetic method for annotations.
-  private final Supplier<Map<VariableElement, Optional<MethodForAnnotations>>>
-      elementFieldAnnotationMethodMap;
+  private final Map<VariableElement, Optional<MethodForAnnotations>>
+      elementFieldAnnotationMethodMap = new HashMap<>();
 
   // Map that associates field elements with its Kotlin getter method.
-  private final Supplier<Map<VariableElement, Optional<ExecutableElement>>>
-      elementFieldGetterMethodMap;
+  private final Map<VariableElement, Optional<ExecutableElement>> elementFieldGetterMethodMap =
+      new HashMap<>();
 
   private final Supplier<Boolean> containsConstructorWithDefaultParam;
 
@@ -117,12 +116,6 @@ final class KotlinMetadata {
                     .collect(
                         Collectors.toMap(
                             DaggerElements::getMethodDescriptor, Function.identity())));
-    this.elementFieldAnnotationMethodMap =
-        Suppliers.memoize(
-            () -> mapFieldToAnnotationMethod(propertyDescriptors.get(), methodDescriptors.get()));
-    this.elementFieldGetterMethodMap =
-        Suppliers.memoize(
-            () -> mapFieldToGetterMethod(propertyDescriptors.get(), methodDescriptors.get()));
     this.containsConstructorWithDefaultParam =
         Suppliers.memoize(this::checkConstructorForDefaultParam);
   }
@@ -215,52 +208,6 @@ final class KotlinMetadata {
     }
   }
 
-  private Map<VariableElement, Optional<MethodForAnnotations>> mapFieldToAnnotationMethod(
-      Map<String, Property> propertyDescriptors, Map<String, ExecutableElement> methodDescriptors) {
-    return ElementFilter.fieldsIn(typeElement.getEnclosedElements()).stream()
-        .filter(field -> !field.getModifiers().contains(Modifier.STATIC))
-        .collect(
-            Collectors.toMap(
-                Function.identity(),
-                field ->
-                    findProperty(field, propertyDescriptors)
-                        .getMethodForAnnotationsSignature()
-                        .map(
-                            signature ->
-                                Optional.ofNullable(methodDescriptors.get(signature))
-                                    .map(MethodForAnnotations::new)
-                                    // The method may be missing across different compilations.
-                                    // See https://youtrack.jetbrains.com/issue/KT-34684
-                                    .orElse(MethodForAnnotations.MISSING))));
-  }
-
-  private Map<VariableElement, Optional<ExecutableElement>> mapFieldToGetterMethod(
-      Map<String, Property> propertyDescriptors, Map<String, ExecutableElement> methodDescriptors) {
-    return ElementFilter.fieldsIn(typeElement.getEnclosedElements()).stream()
-        .filter(field -> !field.getModifiers().contains(Modifier.STATIC))
-        .collect(
-            Collectors.toMap(
-                Function.identity(),
-                field ->
-                    findProperty(field, propertyDescriptors)
-                        .getGetterMethodSignature()
-                        .flatMap(
-                            signature -> Optional.ofNullable(methodDescriptors.get(signature)))));
-  }
-
-  private Property findProperty(VariableElement field, Map<String, Property> propertyDescriptors) {
-    String fieldDescriptor = getFieldDescriptor(field);
-    if (propertyDescriptors.containsKey(fieldDescriptor)) {
-      return propertyDescriptors.get(fieldDescriptor);
-    } else {
-      // Fallback to finding property by name, see: https://youtrack.jetbrains.com/issue/KT-35124
-      final String propertyName = getPropertyNameFromField(field);
-      return propertyDescriptors.values().stream()
-          .filter(property -> propertyName.contentEquals(property.name))
-          .collect(DaggerCollectors.onlyElement());
-    }
-  }
-
   private static String getPropertyNameFromField(VariableElement field) {
     String name = field.getSimpleName().toString();
     if (name.endsWith(DELEGATED_PROPERTY_NAME_SUFFIX)) {
@@ -299,10 +246,8 @@ final class KotlinMetadata {
 
   /** Gets the synthetic method for annotations of a given field element. */
   Optional<ExecutableElement> getSyntheticAnnotationMethod(VariableElement fieldElement) {
-    checkArgument(elementFieldAnnotationMethodMap.get().containsKey(fieldElement));
     return elementFieldAnnotationMethodMap
-        .get()
-        .get(fieldElement)
+        .computeIfAbsent(fieldElement, this::getAnnotationMethodUncached)
         .map(
             methodForAnnotations -> {
               if (methodForAnnotations == MethodForAnnotations.MISSING) {
@@ -318,10 +263,8 @@ final class KotlinMetadata {
    * the Kotlin metadata of a property from another compilation unit.
    */
   boolean isMissingSyntheticAnnotationMethod(VariableElement fieldElement) {
-    checkArgument(elementFieldAnnotationMethodMap.get().containsKey(fieldElement));
     return elementFieldAnnotationMethodMap
-        .get()
-        .get(fieldElement)
+        .computeIfAbsent(fieldElement, this::getAnnotationMethodUncached)
         .map(methodForAnnotations -> methodForAnnotations == MethodForAnnotations.MISSING)
         // This can be missing if there was no property annotation at all (e.g. no annotations or
         // the qualifier is already properly attached to the field). For these cases, it isn't
@@ -353,13 +296,45 @@ final class KotlinMetadata {
 
   /** Gets the getter method of a given field element corresponding to a property. */
   Optional<ExecutableElement> getPropertyGetter(VariableElement fieldElement) {
-    checkArgument(elementFieldGetterMethodMap.get().containsKey(fieldElement));
-    return elementFieldGetterMethodMap.get().get(fieldElement);
+    return elementFieldGetterMethodMap.computeIfAbsent(
+        fieldElement, this::getPropertyGetterUncached);
   }
 
   /** Returns true if any constructor of the defined a default parameter. */
   public boolean containsConstructorWithDefaultParam() {
     return containsConstructorWithDefaultParam.get();
+  }
+
+  private Optional<MethodForAnnotations> getAnnotationMethodUncached(VariableElement fieldElement) {
+    return findProperty(fieldElement, propertyDescriptors.get())
+        .getMethodForAnnotationsSignature()
+        .map(
+            signature ->
+                Optional.ofNullable(methodDescriptors.get().get(signature))
+                    .map(MethodForAnnotations::new)
+                    // The method may be missing across different compilations.
+                    // See https://youtrack.jetbrains.com/issue/KT-34684
+                    .orElse(MethodForAnnotations.MISSING));
+  }
+
+  private Optional<ExecutableElement> getPropertyGetterUncached(VariableElement fieldElement) {
+    return findProperty(fieldElement, propertyDescriptors.get())
+        .getGetterMethodSignature()
+        .flatMap(signature -> Optional.ofNullable(methodDescriptors.get().get(signature)));
+  }
+
+  private static Property findProperty(
+      VariableElement field, Map<String, Property> propertyDescriptors) {
+    String fieldDescriptor = getFieldDescriptor(field);
+    if (propertyDescriptors.containsKey(fieldDescriptor)) {
+      return propertyDescriptors.get(fieldDescriptor);
+    } else {
+      // Fallback to finding property by name, see: https://youtrack.jetbrains.com/issue/KT-35124
+      final String propertyName = getPropertyNameFromField(field);
+      return propertyDescriptors.values().stream()
+          .filter(property -> propertyName.contentEquals(property.name))
+          .collect(DaggerCollectors.onlyElement());
+    }
   }
 
   /** Parse Kotlin class metadata from a given type element * */
