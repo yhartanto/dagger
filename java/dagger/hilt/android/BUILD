@@ -181,6 +181,9 @@ gen_maven_artifact(
     ],
     manifest = "AndroidManifest.xml",
     packaging = "aar",
+    proguard_specs = [
+        "//java/dagger/hilt/android/lifecycle:proguard-rules.pro",
+    ],
 )
 
 filegroup(

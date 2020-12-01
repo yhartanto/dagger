@@ -56,7 +56,8 @@ def gen_maven_artifact(
         shaded_deps = None,
         shaded_rules = None,
         manifest = None,
-        lint_deps = None):
+        lint_deps = None,
+        proguard_specs = None):
     _gen_maven_artifact(
         name,
         artifact_name,
@@ -75,7 +76,8 @@ def gen_maven_artifact(
         shaded_deps,
         shaded_rules,
         manifest,
-        lint_deps
+        lint_deps,
+        proguard_specs
     )
 
 def _gen_maven_artifact(
@@ -96,7 +98,8 @@ def _gen_maven_artifact(
         shaded_deps,
         shaded_rules,
         manifest,
-        lint_deps):
+        lint_deps,
+        proguard_specs):
     """Generates the files required for a maven artifact.
 
     This macro generates the following targets:
@@ -131,6 +134,7 @@ def _gen_maven_artifact(
       shaded_rules: The shaded rules for the jarjar.
       manifest: The AndroidManifest.xml to bundle in when packaing an 'aar'.
       lint_deps: The lint targets to be bundled in when packaging an 'aar'.
+      proguard_specs: The proguard spec files to be bundled in when packaging an 'aar'
     """
 
     _validate_maven_deps(
@@ -181,11 +185,24 @@ def _gen_maven_artifact(
         else:
             lint_jar_name = None
 
+        if proguard_specs:
+            # Concatenate all proguard rules since an aar only contains a single proguard.txt
+            native.genrule(
+                name = name + "-proguard.txt",
+                srcs = proguard_specs,
+                outs = [name + "-proguard.txt"],
+                cmd = "cat $(SRCS) > $@",
+            )
+            proguard_file = name + "-proguard.txt"
+        else:
+            proguard_file = None
+
         _package_android_library(
             name = name + "-android-lib",
             manifest = manifest,
             classesJar = name + "-classes.jar",
             lintJar = lint_jar_name,
+            proguardSpec = proguard_file,
         )
 
         # Copy intermediate outputs to final one.
@@ -329,6 +346,8 @@ def _package_android_library_impl(ctx):
     inputs = [ctx.file.manifest, ctx.file.classesJar]
     if ctx.file.lintJar:
         inputs.append(ctx.file.lintJar)
+    if ctx.file.proguardSpec:
+        inputs.append(ctx.file.proguardSpec)
 
     ctx.actions.run_shell(
         inputs = inputs,
@@ -340,12 +359,16 @@ def _package_android_library_impl(ctx):
             if [[ -a {lintJar} ]]; then
                 cp {lintJar} $TMPDIR/lint.jar
             fi
+            if [[ -a {proguardSpec} ]]; then
+                cp {proguardSpec} $TMPDIR/proguard.txt
+            fi
             touch $TMPDIR/R.txt
             zip -j {outputFile} $TMPDIR/*
             """.format(
             manifest = ctx.file.manifest.path,
             classesJar = ctx.file.classesJar.path,
             lintJar = ctx.file.lintJar.path if ctx.file.lintJar else "none",
+            proguardSpec = ctx.file.proguardSpec.path if ctx.file.proguardSpec else "none",
             outputFile = ctx.outputs.aar.path,
         ),
     )
@@ -365,6 +388,11 @@ _package_android_library = rule(
         ),
         "lintJar": attr.label(
             doc = "The lint.jar file.",
+            allow_single_file = True,
+            mandatory = False,
+        ),
+        "proguardSpec": attr.label(
+            doc = "The proguard.txt file.",
             allow_single_file = True,
             mandatory = False,
         ),
