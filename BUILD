@@ -15,8 +15,16 @@
 load("@rules_java//java:defs.bzl", "java_library")
 load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 load("@google_bazel_common//tools/jarjar:jarjar.bzl", "jarjar_library")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "define_kt_toolchain")
 
 package(default_visibility = ["//visibility:public"])
+
+define_kt_toolchain(
+    name = "kotlin_toolchain",
+    api_version = "1.4",
+    jvm_target = "1.8",
+    language_version = "1.4",
+)
 
 package_group(
     name = "src",

@@ -19,12 +19,14 @@ package dagger.internal.codegen;
 import static com.google.common.base.StandardSystemProperty.JAVA_CLASS_PATH;
 import static com.google.common.base.StandardSystemProperty.PATH_SEPARATOR;
 import static com.google.testing.compile.Compiler.javac;
-import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toList;
 
 import com.google.auto.value.processor.AutoAnnotationProcessor;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compiler;
+import java.io.File;
 import java.util.Arrays;
 import javax.annotation.processing.Processor;
 
@@ -32,12 +34,14 @@ import javax.annotation.processing.Processor;
 public final class Compilers {
   private static final String GUAVA = "guava";
 
-  static final ImmutableList<String> CLASS_PATH_WITHOUT_GUAVA_OPTION =
-      ImmutableList.of(
-          "-classpath",
-          Splitter.on(PATH_SEPARATOR.value()).splitToList(JAVA_CLASS_PATH.value()).stream()
-              .filter(jar -> !jar.contains(GUAVA))
-              .collect(joining(PATH_SEPARATOR.value())));
+  static final ImmutableList<File> CLASS_PATH_WITHOUT_GUAVA_OPTION =
+      Splitter.on(PATH_SEPARATOR.value()).splitToList(JAVA_CLASS_PATH.value()).stream()
+          .filter(jar -> !jar.contains(GUAVA))
+          // Remove Bazel's runner deploy jar which leaks Guava classes into the classpath and
+          // the compile testing tests.
+          .filter(jar -> !jar.contains("Runner_deploy.jar"))
+          .map(File::new)
+          .collect(collectingAndThen(toList(), ImmutableList::copyOf));
 
   static final ImmutableList<String> DEFAULT_JAVACOPTS =
       ImmutableList.of("-Adagger.experimentalDaggerErrorMessages=enabled");

@@ -316,6 +316,7 @@ public class SetBindingRequestFulfillmentTest {
   }
 
   private Compiler daggerCompilerWithoutGuava() {
-    return compilerWithOptions(compilerMode.javacopts().append(CLASS_PATH_WITHOUT_GUAVA_OPTION));
+    return compilerWithOptions(compilerMode.javacopts())
+        .withClasspath(CLASS_PATH_WITHOUT_GUAVA_OPTION);
   }
 }

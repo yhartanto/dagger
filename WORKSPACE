@@ -65,6 +65,37 @@ http_archive(
     urls = ["https://github.com/madler/zlib/archive/v1.2.11.tar.gz"],
 )
 
+RULES_KOTLIN_COMMIT = "2c283821911439e244285b5bfec39148e7d90e21"
+
+RULES_KOTLIN_SHA = "b04cd539e7e3571745179da95069586b6fa76a64306b24bb286154e652010608"
+
+http_archive(
+    name = "io_bazel_rules_kotlin",
+    sha256 = RULES_KOTLIN_SHA,
+    strip_prefix = "rules_kotlin-%s" % RULES_KOTLIN_COMMIT,
+    type = "zip",
+    urls = ["https://github.com/bazelbuild/rules_kotlin/archive/%s.zip" % RULES_KOTLIN_COMMIT],
+)
+
+load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")
+
+kt_download_local_dev_dependencies()
+
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
+
+KOTLIN_VERSION = "1.4.20"
+
+KOTLINC_RELEASE_SHA = "11db93a4d6789e3406c7f60b9f267eba26d6483dcd771eff9f85bb7e9837011f"
+
+KOTLINC_RELEASE = {
+    "sha256": KOTLINC_RELEASE_SHA,
+    "urls": ["https://github.com/JetBrains/kotlin/releases/download/v{v}/kotlin-compiler-{v}.zip".format(v = KOTLIN_VERSION)],
+}
+
+kotlin_repositories(compiler_release = KOTLINC_RELEASE)
+
+register_toolchains("//:kotlin_toolchain")
+
 load("@rules_jvm_external//:defs.bzl", "maven_install")
 
 ANDROID_LINT_VERSION = "26.6.2"
@@ -95,7 +126,7 @@ maven_install(
         "com.android.tools:testutils:%s" % ANDROID_LINT_VERSION,
         "com.github.tschuchortdev:kotlin-compile-testing:1.2.8",
         "com.google.guava:guava:27.1-android",
-        "org.jetbrains.kotlin:kotlin-stdlib:1.3.50",
+        "org.jetbrains.kotlin:kotlin-stdlib:%s" % KOTLIN_VERSION,
         "org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.1.0",
         "org.robolectric:robolectric:4.3.1",
     ],
@@ -105,22 +136,6 @@ maven_install(
         "https://jcenter.bintray.com/",  # Lint has one trove4j dependency in jCenter
     ],
 )
-
-RULES_KOTLIN_VERSION = "legacy-1.4.0-rc3"
-
-RULES_KOTLIN_SHA = "da0e6e1543fcc79e93d4d93c3333378f3bd5d29e82c1bc2518de0dbe048e6598"
-
-http_archive(
-    name = "io_bazel_rules_kotlin",
-    sha256 = RULES_KOTLIN_SHA,
-    urls = ["https://github.com/bazelbuild/rules_kotlin/releases/download/%s/rules_kotlin_release.tgz" % RULES_KOTLIN_VERSION],
-)
-
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories", "kt_register_toolchains")
-
-kotlin_repositories()
-
-kt_register_toolchains()
 
 BAZEL_SKYLIB_VERSION = "1.0.2"
 
