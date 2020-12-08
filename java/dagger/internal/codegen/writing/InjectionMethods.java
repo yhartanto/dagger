@@ -18,7 +18,6 @@ package dagger.internal.codegen.writing;
 
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
-import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.base.RequestKinds.requestTypeName;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
@@ -48,7 +47,6 @@ import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.extension.DaggerCollectors;
-import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
@@ -169,9 +167,7 @@ final class InjectionMethods {
               .returnType(enclosingType.asType())
               .enclosingClass(proxyEnclosingClass);
 
-      injectionMethod
-          .copyTypeParameters(enclosingType)
-          .copyThrows(constructor);
+      injectionMethod.copyTypeParameters(enclosingType).copyThrows(constructor);
 
       CodeBlock arguments = injectionMethod.copyParameters(constructor);
       injectionMethod
@@ -185,32 +181,15 @@ final class InjectionMethods {
      * requires the use of an injection method.
      */
     static boolean requiresInjectionMethod(
-        ProvisionBinding binding,
-        ImmutableList<Expression> arguments,
-        CompilerOptions compilerOptions,
-        String callingPackage,
-        DaggerTypes types) {
+        ProvisionBinding binding, CompilerOptions compilerOptions, ClassName requestingClass) {
       ExecutableElement method = MoreElements.asExecutable(binding.bindingElement().get());
       return !binding.injectionSites().isEmpty()
           || binding.shouldCheckForNull(compilerOptions)
-          || !isElementAccessibleFrom(method, callingPackage)
-          || !areParametersAssignable(method, arguments, types)
+          || !isElementAccessibleFrom(method, requestingClass.packageName())
           // This check should be removable once we drop support for -source 7
           || method.getParameters().stream()
               .map(VariableElement::asType)
-              .anyMatch(type -> !isRawTypeAccessible(type, callingPackage));
-    }
-
-    private static boolean areParametersAssignable(
-        ExecutableElement element, ImmutableList<Expression> arguments, DaggerTypes types) {
-      List<? extends VariableElement> parameters = element.getParameters();
-      checkArgument(parameters.size() == arguments.size());
-      for (int i = 0; i < parameters.size(); i++) {
-        if (!types.isAssignable(arguments.get(i).type(), parameters.get(i).asType())) {
-          return false;
-        }
-      }
-      return true;
+              .anyMatch(type -> !isRawTypeAccessible(type, requestingClass.packageName()));
     }
 
     /**
@@ -261,8 +240,9 @@ final class InjectionMethods {
     static InjectionMethod create(
         InjectionSite injectionSite, DaggerElements elements, KotlinMetadataUtil metadataUtil) {
       String methodName = methodName(injectionSite);
-      ClassName proxyEnclosingClass = membersInjectorNameForType(
-          MoreElements.asType(injectionSite.element().getEnclosingElement()));
+      ClassName proxyEnclosingClass =
+          membersInjectorNameForType(
+              MoreElements.asType(injectionSite.element().getEnclosingElement()));
       switch (injectionSite.kind()) {
         case METHOD:
           return methodProxy(
@@ -349,11 +329,7 @@ final class InjectionMethods {
       arguments.add(instanceCodeBlock);
       if (!injectionSite.dependencies().isEmpty()) {
         arguments.addAll(
-            injectionSite
-                .dependencies()
-                .stream()
-                .map(dependencyUsage)
-                .collect(toList()));
+            injectionSite.dependencies().stream().map(dependencyUsage).collect(toList()));
       }
       return create(injectionSite, elements, metadataUtil).invoke(arguments, generatedTypeName);
     }
@@ -448,7 +424,6 @@ final class InjectionMethods {
         : elements.getTypeElement(Object.class).asType();
   }
 
-
   private enum ReceiverAccessibility {
     CAST_IF_NOT_PUBLIC {
       @Override
@@ -475,6 +450,7 @@ final class InjectionMethods {
     ;
 
     abstract TypeMirror parameterType(TypeMirror type, DaggerElements elements);
+
     abstract CodeBlock potentiallyCast(CodeBlock instance, TypeMirror instanceType);
   }
 
@@ -485,7 +461,9 @@ final class InjectionMethods {
   }
 
   private enum CheckNotNullPolicy {
-    IGNORE, CHECK_FOR_NULL;
+    IGNORE,
+    CHECK_FOR_NULL;
+
     CodeBlock checkForNull(CodeBlock maybeNull) {
       return this.equals(IGNORE)
           ? maybeNull
@@ -540,9 +518,7 @@ final class InjectionMethods {
               CodeBlock.of("$N", instance), enclosingType.asType()));
     }
 
-    injectionMethod
-        .copyTypeParameters(method)
-        .copyThrows(method);
+    injectionMethod.copyTypeParameters(method).copyThrows(method);
 
     proxyInvocation.add(".$N($L)", method.getSimpleName(), arguments);
     injectionMethod

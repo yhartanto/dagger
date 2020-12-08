@@ -576,7 +576,6 @@ public final class ComponentBindingExpressions {
                 this,
                 membersInjectionMethods,
                 componentRequirementExpressions,
-                types,
                 elements,
                 sourceVersion,
                 metadataUtil));
