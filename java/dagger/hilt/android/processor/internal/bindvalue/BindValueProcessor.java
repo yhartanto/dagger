@@ -73,6 +73,11 @@ public final class BindValueProcessor extends BaseProcessor {
   public void processEach(TypeElement annotation, Element element) throws Exception {
     ClassName annotationClassName = ClassName.get(annotation);
     Element enclosingElement = element.getEnclosingElement();
+    // Restrict BindValue to the direct test class (e.g. not allowed in a base test class) because
+    // otherwise generated BindValue modules from the base class will not associate with the
+    // correct test class. This would make the modules apply globally which would be a weird
+    // difference since just moving a declaration to the parent would change whether the module is
+    // limited to the test that declares it to global.
     ProcessorErrors.checkState(
         enclosingElement.getKind() == ElementKind.CLASS
             && (Processors.hasAnnotation(enclosingElement, ClassNames.HILT_ANDROID_TEST)
