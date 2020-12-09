@@ -60,7 +60,7 @@ final class BindValueGenerator {
   }
 
   //  @Module
-  //  @InstallIn(ApplicationComponent.class)
+  //  @InstallIn(SingletonComponent.class)
   //  public final class FooTest_BindValueModule {
   //     // providesMethods ...
   //  }

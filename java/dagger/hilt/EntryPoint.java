@@ -34,7 +34,7 @@ import java.lang.annotation.Target;
  *
  * <pre><code>
  *   {@literal @}EntryPoint
- *   {@literal @}InstallIn(ApplicationComponent.class)
+ *   {@literal @}InstallIn(SingletonComponent.class)
  *   public interface FooEntryPoint {
  *     Foo getFoo();
  *   }

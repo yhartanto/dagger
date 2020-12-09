@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  *
  * <pre><code>
  *   {@literal @}Module
- *   {@literal @}InstallIn(ApplicationComponent.class)
+ *   {@literal @}InstallIn(SingletonComponent.class)
  *   public final class FooModule {
  *     {@literal @}Provides
  *     static Foo provideFoo() {

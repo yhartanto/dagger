@@ -38,7 +38,7 @@ public final class TestInjectorGenerator {
   }
 
   // @GeneratedEntryPoint
-  // @InstallIn(ApplicationComponent.class)
+  // @InstallIn(SingletonComponent.class)
   // public interface FooTest_GeneratedInjector extends TestInjector<FooTest> {}
   public void generate() throws IOException {
     TypeSpec.Builder builder =

@@ -40,7 +40,7 @@ package dagger.hilt.codegen;
  * <pre><code>
  *   {@literal @}OriginatingElement(topLevelClass = Outer.class)
  *   {@literal @}EntryPoint
- *   {@literal @}InstallIn(ApplicationComponent.class) {
+ *   {@literal @}InstallIn(SingletonComponent.class) {
  *       ...
  *   }
  * </code></pre>

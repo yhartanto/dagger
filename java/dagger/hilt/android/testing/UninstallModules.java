@@ -36,7 +36,7 @@ import java.lang.annotation.Target;
  *   })
  *   public class MyTest {
  *     {@literal @}Module
- *     {@literal @}InstallIn(ApplicationComponent.class)
+ *     {@literal @}InstallIn(SingletonComponent.class)
  *     interface FakeFooModule {
  *       {@literal @}Binds Foo bindFoo(FakeFoo fakeFoo);
  *     }

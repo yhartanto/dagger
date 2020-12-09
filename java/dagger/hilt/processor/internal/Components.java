@@ -92,7 +92,6 @@ public final class Components {
         Processors.getAnnotationMirror(element, ClassNames.INSTALL_IN);
     ImmutableSet<TypeElement> components =
         Processors.getAnnotationClassValues(elements, hiltInstallIn, "value").stream()
-            .map(component -> mapComponents(elements, component))
             .collect(toImmutableSet());
     ImmutableSet<TypeElement> undefinedComponents =
         components.stream()
@@ -104,17 +103,6 @@ public final class Components {
         "@InstallIn, can only be used with @DefineComponent-annotated classes, but found: %s",
         undefinedComponents);
     return components.stream().map(ClassName::get).collect(toImmutableSet());
-  }
-
-  // Temporary hack while ApplicationComponent is renamed to SingletonComponent
-  private static TypeElement mapComponents(Elements elements, TypeElement element) {
-    if (ClassNames.LEGACY_APPLICATION_COMPONENT.equals(ClassName.get(element))) {
-      TypeElement singletonComponent =
-          elements.getTypeElement(ClassNames.APPLICATION_COMPONENT.canonicalName());
-      Preconditions.checkState(singletonComponent != null);
-      return singletonComponent;
-    }
-    return element;
   }
 
   private Components() {}
