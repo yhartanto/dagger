@@ -32,7 +32,7 @@ GenJavaTests(
         "//java/dagger/internal/codegen:processor",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "@androidsdk//:platforms/android-29/android.jar",
+        "@androidsdk//:platforms/android-30/android.jar",
         "@google_bazel_common//third_party/java/compile_testing",
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",

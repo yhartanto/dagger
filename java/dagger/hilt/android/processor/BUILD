@@ -83,7 +83,7 @@ gen_maven_artifact(
         "org.jetbrains.kotlin:kotlin-stdlib",
         "org.jetbrains.kotlinx:kotlinx-metadata-jvm",
     ],
-    javadoc_android_api_level = 29,
+    javadoc_android_api_level = 30,
     javadoc_root_packages = [
         "dagger.hilt.processor",
         "dagger.hilt.android.processor",

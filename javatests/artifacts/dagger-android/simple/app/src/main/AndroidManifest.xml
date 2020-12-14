@@ -16,10 +16,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="dagger.android.simple">
 
-  <uses-sdk
-    android:minSdkVersion="14"
-    android:targetSdkVersion="28"/>
-
   <application
     android:name=".SimpleApplication"
     android:label="@string/appName"

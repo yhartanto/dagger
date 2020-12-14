@@ -23,14 +23,18 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.os.Build;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.annotation.Config;
 
-/** A simple test using Hilt that can be run with instrumentation or Robolectric tests. */
+/** A simple test using dagger-android that can be run with instrumentation or Robolectric tests. */
 @RunWith(AndroidJUnit4.class)
+// Robolectric requires Java9 to run API 29 and above, so use API 28 instead
+@Config(sdk = Build.VERSION_CODES.P)
 public final class SimpleActivityTest {
 
   @Test

@@ -18,13 +18,13 @@ jdk:
 android:
   components:
     - tools
-    - tools # Duplicated as per https://github.com/travis-ci/travis-ci/issues/6040#issuecomment-219367943
-    - build-tools-29.0.2
-    - android-29
     - platform-tools
+    - tools # Duplicated as per https://github.com/travis-ci/travis-ci/issues/6040#issuecomment-219367943
     - extra-android-m2repository
 
 before_install:
+  - yes | sdkmanager "build-tools;30.0.2"
+  - yes | sdkmanager "platforms;android-30"
   - wget https://github.com/bazelbuild/bazel/releases/download/"${BAZEL_VERSION}"/bazel_"${BAZEL_VERSION}"-linux-x86_64.deb
   - sudo dpkg -i bazel_"${BAZEL_VERSION}"-linux-x86_64.deb
   - sudo rm -f /etc/mavenrc

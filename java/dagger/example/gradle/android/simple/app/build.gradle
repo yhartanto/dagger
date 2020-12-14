@@ -17,20 +17,20 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion "29.0.2"
+    compileSdkVersion 30
+    buildToolsVersion "30.0.2"
 
     defaultConfig {
         applicationId "dagger.example.gradle.android.simple"
         minSdkVersion 15
-        targetSdkVersion 28
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
     }
 }
 
 dependencies {
-  implementation 'androidx.appcompat:appcompat:1.1.0'
+  implementation 'androidx.appcompat:appcompat:1.2.0'
   implementation 'com.google.dagger:dagger:LOCAL-SNAPSHOT'
   implementation 'com.google.dagger:dagger-android-support:LOCAL-SNAPSHOT'
   annotationProcessor 'com.google.dagger:dagger-compiler:LOCAL-SNAPSHOT'

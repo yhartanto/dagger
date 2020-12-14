@@ -24,7 +24,7 @@ java_test(
     runtime_deps = [
         ":ViewModelProcessorTestLib",
         "//java/dagger/hilt/android/lifecycle",
-        "@androidsdk//:platforms/android-29/android.jar",
+        "@androidsdk//:platforms/android-30/android.jar",
         "@google_bazel_common//third_party/java/compile_testing",
         "@google_bazel_common//third_party/java/truth",
         "@maven//:androidx_lifecycle_lifecycle_viewmodel",
@@ -51,7 +51,7 @@ java_test(
     runtime_deps = [
         ":ViewModelGeneratorTestLib",
         "//java/dagger/hilt/android/lifecycle",
-        "@androidsdk//:platforms/android-29/android.jar",
+        "@androidsdk//:platforms/android-30/android.jar",
         "@google_bazel_common//third_party/java/compile_testing",
         "@google_bazel_common//third_party/java/truth",
         "@maven//:androidx_lifecycle_lifecycle_viewmodel",
