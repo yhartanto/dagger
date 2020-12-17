@@ -194,7 +194,8 @@ final class InjectionMethods {
       copyTypeParameters(builder, enclosingType);
       copyThrows(builder, constructor);
 
-      CodeBlock arguments = copyParameters(builder, constructor.getParameters());
+      CodeBlock arguments =
+          copyParameters(builder, new UniqueNameSet(), constructor.getParameters());
       return builder.addStatement("return new $T($L)", enclosingType, arguments).build();
     }
 
@@ -442,6 +443,7 @@ final class InjectionMethods {
     TypeElement enclosingType = asType(method.getEnclosingElement());
     boolean isMethodInKotlinObject = metadataUtil.isObjectClass(enclosingType);
     boolean isMethodInKotlinCompanionObject = metadataUtil.isCompanionObjectClass(enclosingType);
+    UniqueNameSet parameterNameSet = new UniqueNameSet();
     CodeBlock instance;
     if (isMethodInKotlinCompanionObject || method.getModifiers().contains(STATIC)) {
       instance = CodeBlock.of("$T", rawTypeName(TypeName.get(enclosingType.asType())));
@@ -452,9 +454,9 @@ final class InjectionMethods {
     } else {
       copyTypeParameters(builder, enclosingType);
       boolean useObject = instanceCastPolicy.useObjectType(enclosingType.asType());
-      instance = copyInstance(builder, enclosingType.asType(), useObject);
+      instance = copyInstance(builder, parameterNameSet, enclosingType.asType(), useObject);
     }
-    CodeBlock arguments = copyParameters(builder, method.getParameters());
+    CodeBlock arguments = copyParameters(builder, parameterNameSet, method.getParameters());
     CodeBlock invocation =
         checkNotNullPolicy.checkForNull(
             CodeBlock.of("$L.$L($L)", instance, method.getSimpleName(), arguments));
@@ -489,8 +491,9 @@ final class InjectionMethods {
     copyTypeParameters(builder, enclosingType);
 
     boolean useObject = !isRawTypePubliclyAccessible(enclosingType.asType());
-    CodeBlock instance = copyInstance(builder, enclosingType.asType(), useObject);
-    CodeBlock argument = copyParameters(builder, ImmutableList.of(field));
+    UniqueNameSet parameterNameSet = new UniqueNameSet();
+    CodeBlock instance = copyInstance(builder, parameterNameSet, enclosingType.asType(), useObject);
+    CodeBlock argument = copyParameters(builder, parameterNameSet, ImmutableList.of(field));
     return builder.addStatement("$L.$L = $L", instance, field.getSimpleName(), argument).build();
   }
 
@@ -518,12 +521,14 @@ final class InjectionMethods {
   }
 
   private static CodeBlock copyParameters(
-      MethodSpec.Builder methodBuilder, List<? extends VariableElement> parameters) {
-    UniqueNameSet parameterNames = new UniqueNameSet();
+      MethodSpec.Builder methodBuilder,
+      UniqueNameSet parameterNameSet,
+      List<? extends VariableElement> parameters) {
     return parameters.stream()
         .map(
             parameter -> {
-              String name = parameterNames.getUniqueName(validJavaName(parameter.getSimpleName()));
+              String name =
+                  parameterNameSet.getUniqueName(validJavaName(parameter.getSimpleName()));
               TypeMirror type = parameter.asType();
               boolean useObject = !isRawTypePubliclyAccessible(type);
               return copyParameter(methodBuilder, type, name, useObject);
@@ -539,8 +544,12 @@ final class InjectionMethods {
   }
 
   private static CodeBlock copyInstance(
-      MethodSpec.Builder methodBuilder, TypeMirror type, boolean useObject) {
-    CodeBlock instance = copyParameter(methodBuilder, type, "instance", useObject);
+      MethodSpec.Builder methodBuilder,
+      UniqueNameSet parameterNameSet,
+      TypeMirror type,
+      boolean useObject) {
+    CodeBlock instance =
+        copyParameter(methodBuilder, type, parameterNameSet.getUniqueName("instance"), useObject);
     // If we had to cast the instance add an extra parenthesis incase we're calling a method on it.
     return useObject ? CodeBlock.of("($L)", instance) : instance;
   }
