@@ -19,6 +19,9 @@ package dagger.internal.codegen.kotlin;
 import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
+import static kotlinx.metadata.Flag.Class.IS_COMPANION_OBJECT;
+import static kotlinx.metadata.Flag.Class.IS_OBJECT;
+import static kotlinx.metadata.Flag.IS_PRIVATE;
 
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -79,25 +82,28 @@ public final class KotlinMetadataUtil {
 
   /** Returns {@code true} if this type element is a Kotlin Object. */
   public boolean isObjectClass(TypeElement typeElement) {
-    return hasMetadata(typeElement) && metadataFactory.create(typeElement).isObjectClass();
+    return hasMetadata(typeElement)
+        && metadataFactory.create(typeElement).classMetadata().flags(IS_OBJECT);
   }
 
   /* Returns {@code true} if this type element is a Kotlin Companion Object. */
   public boolean isCompanionObjectClass(TypeElement typeElement) {
-    return hasMetadata(typeElement) && metadataFactory.create(typeElement).isCompanionObjectClass();
+    return hasMetadata(typeElement)
+        && metadataFactory.create(typeElement).classMetadata().flags(IS_COMPANION_OBJECT);
   }
 
   /* Returns {@code true} if this type element has a Kotlin Companion Object. */
   public boolean hasEnclosedCompanionObject(TypeElement typeElement) {
     return hasMetadata(typeElement)
-        && metadataFactory.create(typeElement).getCompanionObjectName().isPresent();
+        && metadataFactory.create(typeElement).classMetadata().companionObjectName().isPresent();
   }
 
   /* Returns the Companion Object element enclosed by the given type element. */
   public TypeElement getEnclosedCompanionObject(TypeElement typeElement) {
     return metadataFactory
         .create(typeElement)
-        .getCompanionObjectName()
+        .classMetadata()
+        .companionObjectName()
         .map(
             companionObjectName ->
                 ElementFilter.typesIn(typeElement.getEnclosedElements()).stream()
@@ -112,7 +118,8 @@ public final class KotlinMetadataUtil {
    * source.
    */
   public boolean isVisibilityPrivate(TypeElement typeElement) {
-    return hasMetadata(typeElement) && metadataFactory.create(typeElement).isPrivate();
+    return hasMetadata(typeElement)
+        && metadataFactory.create(typeElement).classMetadata().flags(IS_PRIVATE);
   }
 
   public Optional<ExecutableElement> getPropertyGetter(VariableElement fieldElement) {

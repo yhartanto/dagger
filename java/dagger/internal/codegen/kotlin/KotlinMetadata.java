@@ -25,6 +25,7 @@ import static dagger.internal.codegen.base.MoreAnnotationValues.getStringValue;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.langmodel.DaggerElements.getFieldDescriptor;
+import static kotlinx.metadata.Flag.ValueParameter.DECLARES_DEFAULT_VALUE;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -46,7 +47,6 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.ElementFilter;
 import kotlin.Metadata;
 import kotlinx.metadata.Flag;
-import kotlinx.metadata.Flag.ValueParameter;
 import kotlinx.metadata.KmClassVisitor;
 import kotlinx.metadata.KmConstructorVisitor;
 import kotlinx.metadata.KmExtensionType;
@@ -85,13 +85,12 @@ abstract class KotlinMetadata {
         .collect(toImmutableMap(DaggerElements::getMethodDescriptor, Function.identity()));
   }
 
-  private static String getPropertyNameFromField(VariableElement field) {
-    String name = field.getSimpleName().toString();
-    if (name.endsWith(DELEGATED_PROPERTY_NAME_SUFFIX)) {
-      return name.substring(0, name.length() - DELEGATED_PROPERTY_NAME_SUFFIX.length());
-    } else {
-      return name;
-    }
+  /** Returns true if any constructor of the defined a default parameter. */
+  @Memoized
+  boolean containsConstructorWithDefaultParam() {
+    return classMetadata().constructors().stream()
+        .flatMap(constructor -> constructor.parameters().stream())
+        .anyMatch(parameter -> parameter.flags(DECLARES_DEFAULT_VALUE));
   }
 
   /** Gets the synthetic method for annotations of a given field element. */
@@ -120,42 +119,6 @@ abstract class KotlinMetadata {
         .orElse(false);
   }
 
-  boolean isObjectClass() {
-    return Flag.Class.IS_OBJECT.invoke(classMetadata().flags());
-  }
-
-  /** Returns true if the type element of this metadata is a Kotlin companion object. */
-  boolean isCompanionObjectClass() {
-    return Flag.Class.IS_COMPANION_OBJECT.invoke(classMetadata().flags());
-  }
-
-  /**
-   * Returns the name of the companion object enclosed by the type element of this metadata. If the
-   * type element this metadata belongs to does not have a companion object, then this method
-   * returns an empty optional.
-   */
-  Optional<String> getCompanionObjectName() {
-    return classMetadata().companionObjectName();
-  }
-
-  boolean isPrivate() {
-    return Flag.IS_PRIVATE.invoke(classMetadata().flags());
-  }
-
-  /** Gets the getter method of a given field element corresponding to a property. */
-  Optional<ExecutableElement> getPropertyGetter(VariableElement fieldElement) {
-    return elementFieldGetterMethodMap.computeIfAbsent(
-        fieldElement, this::getPropertyGetterUncached);
-  }
-
-  /** Returns true if any constructor of the defined a default parameter. */
-  @Memoized
-  boolean containsConstructorWithDefaultParam() {
-    return classMetadata().constructors().stream()
-        .flatMap(constructor -> constructor.parameters().stream())
-        .anyMatch(parameter -> ValueParameter.DECLARES_DEFAULT_VALUE.invoke(parameter.flags()));
-  }
-
   private Optional<MethodForAnnotations> getAnnotationMethod(VariableElement fieldElement) {
     return elementFieldAnnotationMethodMap.computeIfAbsent(
         fieldElement, this::getAnnotationMethodUncached);
@@ -171,6 +134,12 @@ abstract class KotlinMetadata {
                     // The method may be missing across different compilations.
                     // See https://youtrack.jetbrains.com/issue/KT-34684
                     .orElse(MethodForAnnotations.MISSING));
+  }
+
+  /** Gets the getter method of a given field element corresponding to a property. */
+  Optional<ExecutableElement> getPropertyGetter(VariableElement fieldElement) {
+    return elementFieldGetterMethodMap.computeIfAbsent(
+        fieldElement, this::getPropertyGetterUncached);
   }
 
   private Optional<ExecutableElement> getPropertyGetterUncached(VariableElement fieldElement) {
@@ -189,6 +158,15 @@ abstract class KotlinMetadata {
       return classMetadata().propertiesByFieldSignature().values().stream()
           .filter(property -> propertyName.contentEquals(property.name()))
           .collect(DaggerCollectors.onlyElement());
+    }
+  }
+
+  private static String getPropertyNameFromField(VariableElement field) {
+    String name = field.getSimpleName().toString();
+    if (name.endsWith(DELEGATED_PROPERTY_NAME_SUFFIX)) {
+      return name.substring(0, name.length() - DELEGATED_PROPERTY_NAME_SUFFIX.length());
+    } else {
+      return name;
     }
   }
 
@@ -307,11 +285,7 @@ abstract class KotlinMetadata {
   }
 
   @AutoValue
-  abstract static class ClassMetadata {
-    abstract int flags();
-
-    abstract String name();
-
+  abstract static class ClassMetadata extends BaseMetadata {
     abstract Optional<String> companionObjectName();
 
     abstract ImmutableSet<FunctionMetadata> constructors();
@@ -323,11 +297,7 @@ abstract class KotlinMetadata {
     }
 
     @AutoValue.Builder
-    abstract static class Builder {
-      abstract Builder flags(int flags);
-
-      abstract Builder name(String name);
-
+    abstract static class Builder implements BaseMetadata.Builder<Builder> {
       abstract Builder companionObjectName(String companionObjectName);
 
       abstract ImmutableSet.Builder<FunctionMetadata> constructorsBuilder();
@@ -351,11 +321,7 @@ abstract class KotlinMetadata {
   }
 
   @AutoValue
-  abstract static class FunctionMetadata {
-    abstract int flags();
-
-    abstract String name();
-
+  abstract static class FunctionMetadata extends BaseMetadata {
     abstract ImmutableList<ValueParameterMetadata> parameters();
 
     static Builder builder(int flags, String name) {
@@ -363,11 +329,7 @@ abstract class KotlinMetadata {
     }
 
     @AutoValue.Builder
-    abstract static class Builder {
-      abstract Builder flags(int flags);
-
-      abstract Builder name(String name);
-
+    abstract static class Builder implements BaseMetadata.Builder<Builder> {
       abstract ImmutableList.Builder<ValueParameterMetadata> parametersBuilder();
 
       Builder addParameter(ValueParameterMetadata parameter) {
@@ -380,17 +342,7 @@ abstract class KotlinMetadata {
   }
 
   @AutoValue
-  abstract static class PropertyMetadata {
-    /**
-     * Returns the Kotlin metadata flags for this property.
-     *
-     * <p>Use {@link Flag.Property} to apply the right mask and obtain a specific value.
-     */
-    abstract int flags();
-
-    /** Returns the simple name of this property. */
-    abstract String name();
-
+  abstract static class PropertyMetadata extends BaseMetadata {
     /** Returns the JVM field descriptor of the backing field of this property. */
     abstract Optional<String> fieldSignature();
 
@@ -404,11 +356,7 @@ abstract class KotlinMetadata {
     }
 
     @AutoValue.Builder
-    interface Builder {
-      Builder flags(int flags);
-
-      Builder name(String name);
-
+    interface Builder extends BaseMetadata.Builder<Builder> {
       Builder fieldSignature(Optional<String> signature);
 
       Builder getterSignature(Optional<String> signature);
@@ -420,14 +368,29 @@ abstract class KotlinMetadata {
   }
 
   @AutoValue
-  abstract static class ValueParameterMetadata {
+  abstract static class ValueParameterMetadata extends BaseMetadata {
     private static ValueParameterMetadata create(int flags, String name) {
       return new AutoValue_KotlinMetadata_ValueParameterMetadata(flags, name);
     }
+  }
 
+  abstract static class BaseMetadata {
+    /** Returns the Kotlin metadata flags for this property. */
     abstract int flags();
 
+    /** returns {@code true} if the given flag (e.g. {@link Flag.IS_PRIVATE}) applies. */
+    boolean flags(Flag flag) {
+      return flag.invoke(flags());
+    }
+
+    /** Returns the simple name of this property. */
     abstract String name();
+
+    interface Builder<BuilderT> {
+      BuilderT flags(int flags);
+
+      BuilderT name(String name);
+    }
   }
 
   @AutoValue
