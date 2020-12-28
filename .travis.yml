@@ -54,6 +54,7 @@ env:
     - secure: "UpTUhCQzAGbr5JetRg2GZxp/dPDep/7Il3yGeyDECopciWdx41OPk/QNqAXBhNtKuEaMVsmASyoteuhgaTryQdV4qUIGVOMhES6kbOlYy3nwK44VdsNeeepwVospyDyZbxMtXq5LuHWuTADmAl1mdjNPNoziXc523zjnUzUx/EQ="
     - JDK_FOR_PUBLISHING: *jdk_for_publishing
     - BAZEL_VERSION="3.7.1"
+    - ADB_INSTALL_TIMEOUT=10
 
 after_success:
   - util/generate-latest-docs.sh
