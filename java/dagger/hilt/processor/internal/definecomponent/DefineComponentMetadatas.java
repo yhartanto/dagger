@@ -165,7 +165,7 @@ final class DefineComponentMetadatas {
 
     ProcessorErrors.checkState(
         parentComponent.isPresent()
-            || ClassName.get(component).equals(ClassNames.APPLICATION_COMPONENT),
+            || ClassName.get(component).equals(ClassNames.SINGLETON_COMPONENT),
         component,
         "@DefineComponent %s is missing a parent declaration.\n"
             + "Please declare the parent, for example: @DefineComponent(parent ="

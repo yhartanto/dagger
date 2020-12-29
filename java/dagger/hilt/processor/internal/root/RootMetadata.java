@@ -143,7 +143,7 @@ public final class RootMetadata {
     for (ComponentDescriptor componentDescriptor : componentTree.getComponentDescriptors()) {
       ClassName componentName = componentDescriptor.component();
       for (TypeElement extraModule : modulesThatDaggerCannotConstruct(componentName)) {
-        if (root.type().isTestRoot() && !componentName.equals(ClassNames.APPLICATION_COMPONENT)) {
+        if (root.type().isTestRoot() && !componentName.equals(ClassNames.SINGLETON_COMPONENT)) {
           env.getMessager()
               .printMessage(
                   Diagnostic.Kind.ERROR,

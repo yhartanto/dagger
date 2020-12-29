@@ -164,7 +164,7 @@ public final class ClassNames {
   public static final ClassName ARRAYS = get("java.util", "Arrays");
 
   // Standard components
-  public static final ClassName APPLICATION_COMPONENT =
+  public static final ClassName SINGLETON_COMPONENT =
       get("dagger.hilt.components", "SingletonComponent");
   public static final ClassName ACTIVITY_COMPONENT =
       get("dagger.hilt.android.components", "ActivityComponent");

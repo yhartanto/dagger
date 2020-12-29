@@ -228,7 +228,7 @@ public final class ComponentDependencies {
       // Technically, this is only needed for backwards compatibility with libraries using the old
       // processor since new processors should convert to the new SingletonComponent when generating
       // the metadata class.
-      if (descriptor.component().equals(ClassNames.APPLICATION_COMPONENT)) {
+      if (descriptor.component().equals(ClassNames.SINGLETON_COMPONENT)) {
         builder.put("dagger.hilt.android.components.ApplicationComponent", descriptor);
       }
       builder.put(descriptor.component().toString(), descriptor);
