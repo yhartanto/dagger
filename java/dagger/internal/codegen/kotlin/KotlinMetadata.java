@@ -25,6 +25,7 @@ import static dagger.internal.codegen.base.MoreAnnotationValues.getStringValue;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.langmodel.DaggerElements.getFieldDescriptor;
+import static dagger.internal.codegen.langmodel.DaggerElements.getMethodDescriptor;
 import static kotlinx.metadata.Flag.ValueParameter.DECLARES_DEFAULT_VALUE;
 
 import com.google.auto.value.AutoValue;
@@ -48,12 +49,17 @@ import javax.lang.model.util.ElementFilter;
 import kotlin.Metadata;
 import kotlinx.metadata.Flag;
 import kotlinx.metadata.KmClassVisitor;
+import kotlinx.metadata.KmConstructorExtensionVisitor;
 import kotlinx.metadata.KmConstructorVisitor;
 import kotlinx.metadata.KmExtensionType;
+import kotlinx.metadata.KmFunctionExtensionVisitor;
+import kotlinx.metadata.KmFunctionVisitor;
 import kotlinx.metadata.KmPropertyExtensionVisitor;
 import kotlinx.metadata.KmPropertyVisitor;
 import kotlinx.metadata.KmValueParameterVisitor;
+import kotlinx.metadata.jvm.JvmConstructorExtensionVisitor;
 import kotlinx.metadata.jvm.JvmFieldSignature;
+import kotlinx.metadata.jvm.JvmFunctionExtensionVisitor;
 import kotlinx.metadata.jvm.JvmMethodSignature;
 import kotlinx.metadata.jvm.JvmPropertyExtensionVisitor;
 import kotlinx.metadata.jvm.KotlinClassHeader;
@@ -170,6 +176,10 @@ abstract class KotlinMetadata {
     }
   }
 
+  FunctionMetadata getFunctionMetadata(ExecutableElement method) {
+    return classMetadata().functionsBySignature().get(getMethodDescriptor(method));
+  }
+
   /** Parse Kotlin class metadata from a given type element * */
   static KotlinMetadata from(TypeElement typeElement) {
     return new AutoValue_KotlinMetadata(
@@ -231,8 +241,50 @@ abstract class KotlinMetadata {
         }
 
         @Override
+        public KmConstructorExtensionVisitor visitExtensions(KmExtensionType kmExtensionType) {
+          return kmExtensionType.equals(JvmConstructorExtensionVisitor.TYPE)
+              ? new JvmConstructorExtensionVisitor() {
+                @Override
+                public void visit(JvmMethodSignature jvmMethodSignature) {
+                  constructor.signature(jvmMethodSignature.asString());
+                }
+              }
+              : null;
+        }
+
+        @Override
         public void visitEnd() {
           classMetadata.addConstructor(constructor.build());
+        }
+      };
+    }
+
+    @Override
+    public KmFunctionVisitor visitFunction(int flags, String name) {
+      return new KmFunctionVisitor() {
+        private final FunctionMetadata.Builder function = FunctionMetadata.builder(flags, name);
+
+        @Override
+        public KmValueParameterVisitor visitValueParameter(int flags, String name) {
+          function.addParameter(ValueParameterMetadata.create(flags, name));
+          return super.visitValueParameter(flags, name);
+        }
+
+        @Override
+        public KmFunctionExtensionVisitor visitExtensions(KmExtensionType kmExtensionType) {
+          return kmExtensionType.equals(JvmFunctionExtensionVisitor.TYPE)
+              ? new JvmFunctionExtensionVisitor() {
+                @Override
+                public void visit(JvmMethodSignature jvmMethodSignature) {
+                  function.signature(jvmMethodSignature.asString());
+                }
+              }
+              : null;
+        }
+
+        @Override
+        public void visitEnd() {
+          classMetadata.addFunction(function.build());
         }
       };
     }
@@ -290,6 +342,8 @@ abstract class KotlinMetadata {
 
     abstract ImmutableSet<FunctionMetadata> constructors();
 
+    abstract ImmutableMap<String, FunctionMetadata> functionsBySignature();
+
     abstract ImmutableMap<String, PropertyMetadata> propertiesByFieldSignature();
 
     static Builder builder() {
@@ -302,10 +356,17 @@ abstract class KotlinMetadata {
 
       abstract ImmutableSet.Builder<FunctionMetadata> constructorsBuilder();
 
+      abstract ImmutableMap.Builder<String, FunctionMetadata> functionsBySignatureBuilder();
+
       abstract ImmutableMap.Builder<String, PropertyMetadata> propertiesByFieldSignatureBuilder();
 
       Builder addConstructor(FunctionMetadata constructor) {
         constructorsBuilder().add(constructor);
+        return this;
+      }
+
+      Builder addFunction(FunctionMetadata function) {
+        functionsBySignatureBuilder().put(function.signature(), function);
         return this;
       }
 
@@ -322,6 +383,8 @@ abstract class KotlinMetadata {
 
   @AutoValue
   abstract static class FunctionMetadata extends BaseMetadata {
+    abstract String signature();
+
     abstract ImmutableList<ValueParameterMetadata> parameters();
 
     static Builder builder(int flags, String name) {
@@ -330,6 +393,8 @@ abstract class KotlinMetadata {
 
     @AutoValue.Builder
     abstract static class Builder implements BaseMetadata.Builder<Builder> {
+      abstract Builder signature(String signature);
+
       abstract ImmutableList.Builder<ValueParameterMetadata> parametersBuilder();
 
       Builder addParameter(ValueParameterMetadata parameter) {

@@ -37,6 +37,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.ElementFilter;
 import kotlin.Metadata;
 import kotlin.jvm.JvmStatic;
+import kotlinx.metadata.Flag;
 
 /** Utility class for interacting with Kotlin Metadata. */
 public final class KotlinMetadataUtil {
@@ -120,6 +121,15 @@ public final class KotlinMetadataUtil {
   public boolean isVisibilityPrivate(TypeElement typeElement) {
     return hasMetadata(typeElement)
         && metadataFactory.create(typeElement).classMetadata().flags(IS_PRIVATE);
+  }
+
+  /**
+   * Returns {@code true} if the given executable element was declared {@code internal} in its
+   * Kotlin source.
+   */
+  public boolean isVisibilityInternal(ExecutableElement method) {
+    return hasMetadata(method)
+        && metadataFactory.create(method).getFunctionMetadata(method).flags(Flag.IS_INTERNAL);
   }
 
   public Optional<ExecutableElement> getPropertyGetter(VariableElement fieldElement) {
