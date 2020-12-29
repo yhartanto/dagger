@@ -55,7 +55,6 @@ android_library(
     srcs = ["HiltAndroidApp.java"],
     exported_plugins = [
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:plugin",
-        "//java/dagger/hilt/android/processor/internal/viewmodel:validation_plugin",
         "//java/dagger/hilt/processor/internal/root:plugin",
     ],
     exports = [

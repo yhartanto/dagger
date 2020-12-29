@@ -17,15 +17,12 @@
 package dagger.hilt.android.processor.internal.viewmodel
 
 import com.google.testing.compile.CompilationSubject.assertThat
-import com.google.testing.compile.Compiler
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class ViewModelGeneratorTest {
-
-  private fun compiler(): Compiler = Compiler.javac().withProcessors(ViewModelProcessor())
 
   @Test
   fun verifyModule_noArg() {

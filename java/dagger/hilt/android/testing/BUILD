@@ -44,7 +44,6 @@ android_library(
     exported_plugins = [
         "//java/dagger/hilt/processor/internal/root:plugin",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:plugin",
-        "//java/dagger/hilt/android/processor/internal/viewmodel:validation_plugin",
     ],
     exports = [
         ":hilt_android_rule",
