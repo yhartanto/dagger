@@ -108,12 +108,15 @@ public final class AssistedFactoryParameterizedTest {
     }
   }
 
-  @AssistedFactory
-  interface ParameterizedFooFactory<DepT, AssistedDepT> {
+  interface ParameterizedFactory<ReturnT, DepT, AssistedDepT> {
     // Use different parameter names than Foo to make sure we're not assuming they're the same.
-    ParameterizedFoo<DepT, AssistedDepT> create(
+    ReturnT create(
         AssistedDep1 factoryAssistedDep1, AssistedDepT factoryAssistedDepT, int factoryAssistedInt);
   }
+
+  @AssistedFactory
+  interface ParameterizedFooFactory<DepT, AssistedDepT>
+      extends ParameterizedFactory<ParameterizedFoo<DepT, AssistedDepT>, DepT, AssistedDepT> {}
 
   @Test
   public void testParameterizedFooFactory() {

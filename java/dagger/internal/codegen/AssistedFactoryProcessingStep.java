@@ -150,12 +150,13 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
       }
 
       for (ExecutableElement method : abstractFactoryMethods) {
-        if (!isAssistedInjectionType(method.getReturnType())) {
+        ExecutableType methodType = types.resolveExecutableType(method, factory.asType());
+        if (!isAssistedInjectionType(methodType.getReturnType())) {
           report.addError(
               String.format(
                   "Invalid return type: %s. An assisted factory's abstract method must return a "
                       + "type with an @AssistedInject-annotated constructor.",
-                  method.getReturnType()),
+                  methodType.getReturnType()),
               method);
         }
       }
@@ -175,7 +176,9 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
       // Given the previous checks, we can be sure we have a
       // single factory method with a valid return type.
       ExecutableElement factoryMethod = getOnlyElement(abstractFactoryMethods);
-      DeclaredType returnType = asDeclared(factoryMethod.getReturnType());
+      ExecutableType factoryMethodType =
+          types.resolveExecutableType(factoryMethod, factory.asType());
+      DeclaredType returnType = asDeclared(factoryMethodType.getReturnType());
 
       ImmutableList<TypeMirror> assistedParameterTypes =
           assistedInjectConstructorParameterMap(returnType).entrySet().stream()
@@ -184,7 +187,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
               .collect(toImmutableList());
 
       ImmutableList<TypeMirror> factoryMethodParameterTypes =
-          ImmutableList.copyOf(asExecutable(factoryMethod.asType()).getParameterTypes());
+          ImmutableList.copyOf(factoryMethodType.getParameterTypes());
 
       if (!typesAssignableTo(factoryMethodParameterTypes, assistedParameterTypes)) {
         report.addError(
@@ -297,7 +300,9 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
       TypeElement factory = asType(binding.bindingElement().get());
       ExecutableElement factoryMethod =
           AssistedInjectionAnnotations.assistedFactoryMethod(factory, elements, types);
-      TypeElement returnElement = asTypeElement(factoryMethod.getReturnType());
+      ExecutableType factoryMethodType =
+          asExecutable(types.asMemberOf(asDeclared(binding.key().type()), factoryMethod));
+      TypeElement returnElement = asTypeElement(factoryMethodType.getReturnType());
       ParameterSpec delegateFactoryParam =
           ParameterSpec.builder(delegateFactoryTypeName(returnElement), "delegateFactory").build();
       TypeSpec.Builder builder =
@@ -325,7 +330,7 @@ final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<Typ
                   .addStatement("this.$1N = $1N", delegateFactoryParam)
                   .build())
           .addMethod(
-              MethodSpec.overriding(factoryMethod)
+              MethodSpec.overriding(factoryMethod, asDeclared(factory.asType()), types)
                   .addStatement(
                       "return $N.get($L)",
                       delegateFactoryParam,
