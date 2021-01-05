@@ -54,7 +54,13 @@ readonly GRADLE_PROJECTS=(
 )
 for project in "${GRADLE_PROJECTS[@]}"; do
     echo "Running gradle tests for $project"
-    ./$project/gradlew -p $project connectedAndroidTest --no-daemon --stacktrace
+    {
+      ./$project/gradlew -p $project connectedAndroidTest --no-daemon --stacktrace
+    } || {
+      # Try running once more. This test is flaky failure due to InstallException
+      # TODO(b/176111885): See if there's a better way to prevent this flake
+      ./$project/gradlew -p $project connectedAndroidTest --no-daemon --stacktrace
+    }
 done
 
 # Run emulator tests in a project with configuration cache enabled
