@@ -43,6 +43,7 @@ configurations {
 dependencies {
   implementation gradleApi()
   compileOnly 'com.android.tools.build:gradle:4.2.0-beta01'
+  // TODO(user): Make compileOnly to avoid dep for non-Kotlin projects.
   implementation 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20'
   implementation 'org.javassist:javassist:3.26.0-GA'
   implementation 'org.ow2.asm:asm:9.0'
@@ -59,6 +60,12 @@ dependencies {
 // the desired AGP version while keeping a compileOnly dep on the main source.
 tasks.withType(PluginUnderTestMetadata.class).named("pluginUnderTestMetadata").configure {
   it.pluginClasspath.from(configurations.additionalTestPlugin)
+}
+
+compileKotlin {
+  kotlinOptions {
+    jvmTarget = "1.8"
+  }
 }
 
 // Create sources Jar from main kotlin sources
