@@ -22,7 +22,7 @@ class AndroidEntryPointClassVisitor(
   private val apiVersion: Int,
   nextClassVisitor: ClassVisitor,
   private val additionalClasses: File
-) : ClassVisitor(Opcodes.ASM8, nextClassVisitor) {
+) : ClassVisitor(apiVersion, nextClassVisitor) {
 
   interface AndroidEntryPointParams : InstrumentationParameters {
     @get:Input
