@@ -56,10 +56,10 @@ public final class HiltViewModelFactory implements ViewModelProvider.Factory {
   /** Hilt module for providing the empty multi-binding map of ViewModels. */
   @Module
   @InstallIn(ViewModelComponent.class)
-  public abstract static class ViewModelModule {
+  interface ViewModelModule {
     @Multibinds
     @HiltViewModelMap
-    abstract Map<String, ViewModel> hiltViewModelMap();
+    Map<String, ViewModel> hiltViewModelMap();
   }
 
   private final Set<String> viewModelInjectKeys;

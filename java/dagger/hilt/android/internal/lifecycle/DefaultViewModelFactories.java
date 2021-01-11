@@ -135,7 +135,7 @@ public final class DefaultViewModelFactories {
   /** The activity module to declare the optional factories. */
   @Module
   @InstallIn(ActivityComponent.class)
-  public interface ActivityModule {
+  interface ActivityModule {
     @Multibinds
     @HiltViewModelMap.KeySet
     abstract Set<String> viewModelKeys();
@@ -152,14 +152,14 @@ public final class DefaultViewModelFactories {
   /** The activity entry point to retrieve the factory. */
   @EntryPoint
   @InstallIn(ActivityComponent.class)
-  public interface ActivityEntryPoint {
+  interface ActivityEntryPoint {
     InternalFactoryFactory getHiltInternalFactoryFactory();
   }
 
   /** The fragment entry point to retrieve the factory. */
   @EntryPoint
   @InstallIn(FragmentComponent.class)
-  public interface FragmentEntryPoint {
+  interface FragmentEntryPoint {
     InternalFactoryFactory getHiltInternalFactoryFactory();
   }
 
