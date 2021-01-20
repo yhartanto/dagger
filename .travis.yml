@@ -81,6 +81,25 @@ jobs:
       workspaces:
         use: dagger_artifacts
 
+    - stage: "Publish"
+      name: "Publish latest docs"
+      script: util/generate-latest-docs.sh
+      cache:
+        directories:
+          - $HOME/.cache/bazel
+    - name: "Publish latest snapshot"
+      script: util/publish-snapshot-on-commit.sh
+      cache:
+        directories:
+          - $HOME/.cache/bazel
+
+# Order the stages and conditionally exclude stages
+stages:
+  - "Bazel tests"
+  - "Artifact tests"
+  - name: "Publish"
+    if: type != pull_request
+
 env:
   global:
     # Encrypted credentials for deploying snapshots.
@@ -96,10 +115,6 @@ env:
     - JDK_FOR_PUBLISHING: *jdk_for_publishing
     - BAZEL_VERSION="3.7.1"
     - ADB_INSTALL_TIMEOUT=10
-
-after_success:
-  - util/generate-latest-docs.sh
-  - util/publish-snapshot-on-commit.sh
 
 branches:
   only:
