@@ -46,9 +46,10 @@ import javax.inject.Provider;
  */
 public final class HiltViewModelFactory implements ViewModelProvider.Factory {
 
+  /** Hilt entry point for getting the multi-binding map of ViewModels. */
   @EntryPoint
   @InstallIn(ViewModelComponent.class)
-  interface ViewModelFactoriesEntryPoint {
+  public interface ViewModelFactoriesEntryPoint {
     @HiltViewModelMap
     Map<String, Provider<ViewModel>> getHiltViewModelMap();
   }

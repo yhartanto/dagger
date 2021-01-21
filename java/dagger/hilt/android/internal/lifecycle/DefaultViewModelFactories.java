@@ -152,14 +152,14 @@ public final class DefaultViewModelFactories {
   /** The activity entry point to retrieve the factory. */
   @EntryPoint
   @InstallIn(ActivityComponent.class)
-  interface ActivityEntryPoint {
+  public interface ActivityEntryPoint {
     InternalFactoryFactory getHiltInternalFactoryFactory();
   }
 
   /** The fragment entry point to retrieve the factory. */
   @EntryPoint
   @InstallIn(FragmentComponent.class)
-  interface FragmentEntryPoint {
+  public interface FragmentEntryPoint {
     InternalFactoryFactory getHiltInternalFactoryFactory();
   }
 
