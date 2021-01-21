@@ -1,6 +1,6 @@
 # see https://coderwall.com/p/9b_lfq
 
-set -eu
+set -eux
 
 if [ "$TRAVIS_REPO_SLUG" == "google/dagger" ] && \
    [ "$TRAVIS_JDK_VERSION" == "$JDK_FOR_PUBLISHING" ] && \
