@@ -44,7 +44,7 @@ jobs:
       run: ./util/run-local-gradle-tests.sh
       shell: bash
   artifact-emulator-tests:
-    name: 'Artifact emulator tests'
+    name: 'Artifact emulator tests (AGP ${{ matrix.agp }})'
     needs: bazel-test
     runs-on: ubuntu-latest
     strategy:
