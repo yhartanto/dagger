@@ -20,6 +20,7 @@ import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
 import static kotlinx.metadata.Flag.Class.IS_COMPANION_OBJECT;
+import static kotlinx.metadata.Flag.Class.IS_DATA;
 import static kotlinx.metadata.Flag.Class.IS_OBJECT;
 import static kotlinx.metadata.Flag.IS_PRIVATE;
 
@@ -85,6 +86,12 @@ public final class KotlinMetadataUtil {
   public boolean isObjectClass(TypeElement typeElement) {
     return hasMetadata(typeElement)
         && metadataFactory.create(typeElement).classMetadata().flags(IS_OBJECT);
+  }
+
+  /** Returns {@code true} if this type element is a Kotlin data class. */
+  public boolean isDataClass(TypeElement typeElement) {
+    return hasMetadata(typeElement)
+        && metadataFactory.create(typeElement).classMetadata().flags(IS_DATA);
   }
 
   /* Returns {@code true} if this type element is a Kotlin Companion Object. */
