@@ -135,6 +135,11 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
+      - name: 'Publish latest docs'
+        run: ./util/generate-latest-docs.sh
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: 'Publish latest snapshot'
         run: ./util/publish-snapshot-on-commit.sh
         shell: bash

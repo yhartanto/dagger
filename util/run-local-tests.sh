@@ -2,8 +2,8 @@
 
 set -ex
 
-# These jobs should match travis.yml. We can't run this script directly in
-# travis since it's too slow for a single job.
+# These jobs should match .github/workflows/ci.yml. We can't run this script
+# directly in Github since it's too slow for a single job.
 
 # Run local bazel tests
 bazel test --test_output=errors //...
