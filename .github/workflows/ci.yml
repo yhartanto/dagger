@@ -49,8 +49,8 @@ jobs:
         with:
           name: local-snapshot
           path: ~/.m2/repository/com/google/dagger
-  artifact-local-tests:
-    name: 'Artifact local tests'
+  artifact-java-local-tests:
+    name: 'Artifact Java local tests'
     needs: bazel-test
     runs-on: ubuntu-latest
     steps:
@@ -70,11 +70,11 @@ jobs:
       with:
         name: local-snapshot
         path: ~/.m2/repository/com/google/dagger
-    - name: 'Gradle tests'
+    - name: 'Gradle Java local tests'
       run: ./util/run-local-gradle-tests.sh
       shell: bash
-  artifact-emulator-tests:
-    name: 'Artifact emulator tests (AGP ${{ matrix.agp }})'
+  artifact-android-local-tests:
+    name: 'Artifact Android local tests (AGP ${{ matrix.agp }})'
     needs: bazel-test
     runs-on: ubuntu-latest
     strategy:
@@ -97,14 +97,12 @@ jobs:
         with:
           name: local-snapshot
           path: ~/.m2/repository/com/google/dagger
-      - name: 'Gradle Android tests (AGP ${{ matrix.agp }})'
+      - name: 'Gradle Android local tests (AGP ${{ matrix.agp }})'
         run: ./util/run-local-gradle-android-tests.sh "${{ matrix.agp }}"
         shell: bash
-        env:
-          ADB_INSTALL_TIMEOUT: 10 # In Minutes
   publish-snapshot:
     name: 'Publish snapshot'
-    needs: [bazel-test, artifact-local-tests, artifact-emulator-tests]
+    needs: [bazel-test, artifact-java-local-tests, artifact-android-local-tests]
     if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
