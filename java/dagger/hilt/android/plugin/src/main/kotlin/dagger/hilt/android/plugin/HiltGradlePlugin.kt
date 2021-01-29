@@ -221,8 +221,8 @@ class HiltGradlePlugin : Plugin<Project> {
 
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
     androidComponents.onVariants { registerTransform(it) }
-    androidComponents.androidTest { registerTransform(it) }
-    androidComponents.unitTest { registerTransform(it) }
+    androidComponents.androidTests { registerTransform(it) }
+    androidComponents.unitTests { registerTransform(it) }
   }
 
   private fun configureTransform(project: Project, hiltExtension: HiltExtension) {

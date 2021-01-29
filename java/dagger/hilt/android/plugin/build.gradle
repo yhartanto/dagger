@@ -42,7 +42,7 @@ configurations {
 
 dependencies {
   implementation gradleApi()
-  compileOnly 'com.android.tools.build:gradle:4.2.0-beta01'
+  compileOnly 'com.android.tools.build:gradle:4.2.0-beta04'
   // TODO(danysantiago): Make compileOnly to avoid dep for non-Kotlin projects.
   implementation 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20'
   implementation 'org.javassist:javassist:3.26.0-GA'
@@ -51,7 +51,7 @@ dependencies {
   testImplementation gradleTestKit()
   testImplementation 'junit:junit:4.12'
   testImplementation 'com.google.truth:truth:1.0.1'
-  additionalTestPlugin 'com.android.tools.build:gradle:4.2.0-beta01'
+  additionalTestPlugin 'com.android.tools.build:gradle:4.2.0-beta04'
 }
 
 // Configure the generating task of plugin-under-test-metadata.properties to
