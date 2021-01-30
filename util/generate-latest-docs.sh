@@ -21,7 +21,7 @@ if [ "$GITHUB_REPOSITORY" == "google/dagger" ] && \
 
   # Check if there are any changes before committing, otherwise attempting
   # to commit will fail the build (https://stackoverflow.com/a/2659808).
-  if git diff-index --quiet HEAD --; then
+  if [[ $(git diff-index --quiet HEAD --) || $? == 1 ]]; then
     # The exist status is 1, meaning there are changes to commit
     git commit -m "Latest javadoc on successful Github build $GITHUB_WORKFLOW/$GITHUB_RUN_ID auto-pushed to gh-pages"
     git push -fq origin gh-pages > /dev/null
