@@ -125,6 +125,7 @@ jobs:
           path: ~/.m2/repository/com/google/dagger
       - name: 'Gradle Android emulator tests (API 30)'
         uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 25
         with:
           api-level: 30
           target: google_apis
@@ -206,6 +207,7 @@ jobs:
           path: ~/.m2/repository/com/google/dagger
       - name: 'Gradle Android emulator tests (API ${{ matrix.api-level }})'
         uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 25
         with:
           api-level: ${{ matrix.api-level }}
           target: google_apis
