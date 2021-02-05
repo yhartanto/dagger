@@ -154,6 +154,17 @@ public final class TestApplicationComponentManager
     Preconditions.checkState(
         onComponentReadyRunner.isEmpty(),
         "The Hilt onComponentReadyRunner cannot add listeners before Hilt's test rule has run.");
+    DelayedComponentState state = delayedComponentState.get();
+    switch (state) {
+      case NOT_DELAYED:
+      case COMPONENT_DELAYED:
+        // Expected
+        break;
+      case COMPONENT_READY:
+        throw new IllegalStateException("Called componentReady before test execution started");
+      case INJECTED:
+        throw new IllegalStateException("Called inject before test execution started");
+    }
   }
 
   void clearState() {
@@ -162,6 +173,7 @@ public final class TestApplicationComponentManager
     testInstance = null;
     registeredModules.clear();
     autoAddModuleEnabled.set(null);
+    delayedComponentState.set(DelayedComponentState.NOT_DELAYED);
     onComponentReadyRunner = new OnComponentReadyRunner();
   }
 
