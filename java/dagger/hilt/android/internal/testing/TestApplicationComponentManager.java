@@ -246,9 +246,7 @@ public final class TestApplicationComponentManager
       case COMPONENT_DELAYED:
         throw new IllegalStateException("Called inject() before calling componentReady()");
       case INJECTED:
-        // TODO(b/178810695): Enforce tests don't do this
-        // throw new IllegalStateException("Called inject() multiple times");
-        break;
+        throw new IllegalStateException("Called inject() multiple times");
     }
     Preconditions.checkNotNull(testInstance);
     testInjector().injectTest(testInstance);
