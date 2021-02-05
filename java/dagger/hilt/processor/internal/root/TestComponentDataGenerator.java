@@ -30,7 +30,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentNames;
@@ -196,23 +195,22 @@ public final class TestComponentDataGenerator {
   private MethodSpec getTestInjectInternalMethod() {
     TypeElement testElement = rootMetadata.testRootMetadata().testElement();
     ClassName testName = ClassName.get(testElement);
-    MethodSpec.Builder builder =
-        MethodSpec.methodBuilder("injectInternal")
-            .addModifiers(PRIVATE, STATIC)
-            .addParameter(testName, "testInstance")
-            .addAnnotation(
-                AnnotationSpec.builder(SuppressWarnings.class)
-                    .addMember("value", "$S", "unchecked")
-                    .build());
-
-    return builder
-        .addStatement(
-            "(($T) (($T) $T.getApplicationContext()).generatedComponent())"
-                + ".injectTest(testInstance)",
-            ParameterizedTypeName.get(
-                ClassNames.TEST_INJECTOR, rootMetadata.testRootMetadata().testName()),
-            ClassNames.GENERATED_COMPONENT_MANAGER,
-            ClassNames.APPLICATION_PROVIDER)
+    return MethodSpec.methodBuilder("injectInternal")
+        .addModifiers(PRIVATE, STATIC)
+        .addParameter(testName, "testInstance")
+        .addAnnotation(
+            AnnotationSpec.builder(SuppressWarnings.class)
+                .addMember("value", "$S", "unchecked")
+                .build())
+        .addStatement("$L.injectTest(testInstance)", getInjector(testElement))
         .build();
+  }
+
+  private static CodeBlock getInjector(TypeElement testElement) {
+    return CodeBlock.of(
+        "(($T) (($T) $T.getApplicationContext()).generatedComponent())",
+        ClassNames.TEST_INJECTOR,
+        ClassNames.GENERATED_COMPONENT_MANAGER,
+        ClassNames.APPLICATION_PROVIDER);
   }
 }
