@@ -21,17 +21,36 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.Graphs;
 import com.google.common.graph.ImmutableGraph;
+import com.google.common.graph.MutableGraph;
 import com.squareup.javapoet.ClassName;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /** A representation of the full tree of scopes. */
 public final class ComponentTree {
   private final ImmutableGraph<ComponentDescriptor> graph;
+  private final ComponentDescriptor root;
 
-  public ComponentTree(ImmutableGraph<ComponentDescriptor> graph) {
+  /** Creates a new tree from a set of descriptors. */
+  public static ComponentTree from(Set<ComponentDescriptor> descriptors) {
+    MutableGraph<ComponentDescriptor> graph =
+        GraphBuilder.directed().allowsSelfLoops(false).build();
+
+    descriptors.forEach(
+        descriptor -> {
+          graph.addNode(descriptor);
+          descriptor.parent().ifPresent(parent -> graph.putEdge(parent, descriptor));
+        });
+
+    return new ComponentTree(ImmutableGraph.copyOf(graph));
+  }
+
+  private ComponentTree(ImmutableGraph<ComponentDescriptor> graph) {
     this.graph = Preconditions.checkNotNull(graph);
     Preconditions.checkState(
         !Graphs.hasCycle(graph),
@@ -56,14 +75,17 @@ public final class ComponentTree {
       descriptors.put(descriptor.component(), descriptor);
     }
 
-    ImmutableList<ClassName> roots =
+    ImmutableList<ComponentDescriptor> roots =
         graph.nodes().stream()
             .filter(node -> graph.inDegree(node) == 0)
-            .map(node -> node.component())
             .collect(toImmutableList());
 
     Preconditions.checkState(
-        roots.size() == 1, "Component graph must have exactly 1 root. Found: %s", roots);
+        roots.size() == 1,
+        "Component graph must have exactly 1 root. Found: %s",
+        roots.stream().map(ComponentDescriptor::component).collect(toImmutableList()));
+
+    root = Iterables.getOnlyElement(roots);
   }
 
   public ImmutableSet<ComponentDescriptor> getComponentDescriptors() {
@@ -72,5 +94,13 @@ public final class ComponentTree {
 
   public ImmutableSet<ComponentDescriptor> childrenOf(ComponentDescriptor componentDescriptor) {
     return ImmutableSet.copyOf(graph.successors(componentDescriptor));
+  }
+
+  public ImmutableGraph<ComponentDescriptor> graph() {
+    return graph;
+  }
+
+  public ComponentDescriptor root() {
+    return root;
   }
 }

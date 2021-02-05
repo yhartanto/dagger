@@ -58,6 +58,12 @@ public final class RootMetadata {
     return metadata;
   }
 
+  static RootMetadata copyWithNewTree(
+      RootMetadata other,
+      ComponentTree componentTree) {
+    return create(other.root, componentTree, other.deps, other.env);
+  }
+
   private final Root root;
   private final ProcessingEnvironment env;
   private final Elements elements;

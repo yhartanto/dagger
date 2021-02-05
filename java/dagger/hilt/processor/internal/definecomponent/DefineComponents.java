@@ -22,16 +22,9 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
-import com.google.common.graph.Graph;
-import com.google.common.graph.GraphBuilder;
-import com.google.common.graph.Graphs;
-import com.google.common.graph.ImmutableGraph;
-import com.google.common.graph.MutableGraph;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
@@ -45,7 +38,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
@@ -127,42 +119,10 @@ public final class DefineComponents {
     Map<DefineComponentMetadata, DefineComponentBuilderMetadata> builderMap = new LinkedHashMap<>();
     builderMultimap.entries().forEach(e -> builderMap.put(e.getKey(), e.getValue()));
 
-    // Build the component tree graph.
-    Set<ComponentDescriptor> filteredDescriptors = aggregatedMetadata.components().stream()
+
+    return ComponentTree.from(aggregatedMetadata.components().stream()
         .map(componentMetadata -> toComponentDescriptor(componentMetadata, builderMap))
-        // Only keep components that have builders (besides the root component) since if
-        // we didn't find any builder class, then we don't need to generate the component
-        // since it would be inaccessible.
-        .filter(descriptor -> descriptor.isRoot() || descriptor.creator().isPresent())
-        .collect(toImmutableSet());
-
-    // The graph may still have nodes that are children of components that don't have builders,
-    // so we need to find reachable nodes from the root and create a new graph to remove those.
-    Graph<ComponentDescriptor> filteredGraph = buildGraph(filteredDescriptors);
-    Set<ComponentDescriptor> roots = filteredDescriptors.stream()
-        .filter(ComponentDescriptor::isRoot)
-        .collect(toImmutableSet());
-
-    Preconditions.checkState(
-        roots.size() == 1,
-        "Expected exactly 1 root component to be found but found instead %s",
-        roots);
-
-    return new ComponentTree(ImmutableGraph.copyOf(buildGraph(
-        Graphs.reachableNodes(filteredGraph, Iterables.getOnlyElement(roots)))));
-  }
-
-  private static Graph<ComponentDescriptor> buildGraph(Set<ComponentDescriptor> descriptors) {
-    MutableGraph<ComponentDescriptor> graph =
-        GraphBuilder.directed().allowsSelfLoops(false).build();
-
-    descriptors.forEach(
-        descriptor -> {
-          graph.addNode(descriptor);
-          descriptor.parent().ifPresent(parent -> graph.putEdge(parent, descriptor));
-        });
-
-    return graph;
+        .collect(toImmutableSet()));
   }
 
   private static ComponentDescriptor toComponentDescriptor(
