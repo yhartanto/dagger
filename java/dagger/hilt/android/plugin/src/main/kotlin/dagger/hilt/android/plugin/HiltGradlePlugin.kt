@@ -34,6 +34,7 @@ import dagger.hilt.android.plugin.util.SimpleAGPVersion
 import java.io.File
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Attribute
 
 /**
@@ -175,6 +176,15 @@ class HiltGradlePlugin : Plugin<Project> {
     }
     val artifactView = runtimeConfiguration.incoming.artifactView { view ->
       view.attributes.attribute(ARTIFACT_TYPE_ATTRIBUTE, DAGGER_ARTIFACT_TYPE_VALUE)
+      view.componentFilter { identifier ->
+        // Filter out the project's classes from the aggregated view since this can cause
+        // issues with Kotlin internal members visibility. b/178230629
+        if (identifier is ProjectComponentIdentifier) {
+          identifier.projectName != project.name
+        } else {
+          true
+        }
+      }
     }
 
     // CompileOnly config names don't follow the usual convention:
