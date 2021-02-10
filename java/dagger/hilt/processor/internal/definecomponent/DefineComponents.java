@@ -24,12 +24,12 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
-import dagger.hilt.processor.internal.ComponentTree;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentBuilderMetadatas.DefineComponentBuilderMetadata;
@@ -89,8 +89,8 @@ public final class DefineComponents {
     return builder.build();
   }
 
-  /** Returns the {@link ComponentTree} from the aggregated {@link ComponentDescriptor}s. */
-  public ComponentTree getComponentTree(Elements elements) {
+  /** Returns the set of aggregated {@link ComponentDescriptor}s. */
+  public ImmutableSet<ComponentDescriptor> getComponentDescriptors(Elements elements) {
     AggregatedMetadata aggregatedMetadata =
         AggregatedMetadata.from(elements, componentMetadatas, componentBuilderMetadatas);
     ListMultimap<DefineComponentMetadata, DefineComponentBuilderMetadata> builderMultimap =
@@ -120,9 +120,9 @@ public final class DefineComponents {
     builderMultimap.entries().forEach(e -> builderMap.put(e.getKey(), e.getValue()));
 
 
-    return ComponentTree.from(aggregatedMetadata.components().stream()
+    return aggregatedMetadata.components().stream()
         .map(componentMetadata -> toComponentDescriptor(componentMetadata, builderMap))
-        .collect(toImmutableSet()));
+        .collect(toImmutableSet());
   }
 
   private static ComponentDescriptor toComponentDescriptor(

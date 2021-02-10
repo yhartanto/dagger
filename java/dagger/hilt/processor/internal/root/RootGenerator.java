@@ -37,7 +37,6 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ComponentNames;
-import dagger.hilt.processor.internal.ComponentTree;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
 import java.util.HashMap;

@@ -97,15 +97,9 @@ java_library(
 
 java_library(
     name = "component_descriptor",
-    srcs = [
-        "ComponentDescriptor.java",
-        "ComponentTree.java",
-    ],
+    srcs = ["ComponentDescriptor.java"],
     deps = [
-        "//java/dagger/internal/codegen/extension",
-        "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "//java/dagger/internal/guava:graph",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/javapoet",
     ],

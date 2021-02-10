@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.processor.internal;
+package dagger.hilt.processor.internal.root;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 
@@ -27,17 +27,18 @@ import com.google.common.graph.Graphs;
 import com.google.common.graph.ImmutableGraph;
 import com.google.common.graph.MutableGraph;
 import com.squareup.javapoet.ClassName;
+import dagger.hilt.processor.internal.ComponentDescriptor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 /** A representation of the full tree of scopes. */
-public final class ComponentTree {
+final class ComponentTree {
   private final ImmutableGraph<ComponentDescriptor> graph;
   private final ComponentDescriptor root;
 
   /** Creates a new tree from a set of descriptors. */
-  public static ComponentTree from(Set<ComponentDescriptor> descriptors) {
+  static ComponentTree from(Set<ComponentDescriptor> descriptors) {
     MutableGraph<ComponentDescriptor> graph =
         GraphBuilder.directed().allowsSelfLoops(false).build();
 
@@ -88,19 +89,19 @@ public final class ComponentTree {
     root = Iterables.getOnlyElement(roots);
   }
 
-  public ImmutableSet<ComponentDescriptor> getComponentDescriptors() {
+  ImmutableSet<ComponentDescriptor> getComponentDescriptors() {
     return ImmutableSet.copyOf(graph.nodes());
   }
 
-  public ImmutableSet<ComponentDescriptor> childrenOf(ComponentDescriptor componentDescriptor) {
+  ImmutableSet<ComponentDescriptor> childrenOf(ComponentDescriptor componentDescriptor) {
     return ImmutableSet.copyOf(graph.successors(componentDescriptor));
   }
 
-  public ImmutableGraph<ComponentDescriptor> graph() {
+  ImmutableGraph<ComponentDescriptor> graph() {
     return graph;
   }
 
-  public ComponentDescriptor root() {
+  ComponentDescriptor root() {
     return root;
   }
 }

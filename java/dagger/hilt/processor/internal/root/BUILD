@@ -63,6 +63,7 @@ java_library(
 java_library(
     name = "root_metadata",
     srcs = [
+        "ComponentTree.java",
         "Root.java",
         "RootMetadata.java",
         "TestRootMetadata.java",
@@ -80,6 +81,7 @@ java_library(
         "//java/dagger/internal/codegen/kotlin",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
+        "//java/dagger/internal/guava:graph",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/javapoet",
         "@maven//:com_google_auto_auto_common",
