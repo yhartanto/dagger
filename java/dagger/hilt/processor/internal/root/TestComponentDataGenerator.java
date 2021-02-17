@@ -52,9 +52,7 @@ public final class TestComponentDataGenerator {
     this.processingEnv = processingEnv;
     this.rootMetadata = rootMetadata;
     this.name =
-        Processors.append(
-            Processors.getEnclosedClassName(rootMetadata.testRootMetadata().testName()),
-            "_ComponentDataHolder");
+        ComponentNames.generatedComponentDataHolder(rootMetadata.testRootMetadata().testName());
   }
 
   /**

@@ -31,6 +31,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.WildcardTypeName;
 import dagger.hilt.processor.internal.ClassNames;
+import dagger.hilt.processor.internal.ComponentNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -99,7 +100,7 @@ public final class TestComponentDataSupplierGenerator {
     for (RootMetadata rootMetadata : rootMetadatas) {
       ClassName testName = rootMetadata.testRootMetadata().testName();
       ClassName testComponentDataHolderName =
-          Processors.append(Processors.getEnclosedClassName(testName), "_ComponentDataHolder");
+          ComponentNames.generatedComponentDataHolder(rootMetadata.testRootMetadata().testName());
       constructor.addStatement(
           "testComponentDataMap.put($T.class, $T.get())",
           testName,

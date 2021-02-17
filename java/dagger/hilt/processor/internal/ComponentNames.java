@@ -37,6 +37,14 @@ public final class ComponentNames {
   }
 
   /**
+   * Returns the name of the generated {@link dagger.hilt.android.internal.TestComponentData} for a
+   * test class.
+   */
+  public static ClassName generatedComponentDataHolder(ClassName testName) {
+    return Processors.append(Processors.getEnclosedClassName(testName), "_ComponentDataHolder");
+  }
+
+  /**
    * Returns the shortened component name by replacing the ending "Component" with "C" if it exists.
    *
    * <p>This is a hack because nested subcomponents in Dagger generate extremely long class names
