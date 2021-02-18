@@ -43,6 +43,8 @@ android_library(
         "//java/dagger/hilt/internal:preconditions",
         "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
     ],
     deps = [
         ":package_info",
@@ -86,6 +88,8 @@ android_library(
         "//java/dagger/hilt:entry_point",
         "@google_bazel_common//third_party/java/jsr305_annotations",
         "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
     ],
 )
 

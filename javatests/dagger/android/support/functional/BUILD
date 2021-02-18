@@ -30,6 +30,8 @@ android_library(
     resource_files = glob(["res/**"]),
     deps = [
         "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
         "@maven//:androidx_appcompat_appcompat",
         "@maven//:androidx_annotation_annotation",
         "//java/dagger/internal/guava:collect-android",
@@ -51,6 +53,9 @@ GenRobolectricTests(
         "//:dagger_with_compiler",
         "@google_bazel_common//third_party/java/truth",
         "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
+        "@maven//:androidx_test_ext_junit",
         "@maven//:junit_junit",
         "@maven//:org_robolectric_robolectric",
     ],

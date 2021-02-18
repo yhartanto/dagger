@@ -37,5 +37,7 @@ GenJavaTests(
         "@google_bazel_common//third_party/java/junit",
         "@google_bazel_common//third_party/java/truth",
         "@maven//:androidx_fragment_fragment",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel",
+        "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
     ],
 )
