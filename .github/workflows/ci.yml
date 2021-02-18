@@ -10,7 +10,17 @@ jobs:
   bazel-test:
     name: 'Bazel tests'
     runs-on: ubuntu-latest
+    env:
+      # Our Bazel builds currently rely on JDK 8.
+      USE_JAVA_VERSION: '8'
+      # Our Bazel builds currently rely on 3.7.1. The version is set via
+      # baselisk by USE_BAZEL_VERSION: https://github.com/bazelbuild/bazelisk.
+      USE_BAZEL_VERSION: '3.7.1'
     steps:
+      - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
+        uses: actions/setup-java@v1
+        with:
+          java-version: '${{ env.USE_JAVA_VERSION }}'
       - name: 'Check out repository'
         uses: actions/checkout@v2
       - name: 'Cache local Maven repository'
