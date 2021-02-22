@@ -43,6 +43,7 @@ android_library(
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "//java/dagger/hilt/android/testing:uninstall_modules",
         "@google_bazel_common//third_party/java/truth",
+        "@maven//:androidx_test_core",
         "@maven//:androidx_test_ext_junit",
         "@maven//:junit_junit",
         "@maven//:org_robolectric_robolectric",

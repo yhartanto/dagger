@@ -35,7 +35,6 @@ android_library(
         "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
         "@maven//:androidx_appcompat_appcompat",
         "@maven//:androidx_annotation_annotation",
-        "//java/dagger/internal/guava:collect-android",
         "//:dagger_with_compiler",
         "//:android",
         "//:android-support",
@@ -47,6 +46,9 @@ android_library(
 GenRobolectricTests(
     name = "functional_tests",
     srcs = glob(["*Test.java"]),
+    manifest_values = {
+        "minSdkVersion": "14",
+    },
     deps = [
         ":functional",
         "//:android",
@@ -57,6 +59,7 @@ GenRobolectricTests(
         "@maven//:androidx_fragment_fragment",
         "@maven//:androidx_lifecycle_lifecycle_viewmodel",
         "@maven//:androidx_lifecycle_lifecycle_viewmodel_savedstate",
+        "@maven//:androidx_test_core",
         "@maven//:androidx_test_ext_junit",
         "@maven//:junit_junit",
         "@maven//:org_robolectric_robolectric",
