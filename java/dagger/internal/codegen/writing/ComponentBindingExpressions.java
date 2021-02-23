@@ -212,19 +212,14 @@ public final class ComponentBindingExpressions {
   public MethodSpec getComponentMethod(ComponentMethodDescriptor componentMethod) {
     checkArgument(componentMethod.dependencyRequest().isPresent());
     BindingRequest request = bindingRequest(componentMethod.dependencyRequest().get());
-    MethodSpec.Builder method =
-        MethodSpec.overriding(
+    return MethodSpec.overriding(
             componentMethod.methodElement(),
             MoreTypes.asDeclared(graph.componentTypeElement().asType()),
-            types);
-    // Even though this is not used if the method is abstract, we need to invoke the binding
-    // expression in order for the side of effect of the method being added to the
-    // ComponentImplementation
-    CodeBlock methodBody =
-        getBindingExpression(request)
-            .getComponentMethodImplementation(componentMethod, componentImplementation);
-
-    return method.addCode(methodBody).build();
+            types)
+        .addCode(
+            getBindingExpression(request)
+                .getComponentMethodImplementation(componentMethod, componentImplementation))
+        .build();
   }
 
   /** Returns the {@link BindingExpression} for the given {@link BindingRequest}. */
