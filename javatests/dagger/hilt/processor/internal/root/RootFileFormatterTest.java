@@ -107,7 +107,7 @@ public final class RootFileFormatterTest {
                     + "_ActivityRetainedComponentBuilderEntryPoint,",
                 "      ServiceComponentManager.ServiceComponentBuilderEntryPoint,",
                 "      SingletonComponent,",
-                "      GeneratedComponent,",
+                "      TestSingletonComponent,",
                 "      EntryPoint1,",
                 "      EntryPoint2,",
                 "      MyTest_GeneratedInjector {"));

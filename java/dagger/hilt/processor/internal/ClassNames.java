@@ -111,6 +111,8 @@ public final class ClassNames {
   public static final ClassName APPLICATION = get("android.app", "Application");
   public static final ClassName MULTI_DEX_APPLICATION =
       get("androidx.multidex", "MultiDexApplication");
+  public static final ClassName EARLY_ENTRY_POINT =
+      get("dagger.hilt.android", "EarlyEntryPoint");
   public static final ClassName ANDROID_ENTRY_POINT =
       get("dagger.hilt.android", "AndroidEntryPoint");
   public static final ClassName HILT_ANDROID_APP =
@@ -152,6 +154,8 @@ public final class ClassNames {
       get("dagger.hilt.android.testing", "BindValueIntoSet");
   public static final ClassName APPLICATION_CONTEXT =
       get("dagger.hilt.android.qualifiers", "ApplicationContext");
+  public static final ClassName TEST_SINGLETON_COMPONENT =
+      get("dagger.hilt.internal", "TestSingletonComponent");
   public static final ClassName TEST_COMPONENT_DATA =
       get("dagger.hilt.android.internal.testing", "TestComponentData");
   public static final ClassName TEST_COMPONENT_DATA_SUPPLIER =

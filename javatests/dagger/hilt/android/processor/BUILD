@@ -22,6 +22,7 @@ java_library(
     deps = [
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
         "//java/dagger/hilt/android/processor/internal/customtestapplication:processor_lib",
+        "//java/dagger/hilt/android/processor/internal/earlyentrypoint:processor_lib",
         "//java/dagger/hilt/android/processor/internal/uninstallmodules:processor_lib",
         "//java/dagger/hilt/android/processor/internal/viewmodel:processor_lib",
         "//java/dagger/hilt/processor/internal/aggregateddeps:processor_lib",

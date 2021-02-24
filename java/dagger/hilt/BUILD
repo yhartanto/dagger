@@ -51,6 +51,8 @@ java_library(
         ":package_info",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_component",
+        "//java/dagger/hilt/internal:preconditions",
+        "//java/dagger/hilt/internal:test_singleton_component",
         "@google_bazel_common//third_party/java/jsr305_annotations",
     ],
 )
@@ -210,6 +212,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_component",
         "//java/dagger/hilt/internal:preconditions",
+        "//java/dagger/hilt/internal:test_singleton_component",
         "//java/dagger/hilt/internal:unsafe_casts",
         "//java/dagger/hilt/internal/aliasof",
         "//java/dagger/hilt/internal/definecomponent",

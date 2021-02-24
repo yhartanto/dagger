@@ -30,6 +30,7 @@ java_library(
     name = "processor_lib",
     srcs = [
         "ComponentGenerator.java",
+        "EarlySingletonComponentCreatorGenerator.java",
         "RootFileFormatter.java",
         "RootGenerator.java",
         "RootProcessor.java",

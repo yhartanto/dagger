@@ -119,7 +119,6 @@ public final class DefineComponents {
     Map<DefineComponentMetadata, DefineComponentBuilderMetadata> builderMap = new LinkedHashMap<>();
     builderMultimap.entries().forEach(e -> builderMap.put(e.getKey(), e.getValue()));
 
-
     return aggregatedMetadata.components().stream()
         .map(componentMetadata -> toComponentDescriptor(componentMetadata, builderMap))
         .collect(toImmutableSet());

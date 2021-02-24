@@ -186,13 +186,14 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
 
     ImmutableList<TypeElement> replacedModules = ImmutableList.of();
     if (Processors.hasAnnotation(module, ClassNames.TEST_INSTALL_IN)) {
-      Optional<TypeElement> originatingTestElement = getOriginatingTestElement(module);
+      Optional<TypeElement> originatingTestElement =
+          Processors.getOriginatingTestElement(module, getElementUtils());
       ProcessorErrors.checkState(
           !originatingTestElement.isPresent(),
           // TODO(b/152801981): this should really error on the annotation value
           module,
           "@TestInstallIn modules cannot be nested in (or originate from) a "
-                + "@HiltAndroidTest-annotated class:  %s",
+              + "@HiltAndroidTest-annotated class:  %s",
           originatingTestElement
               .map(testElement -> testElement.getQualifiedName().toString())
               .orElse(""));
@@ -262,7 +263,10 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
       // Prevent users from uninstalling test-specific @InstallIn modules.
       ImmutableList<TypeElement> replacedTestSpecificInstallIn =
           replacedModules.stream()
-              .filter(replacedModule -> getOriginatingTestElement(replacedModule).isPresent())
+              .filter(
+                  replacedModule ->
+                      Processors.getOriginatingTestElement(replacedModule, getElementUtils())
+                          .isPresent())
               .collect(toImmutableList());
 
       ProcessorErrors.checkState(
@@ -333,7 +337,8 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
               .generate();
         }
       } else {
-        Optional<ClassName> testName = getOriginatingTestElement(element).map(ClassName::get);
+        Optional<ClassName> testName =
+            Processors.getOriginatingTestElement(element, getElementUtils()).map(ClassName::get);
         new AggregatedDepsGenerator(
                 key, element, testName, components, replacedModules, getProcessingEnv())
             .generate();
@@ -360,25 +365,6 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
         usedAnnotations);
 
     return Optional.of(getOnlyElement(usedAnnotations));
-  }
-
-  private Optional<TypeElement> getOriginatingTestElement(Element element) {
-    TypeElement topLevelType = getOriginatingTopLevelType(element);
-    return Processors.hasAnnotation(topLevelType, ClassNames.HILT_ANDROID_TEST)
-        ? Optional.of(asType(topLevelType))
-        : Optional.empty();
-  }
-
-  private TypeElement getOriginatingTopLevelType(Element element) {
-    TypeElement topLevelType = Processors.getTopLevelType(element);
-    if (Processors.hasAnnotation(topLevelType, ClassNames.ORIGINATING_ELEMENT)) {
-      return getOriginatingTopLevelType(
-          Processors.getAnnotationClassValue(
-              getElementUtils(),
-              Processors.getAnnotationMirror(topLevelType, ClassNames.ORIGINATING_ELEMENT),
-              "topLevelClass"));
-    }
-    return topLevelType;
   }
 
   private static boolean isValidKind(Element element) {

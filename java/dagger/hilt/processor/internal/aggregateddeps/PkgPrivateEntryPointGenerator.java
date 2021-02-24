@@ -19,6 +19,7 @@ package dagger.hilt.processor.internal.aggregateddeps;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
+import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -67,6 +68,10 @@ final class PkgPrivateEntryPointGenerator {
     if (metadata.getOptionalInstallInAnnotationMirror().isPresent()) {
       entryPointInterfaceBuilder.addAnnotation(
           AnnotationSpec.get(metadata.getOptionalInstallInAnnotationMirror().get()));
+    }
+
+    if (Processors.hasAnnotation(metadata.getTypeElement(), ClassNames.EARLY_ENTRY_POINT)) {
+      entryPointInterfaceBuilder.addAnnotation(ClassNames.EARLY_ENTRY_POINT);
     }
 
     JavaFile.builder(

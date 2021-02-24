@@ -115,16 +115,21 @@ android_library(
 )
 
 android_library(
-    name = "artifact-lib",
-    tags = ["maven_coordinates=com.google.dagger:hilt-android:" + POM_VERSION_ALPHA],
-    exports = [
-        ":android_entry_point",
-        ":entry_point_accessors",
-        ":hilt_android_app",
+    name = "early_test_entry_point",
+    srcs = [
+        "EarlyEntryPoint.java",
+        "EarlyEntryPoints.java",
+    ],
+    exported_plugins = [
+        "//java/dagger/hilt/android/processor/internal/earlyentrypoint:processor",
+    ],
+    deps = [
         ":package_info",
-        "//java/dagger/hilt:artifact-core-lib",
-        "//java/dagger/hilt/android/migration:optional_inject",
-        "//java/dagger/lint:lint-android-artifact-lib",
+        "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt/internal:component_manager",
+        "//java/dagger/hilt/internal:preconditions",
+        "//java/dagger/hilt/internal:test_singleton_component_manager",
+        "@google_bazel_common//third_party/java/jsr305_annotations",
     ],
 )
 
@@ -133,6 +138,21 @@ java_library(
     srcs = ["package-info.java"],
     deps = [
         "@google_bazel_common//third_party/java/jsr305_annotations",
+    ],
+)
+
+android_library(
+    name = "artifact-lib",
+    tags = ["maven_coordinates=com.google.dagger:hilt-android:" + POM_VERSION_ALPHA],
+    exports = [
+        ":android_entry_point",
+        ":early_test_entry_point",
+        ":entry_point_accessors",
+        ":hilt_android_app",
+        ":package_info",
+        "//java/dagger/hilt:artifact-core-lib",
+        "//java/dagger/hilt/android/migration:optional_inject",
+        "//java/dagger/lint:lint-android-artifact-lib",
     ],
 )
 
@@ -146,6 +166,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/android:activity_retained_lifecycle",
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android:hilt_android_app",
+        "//java/dagger/hilt/android:early_test_entry_point",
         "//java/dagger/hilt/android:package_info",
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/components:view_model_component",
@@ -168,6 +189,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/scopes:package_info",
         "//java/dagger/hilt/internal:component_entry_point",
         "//java/dagger/hilt/internal:generated_entry_point",
+        "//java/dagger/hilt/internal:test_singleton_component_manager",
     ],
     artifact_target_maven_deps = [
         "androidx.activity:activity",

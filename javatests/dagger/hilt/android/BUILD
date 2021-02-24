@@ -91,6 +91,100 @@ android_local_test(
 )
 
 android_local_test(
+    name = "EarlyEntryPointHiltAndroidAppRuntimeTest",
+    size = "small",
+    srcs = ["EarlyEntryPointHiltAndroidAppRuntimeTest.java"],
+    manifest_values = {
+        "minSdkVersion": "14",
+    },
+    deps = [
+        ":EarlyEntryPointHiltAndroidAppRuntimeClasses",
+        "//:android_local_test_exports",
+        "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt/android:early_test_entry_point",
+        "//java/dagger/hilt/android:package_info",
+        "@google_bazel_common//third_party/java/truth",
+        "@maven//:junit_junit",
+    ],
+)
+
+android_library(
+    name = "EarlyEntryPointHiltAndroidAppRuntimeClasses",
+    srcs = ["EarlyEntryPointHiltAndroidAppRuntimeClasses.java"],
+    deps = [
+        "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt/android:early_test_entry_point",
+        "//java/dagger/hilt/android:hilt_android_app",
+        "//java/dagger/hilt/android:package_info",
+    ],
+)
+
+android_local_test(
+    name = "EarlyEntryPointHiltAndroidTestRuntimeTest",
+    size = "small",
+    srcs = [
+        "EarlyEntryPointHiltAndroidTestRuntimeClasses.java",
+        "EarlyEntryPointHiltAndroidTestRuntimeTest.java",
+    ],
+    manifest_values = {
+        "minSdkVersion": "14",
+    },
+    deps = [
+        "//:android_local_test_exports",
+        "//:dagger_with_compiler",
+        "//java/dagger/hilt:define_component",
+        "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt/android:early_test_entry_point",
+        "//java/dagger/hilt/android:package_info",
+        "//java/dagger/hilt/android/testing:hilt_android_test",
+        "@google_bazel_common//third_party/java/truth",
+    ],
+)
+
+android_local_test(
+    name = "EarlyEntryPointCustomApplicationTest",
+    size = "small",
+    srcs = [
+        "EarlyEntryPointCustomApplicationClasses.java",
+        "EarlyEntryPointCustomApplicationTest.java",
+    ],
+    manifest_values = {
+        "minSdkVersion": "14",
+    },
+    deps = [
+        "//:android_local_test_exports",
+        "//:dagger_with_compiler",
+        "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt/android:early_test_entry_point",
+        "//java/dagger/hilt/android:package_info",
+        "//java/dagger/hilt/android/testing:custom_test_application",
+        "//java/dagger/hilt/android/testing:hilt_android_test",
+        "@google_bazel_common//third_party/java/truth",
+    ],
+)
+
+android_local_test(
+    name = "EarlyEntryPointNoEntryPointsDefinedTest",
+    size = "small",
+    srcs = ["EarlyEntryPointNoEntryPointsDefinedTest.java"],
+    manifest_values = {
+        "minSdkVersion": "14",
+    },
+    deps = [
+        "//:android_local_test_exports",
+        "//:dagger_with_compiler",
+        "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt/android:early_test_entry_point",
+        "//java/dagger/hilt/android:package_info",
+        "//java/dagger/hilt/android/testing:hilt_android_test",
+        "@google_bazel_common//third_party/java/truth",
+    ],
+)
+
+android_local_test(
     name = "AndroidEntryPointBaseClassTest",
     size = "small",
     srcs = [

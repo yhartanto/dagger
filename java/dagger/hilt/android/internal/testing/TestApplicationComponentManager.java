@@ -21,6 +21,7 @@ import dagger.hilt.android.testing.OnComponentReadyRunner;
 import dagger.hilt.android.testing.OnComponentReadyRunner.OnComponentReadyRunnerHolder;
 import dagger.hilt.internal.GeneratedComponentManager;
 import dagger.hilt.internal.Preconditions;
+import dagger.hilt.internal.TestSingletonComponentManager;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Map;
@@ -35,7 +36,7 @@ import org.junit.runner.Description;
  * <p>A manager for the creation of components that live in the test Application.
  */
 public final class TestApplicationComponentManager
-    implements GeneratedComponentManager<Object>, OnComponentReadyRunnerHolder {
+    implements TestSingletonComponentManager, OnComponentReadyRunnerHolder {
 
   // This is a generated class that we always generate in a known location.
   private static final String TEST_COMPONENT_DATA_SUPPLIER_IMPL =
@@ -44,8 +45,11 @@ public final class TestApplicationComponentManager
   private final Application application;
   private final Map<Class<?>, TestComponentData> testComponentDataSupplier;
 
+  private final Object earlyComponentLock = new Object();
+  private volatile Object earlyComponent = null;
   private final AtomicReference<Object> component = new AtomicReference<>();
   private final AtomicReference<Description> hasHiltTestRule = new AtomicReference<>();
+  // TODO(bcorso): Consider using a lock here rather than ConcurrentHashMap to avoid b/37042460.
   private final Map<Class<?>, Object> registeredModules = new ConcurrentHashMap<>();
   private final AtomicReference<Boolean> autoAddModuleEnabled = new AtomicReference<>();
   private final AtomicReference<DelayedComponentState> delayedComponentState =
@@ -93,6 +97,18 @@ public final class TestApplicationComponentManager
               + "test",
           e);
     }
+  }
+
+  @Override
+  public Object earlySingletonComponent() {
+    if (earlyComponent == null) {
+      synchronized (earlyComponentLock) {
+        if (earlyComponent == null) {
+          earlyComponent = EarlySingletonComponentCreator.createComponent();
+        }
+      }
+    }
+    return earlyComponent;
   }
 
   @Override

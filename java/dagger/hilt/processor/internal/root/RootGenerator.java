@@ -96,7 +96,6 @@ final class RootGenerator {
           new ComponentGenerator(
                   env,
                   getComponentClassName(componentDescriptor),
-                  root.element(),
                   Optional.empty(),
                   modules,
                   metadata.entryPoints(componentDescriptor.component()),
@@ -104,7 +103,9 @@ final class RootGenerator {
                   ImmutableList.of(),
                   componentAnnotation(componentDescriptor),
                   componentBuilder(componentDescriptor))
-              .generate().toBuilder().addModifiers(Modifier.STATIC).build());
+              .typeSpecBuilder()
+              .addModifiers(Modifier.STATIC)
+              .build());
     }
 
     RootFileFormatter.write(

@@ -24,6 +24,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -64,6 +65,14 @@ public abstract class ComponentDependencies {
 
   /** Returns the component entry point associated with the given a component. */
   public abstract Dependencies componentEntryPoints();
+
+  /** Returns {@code true} if any entry points are annotated with {@code EarlyEntryPoints}. */
+  @Memoized
+  public boolean hasEarlySingletonEntryPoints() {
+    return entryPoints().getGlobalSingletonDeps().stream()
+        .anyMatch(
+            entryPoint -> Processors.hasAnnotation(entryPoint, ClassNames.EARLY_ENTRY_POINT));
+  }
 
   @AutoValue.Builder
   abstract static class Builder {
@@ -122,6 +131,17 @@ public abstract class ComponentDependencies {
 
     /** Returns the global uninstalled test deps. */
     abstract ImmutableSet<TypeElement> globalUninstalledTestDeps();
+
+    /** Returns the dependencies to be installed in the global singleton component. */
+    ImmutableSet<TypeElement> getGlobalSingletonDeps() {
+      return ImmutableSet.<TypeElement>builder()
+          .addAll(
+              globalDeps().get(ClassNames.SINGLETON_COMPONENT).stream()
+                  .filter(dep -> !globalUninstalledTestDeps().contains(dep))
+                  .collect(toImmutableSet()))
+          .addAll(globalTestDeps().get(ClassNames.SINGLETON_COMPONENT))
+          .build();
+    }
 
     /** Returns the dependencies to be installed in the given component for the given root. */
     public ImmutableSet<TypeElement> get(ClassName component, ClassName root, boolean isTestRoot) {

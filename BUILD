@@ -105,6 +105,7 @@ android_library(
         "@maven//:org_robolectric_shadows_framework",  # For ActivityController
         "@maven//:androidx_lifecycle_lifecycle_common",  # For Lifecycle.State
         "@maven//:androidx_activity_activity",  # For ComponentActivity
+        "@maven//:androidx_test_core",  # For ApplicationProvider
         "@maven//:androidx_test_ext_junit",
         "@maven//:org_robolectric_annotations",
         "@maven//:org_robolectric_robolectric",

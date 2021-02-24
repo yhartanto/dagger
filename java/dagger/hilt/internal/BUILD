@@ -18,10 +18,20 @@
 package(default_visibility = ["//:src"])
 
 java_library(
+    name = "test_singleton_component",
+    srcs = ["TestSingletonComponent.java"],
+    deps = [":generated_component"],
+)
+
+java_library(
     name = "generated_component",
-    srcs = [
-        "GeneratedComponent.java",
-    ],
+    srcs = ["GeneratedComponent.java"],
+)
+
+java_library(
+    name = "test_singleton_component_manager",
+    srcs = ["TestSingletonComponentManager.java"],
+    deps = [":component_manager"],
 )
 
 java_library(

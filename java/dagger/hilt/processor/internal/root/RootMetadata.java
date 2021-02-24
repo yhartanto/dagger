@@ -16,6 +16,7 @@
 
 package dagger.hilt.processor.internal.root;
 
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Suppliers.memoize;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -104,6 +105,10 @@ public final class RootMetadata {
   public ImmutableSet<TypeName> entryPoints(ClassName componentName) {
     return ImmutableSet.<TypeName>builder()
         .addAll(getUserDefinedEntryPoints(componentName))
+        .add(
+            root.isTestRoot() && componentName.equals(ClassNames.SINGLETON_COMPONENT)
+                ? ClassNames.TEST_SINGLETON_COMPONENT
+                : ClassNames.GENERATED_COMPONENT)
         .add(componentName)
         .build();
   }
@@ -127,6 +132,7 @@ public final class RootMetadata {
   }
 
   public TestRootMetadata testRootMetadata() {
+    checkState(!root.isDefaultRoot(), "The default root does not have TestRootMetadata!");
     return testRootMetadata.get();
   }
 
@@ -148,7 +154,7 @@ public final class RootMetadata {
     for (ComponentDescriptor componentDescriptor : componentTree.getComponentDescriptors()) {
       ClassName componentName = componentDescriptor.component();
       for (TypeElement extraModule : modulesThatDaggerCannotConstruct(componentName)) {
-        if (root.type().isTestRoot() && !componentName.equals(ClassNames.SINGLETON_COMPONENT)) {
+        if (root.isTestRoot() && !componentName.equals(ClassNames.SINGLETON_COMPONENT)) {
           env.getMessager()
               .printMessage(
                   Diagnostic.Kind.ERROR,
@@ -156,7 +162,7 @@ public final class RootMetadata {
                       + "static provision methods or have a visible, no-arg constructor. Found: "
                       + extraModule.getQualifiedName(),
                   root.element());
-        } else if (!root.type().isTestRoot()) {
+        } else if (!root.isTestRoot()) {
           env.getMessager()
               .printMessage(
                   Diagnostic.Kind.ERROR,
@@ -171,10 +177,20 @@ public final class RootMetadata {
 
   private ImmutableSet<TypeName> getUserDefinedEntryPoints(ClassName componentName) {
     ImmutableSet.Builder<TypeName> entryPointSet = ImmutableSet.builder();
-    entryPointSet.add(ClassNames.GENERATED_COMPONENT);
-    for (TypeElement element :
-        deps.entryPoints().get(componentName, root.classname(), root.isTestRoot())) {
-      entryPointSet.add(ClassName.get(element));
+    if (root.isDefaultRoot() && componentName.equals(ClassNames.SINGLETON_COMPONENT)) {
+      // Filter to only use the entry points annotated with @EarlyEntryPoint. We only do this
+      // for SingletonComponent because EarlyEntryPoints can only be installed in the
+      // SingletonComponent.
+      // TODO(bcorso): Once the DefaultComponent is used as a "shared" component across tests we'll
+      // only do this filtering if there are no tests that need to share it.
+      deps.entryPoints().get(componentName, root.classname(), root.isTestRoot()).stream()
+          .filter(ep -> Processors.hasAnnotation(ep, ClassNames.EARLY_ENTRY_POINT))
+          .map(ClassName::get)
+          .forEach(entryPointSet::add);
+    } else {
+      deps.entryPoints().get(componentName, root.classname(), root.isTestRoot()).stream()
+          .map(ClassName::get)
+          .forEach(entryPointSet::add);
     }
     return entryPointSet.build();
   }

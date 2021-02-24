@@ -17,6 +17,7 @@
 package dagger.hilt.processor.internal;
 
 import static com.google.auto.common.MoreElements.asPackage;
+import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.asVariable;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
@@ -934,6 +935,28 @@ public final class Processors {
     return (typeName instanceof ParameterizedTypeName)
         ? ((ParameterizedTypeName) typeName).rawType
         : typeName;
+  }
+
+  public static Optional<TypeElement> getOriginatingTestElement(
+      Element element, Elements elements) {
+    TypeElement topLevelType = getOriginatingTopLevelType(element, elements);
+    return hasAnnotation(topLevelType, ClassNames.HILT_ANDROID_TEST)
+        ? Optional.of(asType(topLevelType))
+        : Optional.empty();
+  }
+
+  private static TypeElement getOriginatingTopLevelType(Element element, Elements elements) {
+    TypeElement topLevelType = getTopLevelType(element);
+    if (hasAnnotation(topLevelType, ClassNames.ORIGINATING_ELEMENT)) {
+      return getOriginatingTopLevelType(
+          getAnnotationClassValue(
+              elements,
+              getAnnotationMirror(topLevelType, ClassNames.ORIGINATING_ELEMENT),
+              "topLevelClass"),
+          elements);
+    }
+
+    return topLevelType;
   }
 
   private Processors() {}

@@ -89,8 +89,8 @@ public final class RootProcessor extends BaseProcessor {
     rootNames.add(ClassName.get(rootElement));
     if (isTestEnv) {
       new TestInjectorGenerator(
-          getProcessingEnv(),
-          TestRootMetadata.of(getProcessingEnv(), rootElement)).generate();
+              getProcessingEnv(), TestRootMetadata.of(getProcessingEnv(), rootElement))
+          .generate();
     } else {
       ProcessorErrors.checkState(
           rootNames.size() <= 1, element, "More than one root found: %s", rootNames);
@@ -149,6 +149,11 @@ public final class RootProcessor extends BaseProcessor {
 
       if (isTestEnv) {
         generateTestComponentData(rootMetadatas);
+        if (deps.hasEarlySingletonEntryPoints()) {
+          Root defaultRoot = Root.createDefaultRoot(getProcessingEnv());
+          generateComponents(RootMetadata.create(defaultRoot, tree, deps, getProcessingEnv()));
+          EarlySingletonComponentCreatorGenerator.generate(getProcessingEnv());
+        }
       }
     } catch (Exception e) {
       for (Root root : rootsToProcess) {
