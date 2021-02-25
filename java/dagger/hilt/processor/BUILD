@@ -15,7 +15,7 @@
 # Description:
 #   Hilt android processors.
 
-load("//:build_defs.bzl", "POM_VERSION_ALPHA")
+load("//:build_defs.bzl", "POM_VERSION_BETA")
 load("//tools:maven.bzl", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
@@ -42,7 +42,7 @@ java_library(
 
 java_library(
     name = "artifact-lib",
-    tags = ["maven_coordinates=com.google.dagger:hilt-compiler:" + POM_VERSION_ALPHA],
+    tags = ["maven_coordinates=com.google.dagger:hilt-compiler:" + POM_VERSION_BETA],
     visibility = ["//visibility:private"],
     exports = [
         ":artifact-lib-shared",
@@ -51,7 +51,7 @@ java_library(
 
 gen_maven_artifact(
     name = "artifact",
-    artifact_coordinates = "com.google.dagger:hilt-compiler:" + POM_VERSION_ALPHA,
+    artifact_coordinates = "com.google.dagger:hilt-compiler:" + POM_VERSION_BETA,
     artifact_name = "Hilt Processor",
     artifact_target = ":artifact-lib",
     artifact_target_libs = [

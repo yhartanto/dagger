@@ -14,10 +14,10 @@
 
 """A macro to configure Dagger deps within a workspace"""
 
-load("//:build_defs.bzl", "POM_VERSION", "POM_VERSION_ALPHA")
+load("//:build_defs.bzl", "POM_VERSION", "POM_VERSION_BETA")
 
 _DAGGER_VERSION = POM_VERSION
-_HILT_VERSION = POM_VERSION_ALPHA
+_HILT_VERSION = POM_VERSION_BETA
 
 DAGGER_ARTIFACTS = [
     "com.google.dagger:dagger:" + _DAGGER_VERSION,

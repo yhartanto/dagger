@@ -14,7 +14,7 @@
 # Description:
 #   Testing libraries for Hilt Android.
 
-load("//:build_defs.bzl", "POM_VERSION_ALPHA")
+load("//:build_defs.bzl", "POM_VERSION_BETA")
 load("//tools:maven.bzl", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
@@ -171,7 +171,7 @@ java_library(
 android_library(
     name = "artifact-lib",
     testonly = 1,
-    tags = ["maven_coordinates=com.google.dagger:hilt-android-testing:" + POM_VERSION_ALPHA],
+    tags = ["maven_coordinates=com.google.dagger:hilt-android-testing:" + POM_VERSION_BETA],
     exports = [
         ":bind_value",
         ":custom_test_application",
@@ -186,7 +186,7 @@ android_library(
 gen_maven_artifact(
     name = "artifact",
     testonly = 1,
-    artifact_coordinates = "com.google.dagger:hilt-android-testing:" + POM_VERSION_ALPHA,
+    artifact_coordinates = "com.google.dagger:hilt-android-testing:" + POM_VERSION_BETA,
     artifact_name = "Hilt Android Testing",
     artifact_target = ":artifact-lib",
     artifact_target_libs = [
