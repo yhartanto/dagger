@@ -18,6 +18,7 @@ package dagger.hilt.android;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import dagger.internal.Beta;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -31,18 +32,21 @@ import java.lang.annotation.Target;
  *
  * <h1>Usage:
  *
- * <p>To use, annotate an existing entry point with {@link EarlyEntryPoint} as shown below:
+ * <p>To enable an existing entry point to be called early in a Hilt test, replace its
+ * {@link dagger.hilt.EntryPoint} annotation with {@link EarlyEntryPoint}. (Note that,
+ * {@link EarlyEntryPoint} is only allowed on entry points installed in the
+ * {@link dagger.hilt.components.SingletonComponent}).
  *
  * <pre>{@code
- * @EarlyEntryPoint
- * @EntryPoint
+ * @EarlyEntryPoint  // <- This replaces @EntryPoint
  * @InstallIn(SingletonComponent.class)
  * interface FooEntryPoint {
  *   Foo getFoo();
  * }
  * }</pre>
  *
- * <p>Then, replace any usages of {@link EntryPoints} with {@link EarlyEntryPoints}, as shown below:
+ * <p>Then, replace any of the corresponding usages of {@link dagger.hilt.EntryPoints} with
+ * {@link EarlyEntryPoints}, as shown below:
  *
  * <pre>{@code
  * // EarlyEntryPoints.get() must be used with entry points annotated with @EarlyEntryPoint
@@ -50,6 +54,7 @@ import java.lang.annotation.Target;
  * Foo foo = EarlyEntryPoints.get(appContext, FooEntryPoint.class).getFoo();
  * }</pre>
  */
+@Beta
 @Retention(RUNTIME) // Needs to be runtime for checks in EntryPoints and EarlyEntryPoints.
 @Target(ElementType.TYPE)
 public @interface EarlyEntryPoint {}

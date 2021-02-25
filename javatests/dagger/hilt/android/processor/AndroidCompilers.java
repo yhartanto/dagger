@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compiler;
 import dagger.hilt.android.processor.internal.androidentrypoint.AndroidEntryPointProcessor;
 import dagger.hilt.android.processor.internal.customtestapplication.CustomTestApplicationProcessor;
-import dagger.hilt.android.processor.internal.earlyentrypoint.EarlyEntryPointProcessor;
 import dagger.hilt.android.processor.internal.uninstallmodules.UninstallModulesProcessor;
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessor;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentProcessor;
@@ -69,7 +68,6 @@ public final class AndroidCompilers {
         new AndroidEntryPointProcessor(),
         new ComponentProcessor(),
         new DefineComponentProcessor(),
-        new EarlyEntryPointProcessor(),
         new GeneratesRootInputProcessor(),
         new OriginatingElementProcessor(),
         new CustomTestApplicationProcessor(),

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.processor.internal.earlyentrypoint;
+package dagger.hilt.android.processor.internal.aggregateddeps;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.hilt.android.processor.AndroidCompilers.compiler;
@@ -30,48 +30,57 @@ import org.junit.runners.JUnit4;
 public class EarlyEntryPointProcessorTest {
 
   @Test
-  public void testNotEntryPoint_fails() {
-    Compilation compilation =
-        compiler()
-            .compile(
-                JavaFileObjects.forSourceLines(
-                    "test.NotEntryPoint",
-                    "package test;",
-                    "",
-                    "import dagger.hilt.android.EarlyEntryPoint;",
-                    "",
-                    "@EarlyEntryPoint",
-                    "public interface NotEntryPoint {}"));
+  public void testUsedWithEntryPoint_fails() {
+    JavaFileObject entryPoint =
+        JavaFileObjects.forSourceLines(
+            "test.UsedWithEntryPoint",
+            "package test;",
+            "",
+            "import dagger.hilt.android.EarlyEntryPoint;",
+            "import dagger.hilt.EntryPoint;",
+            "import dagger.hilt.InstallIn;",
+            "import dagger.hilt.components.SingletonComponent;",
+            "",
+            "@EarlyEntryPoint",
+            "@EntryPoint",
+            "@InstallIn(SingletonComponent.class)",
+            "public interface UsedWithEntryPoint {}");
+    Compilation compilation = compiler().compile(entryPoint);
 
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("@EarlyEntryPoint must be used with @EntryPoint");
+        .hadErrorContaining(
+            "Only one of the following annotations can be used on test.UsedWithEntryPoint: "
+                + "[dagger.hilt.EntryPoint, dagger.hilt.android.EarlyEntryPoint]")
+        .inFile(entryPoint)
+        .onLine(11);
   }
 
   @Test
   public void testNotSingletonComponent_fails() {
-    Compilation compilation =
-        compiler()
-            .compile(
-                JavaFileObjects.forSourceLines(
-                    "test.NotSingletonComponent",
-                    "package test;",
-                    "",
-                    "import dagger.hilt.android.EarlyEntryPoint;",
-                    "import dagger.hilt.android.components.ActivityComponent;",
-                    "import dagger.hilt.EntryPoint;",
-                    "import dagger.hilt.InstallIn;",
-                    "",
-                    "@EarlyEntryPoint",
-                    "@EntryPoint",
-                    "@InstallIn(ActivityComponent.class)",
-                    "public interface NotSingletonComponent {}"));
+    JavaFileObject entryPoint =
+        JavaFileObjects.forSourceLines(
+            "test.NotSingletonComponent",
+            "package test;",
+            "",
+            "import dagger.hilt.android.EarlyEntryPoint;",
+            "import dagger.hilt.android.components.ActivityComponent;",
+            "import dagger.hilt.EntryPoint;",
+            "import dagger.hilt.InstallIn;",
+            "",
+            "@EarlyEntryPoint",
+            "@InstallIn(ActivityComponent.class)",
+            "public interface NotSingletonComponent {}");
+
+    Compilation compilation = compiler().compile(entryPoint);
 
     assertThat(compilation).failed();
     assertThat(compilation)
         .hadErrorContaining(
             "@EarlyEntryPoint can only be installed into the SingletonComponent. "
-                + "Found: [dagger.hilt.android.components.ActivityComponent]");
+                + "Found: [dagger.hilt.android.components.ActivityComponent]")
+        .inFile(entryPoint)
+        .onLine(10);
   }
 
   @Test
@@ -90,7 +99,6 @@ public class EarlyEntryPointProcessorTest {
             "@HiltAndroidTest",
             "public class MyTest {",
             "  @EarlyEntryPoint",
-            "  @EntryPoint",
             "  @InstallIn(SingletonComponent.class)",
             "  interface NestedEarlyEntryPoint {}",
             "}");
@@ -103,6 +111,6 @@ public class EarlyEntryPointProcessorTest {
                 + "be nested in (or originate from) a @HiltAndroidTest-annotated class, "
                 + "test.MyTest.")
         .inFile(test)
-        .onLine(14);
+        .onLine(13);
   }
 }

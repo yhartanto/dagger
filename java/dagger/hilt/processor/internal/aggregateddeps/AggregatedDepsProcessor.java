@@ -65,6 +65,7 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
   private static final ImmutableSet<ClassName> ENTRY_POINT_ANNOTATIONS =
       ImmutableSet.of(
           ClassNames.ENTRY_POINT,
+          ClassNames.EARLY_ENTRY_POINT,
           ClassNames.GENERATED_ENTRY_POINT,
           ClassNames.COMPONENT_ENTRY_POINT);
 
@@ -307,6 +308,28 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
         entryPointAnnotation.simpleName(),
         element);
     TypeElement entryPoint = asType(element);
+
+    if (entryPointAnnotation.equals(ClassNames.EARLY_ENTRY_POINT)) {
+      ImmutableSet<ClassName> components = Components.getComponents(getElementUtils(), element);
+      ProcessorErrors.checkState(
+          components.equals(ImmutableSet.of(ClassNames.SINGLETON_COMPONENT)),
+          element,
+          "@EarlyEntryPoint can only be installed into the SingletonComponent. Found: %s",
+          components);
+
+      Optional<TypeElement> optionalTestElement =
+          Processors.getOriginatingTestElement(element, getElementUtils());
+      ProcessorErrors.checkState(
+          !optionalTestElement.isPresent(),
+          element,
+          "@EarlyEntryPoint-annotated entry point, %s, cannot be nested in (or originate from) "
+              + "a @HiltAndroidTest-annotated class, %s. This requirement is to avoid confusion "
+              + "with other, test-specific entry points.",
+          asType(element).getQualifiedName().toString(),
+          optionalTestElement
+              .map(testElement -> testElement.getQualifiedName().toString())
+              .orElse(""));
+    }
 
     generateAggregatedDeps(
         entryPointAnnotation.equals(ClassNames.COMPONENT_ENTRY_POINT)

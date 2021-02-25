@@ -21,10 +21,12 @@ import dagger.hilt.EntryPoints;
 import dagger.hilt.internal.GeneratedComponentManagerHolder;
 import dagger.hilt.internal.Preconditions;
 import dagger.hilt.internal.TestSingletonComponentManager;
+import dagger.internal.Beta;
 import java.lang.annotation.Annotation;
 import javax.annotation.Nonnull;
 
 /** Static utility methods for accessing entry points annotated with {@link EarlyEntryPoint}. */
+@Beta
 public final class EarlyEntryPoints {
 
   /**

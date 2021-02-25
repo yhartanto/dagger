@@ -121,10 +121,11 @@ android_library(
         "EarlyEntryPoints.java",
     ],
     exported_plugins = [
-        "//java/dagger/hilt/android/processor/internal/earlyentrypoint:processor",
+        "//java/dagger/hilt/processor/internal/aggregateddeps:plugin",
     ],
     deps = [
         ":package_info",
+        "//:dagger_with_compiler",
         "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:preconditions",

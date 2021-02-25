@@ -16,7 +16,6 @@
 
 package dagger.hilt.android;
 
-import dagger.hilt.EntryPoint;
 import dagger.hilt.InstallIn;
 import dagger.hilt.components.SingletonComponent;
 import javax.inject.Inject;
@@ -26,9 +25,8 @@ import javax.inject.Singleton;
 public final class EarlyEntryPointCustomApplicationClasses {
   private EarlyEntryPointCustomApplicationClasses() {}
 
-  // @EarlyEntryPoints cannot be nested in tests, so we have to put everything here.
+  // @EarlyEntryPoint cannot be nested in tests, so we've separated it out into this class.
   @EarlyEntryPoint
-  @EntryPoint
   @InstallIn(SingletonComponent.class)
   interface EarlyFooEntryPoint {
     Foo foo();

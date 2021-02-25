@@ -38,8 +38,8 @@ public final class EarlyEntryPointHiltAndroidAppRuntimeClasses {
     Foo foo();
   }
 
+  // @EarlyEntryPoint cannot be nested in tests, so we've separated it out into this class.
   @EarlyEntryPoint
-  @EntryPoint
   @InstallIn(SingletonComponent.class)
   interface EarlyFooEntryPoint {
     Foo foo();

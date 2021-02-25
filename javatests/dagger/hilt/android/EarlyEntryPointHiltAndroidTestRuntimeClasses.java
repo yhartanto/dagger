@@ -33,17 +33,15 @@ import javax.inject.Scope;
 public final class EarlyEntryPointHiltAndroidTestRuntimeClasses {
   private EarlyEntryPointHiltAndroidTestRuntimeClasses() {}
 
-  // @EarlyEntryPoints cannot be nested in tests, so we have to put everything here.
+  // @EarlyEntryPoint cannot be nested in tests, so we've separated it out into this class.
   @EarlyEntryPoint
-  @EntryPoint
   @InstallIn(SingletonComponent.class)
   interface EarlyFooEntryPoint {
     Foo foo();
   }
 
-  // @EarlyEntryPoints cannot be nested in tests, so we have to put everything here.
+  // @EarlyEntryPoint cannot be nested in tests, so we've separated it out into this class.
   @EarlyEntryPoint
-  @EntryPoint
   @InstallIn(SingletonComponent.class)
   interface EarlyMySubcomponentBuilderEntryPoint {
     MySubcomponent.Builder mySubcomponentBuilder();

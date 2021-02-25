@@ -43,7 +43,6 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
         "//java/dagger/hilt/android/processor/internal/bindvalue:bind_value_processor_lib",
         "//java/dagger/hilt/android/processor/internal/customtestapplication:processor_lib",
-        "//java/dagger/hilt/android/processor/internal/earlyentrypoint:processor_lib",
         "//java/dagger/hilt/android/processor/internal/viewmodel:validation_plugin_lib",
         "//java/dagger/hilt/android/processor/internal/uninstallmodules:processor_lib",
         "//java/dagger/hilt/android/processor/internal/viewmodel:processor_lib",

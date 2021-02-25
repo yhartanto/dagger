@@ -29,7 +29,6 @@ import javax.inject.Singleton;
 /** A custom application used to test @EarlyEntryPoint */
 public class BaseTestApplication extends Application {
   @EarlyEntryPoint
-  @EntryPoint
   @InstallIn(SingletonComponent.class)
   interface EarlyFooEntryPoint {
     Foo earlyFoo();
