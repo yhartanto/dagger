@@ -30,29 +30,29 @@ import java.lang.annotation.Target;
  * <p>Warning: Please see documentation for more details:
  * https://dagger.dev/hilt/early-entry-point
  *
- * <h1>Usage:
+ * <p>Usage:
  *
  * <p>To enable an existing entry point to be called early in a Hilt test, replace its
  * {@link dagger.hilt.EntryPoint} annotation with {@link EarlyEntryPoint}. (Note that,
  * {@link EarlyEntryPoint} is only allowed on entry points installed in the
  * {@link dagger.hilt.components.SingletonComponent}).
  *
- * <pre>{@code
+ * <pre><code>
  * @EarlyEntryPoint  // <- This replaces @EntryPoint
  * @InstallIn(SingletonComponent.class)
  * interface FooEntryPoint {
  *   Foo getFoo();
  * }
- * }</pre>
+ * </code></pre>
  *
  * <p>Then, replace any of the corresponding usages of {@link dagger.hilt.EntryPoints} with
  * {@link EarlyEntryPoints}, as shown below:
  *
- * <pre>{@code
+ * <pre><code>
  * // EarlyEntryPoints.get() must be used with entry points annotated with @EarlyEntryPoint
  * // This entry point can now be called at any point during a test, e.g. in Application.onCreate().
  * Foo foo = EarlyEntryPoints.get(appContext, FooEntryPoint.class).getFoo();
- * }</pre>
+ * </code></pre>
  */
 @Beta
 @Retention(RUNTIME) // Needs to be runtime for checks in EntryPoints and EarlyEntryPoints.
