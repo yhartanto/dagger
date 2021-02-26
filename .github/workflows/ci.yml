@@ -6,6 +6,13 @@ on:
       - master
   pull_request:
 
+env:
+  # Our Bazel builds currently rely on JDK 8.
+  USE_JAVA_VERSION: '8'
+  # Our Bazel builds currently rely on 3.7.1. The version is set via
+  # baselisk by USE_BAZEL_VERSION: https://github.com/bazelbuild/bazelisk.
+  USE_BAZEL_VERSION: '3.7.1'
+
 jobs:
   validate-latest-dagger-version:
     name: 'Validate Dagger version'
@@ -22,12 +29,6 @@ jobs:
     name: 'Bazel tests'
     needs: validate-latest-dagger-version
     runs-on: ubuntu-latest
-    env:
-      # Our Bazel builds currently rely on JDK 8.
-      USE_JAVA_VERSION: '8'
-      # Our Bazel builds currently rely on 3.7.1. The version is set via
-      # baselisk by USE_BAZEL_VERSION: https://github.com/bazelbuild/bazelisk.
-      USE_BAZEL_VERSION: '3.7.1'
     steps:
       - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
         uses: actions/setup-java@v1
@@ -160,6 +161,10 @@ jobs:
     if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
+      - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
+        uses: actions/setup-java@v1
+        with:
+          java-version: '${{ env.USE_JAVA_VERSION }}'
       - name: 'Check out repository'
         uses: actions/checkout@v2
       - name: 'Cache local Maven repository'
