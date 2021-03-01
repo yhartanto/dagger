@@ -117,8 +117,8 @@ public abstract class BindingGraph {
       TopLevelBindingGraph topLevelBindingGraph) {
     ImmutableSet<BindingNode> reachableBindingNodes =
         Graphs.reachableNodes(topLevelBindingGraph.network().asGraph(), componentNode).stream()
-            .filter(node -> isSubpath(componentNode.componentPath(), node.componentPath()))
             .filter(node -> node instanceof BindingNode)
+            .filter(node -> isSubpath(componentNode.componentPath(), node.componentPath()))
             .map(node -> (BindingNode) node)
             .collect(toImmutableSet());
 
