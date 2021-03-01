@@ -57,8 +57,8 @@ public final class RootFileFormatterTest {
         .contains(
             JOINER.join(
                 "  public abstract static class SingletonC implements"
-                    + " HiltWrapper_ActivityRetainedComponentManager"
-                    + "_ActivityRetainedComponentBuilderEntryPoint,",
+                + " HiltWrapper_ActivityRetainedComponentManager"
+                + "_ActivityRetainedComponentBuilderEntryPoint,",
                 "      ServiceComponentManager.ServiceComponentBuilderEntryPoint,",
                 "      SingletonComponent,",
                 "      GeneratedComponent,",
@@ -103,8 +103,8 @@ public final class RootFileFormatterTest {
         .contains(
             JOINER.join(
                 "  public abstract static class SingletonC implements"
-                    + " HiltWrapper_ActivityRetainedComponentManager"
-                    + "_ActivityRetainedComponentBuilderEntryPoint,",
+                + " HiltWrapper_ActivityRetainedComponentManager"
+                + "_ActivityRetainedComponentBuilderEntryPoint,",
                 "      ServiceComponentManager.ServiceComponentBuilderEntryPoint,",
                 "      SingletonComponent,",
                 "      TestSingletonComponent,",
