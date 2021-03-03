@@ -125,7 +125,7 @@ public final class DaggerElements implements Elements, ClearableCache {
 
   /** Returns the type element for a class name. */
   public TypeElement getTypeElement(ClassName className) {
-    return getTypeElement(className.withoutAnnotations().toString());
+    return getTypeElement(className.canonicalName());
   }
 
   /** Returns the argument or the closest enclosing element that is a {@link TypeElement}. */
