@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.processor.internal.androidentrypoint;
+package dagger.hilt.processor.internal;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -23,7 +23,6 @@ import javax.annotation.processing.ProcessingEnvironment;
 
 /** Hilt annotation processor options. */
 // TODO(danysantiago): Consider consolidating with Dagger compiler options logic.
-// TODO(user): Move this class to dagger/hilt/processor/internal
 public final class HiltCompilerOptions {
 
   /** Processor options which can have true or false values. */

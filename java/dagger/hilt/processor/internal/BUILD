@@ -24,6 +24,7 @@ java_library(
         "ProcessorErrorHandler.java",
     ],
     deps = [
+        ":compiler_options",
         ":processor_errors",
         ":processors",
         "//java/dagger/internal/guava:base",
@@ -132,6 +133,11 @@ java_library(
         "//:dagger_with_compiler",
         "//java/dagger/internal/codegen/kotlin",
     ],
+)
+
+java_library(
+    name = "compiler_options",
+    srcs = ["HiltCompilerOptions.java"],
 )
 
 filegroup(
