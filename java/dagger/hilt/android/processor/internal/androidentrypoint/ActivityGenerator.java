@@ -57,7 +57,9 @@ public final class ActivityGenerator {
     Processors.addGeneratedAnnotation(builder, env, getClass());
 
       Generators.copyConstructors(
-          metadata.baseElement(), CodeBlock.builder().addStatement("init()").build(), builder);
+          metadata.baseElement(),
+          CodeBlock.builder().addStatement("_initHiltInternal()").build(),
+          builder);
       builder.addMethod(init());
 
     metadata.baseElement().getTypeParameters().stream()
@@ -88,7 +90,7 @@ public final class ActivityGenerator {
   //   });
   // }
   private MethodSpec init() {
-    return MethodSpec.methodBuilder("init")
+    return MethodSpec.methodBuilder("_initHiltInternal")
         .addModifiers(Modifier.PRIVATE)
         .addStatement(
             "addOnContextAvailableListener($L)",

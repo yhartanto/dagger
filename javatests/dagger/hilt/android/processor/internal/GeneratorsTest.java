@@ -79,7 +79,7 @@ public final class GeneratorsTest {
                 "      @Nullable String androidxNullable,",
                 "      @javax.annotation.Nullable String javaxNullable) {",
                 "    super(supportNullable, androidxNullable, javaxNullable);",
-                "    init();",
+                "    _initHiltInternal();",
                 "  }",
                 "}"));
   }
