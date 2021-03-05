@@ -24,6 +24,7 @@ import static dagger.internal.codegen.base.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedInjectedConstructors;
 import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
+import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -351,7 +352,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     if (!isValidMembersInjectionKey(key)) {
       return Optional.empty();
     }
-    Key membersInjectionKey = keyFactory.forMembersInjectedType(types.unwrapType(key.type()));
+    Key membersInjectionKey = keyFactory.forMembersInjectedType(unwrapType(key.type()));
     return getOrFindMembersInjectionBinding(membersInjectionKey)
         .map(binding -> bindingFactory.membersInjectorBinding(key, binding));
   }
