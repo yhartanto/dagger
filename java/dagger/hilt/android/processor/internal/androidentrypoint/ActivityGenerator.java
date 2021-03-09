@@ -30,7 +30,6 @@ import javax.lang.model.element.Modifier;
 
 /** Generates an Hilt Activity class for the @AndroidEntryPoint annotated class. */
 public final class ActivityGenerator {
-
   private final ProcessingEnvironment env;
   private final AndroidEntryPointMetadata metadata;
   private final ClassName generatedClassName;
