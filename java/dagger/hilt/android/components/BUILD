@@ -36,7 +36,6 @@ android_library(
         "//java/dagger/hilt/android/scopes",
         "//java/dagger/hilt/android/scopes:activity_retained_scoped",
         "//java/dagger/hilt/components",
-        "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )
 
