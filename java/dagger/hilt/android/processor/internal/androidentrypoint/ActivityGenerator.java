@@ -108,7 +108,8 @@ public final class ActivityGenerator {
 
   // @Override
   // public ViewModelProvider.Factory getDefaultViewModelProviderFactory() {
-  //   return DefaultViewModelFactories.getActivityFactory(this);
+  //   return DefaultViewModelFactories.getActivityFactory(
+  //       this, super.getDefaultViewModelProviderFactory());
   // }
   private MethodSpec getDefaultViewModelProviderFactory() {
     return MethodSpec.methodBuilder("getDefaultViewModelProviderFactory")
@@ -116,7 +117,7 @@ public final class ActivityGenerator {
         .addModifiers(Modifier.PUBLIC)
         .returns(AndroidClassNames.VIEW_MODEL_PROVIDER_FACTORY)
         .addStatement(
-            "return $T.getActivityFactory(this)",
+            "return $T.getActivityFactory(this, super.getDefaultViewModelProviderFactory())",
             AndroidClassNames.DEFAULT_VIEW_MODEL_FACTORIES)
         .build();
   }
