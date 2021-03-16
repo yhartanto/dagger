@@ -141,8 +141,8 @@ maven_install(
     artifacts = [
         "androidx.annotation:annotation:1.1.0",
         "androidx.appcompat:appcompat:1.2.0",
-        "androidx.activity:activity:1.2.0",
-        "androidx.fragment:fragment:1.3.0",
+        "androidx.activity:activity:1.2.1",
+        "androidx.fragment:fragment:1.3.1",
         "androidx.lifecycle:lifecycle-common:2.3.0",
         "androidx.lifecycle:lifecycle-viewmodel:2.3.0",
         "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.3.0",
