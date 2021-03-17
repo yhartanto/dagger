@@ -70,7 +70,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: 'Run Bazel tests'
-        run: bazel test --test_output=errors //...
+        run: bazel test --test_output=errors //... --keep_going
         shell: bash
       - name: 'Install local snapshot'
         run: ./util/install-local-snapshot.sh
@@ -131,6 +131,12 @@ jobs:
       - name: 'Gradle Android local tests (AGP ${{ matrix.agp }})'
         run: ./util/run-local-gradle-android-tests.sh "${{ matrix.agp }}"
         shell: bash
+      - name: 'Upload test reports (AGP ${{ matrix.agp }})'
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: tests-reports-agp-${{ matrix.agp }}
+          path: ${{ github.workspace }}/**/build/reports/tests/*
   artifact-android-emulator-tests:
     name: 'Artifact Android emulator tests (API 30)'
     needs: bazel-test
@@ -161,6 +167,12 @@ jobs:
           api-level: 30
           target: google_apis
           script: ./util/run-local-emulator-tests.sh
+      - name: 'Upload test reports (API 30)'
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: androidTests-reports-api-30
+          path: ${{ github.workspace }}/**/build/reports/androidTests/connected/*
   publish-snapshot:
     name: 'Publish snapshot'
     # TODO(bcorso): Consider also waiting on artifact-android-emulator-tests
@@ -247,3 +259,9 @@ jobs:
           api-level: ${{ matrix.api-level }}
           target: google_apis
           script: ./util/run-local-emulator-tests.sh
+      - name: 'Upload test reports (API ${{ matrix.api-level }})'
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: androidTests-report-api-${{ matrix.api-level }}
+          path: ${{ github.workspace }}/**/build/reports/androidTests/connected/*
