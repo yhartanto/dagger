@@ -21,7 +21,6 @@ java_library(
     name = "test_injector",
     testonly = 1,
     srcs = [
-        "TestApplicationInjector.java",
         "TestInjector.java",
     ],
 )

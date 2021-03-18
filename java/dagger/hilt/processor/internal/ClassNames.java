@@ -128,8 +128,6 @@ public final class ClassNames {
       get("dagger.hilt.android.internal.testing", "InternalTestRoot");
   public static final ClassName TEST_INJECTOR =
       get("dagger.hilt.android.internal.testing", "TestInjector");
-  public static final ClassName TEST_APPLICATION_INJECTOR =
-      get("dagger.hilt.android.internal.testing", "TestApplicationInjector");
   public static final ClassName TEST_APPLICATION_COMPONENT_MANAGER =
       get("dagger.hilt.android.internal.testing", "TestApplicationComponentManager");
   public static final ClassName TEST_APPLICATION_COMPONENT_MANAGER_HOLDER =
