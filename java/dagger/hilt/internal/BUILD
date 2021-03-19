@@ -63,12 +63,14 @@ java_library(
 java_library(
     name = "component_entry_point",
     srcs = ["ComponentEntryPoint.java"],
+    proguard_specs = ["proguard-rules.pro"],
     deps = ["//java/dagger/hilt:generates_root_input"],
 )
 
 java_library(
     name = "generated_entry_point",
     srcs = ["GeneratedEntryPoint.java"],
+    proguard_specs = ["proguard-rules.pro"],
     deps = ["//java/dagger/hilt:generates_root_input"],
 )
 

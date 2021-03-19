@@ -126,6 +126,7 @@ android_library(
     exported_plugins = [
         "//java/dagger/hilt/processor/internal/aggregateddeps:plugin",
     ],
+    proguard_specs = ["proguard-rules.pro"],
     deps = [
         ":package_info",
         "//:dagger_with_compiler",
@@ -226,7 +227,10 @@ gen_maven_artifact(
     manifest = "AndroidManifest.xml",
     packaging = "aar",
     proguard_specs = [
+        "//java/dagger/hilt:proguard-rules.pro",
+        ":proguard-rules.pro",
         "//java/dagger/hilt/android/lifecycle:proguard-rules.pro",
+        "//java/dagger/hilt/internal:proguard-rules.pro",
     ],
 )
 
