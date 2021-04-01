@@ -74,6 +74,15 @@ public abstract class ComponentDependencies {
             entryPoint -> Processors.hasAnnotation(entryPoint, ClassNames.EARLY_ENTRY_POINT));
   }
 
+  /**
+   * Returns {@code true} if the test binds or uninstalls test-specific bindings that would prevent
+   * it from sharing components with other test roots.
+   */
+  public final boolean includesTestDeps(ClassName root) {
+    return modules().testDeps().keySet().stream().anyMatch((key) -> key.test().equals(root))
+        || modules().uninstalledTestDeps().containsKey(root);
+  }
+
   @AutoValue.Builder
   abstract static class Builder {
     abstract Dependencies.Builder modulesBuilder();

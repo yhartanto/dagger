@@ -144,14 +144,22 @@ public final class RootProcessor extends BaseProcessor {
 
       for (RootMetadata rootMetadata : rootMetadatas) {
         setProcessingState(rootMetadata.root());
-        generateComponents(rootMetadata);
+        if (!rootMetadata.canShareTestComponents()) {
+          generateComponents(rootMetadata);
+        }
       }
 
       if (isTestEnv) {
+        ImmutableList<RootMetadata> rootsThatCanShareComponents =
+            rootMetadatas.stream()
+                .filter(RootMetadata::canShareTestComponents)
+                .collect(toImmutableList());
         generateTestComponentData(rootMetadatas);
-        if (deps.hasEarlySingletonEntryPoints()) {
+        if (deps.hasEarlySingletonEntryPoints() || !rootsThatCanShareComponents.isEmpty()) {
           Root defaultRoot = Root.createDefaultRoot(getProcessingEnv());
-          generateComponents(RootMetadata.create(defaultRoot, tree, deps, getProcessingEnv()));
+          generateComponents(
+              RootMetadata.createForDefaultRoot(
+                  defaultRoot, rootsThatCanShareComponents, tree, deps, getProcessingEnv()));
           EarlySingletonComponentCreatorGenerator.generate(getProcessingEnv());
         }
       }

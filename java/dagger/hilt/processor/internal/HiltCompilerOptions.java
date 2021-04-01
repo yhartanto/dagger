@@ -36,7 +36,17 @@ public final class HiltCompilerOptions {
         "android.internal.disableAndroidSuperclassValidation", false),
 
     /** Flag that disables check on modules to be annotated with @InstallIn. */
-    DISABLE_MODULES_HAVE_INSTALL_IN_CHECK("disableModulesHaveInstallInCheck", false);
+    DISABLE_MODULES_HAVE_INSTALL_IN_CHECK("disableModulesHaveInstallInCheck", false),
+
+    /**
+     * Flag that enables unit tests to share a single generated Component, rather than using a
+     * separate generated Component per Hilt test root.
+     *
+     * <p>Tests that provide their own test bindings (e.g. using {@link
+     * dagger.hilt.android.testing.BindValue} or a test {@link dagger.Module}) cannot use the shared
+     * component. In these cases, a component will be generated for the test.
+     */
+    SHARE_TEST_COMPONENTS("shareTestComponents", false);
 
     private final String name;
     private final boolean defaultValue;

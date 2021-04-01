@@ -91,6 +91,7 @@ java_library(
         "ComponentNames.java",
     ],
     deps = [
+        ":classnames",
         ":processors",
         "@google_bazel_common//third_party/java/javapoet",
     ],

@@ -124,6 +124,8 @@ public final class ClassNames {
       get("dagger.hilt.android.internal.managers", "ComponentSupplier");
   public static final ClassName APPLICATION_CONTEXT_MODULE =
       get("dagger.hilt.android.internal.modules", "ApplicationContextModule");
+  public static final ClassName DEFAULT_ROOT =
+      ClassName.get("dagger.hilt.android.internal.testing.root", "Default");
   public static final ClassName INTERNAL_TEST_ROOT =
       get("dagger.hilt.android.internal.testing", "InternalTestRoot");
   public static final ClassName TEST_INJECTOR =

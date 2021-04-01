@@ -44,6 +44,12 @@ public final class ComponentNames {
     return Processors.append(Processors.getEnclosedClassName(testName), "_ComponentDataHolder");
   }
 
+  /** Returns the name of components generated for the default root. */
+  public static ClassName defaultRootComponentName(ClassName component) {
+    return generatedComponentsWrapper(ClassNames.DEFAULT_ROOT)
+        .nestedClass(componentName(component));
+  }
+
   /**
    * Returns the shortened component name by replacing the ending "Component" with "C" if it exists.
    *

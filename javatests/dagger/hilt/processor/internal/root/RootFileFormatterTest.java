@@ -125,6 +125,37 @@ public final class RootFileFormatterTest {
                 "      EntryPoint4 {"));
   }
 
+  @Test
+  public void testSharedTestComponents() {
+    Compilation compilation =
+        compiler()
+            .withOptions("-Adagger.hilt.shareTestComponents=true")
+            .compile(
+                JavaFileObjects.forSourceLines(
+                    "test.MyTest",
+                    "package test;",
+                    "",
+                    "import dagger.hilt.android.testing.HiltAndroidTest;",
+                    "",
+                    "@HiltAndroidTest",
+                    "public class MyTest {}"),
+                entryPoint("SingletonComponent", "EntryPoint1"));
+    assertThat(compilation).succeeded();
+    assertThat(compilation)
+        .generatedSourceFile("dagger/hilt/android/internal/testing/root/Default_HiltComponents")
+        .contentsAsUtf8String()
+        .contains(
+            JOINER.join(
+                "  public abstract static class SingletonC implements"
+                + " HiltWrapper_ActivityRetainedComponentManager"
+                + "_ActivityRetainedComponentBuilderEntryPoint,",
+                "      ServiceComponentManager.ServiceComponentBuilderEntryPoint,",
+                "      SingletonComponent,",
+                "      TestSingletonComponent,",
+                "      EntryPoint1,",
+                "      MyTest_GeneratedInjector {"));
+  }
+
   private static JavaFileObject entryPoint(String component, String name) {
     return JavaFileObjects.forSourceLines(
         "test." + name,

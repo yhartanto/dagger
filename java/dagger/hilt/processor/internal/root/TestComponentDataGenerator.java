@@ -89,7 +89,7 @@ public final class TestComponentDataGenerator {
     Processors.addGeneratedAnnotation(
         generator, processingEnv, ClassNames.ROOT_PROCESSOR.toString());
 
-    JavaFile.builder(rootMetadata.testRootMetadata().testName().packageName(), generator.build())
+    JavaFile.builder(name.packageName(), generator.build())
         .build()
         .writeTo(processingEnv.getFiler());
   }
@@ -97,8 +97,10 @@ public final class TestComponentDataGenerator {
   private MethodSpec getMethod() {
     TypeElement testElement = rootMetadata.testRootMetadata().testElement();
     ClassName component =
-        ComponentNames.generatedComponent(
-            ClassName.get(testElement), ClassNames.SINGLETON_COMPONENT);
+        rootMetadata.canShareTestComponents()
+            ? ComponentNames.defaultRootComponentName(ClassNames.SINGLETON_COMPONENT)
+            : ComponentNames.generatedComponent(
+                ClassName.get(testElement), ClassNames.SINGLETON_COMPONENT);
     ImmutableSet<TypeElement> daggerRequiredModules =
         rootMetadata.modulesThatDaggerCannotConstruct(ClassNames.SINGLETON_COMPONENT);
     ImmutableSet<TypeElement> hiltRequiredModules =
@@ -200,14 +202,14 @@ public final class TestComponentDataGenerator {
             AnnotationSpec.builder(SuppressWarnings.class)
                 .addMember("value", "$S", "unchecked")
                 .build())
-        .addStatement("$L.injectTest(testInstance)", getInjector(testElement))
+        .addStatement(callInjectTest(testElement))
         .build();
   }
 
-  private static CodeBlock getInjector(TypeElement testElement) {
+  private CodeBlock callInjectTest(TypeElement testElement) {
     return CodeBlock.of(
-        "(($T) (($T) $T.getApplicationContext()).generatedComponent())",
-        ClassNames.TEST_INJECTOR,
+        "(($T) (($T) $T.getApplicationContext()).generatedComponent()).injectTest(testInstance)",
+        rootMetadata.testRootMetadata().testInjectorName(),
         ClassNames.GENERATED_COMPONENT_MANAGER,
         ClassNames.APPLICATION_PROVIDER);
   }

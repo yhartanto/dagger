@@ -18,12 +18,14 @@ package dagger.hilt.processor.internal.root;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Suppliers.memoize;
+import static dagger.hilt.processor.internal.HiltCompilerOptions.BooleanOption.SHARE_TEST_COMPONENTS;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.squareup.javapoet.ClassName;
@@ -53,15 +55,34 @@ public final class RootMetadata {
       ComponentTree componentTree,
       ComponentDependencies deps,
       ProcessingEnvironment env) {
-    RootMetadata metadata = new RootMetadata(root, componentTree, deps, env);
-    metadata.validate();
-    return metadata;
+    return createInternal(root, ImmutableList.of(), componentTree, deps, env);
   }
 
-  static RootMetadata copyWithNewTree(
-      RootMetadata other,
-      ComponentTree componentTree) {
-    return create(other.root, componentTree, other.deps, other.env);
+  static RootMetadata createForDefaultRoot(
+      Root root,
+      ImmutableList<RootMetadata> rootsUsingDefaultComponents,
+      ComponentTree componentTree,
+      ComponentDependencies deps,
+      ProcessingEnvironment env) {
+    checkState(root.isDefaultRoot());
+    return createInternal(root, rootsUsingDefaultComponents, componentTree, deps, env);
+  }
+
+  static RootMetadata copyWithNewTree(RootMetadata other, ComponentTree componentTree) {
+    return createInternal(
+        other.root, other.rootsUsingDefaultComponents, componentTree, other.deps, other.env);
+  }
+
+  private static RootMetadata createInternal(
+      Root root,
+      ImmutableList<RootMetadata> rootsUsingDefaultComponents,
+      ComponentTree componentTree,
+      ComponentDependencies deps,
+      ProcessingEnvironment env) {
+    RootMetadata metadata =
+        new RootMetadata(root, componentTree, deps, rootsUsingDefaultComponents, env);
+    metadata.validate();
+    return metadata;
   }
 
   private final Root root;
@@ -69,6 +90,7 @@ public final class RootMetadata {
   private final Elements elements;
   private final ComponentTree componentTree;
   private final ComponentDependencies deps;
+  private final ImmutableList<RootMetadata> rootsUsingDefaultComponents;
   private final Supplier<ImmutableSetMultimap<ClassName, ClassName>> scopesByComponent =
       memoize(this::getScopesByComponentUncached);
   private final Supplier<TestRootMetadata> testRootMetadata =
@@ -78,12 +100,14 @@ public final class RootMetadata {
       Root root,
       ComponentTree componentTree,
       ComponentDependencies deps,
+      ImmutableList<RootMetadata> rootsUsingDefaultComponents,
       ProcessingEnvironment env) {
     this.root = root;
     this.env = env;
     this.elements = env.getElementUtils();
     this.componentTree = componentTree;
     this.deps = deps;
+    this.rootsUsingDefaultComponents = rootsUsingDefaultComponents;
   }
 
   public Root root() {
@@ -100,6 +124,18 @@ public final class RootMetadata {
 
   public ImmutableSet<TypeElement> modules(ClassName componentName) {
     return deps.modules().get(componentName, root.classname(), root.isTestRoot());
+  }
+
+  /**
+   * Returns {@code true} if this is a test root that provides no test-specific dependencies or sets
+   * other options that would prevent it from sharing components with other test roots.
+   */
+  // TODO(groakley): Allow more tests to share modules, e.g. tests that uninstall the same module.
+  // In that case, this might instead return which shared dep grouping should be used.
+  public boolean canShareTestComponents() {
+    return SHARE_TEST_COMPONENTS.get(env)
+        && root.isTestRoot()
+        && !deps.includesTestDeps(root.classname());
   }
 
   public ImmutableSet<TypeName> entryPoints(ClassName componentName) {
@@ -177,12 +213,15 @@ public final class RootMetadata {
 
   private ImmutableSet<TypeName> getUserDefinedEntryPoints(ClassName componentName) {
     ImmutableSet.Builder<TypeName> entryPointSet = ImmutableSet.builder();
-    if (root.isDefaultRoot() && componentName.equals(ClassNames.SINGLETON_COMPONENT)) {
-      // Filter to only use the entry points annotated with @EarlyEntryPoint. We only do this
-      // for SingletonComponent because EarlyEntryPoints can only be installed in the
-      // SingletonComponent.
-      // TODO(bcorso): Once the DefaultComponent is used as a "shared" component across tests we'll
-      // only do this filtering if there are no tests that need to share it.
+    if (root.isDefaultRoot() && !rootsUsingDefaultComponents.isEmpty()) {
+      // Add entry points for shared component
+      rootsUsingDefaultComponents.stream()
+          .flatMap(metadata -> metadata.entryPoints(componentName).stream())
+          .forEach(entryPointSet::add);
+    } else if (root.isDefaultRoot() && componentName.equals(ClassNames.SINGLETON_COMPONENT)) {
+      // Filter to only use the entry points annotated with @EarlyEntryPoint. We only
+      // do this for SingletonComponent because EarlyEntryPoints can only be installed
+      // in the SingletonComponent.
       deps.entryPoints().get(componentName, root.classname(), root.isTestRoot()).stream()
           .filter(ep -> Processors.hasAnnotation(ep, ClassNames.EARLY_ENTRY_POINT))
           .map(ClassName::get)

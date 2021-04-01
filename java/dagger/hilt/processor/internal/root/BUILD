@@ -72,6 +72,7 @@ java_library(
     deps = [
         ":root_type",
         "//java/dagger/hilt/processor/internal:classnames",
+        "//java/dagger/hilt/processor/internal:compiler_options",
         "//java/dagger/hilt/processor/internal:component_descriptor",
         "//java/dagger/hilt/processor/internal:kotlin",
         "//java/dagger/hilt/processor/internal:processor_errors",
