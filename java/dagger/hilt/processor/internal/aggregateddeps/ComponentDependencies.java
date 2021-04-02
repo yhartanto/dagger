@@ -16,11 +16,9 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator.AGGREGATING_PACKAGE;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
@@ -32,21 +30,11 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.SetMultimap;
 import com.squareup.javapoet.ClassName;
-import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.BadInputException;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
-import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
-import dagger.hilt.processor.internal.aggregateddeps.ComponentDependencies.AggregatedDepMetadata.DependencyType;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
@@ -70,8 +58,7 @@ public abstract class ComponentDependencies {
   @Memoized
   public boolean hasEarlySingletonEntryPoints() {
     return entryPoints().getGlobalSingletonDeps().stream()
-        .anyMatch(
-            entryPoint -> Processors.hasAnnotation(entryPoint, ClassNames.EARLY_ENTRY_POINT));
+        .anyMatch(entryPoint -> Processors.hasAnnotation(entryPoint, ClassNames.EARLY_ENTRY_POINT));
   }
 
   /**
@@ -204,14 +191,13 @@ public abstract class ComponentDependencies {
    */
   public static ComponentDependencies from(
       ImmutableSet<ComponentDescriptor> descriptors, Elements elements) {
-    Map<String, ComponentDescriptor> descriptorLookup = descriptorLookupMap(descriptors);
-    ImmutableList<AggregatedDepMetadata> metadatas =
-        getAggregatedDeps(elements).stream()
-            .map(deps -> AggregatedDepMetadata.create(deps, descriptorLookup, elements))
-            .collect(toImmutableList());
+    ImmutableMap<ClassName, ComponentDescriptor> descriptorLookup =
+        descriptors.stream()
+            .collect(toImmutableMap(ComponentDescriptor::component, descriptor -> descriptor));
+    ImmutableSet<AggregatedDepsMetadata> metadatas = AggregatedDepsMetadata.from(elements);
 
     ComponentDependencies.Builder componentDependencies = ComponentDependencies.builder();
-    for (AggregatedDepMetadata metadata : metadatas) {
+    for (AggregatedDepsMetadata metadata : metadatas) {
       Dependencies.Builder builder = null;
       switch (metadata.dependencyType()) {
         case MODULE:
@@ -224,22 +210,25 @@ public abstract class ComponentDependencies {
           builder = componentDependencies.componentEntryPointsBuilder();
           break;
       }
-
-      for (ComponentDescriptor componentDescriptor : metadata.componentDescriptors()) {
-        ClassName component = componentDescriptor.component();
+      for (TypeElement componentElement : metadata.componentElements()) {
+        ClassName componentName = ClassName.get(componentElement);
+        checkState(
+            descriptorLookup.containsKey(componentName),
+            "%s is not a valid Component.",
+            componentName);
         if (metadata.testElement().isPresent()) {
           // In this case the @InstallIn or @TestInstallIn applies to only the given test root.
           ClassName test = ClassName.get(metadata.testElement().get());
-          builder.testDepsBuilder().put(TestDepKey.of(component, test), metadata.dependency());
+          builder.testDepsBuilder().put(TestDepKey.of(componentName, test), metadata.dependency());
           builder.uninstalledTestDepsBuilder().putAll(test, metadata.replacedDependencies());
         } else {
           // In this case the @InstallIn or @TestInstallIn applies to all roots
           if (!metadata.replacedDependencies().isEmpty()) {
             // If there are replacedDependencies() it means this is a @TestInstallIn
-            builder.globalTestDepsBuilder().put(component, metadata.dependency());
+            builder.globalTestDepsBuilder().put(componentName, metadata.dependency());
             builder.globalUninstalledTestDepsBuilder().addAll(metadata.replacedDependencies());
           } else {
-            builder.globalDepsBuilder().put(component, metadata.dependency());
+            builder.globalDepsBuilder().put(componentName, metadata.dependency());
           }
         }
       }
@@ -261,22 +250,6 @@ public abstract class ComponentDependencies {
                         ClassName.get(testElement), getUninstalledModules(testElement, elements)));
 
     return componentDependencies.build(elements);
-  }
-
-  private static ImmutableMap<String, ComponentDescriptor> descriptorLookupMap(
-      ImmutableSet<ComponentDescriptor> descriptors) {
-    ImmutableMap.Builder<String, ComponentDescriptor> builder = ImmutableMap.builder();
-    for (ComponentDescriptor descriptor : descriptors) {
-      // This is a temporary hack to map the old ApplicationComponent to the new SingletonComponent.
-      // Technically, this is only needed for backwards compatibility with libraries using the old
-      // processor since new processors should convert to the new SingletonComponent when generating
-      // the metadata class.
-      if (descriptor.component().equals(ClassNames.SINGLETON_COMPONENT)) {
-        builder.put("dagger.hilt.android.components.ApplicationComponent", descriptor);
-      }
-      builder.put(descriptor.component().toString(), descriptor);
-    }
-    return builder.build();
   }
 
   // Validate that the @UninstallModules doesn't contain any test modules.
@@ -327,162 +300,5 @@ public abstract class ComponentDependencies {
     return PkgPrivateMetadata.of(elements, dependency, ClassNames.MODULE)
         .map(metadata -> elements.getTypeElement(metadata.generatedClassName().toString()))
         .orElse(dependency);
-  }
-
-  /** Returns the top-level elements of the aggregated deps package. */
-  private static ImmutableList<AnnotationMirror> getAggregatedDeps(Elements elements) {
-    PackageElement packageElement = elements.getPackageElement(AGGREGATING_PACKAGE);
-    checkState(
-        packageElement != null,
-        "Couldn't find package %s. Did you mark your @Module classes with @InstallIn annotations?",
-        AGGREGATING_PACKAGE);
-
-    List<? extends Element> aggregatedDepsElements = packageElement.getEnclosedElements();
-    checkState(
-        !aggregatedDepsElements.isEmpty(),
-        "No dependencies found. Did you mark your @Module classes with @InstallIn annotations?");
-
-    ImmutableList.Builder<AnnotationMirror> builder = ImmutableList.builder();
-    for (Element element : aggregatedDepsElements) {
-      ProcessorErrors.checkState(
-          element.getKind() == ElementKind.CLASS,
-          element,
-          "Only classes may be in package %s. Did you add custom code in the package?",
-          AGGREGATING_PACKAGE);
-
-      AnnotationMirror aggregatedDeps =
-          Processors.getAnnotationMirror(element, ClassNames.AGGREGATED_DEPS);
-      ProcessorErrors.checkState(
-          aggregatedDeps != null,
-          element,
-          "Classes in package %s must be annotated with @AggregatedDeps: %s. Found: %s.",
-          AGGREGATING_PACKAGE,
-          element.getSimpleName(),
-          element.getAnnotationMirrors());
-
-      builder.add(aggregatedDeps);
-    }
-    return builder.build();
-  }
-
-  @AutoValue
-  abstract static class AggregatedDepMetadata {
-    static AggregatedDepMetadata create(
-        AnnotationMirror aggregatedDeps,
-        Map<String, ComponentDescriptor> descriptorLookup,
-        Elements elements) {
-      ImmutableMap<String, AnnotationValue> aggregatedDepsValues =
-          Processors.getAnnotationValues(elements, aggregatedDeps);
-
-      return new AutoValue_ComponentDependencies_AggregatedDepMetadata(
-          getTestElement(aggregatedDepsValues.get("test"), elements),
-          getComponents(aggregatedDepsValues.get("components"), descriptorLookup),
-          getDependencyType(
-              aggregatedDepsValues.get("modules"),
-              aggregatedDepsValues.get("entryPoints"),
-              aggregatedDepsValues.get("componentEntryPoints")),
-          getDependency(
-              aggregatedDepsValues.get("modules"),
-              aggregatedDepsValues.get("entryPoints"),
-              aggregatedDepsValues.get("componentEntryPoints"),
-              elements),
-          getReplacedDependencies(aggregatedDepsValues.get("replaces"), elements));
-    }
-
-    enum DependencyType {
-      MODULE,
-      ENTRY_POINT,
-      COMPONENT_ENTRY_POINT
-    }
-
-    abstract Optional<TypeElement> testElement();
-
-    abstract ImmutableList<ComponentDescriptor> componentDescriptors();
-
-    abstract DependencyType dependencyType();
-
-    abstract TypeElement dependency();
-
-    abstract ImmutableSet<TypeElement> replacedDependencies();
-
-    private static Optional<TypeElement> getTestElement(
-        AnnotationValue testValue, Elements elements) {
-      checkNotNull(testValue);
-      String test = AnnotationValues.getString(testValue);
-      return test.isEmpty() ? Optional.empty() : Optional.of(elements.getTypeElement(test));
-    }
-
-    private static ImmutableList<ComponentDescriptor> getComponents(
-        AnnotationValue componentsValue, Map<String, ComponentDescriptor> descriptorLookup) {
-      checkNotNull(componentsValue);
-      ImmutableList<String> componentNames =
-          AnnotationValues.getAnnotationValues(componentsValue).stream()
-              .map(AnnotationValues::getString)
-              .collect(toImmutableList());
-
-      checkState(!componentNames.isEmpty());
-      ImmutableList.Builder<ComponentDescriptor> components = ImmutableList.builder();
-      for (String componentName : componentNames) {
-        checkState(
-            descriptorLookup.containsKey(componentName),
-            "%s is not a valid Component. Did you add or remove code in package %s?",
-            componentName,
-            AGGREGATING_PACKAGE);
-        components.add(descriptorLookup.get(componentName));
-      }
-      return components.build();
-    }
-
-    private static DependencyType getDependencyType(
-        AnnotationValue modulesValue,
-        AnnotationValue entryPointsValue,
-        AnnotationValue componentEntryPointsValue) {
-      checkNotNull(modulesValue);
-      checkNotNull(entryPointsValue);
-      checkNotNull(componentEntryPointsValue);
-
-      ImmutableSet.Builder<DependencyType> dependencyTypes = ImmutableSet.builder();
-      if (!AnnotationValues.getAnnotationValues(modulesValue).isEmpty()) {
-        dependencyTypes.add(DependencyType.MODULE);
-      }
-      if (!AnnotationValues.getAnnotationValues(entryPointsValue).isEmpty()) {
-        dependencyTypes.add(DependencyType.ENTRY_POINT);
-      }
-      if (!AnnotationValues.getAnnotationValues(componentEntryPointsValue).isEmpty()) {
-        dependencyTypes.add(DependencyType.COMPONENT_ENTRY_POINT);
-      }
-      return getOnlyElement(dependencyTypes.build());
-    }
-
-    private static TypeElement getDependency(
-        AnnotationValue modulesValue,
-        AnnotationValue entryPointsValue,
-        AnnotationValue componentEntryPointsValue,
-        Elements elements) {
-      checkNotNull(modulesValue);
-      checkNotNull(entryPointsValue);
-      checkNotNull(componentEntryPointsValue);
-
-      return elements.getTypeElement(
-          AnnotationValues.getString(
-              getOnlyElement(
-                  ImmutableList.<AnnotationValue>builder()
-                      .addAll(AnnotationValues.getAnnotationValues(modulesValue))
-                      .addAll(AnnotationValues.getAnnotationValues(entryPointsValue))
-                      .addAll(AnnotationValues.getAnnotationValues(componentEntryPointsValue))
-                      .build())));
-    }
-
-    private static ImmutableSet<TypeElement> getReplacedDependencies(
-        AnnotationValue replacedDependenciesValue, Elements elements) {
-      // Allow null values to support libraries using a Hilt version before @TestInstallIn was added
-      return replacedDependenciesValue == null
-          ? ImmutableSet.of()
-          : AnnotationValues.getAnnotationValues(replacedDependenciesValue).stream()
-              .map(AnnotationValues::getString)
-              .map(elements::getTypeElement)
-              .map(replacedDep -> getPublicDependency(replacedDep, elements))
-              .collect(toImmutableSet());
-    }
   }
 }

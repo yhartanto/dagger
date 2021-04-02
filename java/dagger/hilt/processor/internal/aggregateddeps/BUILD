@@ -66,6 +66,7 @@ java_library(
 java_library(
     name = "component_dependencies",
     srcs = [
+        "AggregatedDepsMetadata.java",
         "ComponentDependencies.java",
     ],
     deps = [
@@ -79,6 +80,7 @@ java_library(
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/javapoet",
+        "@maven//:com_google_auto_auto_common",
     ],
 )
 
