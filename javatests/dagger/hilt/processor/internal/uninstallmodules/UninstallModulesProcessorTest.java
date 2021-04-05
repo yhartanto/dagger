@@ -156,8 +156,7 @@ public class UninstallModulesProcessorTest {
     // TODO(bcorso): Consider unwrapping pkg-private modules before reporting the error.
     assertThat(compilation)
         .hadErrorContaining(
-            "@UninstallModules on test, test.MyTest, should not containing test modules, but"
-                + " found: [test.HiltWrapper_MyTest_PkgPrivateInvalidModule, "
-                + "test.MyTest.PublicInvalidModule]");
+            "@UninstallModules should not contain test modules, but found: "
+                + "[test.MyTest.PkgPrivateInvalidModule, test.MyTest.PublicInvalidModule]");
   }
 }

@@ -165,7 +165,6 @@ filegroup(
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:srcs_filegroup",
         "//java/dagger/hilt/android/processor/internal/bindvalue:srcs_filegroup",
         "//java/dagger/hilt/android/processor/internal/customtestapplication:srcs_filegroup",
-        "//java/dagger/hilt/android/processor/internal/uninstallmodules:srcs_filegroup",
         "//java/dagger/hilt/android/processor/internal/viewmodel:srcs_filegroup",
         "//java/dagger/hilt/processor:srcs_filegroup",
         "//java/dagger/hilt/processor/internal:srcs_filegroup",
@@ -176,6 +175,7 @@ filegroup(
         "//java/dagger/hilt/processor/internal/generatesrootinput:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/originatingelement:srcs_filegroup",
         "//java/dagger/hilt/processor/internal/root:srcs_filegroup",
+        "//java/dagger/hilt/processor/internal/uninstallmodules:srcs_filegroup",
     ],
 )
 

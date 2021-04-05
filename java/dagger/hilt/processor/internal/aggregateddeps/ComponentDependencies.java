@@ -17,24 +17,19 @@
 package dagger.hilt.processor.internal.aggregateddeps;
 
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.SetMultimap;
 import com.squareup.javapoet.ClassName;
-import dagger.hilt.processor.internal.BadInputException;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.Processors;
-import java.util.Optional;
+import dagger.hilt.processor.internal.uninstallmodules.AggregatedUninstallModulesMetadata;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
@@ -78,12 +73,7 @@ public abstract class ComponentDependencies {
 
     abstract Dependencies.Builder componentEntryPointsBuilder();
 
-    abstract ComponentDependencies autoBuild();
-
-    ComponentDependencies build(Elements elements) {
-      validateModules(modulesBuilder().build(), elements);
-      return autoBuild();
-    }
+    abstract ComponentDependencies build();
   }
 
   /** A key used for grouping a test dependency by both its component and test name. */
@@ -194,10 +184,8 @@ public abstract class ComponentDependencies {
     ImmutableMap<ClassName, ComponentDescriptor> descriptorLookup =
         descriptors.stream()
             .collect(toImmutableMap(ComponentDescriptor::component, descriptor -> descriptor));
-    ImmutableSet<AggregatedDepsMetadata> metadatas = AggregatedDepsMetadata.from(elements);
-
     ComponentDependencies.Builder componentDependencies = ComponentDependencies.builder();
-    for (AggregatedDepsMetadata metadata : metadatas) {
+    for (AggregatedDepsMetadata metadata : AggregatedDepsMetadata.from(elements)) {
       Dependencies.Builder builder = null;
       switch (metadata.dependencyType()) {
         case MODULE:
@@ -234,71 +222,18 @@ public abstract class ComponentDependencies {
       }
     }
 
-    // Collect all @UninstallModules.
-    // TODO(b/176438516): Filter @UninstallModules at the root.
-    metadatas.stream()
-        .filter(metadata -> metadata.testElement().isPresent())
-        .map(metadata -> metadata.testElement().get())
-        .distinct()
-        .filter(testElement -> Processors.hasAnnotation(testElement, ClassNames.IGNORE_MODULES))
+    AggregatedUninstallModulesMetadata.from(elements)
         .forEach(
-            testElement ->
+            metadata ->
                 componentDependencies
                     .modulesBuilder()
                     .uninstalledTestDepsBuilder()
                     .putAll(
-                        ClassName.get(testElement), getUninstalledModules(testElement, elements)));
+                        ClassName.get(metadata.testElement()),
+                        metadata.uninstallModuleElements().stream()
+                            .map(module -> PkgPrivateMetadata.publicModule(module, elements))
+                            .collect(toImmutableSet())));
 
-    return componentDependencies.build(elements);
-  }
-
-  // Validate that the @UninstallModules doesn't contain any test modules.
-  private static Dependencies validateModules(Dependencies moduleDeps, Elements elements) {
-    SetMultimap<ClassName, TypeElement> invalidTestModules = HashMultimap.create();
-    moduleDeps.testDeps().entries().stream()
-        .filter(
-            e -> moduleDeps.uninstalledTestDeps().containsEntry(e.getKey().test(), e.getValue()))
-        .forEach(e -> invalidTestModules.put(e.getKey().test(), e.getValue()));
-
-    // Currently we don't have a good way to throw an error for all tests, so we sort (to keep the
-    // error reporting order stable) and then choose the first test.
-    // TODO(bcorso): Consider using ProcessorErrorHandler directly to report all errors at once?
-    Optional<ClassName> invalidTest =
-        invalidTestModules.keySet().stream()
-            .min((test1, test2) -> test1.toString().compareTo(test2.toString()));
-    if (invalidTest.isPresent()) {
-      throw new BadInputException(
-          String.format(
-              "@UninstallModules on test, %s, should not containing test modules, "
-                  + "but found: %s",
-              invalidTest.get(),
-              invalidTestModules.get(invalidTest.get()).stream()
-                  // Sort modules to keep stable error messages.
-                  .sorted((test1, test2) -> test1.toString().compareTo(test2.toString()))
-                  .collect(toImmutableList())),
-          elements.getTypeElement(invalidTest.get().toString()));
-    }
-    return moduleDeps;
-  }
-
-  private static ImmutableSet<TypeElement> getUninstalledModules(
-      TypeElement testElement, Elements elements) {
-    ImmutableList<TypeElement> userUninstallModules =
-        Processors.getAnnotationClassValues(
-            elements,
-            Processors.getAnnotationMirror(testElement, ClassNames.IGNORE_MODULES),
-            "value");
-
-    // For pkg-private modules, find the generated wrapper class and uninstall that instead.
-    return userUninstallModules.stream()
-        .map(uninstallModule -> getPublicDependency(uninstallModule, elements))
-        .collect(toImmutableSet());
-  }
-
-  /** Returns the public Hilt wrapper module, or the module itself if its already public. */
-  private static TypeElement getPublicDependency(TypeElement dependency, Elements elements) {
-    return PkgPrivateMetadata.of(elements, dependency, ClassNames.MODULE)
-        .map(metadata -> elements.getTypeElement(metadata.generatedClassName().toString()))
-        .orElse(dependency);
+    return componentDependencies.build();
   }
 }

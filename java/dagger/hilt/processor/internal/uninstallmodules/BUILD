@@ -20,13 +20,14 @@ package(default_visibility = ["//:src"])
 java_plugin(
     name = "processor",
     generates_api = 1,
-    processor_class = "dagger.hilt.android.processor.internal.uninstallmodules.UninstallModulesProcessor",
+    processor_class = "dagger.hilt.processor.internal.uninstallmodules.UninstallModulesProcessor",
     deps = [":processor_lib"],
 )
 
 java_library(
     name = "processor_lib",
     srcs = [
+        "AggregatedUninstallModulesGenerator.java",
         "UninstallModulesProcessor.java",
     ],
     deps = [
@@ -38,6 +39,23 @@ java_library(
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/incap",
+        "@google_bazel_common//third_party/java/javapoet",
+        "@maven//:com_google_auto_auto_common",
+    ],
+)
+
+java_library(
+    name = "aggregated_uninstall_modules_metadata",
+    srcs = [
+        "AggregatedUninstallModulesMetadata.java",
+    ],
+    deps = [
+        "//java/dagger/hilt/processor/internal:classnames",
+        "//java/dagger/hilt/processor/internal:processor_errors",
+        "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/auto:value",
         "@maven//:com_google_auto_auto_common",
     ],
 )

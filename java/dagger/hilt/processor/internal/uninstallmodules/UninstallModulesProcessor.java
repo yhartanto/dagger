@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.processor.internal.uninstallmodules;
+package dagger.hilt.processor.internal.uninstallmodules;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
@@ -23,6 +23,7 @@ import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
@@ -40,7 +41,7 @@ public final class UninstallModulesProcessor extends BaseProcessor {
 
   @Override
   public Set<String> getSupportedAnnotationTypes() {
-    return ImmutableSet.of(ClassNames.IGNORE_MODULES.toString());
+    return ImmutableSet.of(ClassNames.UNINSTALL_MODULES.toString());
   }
 
   @Override
@@ -56,12 +57,24 @@ public final class UninstallModulesProcessor extends BaseProcessor {
         ClassNames.HILT_ANDROID_TEST.simpleName(),
         element);
 
-    ImmutableList<TypeElement> invalidModules =
+    TypeElement testElement = MoreElements.asType(element);
+    ImmutableList<TypeElement> uninstallModules =
         Processors.getAnnotationClassValues(
-                getElementUtils(),
-                Processors.getAnnotationMirror(element, ClassNames.IGNORE_MODULES),
-                "value")
-            .stream()
+            getElementUtils(),
+            Processors.getAnnotationMirror(testElement, ClassNames.UNINSTALL_MODULES),
+            "value");
+
+    checkModulesHaveInstallIn(testElement, uninstallModules);
+    checkModulesDontOriginateFromTest(testElement, uninstallModules);
+
+    new AggregatedUninstallModulesGenerator(testElement, uninstallModules, getProcessingEnv())
+        .generate();
+  }
+
+  private void checkModulesHaveInstallIn(
+      TypeElement testElement, ImmutableList<TypeElement> uninstallModules) {
+    ImmutableList<TypeElement> invalidModules =
+        uninstallModules.stream()
             .filter(
                 module ->
                     !(Processors.hasAnnotation(module, ClassNames.MODULE)
@@ -71,10 +84,27 @@ public final class UninstallModulesProcessor extends BaseProcessor {
     ProcessorErrors.checkState(
         invalidModules.isEmpty(),
         // TODO(b/152801981): Point to the annotation value rather than the annotated element.
-        element,
-        "@%s should only include modules annotated with both @Module and @InstallIn, but found: "
-          + "%s.",
-        annotation.getSimpleName(),
+        testElement,
+        "@UninstallModules should only include modules annotated with both @Module and @InstallIn, "
+            + "but found: %s.",
+        invalidModules);
+  }
+
+  private void checkModulesDontOriginateFromTest(
+      TypeElement testElement, ImmutableList<TypeElement> uninstallModules) {
+    ImmutableList<ClassName> invalidModules =
+        uninstallModules.stream()
+            .filter(
+                module ->
+                    Processors.getOriginatingTestElement(module, getElementUtils()).isPresent())
+            .map(ClassName::get)
+            .collect(toImmutableList());
+
+    ProcessorErrors.checkState(
+        invalidModules.isEmpty(),
+        // TODO(b/152801981): Point to the annotation value rather than the annotated element.
+        testElement,
+        "@UninstallModules should not contain test modules, but found: %s",
         invalidModules);
   }
 }

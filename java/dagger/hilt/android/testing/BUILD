@@ -131,10 +131,14 @@ android_library(
     testonly = 1,
     srcs = ["UninstallModules.java"],
     exported_plugins = [
-        "//java/dagger/hilt/android/processor/internal/uninstallmodules:processor",
+        "//java/dagger/hilt/processor/internal/uninstallmodules:processor",
+    ],
+    exports = [
+        "//java/dagger/hilt/android/internal/uninstallmodules",
     ],
     deps = [
         ":package_info",
+        "//java/dagger/hilt:generates_root_input",
     ],
 )
 
@@ -197,6 +201,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/android/internal/testing:test_component_data",
         "//java/dagger/hilt/android/internal/testing:test_injector",
         "//java/dagger/hilt/android/internal/testing/root:default",
+        "//java/dagger/hilt/android/internal/uninstallmodules:uninstallmodules",
         "//java/dagger/hilt/android/testing:bind_value",
         "//java/dagger/hilt/android/testing:custom_test_application",
         "//java/dagger/hilt/android/testing:hilt_android_rule",

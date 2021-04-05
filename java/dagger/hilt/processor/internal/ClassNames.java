@@ -22,6 +22,11 @@ import com.squareup.javapoet.ClassName;
 
 /** Holder for commonly used class names. */
 public final class ClassNames {
+  public static final String AGGREGATED_UNINSTALL_MODULES_PACKAGE =
+      "dagger.hilt.android.internal.uninstallmodules.codegen";
+  public static final ClassName AGGREGATED_UNINSTALL_MODULES =
+      get("dagger.hilt.android.internal.uninstallmodules", "AggregatedUninstallModules");
+
   public static final ClassName ORIGINATING_ELEMENT =
       get("dagger.hilt.codegen", "OriginatingElement");
   public static final ClassName AGGREGATED_DEPS =
@@ -32,7 +37,7 @@ public final class ClassNames {
       get("dagger.hilt.internal", "GeneratedComponentManager");
   public static final ClassName GENERATED_COMPONENT_MANAGER_HOLDER =
       get("dagger.hilt.internal", "GeneratedComponentManagerHolder");
-  public static final ClassName IGNORE_MODULES =
+  public static final ClassName UNINSTALL_MODULES =
       get("dagger.hilt.android.testing", "UninstallModules");
 
   public static final ClassName DEFINE_COMPONENT = get("dagger.hilt", "DefineComponent");
