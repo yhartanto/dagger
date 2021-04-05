@@ -40,6 +40,8 @@ public final class ClassNames {
   public static final ClassName UNINSTALL_MODULES =
       get("dagger.hilt.android.testing", "UninstallModules");
 
+  public static final String DEFINE_COMPONENT_CLASSES_PACKAGE =
+      "dagger.hilt.processor.internal.definecomponent.codegen";
   public static final ClassName DEFINE_COMPONENT = get("dagger.hilt", "DefineComponent");
   public static final ClassName DEFINE_COMPONENT_BUILDER =
       get("dagger.hilt", "DefineComponent", "Builder");

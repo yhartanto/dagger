@@ -80,7 +80,7 @@ public final class DefineComponentProcessor extends BaseProcessor {
 
     Processors.addGeneratedAnnotation(builder, processingEnv, getClass());
 
-    JavaFile.builder(DefineComponents.AGGREGATING_PACKAGE, builder.build())
+    JavaFile.builder(ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE, builder.build())
         .build()
         .writeTo(processingEnv.getFiler());
   }
