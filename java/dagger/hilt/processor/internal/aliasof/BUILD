@@ -31,7 +31,6 @@ java_library(
         "AliasOfPropagatedDataGenerator.java",
     ],
     deps = [
-        ":alias_ofs",
         "//java/dagger/hilt/processor/internal:base_processor",
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:processor_errors",
@@ -46,15 +45,17 @@ java_library(
 java_library(
     name = "alias_ofs",
     srcs = [
+        "AliasOfPropagatedDataMetadata.java",
         "AliasOfs.java",
     ],
     deps = [
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
-        "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/javapoet",
+        "@maven//:com_google_auto_auto_common",
     ],
 )
 

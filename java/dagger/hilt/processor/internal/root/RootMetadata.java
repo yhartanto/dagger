@@ -242,7 +242,7 @@ public final class RootMetadata {
             .flatMap(descriptor -> descriptor.scopes().stream())
             .collect(toImmutableSet());
 
-    AliasOfs aliasOfs = new AliasOfs(env, defineComponentScopes);
+    AliasOfs aliasOfs = AliasOfs.create(env.getElementUtils(), defineComponentScopes);
 
     for (ComponentDescriptor componentDescriptor : componentTree.getComponentDescriptors()) {
       for (ClassName scope : componentDescriptor.scopes()) {

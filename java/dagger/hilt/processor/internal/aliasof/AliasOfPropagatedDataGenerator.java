@@ -52,7 +52,7 @@ final class AliasOfPropagatedDataGenerator {
 
     Processors.addGeneratedAnnotation(generator, processingEnv, getClass());
 
-    JavaFile.builder(AliasOfs.AGGREGATING_PACKAGE, generator.build())
+    JavaFile.builder(ClassNames.ALIAS_OF_PROPAGATED_DATA_PACKAGE, generator.build())
         .build()
         .writeTo(processingEnv.getFiler());
   }

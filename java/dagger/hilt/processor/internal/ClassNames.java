@@ -86,6 +86,8 @@ public final class ClassNames {
   public static final ClassName ALIAS_OF = get("dagger.hilt.migration", "AliasOf");
   public static final ClassName ALIAS_OF_PROPAGATED_DATA =
       get("dagger.hilt.internal.aliasof", "AliasOfPropagatedData");
+  public static final String ALIAS_OF_PROPAGATED_DATA_PACKAGE =
+      "dagger.hilt.processor.internal.aliasof.codegen";
 
   public static final ClassName GENERATES_ROOT_INPUT = get("dagger.hilt", "GeneratesRootInput");
   public static final ClassName GENERATES_ROOT_INPUT_PROPAGATED_DATA =
