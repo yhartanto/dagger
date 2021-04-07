@@ -64,13 +64,13 @@ public abstract class UsesComponentTestClasses {
 
   @EntryPoint
   @InstallIn(SingletonComponent.class)
-  interface UsesComponentTestSubcomponentBuilderEntryPoint {
+  public interface UsesComponentTestSubcomponentBuilderEntryPoint {
     UsesComponentTestSubcomponent.Builder mySubcomponentBuilder();
   }
 
   @EntryPoint
   @InstallIn(UsesComponentTestSubcomponent.class)
-  interface FooEntryPoint {
+  public interface FooEntryPoint {
     Foo foo();
   }
 

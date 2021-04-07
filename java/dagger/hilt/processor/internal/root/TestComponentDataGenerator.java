@@ -45,14 +45,17 @@ public final class TestComponentDataGenerator {
   private final ProcessingEnvironment processingEnv;
   private final RootMetadata rootMetadata;
   private final ClassName name;
+  private final ComponentNames componentNames;
 
   public TestComponentDataGenerator(
       ProcessingEnvironment processingEnv,
-      RootMetadata rootMetadata) {
+      RootMetadata rootMetadata,
+      ComponentNames componentNames) {
     this.processingEnv = processingEnv;
     this.rootMetadata = rootMetadata;
+    this.componentNames = componentNames;
     this.name =
-        ComponentNames.generatedComponentDataHolder(rootMetadata.testRootMetadata().testName());
+        componentNames.generatedComponentDataHolder(rootMetadata.testRootMetadata().testName());
   }
 
   /**
@@ -98,8 +101,8 @@ public final class TestComponentDataGenerator {
     TypeElement testElement = rootMetadata.testRootMetadata().testElement();
     ClassName component =
         rootMetadata.canShareTestComponents()
-            ? ComponentNames.defaultRootComponentName(ClassNames.SINGLETON_COMPONENT)
-            : ComponentNames.generatedComponent(
+            ? componentNames.defaultRootComponentName(ClassNames.SINGLETON_COMPONENT)
+            : componentNames.generatedComponent(
                 ClassName.get(testElement), ClassNames.SINGLETON_COMPONENT);
     ImmutableSet<TypeElement> daggerRequiredModules =
         rootMetadata.modulesThatDaggerCannotConstruct(ClassNames.SINGLETON_COMPONENT);

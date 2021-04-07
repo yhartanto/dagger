@@ -40,7 +40,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
 
-/** A test that provides none of its own test bindings, and therefore uses the shared components. */
+/**
+ * A test that provides none of its own test bindings, and therefore uses the shared components.
+ *
+ * <p>Note that this test class exactly matches the simple name of {@link
+ * dagger.hilt.android.testsubpackage.UsesSharedComponent1Test}. This is intentional and used to
+ * verify generated code class names do not clash.
+ */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
 // Robolectric requires Java9 to run API 29 and above, so use API 28 instead

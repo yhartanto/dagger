@@ -47,12 +47,15 @@ public final class TestComponentDataSupplierGenerator {
 
   private final ProcessingEnvironment processingEnv;
   private final ImmutableList<RootMetadata> rootMetadatas;
+  private final ComponentNames componentNames;
 
   public TestComponentDataSupplierGenerator(
       ProcessingEnvironment processingEnv,
-      ImmutableList<RootMetadata> rootMetadatas) {
+      ImmutableList<RootMetadata> rootMetadatas,
+      ComponentNames componentNames) {
     this.processingEnv = processingEnv;
     this.rootMetadatas = rootMetadatas;
+    this.componentNames = componentNames;
   }
 
   /**
@@ -100,7 +103,7 @@ public final class TestComponentDataSupplierGenerator {
     for (RootMetadata rootMetadata : rootMetadatas) {
       ClassName testName = rootMetadata.testRootMetadata().testName();
       ClassName testComponentDataHolderName =
-          ComponentNames.generatedComponentDataHolder(rootMetadata.testRootMetadata().testName());
+          componentNames.generatedComponentDataHolder(rootMetadata.testRootMetadata().testName());
       constructor.addStatement(
           "testComponentDataMap.put($T.class, $T.get())",
           testName,

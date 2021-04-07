@@ -19,15 +19,30 @@ package dagger.hilt.android;
 /**
  * Utility methods for tests that verify which generated component is used to inject the test class.
  */
-abstract class UsesComponentHelper {
+public abstract class UsesComponentHelper {
 
-  static String defaultComponentName() {
+  public static String defaultComponentName() {
     return "dagger.hilt.android.internal.testing.root.DaggerDefault_HiltComponents_SingletonC";
   }
 
-  static String perTestComponentName(Object testInstance) {
-    return testInstance.getClass().getPackage().getName()
-        + ".Dagger"
+  /**
+   * Returns the name of a component that cannot use the default component. Does not handle deduping
+   * if test class names clash.
+   */
+  public static String perTestComponentName(Object testInstance) {
+    return "dagger.hilt.android.internal.testing.root.Dagger"
+        + testInstance.getClass().getSimpleName()
+        + "_HiltComponents_SingletonC";
+  }
+
+  /**
+   * Returns the name of a component that cannot use the default component, including the expected
+   * prefix applied by Hilt to dedupe clashing class names.
+   */
+  public static String perTestComponentNameWithDedupePrefix(
+      String expectedPrefix, Object testInstance) {
+    return "dagger.hilt.android.internal.testing.root.Dagger"
+        + expectedPrefix
         + testInstance.getClass().getSimpleName()
         + "_HiltComponents_SingletonC";
   }

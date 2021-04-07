@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android;
+package dagger.hilt.android.testsubpackage;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static com.google.common.truth.Truth.assertThat;
@@ -25,6 +25,7 @@ import dagger.Module;
 import dagger.Provides;
 import dagger.hilt.EntryPoints;
 import dagger.hilt.InstallIn;
+import dagger.hilt.android.UsesComponentHelper;
 import dagger.hilt.android.UsesComponentTestClasses.Foo;
 import dagger.hilt.android.UsesComponentTestClasses.FooEntryPoint;
 import dagger.hilt.android.UsesComponentTestClasses.UsesComponentQualifier;
@@ -46,8 +47,8 @@ import org.robolectric.annotation.Config;
  * A test that provides its own test bindings, and therefore cannot use the shared components.
  *
  * <p>Note that this test class exactly matches the simple name of {@link
- * dagger.hilt.android.testsubpackage.UsesLocalComponentTestBindingsTest}. This is intentional and
- * used to verify generated code class names do not clash.
+ * dagger.hilt.android.UsesLocalComponentTestBindingsTest}. This is intentional and used to verify
+ * generated code class names do not clash.
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
@@ -105,6 +106,6 @@ public final class UsesLocalComponentTestBindingsTest {
     Object generatedComponent =
         ((TestApplicationComponentManager) app.componentManager()).generatedComponent();
     assertThat(generatedComponent.getClass().getName())
-        .isEqualTo(UsesComponentHelper.perTestComponentNameWithDedupePrefix("dha_", this));
+        .isEqualTo(UsesComponentHelper.perTestComponentNameWithDedupePrefix("dhat_", this));
   }
 }

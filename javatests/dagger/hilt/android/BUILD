@@ -527,6 +527,9 @@ android_library(
         "UsesLocalComponentUninstallModuleTest.java",
         "UsesSharedComponent1Test.java",
         "UsesSharedComponent2Test.java",
+        "UsesSharedComponentEnclosedTest.java",
+        "//javatests/dagger/hilt/android/testsubpackage:UsesLocalComponentTestBindingsTest.java",
+        "//javatests/dagger/hilt/android/testsubpackage:UsesSharedComponent1Test.java",
     ],
     exports_manifest = 1,
     javacopts = ["-Adagger.hilt.shareTestComponents=true"],
@@ -617,6 +620,16 @@ android_local_test(
 
 android_local_test(
     name = "UsesSharedComponent2Test",
+    manifest_values = {
+        "minSdkVersion": "14",
+    },
+    deps = [
+        ":shared_component_test_classes",
+    ],
+)
+
+android_local_test(
+    name = "UsesSharedComponentEnclosedTest",
     manifest_values = {
         "minSdkVersion": "14",
     },

@@ -17,6 +17,7 @@
 package dagger.hilt.processor.internal.root;
 
 import static com.google.common.base.Preconditions.checkState;
+import static dagger.hilt.processor.internal.HiltCompilerOptions.BooleanOption.SHARE_TEST_COMPONENTS;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -28,7 +29,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.BaseProcessor;
+import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
+import dagger.hilt.processor.internal.ComponentNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.aggregateddeps.ComponentDependencies;
 import dagger.hilt.processor.internal.definecomponent.DefineComponents;
@@ -132,6 +135,13 @@ public final class RootProcessor extends BaseProcessor {
     // all roots. We should consider if it's worth trying to continue processing for other
     // roots. At the moment, I think it's rare that if one root failed the others would not.
     try {
+      ComponentNames componentNames =
+          isTestEnv && SHARE_TEST_COMPONENTS.get(getProcessingEnv())
+              ? ComponentNames.withRenamingIntoPackage(
+                  ClassNames.DEFAULT_ROOT.packageName(),
+                  rootsToProcess.stream().map(Root::element).collect(toImmutableList()))
+              : ComponentNames.withoutRenaming();
+
       ImmutableSet<ComponentDescriptor> componentDescriptors =
           defineComponents.getComponentDescriptors(getElementUtils());
       ComponentTree tree = ComponentTree.from(componentDescriptors);
@@ -145,7 +155,7 @@ public final class RootProcessor extends BaseProcessor {
       for (RootMetadata rootMetadata : rootMetadatas) {
         setProcessingState(rootMetadata.root());
         if (!rootMetadata.canShareTestComponents()) {
-          generateComponents(rootMetadata);
+          generateComponents(rootMetadata, componentNames);
         }
       }
 
@@ -154,12 +164,13 @@ public final class RootProcessor extends BaseProcessor {
             rootMetadatas.stream()
                 .filter(RootMetadata::canShareTestComponents)
                 .collect(toImmutableList());
-        generateTestComponentData(rootMetadatas);
+        generateTestComponentData(rootMetadatas, componentNames);
         if (deps.hasEarlySingletonEntryPoints() || !rootsThatCanShareComponents.isEmpty()) {
           Root defaultRoot = Root.createDefaultRoot(getProcessingEnv());
           generateComponents(
               RootMetadata.createForDefaultRoot(
-                  defaultRoot, rootsThatCanShareComponents, tree, deps, getProcessingEnv()));
+                  defaultRoot, rootsThatCanShareComponents, tree, deps, getProcessingEnv()),
+              componentNames);
           EarlySingletonComponentCreatorGenerator.generate(getProcessingEnv());
         }
       }
@@ -175,12 +186,13 @@ public final class RootProcessor extends BaseProcessor {
     processed.add(root.classname());
   }
 
-  private void generateComponents(RootMetadata rootMetadata) throws IOException {
-    RootGenerator.generate(rootMetadata, getProcessingEnv());
+  private void generateComponents(RootMetadata rootMetadata, ComponentNames componentNames)
+      throws IOException {
+    RootGenerator.generate(rootMetadata, componentNames, getProcessingEnv());
   }
 
-  private void generateTestComponentData(ImmutableList<RootMetadata> rootMetadatas)
-      throws IOException {
+  private void generateTestComponentData(
+      ImmutableList<RootMetadata> rootMetadatas, ComponentNames componentNames) throws IOException {
     for (RootMetadata rootMetadata : rootMetadatas) {
       // TODO(bcorso): Consider moving this check earlier into processEach.
       TypeElement testElement = rootMetadata.testRootMetadata().testElement();
@@ -189,8 +201,9 @@ public final class RootProcessor extends BaseProcessor {
           testElement,
           "Hilt tests must be public, but found: %s",
           testElement);
-      new TestComponentDataGenerator(getProcessingEnv(), rootMetadata).generate();
+      new TestComponentDataGenerator(getProcessingEnv(), rootMetadata, componentNames).generate();
     }
-    new TestComponentDataSupplierGenerator(getProcessingEnv(), rootMetadatas).generate();
+    new TestComponentDataSupplierGenerator(getProcessingEnv(), rootMetadatas, componentNames)
+        .generate();
   }
 }
