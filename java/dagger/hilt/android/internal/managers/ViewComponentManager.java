@@ -168,7 +168,6 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
    *
    * <p>A wrapper class to expose the {@link Fragment} to the views they're inflating.
    */
-  // This is only non-final for the account override
   public static final class FragmentContextWrapper extends ContextWrapper {
     private Fragment fragment;
     private LayoutInflater baseInflater;
@@ -181,6 +180,8 @@ public final class ViewComponentManager implements GeneratedComponentManager<Obj
               // Prevent the fragment from leaking if the view outlives the fragment.
               // See https://github.com/google/dagger/issues/2070
               FragmentContextWrapper.this.fragment = null;
+              FragmentContextWrapper.this.baseInflater = null;
+              FragmentContextWrapper.this.inflater = null;
             }
           }
         };
