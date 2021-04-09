@@ -37,7 +37,6 @@ import org.junit.runner.Description;
  */
 public final class TestApplicationComponentManager
     implements TestSingletonComponentManager, OnComponentReadyRunnerHolder {
-
   // This is a generated class that we always generate in a known location.
   private static final String TEST_COMPONENT_DATA_SUPPLIER_IMPL =
       "dagger.hilt.android.internal.testing.TestComponentDataSupplierImpl";
