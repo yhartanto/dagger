@@ -20,6 +20,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
+import static javax.lang.model.element.Modifier.PROTECTED;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
@@ -55,15 +56,18 @@ public final class TestComponentDataGenerator {
     this.rootMetadata = rootMetadata;
     this.componentNames = componentNames;
     this.name =
-        componentNames.generatedComponentDataHolder(rootMetadata.testRootMetadata().testName());
+        Processors.append(
+            Processors.getEnclosedClassName(rootMetadata.testRootMetadata().testName()),
+            "_TestComponentDataSupplier");
   }
 
   /**
    *
    *
    * <pre><code>{@code
-   * public final class FooTest_ComponentDataHolder {
-   *   public static TestComponentData get() {
+   * public final class FooTest_TestComponentDataSupplier extends TestComponentDataSupplier {
+   *   @Override
+   *   protected TestComponentData get() {
    *     return new TestComponentData(
    *         false, // waitForBindValue
    *         testInstance -> injectInternal(($1T) testInstance),
@@ -84,8 +88,8 @@ public final class TestComponentDataGenerator {
   public void generate() throws IOException {
     TypeSpec.Builder generator =
         TypeSpec.classBuilder(name)
+            .superclass(ClassNames.TEST_COMPONENT_DATA_SUPPLIER)
             .addModifiers(PUBLIC, FINAL)
-            .addMethod(MethodSpec.constructorBuilder().addModifiers(PRIVATE).build())
             .addMethod(getMethod())
             .addMethod(getTestInjectInternalMethod());
 
@@ -112,7 +116,7 @@ public final class TestComponentDataGenerator {
             .collect(toImmutableSet());
 
     return MethodSpec.methodBuilder("get")
-        .addModifiers(PUBLIC, STATIC)
+        .addModifiers(PROTECTED)
         .returns(ClassNames.TEST_COMPONENT_DATA)
         .addStatement(
             "return new $T($L, $L, $L, $L, $L)",

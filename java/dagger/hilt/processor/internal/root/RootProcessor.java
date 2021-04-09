@@ -203,7 +203,5 @@ public final class RootProcessor extends BaseProcessor {
           testElement);
       new TestComponentDataGenerator(getProcessingEnv(), rootMetadata, componentNames).generate();
     }
-    new TestComponentDataSupplierGenerator(getProcessingEnv(), rootMetadatas, componentNames)
-        .generate();
   }
 }

@@ -84,15 +84,6 @@ public final class ComponentNames {
     return generatedComponentsWrapper(root).nestedClass(componentName(component));
   }
 
-  /**
-   * Returns the name of the generated {@link dagger.hilt.android.internal.TestComponentData} for a
-   * test class.
-   */
-  public ClassName generatedComponentDataHolder(ClassName testName) {
-    return Processors.append(
-        Processors.getEnclosedClassName(maybeRenameComponent(testName)), "_ComponentDataHolder");
-  }
-
   /** Returns the name of components generated for the default root. */
   public ClassName defaultRootComponentName(ClassName component) {
     return generatedComponentsWrapper(ClassNames.DEFAULT_ROOT)
