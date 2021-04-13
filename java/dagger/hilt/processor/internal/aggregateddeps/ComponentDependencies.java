@@ -17,18 +17,15 @@
 package dagger.hilt.processor.internal.aggregateddeps;
 
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
-import com.google.auto.value.extension.memoized.Memoized;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
-import dagger.hilt.processor.internal.Processors;
+import dagger.hilt.processor.internal.earlyentrypoint.AggregatedEarlyEntryPointMetadata;
 import dagger.hilt.processor.internal.uninstallmodules.AggregatedUninstallModulesMetadata;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
@@ -49,11 +46,12 @@ public abstract class ComponentDependencies {
   /** Returns the component entry point associated with the given a component. */
   public abstract Dependencies componentEntryPoints();
 
+  /** Returns the set of early entry points */
+  public abstract ImmutableSet<ClassName> earlyEntryPoints();
+
   /** Returns {@code true} if any entry points are annotated with {@code EarlyEntryPoints}. */
-  @Memoized
-  public boolean hasEarlySingletonEntryPoints() {
-    return entryPoints().getGlobalSingletonDeps().stream()
-        .anyMatch(entryPoint -> Processors.hasAnnotation(entryPoint, ClassNames.EARLY_ENTRY_POINT));
+  public boolean hasEarlyEntryPoints() {
+    return !earlyEntryPoints().isEmpty();
   }
 
   /**
@@ -72,6 +70,8 @@ public abstract class ComponentDependencies {
     abstract Dependencies.Builder entryPointsBuilder();
 
     abstract Dependencies.Builder componentEntryPointsBuilder();
+
+    abstract ImmutableSet.Builder<ClassName> earlyEntryPointsBuilder();
 
     abstract ComponentDependencies build();
   }
@@ -181,9 +181,8 @@ public abstract class ComponentDependencies {
    */
   public static ComponentDependencies from(
       ImmutableSet<ComponentDescriptor> descriptors, Elements elements) {
-    ImmutableMap<ClassName, ComponentDescriptor> descriptorLookup =
-        descriptors.stream()
-            .collect(toImmutableMap(ComponentDescriptor::component, descriptor -> descriptor));
+    ImmutableSet<ClassName> componentNames =
+        descriptors.stream().map(ComponentDescriptor::component).collect(toImmutableSet());
     ComponentDependencies.Builder componentDependencies = ComponentDependencies.builder();
     for (AggregatedDepsMetadata metadata : AggregatedDepsMetadata.from(elements)) {
       Dependencies.Builder builder = null;
@@ -201,9 +200,7 @@ public abstract class ComponentDependencies {
       for (TypeElement componentElement : metadata.componentElements()) {
         ClassName componentName = ClassName.get(componentElement);
         checkState(
-            descriptorLookup.containsKey(componentName),
-            "%s is not a valid Component.",
-            componentName);
+            componentNames.contains(componentName), "%s is not a valid Component.", componentName);
         if (metadata.testElement().isPresent()) {
           // In this case the @InstallIn or @TestInstallIn applies to only the given test root.
           ClassName test = ClassName.get(metadata.testElement().get());
@@ -233,6 +230,12 @@ public abstract class ComponentDependencies {
                         metadata.uninstallModuleElements().stream()
                             .map(module -> PkgPrivateMetadata.publicModule(module, elements))
                             .collect(toImmutableSet())));
+
+    AggregatedEarlyEntryPointMetadata.from(elements).stream()
+        .map(AggregatedEarlyEntryPointMetadata::earlyEntryPoint)
+        .map(entryPoint -> PkgPrivateMetadata.publicEarlyEntryPoint(entryPoint, elements))
+        .map(ClassName::get)
+        .forEach(componentDependencies.earlyEntryPointsBuilder()::add);
 
     return componentDependencies.build();
   }

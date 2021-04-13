@@ -60,6 +60,8 @@ gen_maven_artifact(
         "//java/dagger/hilt/processor/internal/aliasof:processor_lib",
         "//java/dagger/hilt/processor/internal/definecomponent:define_components",
         "//java/dagger/hilt/processor/internal/definecomponent:processor_lib",
+        "//java/dagger/hilt/processor/internal/earlyentrypoint:aggregated_early_entry_point_metadata",
+        "//java/dagger/hilt/processor/internal/earlyentrypoint:processor_lib",
         "//java/dagger/hilt/processor/internal/generatesrootinput:generates_root_inputs",
         "//java/dagger/hilt/processor/internal/generatesrootinput:processor_lib",
         "//java/dagger/hilt/processor/internal/originatingelement:processor_lib",

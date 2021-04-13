@@ -46,7 +46,7 @@ compiler_test(
     compiler_deps = [
         "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:install_in",
-        "//java/dagger/hilt/android:early_test_entry_point",
+        "//java/dagger/hilt/android:early_entry_point",
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/testing:hilt_android_test",
         "@androidsdk//:platforms/android-30/android.jar",

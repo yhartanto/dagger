@@ -219,13 +219,9 @@ public final class RootMetadata {
           .flatMap(metadata -> metadata.entryPoints(componentName).stream())
           .forEach(entryPointSet::add);
     } else if (root.isDefaultRoot() && componentName.equals(ClassNames.SINGLETON_COMPONENT)) {
-      // Filter to only use the entry points annotated with @EarlyEntryPoint. We only
-      // do this for SingletonComponent because EarlyEntryPoints can only be installed
+      // We only do this for SingletonComponent because EarlyEntryPoints can only be installed
       // in the SingletonComponent.
-      deps.entryPoints().get(componentName, root.classname(), root.isTestRoot()).stream()
-          .filter(ep -> Processors.hasAnnotation(ep, ClassNames.EARLY_ENTRY_POINT))
-          .map(ClassName::get)
-          .forEach(entryPointSet::add);
+      deps.earlyEntryPoints().forEach(entryPointSet::add);
     } else {
       deps.entryPoints().get(componentName, root.classname(), root.isTestRoot()).stream()
           .map(ClassName::get)

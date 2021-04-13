@@ -165,7 +165,7 @@ public final class RootProcessor extends BaseProcessor {
                 .filter(RootMetadata::canShareTestComponents)
                 .collect(toImmutableList());
         generateTestComponentData(rootMetadatas, componentNames);
-        if (deps.hasEarlySingletonEntryPoints() || !rootsThatCanShareComponents.isEmpty()) {
+        if (deps.hasEarlyEntryPoints() || !rootsThatCanShareComponents.isEmpty()) {
           Root defaultRoot = Root.createDefaultRoot(getProcessingEnv());
           generateComponents(
               RootMetadata.createForDefaultRoot(

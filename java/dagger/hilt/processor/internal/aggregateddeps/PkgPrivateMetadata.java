@@ -34,9 +34,19 @@ import javax.lang.model.util.Elements;
 /** PkgPrivateModuleMetadata contains a set of utilities for processing package private modules. */
 @AutoValue
 public abstract class PkgPrivateMetadata {
-  /** Returns the public Hilt wrapper module, or the module itself if its already public. */
+  /** Returns the public Hilt wrapped type or the type itself if it is already public. */
   public static TypeElement publicModule(TypeElement element, Elements elements) {
-    return of(elements, element, ClassNames.MODULE)
+    return publicDep(element, elements, ClassNames.MODULE);
+  }
+
+  /** Returns the public Hilt wrapped type or the type itself if it is already public. */
+  public static TypeElement publicEarlyEntryPoint(TypeElement element, Elements elements) {
+    return publicDep(element, elements, ClassNames.EARLY_ENTRY_POINT);
+  }
+
+  private static TypeElement publicDep(
+      TypeElement element, Elements elements, ClassName annotation) {
+    return of(elements, element, annotation)
         .map(PkgPrivateMetadata::generatedClassName)
         .map(ClassName::canonicalName)
         .map(elements::getTypeElement)

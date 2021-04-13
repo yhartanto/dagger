@@ -22,6 +22,12 @@ import com.squareup.javapoet.ClassName;
 
 /** Holder for commonly used class names. */
 public final class ClassNames {
+  public static final String AGGREGATED_EARLY_ENTRY_POINT_PACKAGE =
+      "dagger.hilt.android.internal.earlyentrypoint.codegen";
+  public static final ClassName AGGREGATED_EARLY_ENTRY_POINT =
+      get("dagger.hilt.android.internal.earlyentrypoint", "AggregatedEarlyEntryPoint");
+  public static final ClassName EARLY_ENTRY_POINT = get("dagger.hilt.android", "EarlyEntryPoint");
+
   public static final String AGGREGATED_UNINSTALL_MODULES_PACKAGE =
       "dagger.hilt.android.internal.uninstallmodules.codegen";
   public static final ClassName AGGREGATED_UNINSTALL_MODULES =
@@ -120,8 +126,6 @@ public final class ClassNames {
   public static final ClassName APPLICATION = get("android.app", "Application");
   public static final ClassName MULTI_DEX_APPLICATION =
       get("androidx.multidex", "MultiDexApplication");
-  public static final ClassName EARLY_ENTRY_POINT =
-      get("dagger.hilt.android", "EarlyEntryPoint");
   public static final ClassName ANDROID_ENTRY_POINT =
       get("dagger.hilt.android", "AndroidEntryPoint");
   public static final ClassName HILT_ANDROID_APP =

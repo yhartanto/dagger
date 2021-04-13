@@ -24,6 +24,7 @@ import dagger.hilt.android.processor.internal.androidentrypoint.AndroidEntryPoin
 import dagger.hilt.android.processor.internal.customtestapplication.CustomTestApplicationProcessor;
 import dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsProcessor;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentProcessor;
+import dagger.hilt.processor.internal.earlyentrypoint.EarlyEntryPointProcessor;
 import dagger.hilt.processor.internal.generatesrootinput.GeneratesRootInputProcessor;
 import dagger.hilt.processor.internal.originatingelement.OriginatingElementProcessor;
 import dagger.hilt.processor.internal.root.RootProcessor;
@@ -68,6 +69,7 @@ public final class AndroidCompilers {
         new AndroidEntryPointProcessor(),
         new ComponentProcessor(),
         new DefineComponentProcessor(),
+        new EarlyEntryPointProcessor(),
         new GeneratesRootInputProcessor(),
         new OriginatingElementProcessor(),
         new CustomTestApplicationProcessor(),

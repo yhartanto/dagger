@@ -118,15 +118,19 @@ android_library(
 )
 
 android_library(
-    name = "early_test_entry_point",
+    name = "early_entry_point",
     srcs = [
         "EarlyEntryPoint.java",
         "EarlyEntryPoints.java",
     ],
     exported_plugins = [
         "//java/dagger/hilt/processor/internal/aggregateddeps:plugin",
+        "//java/dagger/hilt/processor/internal/earlyentrypoint:processor",
     ],
     proguard_specs = ["proguard-rules.pro"],
+    exports = [
+        "//java/dagger/hilt/android/internal/earlyentrypoint",
+    ],
     deps = [
         ":package_info",
         "//:dagger_with_compiler",
@@ -151,7 +155,7 @@ android_library(
     tags = ["maven_coordinates=com.google.dagger:hilt-android:" + POM_VERSION_BETA],
     exports = [
         ":android_entry_point",
-        ":early_test_entry_point",
+        ":early_entry_point",
         ":entry_point_accessors",
         ":hilt_android_app",
         ":package_info",
@@ -171,13 +175,14 @@ gen_maven_artifact(
         "//java/dagger/hilt/android:activity_retained_lifecycle",
         "//java/dagger/hilt/android:android_entry_point",
         "//java/dagger/hilt/android:hilt_android_app",
-        "//java/dagger/hilt/android:early_test_entry_point",
+        "//java/dagger/hilt/android:early_entry_point",
         "//java/dagger/hilt/android:package_info",
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/components:view_model_component",
         "//java/dagger/hilt/android/components:package_info",
         "//java/dagger/hilt/android/internal",
         "//java/dagger/hilt/android/internal/builders",
+        "//java/dagger/hilt/android/internal/earlyentrypoint",
         "//java/dagger/hilt/android/internal/lifecycle",
         "//java/dagger/hilt/android/internal/managers",
         "//java/dagger/hilt/android/internal/managers:component_supplier",
