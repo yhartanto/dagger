@@ -25,6 +25,7 @@ android_library(
         "FragmentComponent.java",
         "ServiceComponent.java",
         "ViewComponent.java",
+        "ViewModelComponent.java",
         "ViewWithFragmentComponent.java",
     ],
     exports = [
@@ -34,19 +35,7 @@ android_library(
         ":package_info",
         "//java/dagger/hilt:define_component",
         "//java/dagger/hilt/android/scopes",
-        "//java/dagger/hilt/android/scopes:activity_retained_scoped",
         "//java/dagger/hilt/components",
-    ],
-)
-
-android_library(
-    name = "view_model_component",
-    srcs = ["ViewModelComponent.java"],
-    deps = [
-        ":components",
-        ":package_info",
-        "//java/dagger/hilt:define_component",
-        "//java/dagger/hilt/android/scopes:view_model_scoped",
     ],
 )
 

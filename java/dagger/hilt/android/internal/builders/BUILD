@@ -24,7 +24,6 @@ android_library(
         "//:dagger_with_compiler",
         "//java/dagger/hilt:define_component",
         "//java/dagger/hilt/android/components",
-        "//java/dagger/hilt/android/components:view_model_component",
         "@maven//:androidx_activity_activity",
         "@maven//:androidx_fragment_fragment",
         "@maven//:androidx_lifecycle_lifecycle_common",
