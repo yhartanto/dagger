@@ -22,6 +22,7 @@ import static com.google.auto.common.MoreElements.asVariable;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static javax.lang.model.element.Modifier.ABSTRACT;
+import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.AnnotationMirrors;
@@ -42,6 +43,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.SetMultimap;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
@@ -49,6 +51,7 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.extension.DaggerStreams;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -88,6 +91,26 @@ public final class Processors {
   public static final String STATIC_INITIALIZER_NAME = "<clinit>";
 
   private static final String JAVA_CLASS = "java.lang.Class";
+
+  public static void generateAggregatingClass(
+      String aggregatingPackage,
+      AnnotationSpec aggregatingAnnotation,
+      TypeElement element,
+      Class<?> generatedAnnotationClass,
+      ProcessingEnvironment env) throws IOException {
+    ClassName name = ClassName.get(aggregatingPackage, "_" + getFullEnclosedName(element));
+    TypeSpec.Builder builder =
+        TypeSpec.classBuilder(name)
+            .addModifiers(PUBLIC)
+            .addOriginatingElement(element)
+            .addAnnotation(aggregatingAnnotation)
+            .addJavadoc("This class should only be referenced by generated code!")
+            .addJavadoc("This class aggregates information across multiple compilations.\n");;
+
+    addGeneratedAnnotation(builder, env, generatedAnnotationClass);
+
+    JavaFile.builder(name.packageName(), builder.build()).build().writeTo(env.getFiler());
+  }
 
   /** Returns a map from {@link AnnotationMirror} attribute name to {@link AnnotationValue}s */
   public static ImmutableMap<String, AnnotationValue> getAnnotationValues(Elements elements,

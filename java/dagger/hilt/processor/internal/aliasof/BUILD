@@ -39,6 +39,7 @@ java_library(
         "@google_bazel_common//third_party/java/auto:service",
         "@google_bazel_common//third_party/java/incap",
         "@google_bazel_common//third_party/java/javapoet",
+        "@maven//:com_google_auto_auto_common",
     ],
 )
 

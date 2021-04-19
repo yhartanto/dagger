@@ -18,9 +18,6 @@ package dagger.hilt.processor.internal.uninstallmodules;
 
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.AnnotationSpec;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
@@ -47,19 +44,12 @@ final class AggregatedUninstallModulesGenerator {
   }
 
   void generate() throws IOException {
-    ClassName name =
-        ClassName.get(
-            ClassNames.AGGREGATED_UNINSTALL_MODULES_PACKAGE,
-            Processors.getFullEnclosedName(testElement) + "_AggregatedUninstallModules");
-
-    TypeSpec.Builder builder =
-        TypeSpec.classBuilder(name)
-            .addOriginatingElement(testElement)
-            .addAnnotation(aggregatedUninstallModulesAnnotation());
-
-    Processors.addGeneratedAnnotation(builder, env, getClass());
-
-    JavaFile.builder(name.packageName(), builder.build()).build().writeTo(env.getFiler());
+    Processors.generateAggregatingClass(
+        ClassNames.AGGREGATED_UNINSTALL_MODULES_PACKAGE,
+        aggregatedUninstallModulesAnnotation(),
+        testElement,
+        getClass(),
+        env);
   }
 
   private AnnotationSpec aggregatedUninstallModulesAnnotation() {
