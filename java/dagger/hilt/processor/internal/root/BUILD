@@ -29,8 +29,10 @@ java_plugin(
 java_library(
     name = "processor_lib",
     srcs = [
+        "AggregatedRootGenerator.java",
         "ComponentGenerator.java",
         "EarlySingletonComponentCreatorGenerator.java",
+        "ProcessedRootSentinelGenerator.java",
         "RootFileFormatter.java",
         "RootGenerator.java",
         "RootProcessor.java",
@@ -64,7 +66,9 @@ java_library(
 java_library(
     name = "root_metadata",
     srcs = [
+        "AggregatedRootMetadata.java",
         "ComponentTree.java",
+        "ProcessedRootSentinelMetadata.java",
         "Root.java",
         "RootMetadata.java",
         "TestRootMetadata.java",
@@ -95,7 +99,6 @@ java_library(
     srcs = ["RootType.java"],
     deps = [
         "//java/dagger/hilt/processor/internal:classnames",
-        "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
         "@google_bazel_common//third_party/java/javapoet",
     ],

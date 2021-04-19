@@ -22,6 +22,15 @@ import com.squareup.javapoet.ClassName;
 
 /** Holder for commonly used class names. */
 public final class ClassNames {
+  public static final String AGGREGATED_ROOT_PACKAGE =
+      "dagger.hilt.internal.aggregatedroot.codegen";
+  public static final ClassName AGGREGATED_ROOT =
+      get("dagger.hilt.internal.aggregatedroot", "AggregatedRoot");
+  public static final String PROCESSED_ROOT_SENTINEL_PACKAGE =
+      "dagger.hilt.internal.processedrootsentinel.codegen";
+  public static final ClassName PROCESSED_ROOT_SENTINEL =
+      get("dagger.hilt.internal.processedrootsentinel", "ProcessedRootSentinel");
+
   public static final String AGGREGATED_EARLY_ENTRY_POINT_PACKAGE =
       "dagger.hilt.android.internal.earlyentrypoint.codegen";
   public static final ClassName AGGREGATED_EARLY_ENTRY_POINT =

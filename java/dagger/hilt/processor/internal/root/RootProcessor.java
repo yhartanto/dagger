@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.BooleanOption.SHARE_TEST_COMPONENTS;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static java.util.Comparator.comparing;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.AGGREGATING;
 
@@ -37,10 +38,9 @@ import dagger.hilt.processor.internal.aggregateddeps.ComponentDependencies;
 import dagger.hilt.processor.internal.definecomponent.DefineComponents;
 import dagger.hilt.processor.internal.generatesrootinput.GeneratesRootInputs;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
@@ -53,9 +53,10 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 @IncrementalAnnotationProcessor(AGGREGATING)
 @AutoService(Processor.class)
 public final class RootProcessor extends BaseProcessor {
-  private final List<ClassName> rootNames = new ArrayList<>();
+  private static final Comparator<TypeElement> QUALIFIED_NAME_COMPARATOR =
+      comparing(TypeElement::getQualifiedName, (n1, n2) -> n1.toString().compareTo(n2.toString()));
+
   private final Set<ClassName> processed = new HashSet<>();
-  private boolean isTestEnv;
   // TODO(bcorso): Consider using a Dagger component to create/scope these objects
   private final DefineComponents defineComponents = DefineComponents.create();
   private GeneratesRootInputs generatesRootInputs;
@@ -79,25 +80,13 @@ public final class RootProcessor extends BaseProcessor {
   @Override
   public void processEach(TypeElement annotation, Element element) throws Exception {
     TypeElement rootElement = MoreElements.asType(element);
-    boolean isTestRoot = RootType.of(getProcessingEnv(), rootElement).isTestRoot();
-    checkState(
-        rootNames.isEmpty() || isTestEnv == isTestRoot,
-        "Cannot mix test roots with non-test roots:"
-            + "\n\tNon-Test Roots: %s"
-            + "\n\tTest Roots: %s",
-        isTestRoot ? rootNames : rootElement,
-        isTestRoot ? rootElement : rootNames);
-    isTestEnv = isTestRoot;
-
-    rootNames.add(ClassName.get(rootElement));
-    if (isTestEnv) {
+    RootType rootType = RootType.of(rootElement);
+    if (rootType.isTestRoot()) {
       new TestInjectorGenerator(
               getProcessingEnv(), TestRootMetadata.of(getProcessingEnv(), rootElement))
           .generate();
-    } else {
-      ProcessorErrors.checkState(
-          rootNames.size() <= 1, element, "More than one root found: %s", rootNames);
     }
+    new AggregatedRootGenerator(rootElement, annotation, getProcessingEnv()).generate();
   }
 
   @Override
@@ -117,14 +106,22 @@ public final class RootProcessor extends BaseProcessor {
       return;
     }
 
-    ImmutableList<Root> rootsToProcess =
-        rootNames.stream()
-            .filter(rootName -> !processed.contains(rootName))
-            // We create a new root element each round to avoid the jdk8 bug where
-            // TypeElement.equals does not work for elements across processing rounds.
-            .map(rootName -> getElementUtils().getTypeElement(rootName.toString()))
+    ImmutableSet<Root> allRoots =
+        AggregatedRootMetadata.from(getElementUtils()).stream()
+            .map(metadata -> Root.create(metadata.rootElement(), getProcessingEnv()))
+            .collect(toImmutableSet());
+
+    ImmutableSet<Root> processedRoots =
+        ProcessedRootSentinelMetadata.from(getElementUtils()).stream()
+            .flatMap(metadata -> metadata.rootElements().stream())
             .map(rootElement -> Root.create(rootElement, getProcessingEnv()))
-            .collect(toImmutableList());
+            .collect(toImmutableSet());
+
+    ImmutableSet<Root> rootsToProcess =
+        allRoots.stream()
+            .filter(root -> !processedRoots.contains(root))
+            .filter(root -> !processed.contains(rootName(root)))
+            .collect(toImmutableSet());
 
     if (rootsToProcess.isEmpty()) {
       // Skip further processing since there's no roots that need processing.
@@ -135,6 +132,9 @@ public final class RootProcessor extends BaseProcessor {
     // all roots. We should consider if it's worth trying to continue processing for other
     // roots. At the moment, I think it's rare that if one root failed the others would not.
     try {
+      validateRoots(allRoots, rootsToProcess);
+
+      boolean isTestEnv = rootsToProcess.stream().anyMatch(Root::isTestRoot);
       ComponentNames componentNames =
           isTestEnv && SHARE_TEST_COMPONENTS.get(getProcessingEnv())
               ? ComponentNames.withRenamingIntoPackage(
@@ -153,7 +153,6 @@ public final class RootProcessor extends BaseProcessor {
               .collect(toImmutableList());
 
       for (RootMetadata rootMetadata : rootMetadatas) {
-        setProcessingState(rootMetadata.root());
         if (!rootMetadata.canShareTestComponents()) {
           generateComponents(rootMetadata, componentNames);
         }
@@ -176,14 +175,107 @@ public final class RootProcessor extends BaseProcessor {
       }
     } catch (Exception e) {
       for (Root root : rootsToProcess) {
-        processed.add(root.classname());
+        processed.add(rootName(root));
       }
       throw e;
+    } finally {
+      rootsToProcess.forEach(this::setProcessingState);
+      // Calculate the roots processed in this round. We do this in the finally-block rather than in
+      // the try-block because the catch-block can change the processing state.
+      ImmutableSet<Root> rootsProcessedInRound =
+          rootsToProcess.stream()
+              // Only add a sentinel for processed roots. Skip preprocessed roots since those will
+              // will be processed in the next round.
+              .filter(root -> processed.contains(rootName(root)))
+              .collect(toImmutableSet());
+      for (Root root : rootsProcessedInRound) {
+        new ProcessedRootSentinelGenerator(rootElement(root), getProcessingEnv()).generate();
+      }
+    }
+  }
+
+  private void validateRoots(ImmutableSet<Root> allRoots, ImmutableSet<Root> rootsToProcess) {
+
+    ImmutableSet<TypeElement> rootElementsToProcess =
+        rootsToProcess.stream()
+            .map(Root::element)
+            .sorted(QUALIFIED_NAME_COMPARATOR)
+            .collect(toImmutableSet());
+
+    ImmutableSet<TypeElement> processedTestRootElements =
+        allRoots.stream()
+            .filter(Root::isTestRoot)
+            .filter(root -> !rootsToProcess.contains(root))
+            .map(Root::element)
+            .sorted(QUALIFIED_NAME_COMPARATOR)
+            .collect(toImmutableSet());
+
+    // TODO(b/185742783): Add an explanation or link to docs to explain why we're forbidding this.
+    ProcessorErrors.checkState(
+        processedTestRootElements.isEmpty(),
+        "Cannot process new roots when there are test roots from a previous compilation unit:"
+            + "\n\tTest roots from previous compilation unit: %s"
+            + "\n\tAll roots from this compilation unit: %s",
+        processedTestRootElements,
+        rootElementsToProcess);
+
+    ImmutableSet<TypeElement> appRootElementsToProcess =
+        rootsToProcess.stream()
+            .filter(root -> !root.isTestRoot())
+            .map(Root::element)
+            .sorted(QUALIFIED_NAME_COMPARATOR)
+            .collect(toImmutableSet());
+
+    if (!appRootElementsToProcess.isEmpty()) {
+      ImmutableSet<TypeElement> testRootElementsToProcess =
+          rootsToProcess.stream()
+              .filter(Root::isTestRoot)
+              .map(Root::element)
+              .sorted(QUALIFIED_NAME_COMPARATOR)
+              .collect(toImmutableSet());
+
+      ProcessorErrors.checkState(
+          testRootElementsToProcess.isEmpty(),
+          "Cannot process test roots and app roots in the same compilation unit:"
+              + "\n\tApp root in this compilation unit: %s"
+              + "\n\tTest roots in this compilation unit: %s",
+          appRootElementsToProcess,
+          testRootElementsToProcess);
+
+      ImmutableSet<TypeElement> processedAppRootElements =
+          allRoots.stream()
+              .filter(root -> !root.isTestRoot())
+              .filter(root -> !rootsToProcess.contains(root))
+              .map(Root::element)
+              .sorted(QUALIFIED_NAME_COMPARATOR)
+              .collect(toImmutableSet());
+
+      ProcessorErrors.checkState(
+          processedAppRootElements.isEmpty(),
+          "Cannot process app roots in this compilation unit since there are app roots in a "
+              + "previous compilation unit:"
+              + "\n\tApp roots in previous compilation unit: %s"
+              + "\n\tApp roots in this compilation unit: %s",
+          processedAppRootElements,
+          appRootElementsToProcess);
+
+      ProcessorErrors.checkState(
+          appRootElementsToProcess.size() == 1,
+          "Cannot process multiple app roots in the same compilation unit: %s",
+          appRootElementsToProcess);
     }
   }
 
   private void setProcessingState(Root root) {
-    processed.add(root.classname());
+    processed.add(rootName(root));
+  }
+
+  private ClassName rootName(Root root) {
+    return ClassName.get(rootElement(root));
+  }
+
+  private TypeElement rootElement(Root root) {
+    return root.element();
   }
 
   private void generateComponents(RootMetadata rootMetadata, ComponentNames componentNames)

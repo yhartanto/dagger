@@ -70,6 +70,8 @@ android_library(
         "//java/dagger/hilt/internal:generated_entry_point",
         "//java/dagger/hilt/internal:preconditions",
         "//java/dagger/hilt/internal:test_singleton_component",
+        "//java/dagger/hilt/internal/aggregatedroot",
+        "//java/dagger/hilt/internal/processedrootsentinel",
         "//java/dagger/hilt/migration:disable_install_in_check",
         "@maven//:androidx_annotation_annotation",
         "@maven//:androidx_multidex_multidex",

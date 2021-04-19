@@ -49,7 +49,7 @@ abstract class Root {
   /** Creates a {@plainlink Root root} for the given {@plainlink Element element}. */
   static Root create(Element element, ProcessingEnvironment env) {
     TypeElement rootElement = MoreElements.asType(element);
-    return new AutoValue_Root(rootElement, RootType.of(env, rootElement).isTestRoot());
+    return new AutoValue_Root(rootElement, RootType.of(rootElement).isTestRoot());
   }
 
   /** Returns the root element that should be used with processing. */

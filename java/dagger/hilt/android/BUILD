@@ -76,6 +76,8 @@ android_library(
         "//java/dagger/hilt/internal:component_manager",
         "//java/dagger/hilt/internal:generated_component",
         "//java/dagger/hilt/internal:generated_entry_point",
+        "//java/dagger/hilt/internal/aggregatedroot",
+        "//java/dagger/hilt/internal/processedrootsentinel",
         "//java/dagger/hilt/migration:disable_install_in_check",
         "@maven//:androidx_activity_activity",
         "@maven//:androidx_annotation_annotation",
@@ -194,6 +196,8 @@ gen_maven_artifact(
         "//java/dagger/hilt/internal:component_entry_point",
         "//java/dagger/hilt/internal:generated_entry_point",
         "//java/dagger/hilt/internal:test_singleton_component_manager",
+        "//java/dagger/hilt/internal/aggregatedroot:aggregatedroot",
+        "//java/dagger/hilt/internal/processedrootsentinel:processedrootsentinel",
     ],
     artifact_target_maven_deps = [
         "androidx.activity:activity",
