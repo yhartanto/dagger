@@ -104,10 +104,11 @@ public final class TestComponentDataGenerator {
   private MethodSpec getMethod() {
     TypeElement testElement = rootMetadata.testRootMetadata().testElement();
     ClassName component =
-        rootMetadata.canShareTestComponents()
-            ? componentNames.defaultRootComponentName(ClassNames.SINGLETON_COMPONENT)
-            : componentNames.generatedComponent(
-                ClassName.get(testElement), ClassNames.SINGLETON_COMPONENT);
+        componentNames.generatedComponent(
+            rootMetadata.canShareTestComponents()
+                ? ClassNames.DEFAULT_ROOT
+                : ClassName.get(testElement),
+            ClassNames.SINGLETON_COMPONENT);
     ImmutableSet<TypeElement> daggerRequiredModules =
         rootMetadata.modulesThatDaggerCannotConstruct(ClassNames.SINGLETON_COMPONENT);
     ImmutableSet<TypeElement> hiltRequiredModules =
