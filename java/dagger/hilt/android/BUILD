@@ -14,7 +14,7 @@
 
 # Description:
 #   A library based on Hilt that provides standard components and automated injection for Android.
-load("//:build_defs.bzl", "POM_VERSION_BETA")
+load("//:build_defs.bzl", "POM_VERSION")
 load("//tools:maven.bzl", "gen_maven_artifact")
 
 package(default_visibility = ["//:src"])
@@ -151,7 +151,7 @@ java_library(
 
 android_library(
     name = "artifact-lib",
-    tags = ["maven_coordinates=com.google.dagger:hilt-android:" + POM_VERSION_BETA],
+    tags = ["maven_coordinates=com.google.dagger:hilt-android:" + POM_VERSION],
     exports = [
         ":android_entry_point",
         ":early_entry_point",
@@ -166,7 +166,7 @@ android_library(
 
 gen_maven_artifact(
     name = "artifact",
-    artifact_coordinates = "com.google.dagger:hilt-android:" + POM_VERSION_BETA,
+    artifact_coordinates = "com.google.dagger:hilt-android:" + POM_VERSION,
     artifact_name = "Hilt Android",
     artifact_target = ":artifact-lib",
     artifact_target_libs = [

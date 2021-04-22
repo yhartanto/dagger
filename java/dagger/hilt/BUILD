@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("//tools:maven.bzl", "gen_maven_artifact")
-load("//:build_defs.bzl", "POM_VERSION_BETA")
+load("//:build_defs.bzl", "POM_VERSION")
 
 # Description:
 #   A library that wraps the Dagger API to make DI usage and testing easier.
@@ -181,7 +181,7 @@ filegroup(
 
 java_library(
     name = "artifact-core-lib",
-    tags = ["maven_coordinates=com.google.dagger:hilt-core:" + POM_VERSION_BETA],
+    tags = ["maven_coordinates=com.google.dagger:hilt-core:" + POM_VERSION],
     exports = [
         ":define_component",
         ":entry_point",
@@ -197,7 +197,7 @@ java_library(
 
 gen_maven_artifact(
     name = "artifact-core",
-    artifact_coordinates = "com.google.dagger:hilt-core:" + POM_VERSION_BETA,
+    artifact_coordinates = "com.google.dagger:hilt-core:" + POM_VERSION,
     artifact_name = "Hilt Core",
     artifact_target = ":artifact-core-lib",
     artifact_target_libs = [

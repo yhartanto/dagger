@@ -26,6 +26,3 @@ SOURCE_7_TARGET_7 = [
 ]
 
 POM_VERSION = "${project.version}"
-
-# DO NOT remove the comment on the next line. It's used in deploy-to-maven-central.sh
-POM_VERSION_BETA = POM_VERSION  #BETA_POSTFIX
