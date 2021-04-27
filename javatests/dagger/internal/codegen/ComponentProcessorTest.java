@@ -1227,7 +1227,7 @@ public class ComponentProcessorTest {
                 "  }")
             .addLinesIn(
                 DEFAULT_MODE,
-                "  private static class test_AComponent_a implements Provider<A> {",
+                "  private static final class test_AComponent_a implements Provider<A> {",
                 "    private final AComponent aComponent;",
                 "    ",
                 "    test_AComponent_a(AComponent aComponent) {",
