@@ -17,17 +17,41 @@
 package dagger.hilt.processor.internal.root;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.hilt.android.processor.AndroidCompilers.compiler;
 
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
+import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.hilt.android.processor.AndroidCompilers;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public final class MyTestPreviousCompilationTest {
+
+  @Parameters(name = "{0}")
+  public static ImmutableCollection<Object[]> parameters() {
+    return ImmutableList.copyOf(new Object[][] {{true}, {false}});
+  }
+
+  private final boolean disableCrossCompilationRootValidation;
+
+  public MyTestPreviousCompilationTest(boolean disableCrossCompilationRootValidation) {
+    this.disableCrossCompilationRootValidation = disableCrossCompilationRootValidation;
+  }
+
+  private Compiler compiler() {
+    return AndroidCompilers.compiler()
+        .withOptions(
+            String.format(
+                "-Adagger.hilt.disableCrossCompilationRootValidation=%s",
+                disableCrossCompilationRootValidation));
+  }
+
   @Test
   public void testRootTest() {
     JavaFileObject testRoot =
@@ -41,13 +65,18 @@ public final class MyTestPreviousCompilationTest {
             "public class TestRoot {}");
 
     Compilation compilation = compiler().compile(testRoot);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Cannot process new roots when there are test roots from a previous compilation unit:"
-                + "\n  \tTest roots from previous compilation unit: "
-                + "[dagger.hilt.processor.internal.root.MyTestPreviousCompilation.MyTest]"
-                + "\n  \tAll roots from this compilation unit: [test.TestRoot]");
+    if (disableCrossCompilationRootValidation) {
+      assertThat(compilation).succeeded();
+    } else {
+      assertThat(compilation).failed();
+      assertThat(compilation).hadErrorCount(1);
+      assertThat(compilation)
+          .hadErrorContaining(
+              "Cannot process new roots when there are test roots from a previous compilation unit:"
+                  + "\n  \tTest roots from previous compilation unit: "
+                  + "[dagger.hilt.processor.internal.root.MyTestPreviousCompilation.MyTest]"
+                  + "\n  \tAll roots from this compilation unit: [test.TestRoot]");
+    }
   }
 
   @Test
@@ -64,13 +93,17 @@ public final class MyTestPreviousCompilationTest {
             "public class AppRoot extends Hilt_AppRoot {}");
 
     Compilation compilation = compiler().compile(appRoot);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Cannot process new roots when there are test roots from a previous compilation unit:"
-                + "\n  \tTest roots from previous compilation unit: "
-                + "[dagger.hilt.processor.internal.root.MyTestPreviousCompilation.MyTest]"
-                + "\n  \tAll roots from this compilation unit: [test.AppRoot]");
+    if (disableCrossCompilationRootValidation) {
+      assertThat(compilation).succeeded();
+    } else {
+      assertThat(compilation).failed();
+      assertThat(compilation).hadErrorCount(1);
+      assertThat(compilation)
+          .hadErrorContaining(
+              "Cannot process new roots when there are test roots from a previous compilation unit:"
+                  + "\n  \tTest roots from previous compilation unit: "
+                  + "[dagger.hilt.processor.internal.root.MyTestPreviousCompilation.MyTest]"
+                  + "\n  \tAll roots from this compilation unit: [test.AppRoot]");
+    }
   }
 }

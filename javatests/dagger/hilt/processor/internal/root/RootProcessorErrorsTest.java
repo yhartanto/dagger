@@ -17,17 +17,41 @@
 package dagger.hilt.processor.internal.root;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.hilt.android.processor.AndroidCompilers.compiler;
 
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
+import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.hilt.android.processor.AndroidCompilers;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public final class RootProcessorErrorsTest {
+
+  @Parameters(name = "{0}")
+  public static ImmutableCollection<Object[]> parameters() {
+    return ImmutableList.copyOf(new Object[][] {{true}, {false}});
+  }
+
+  private final boolean disableCrossCompilationRootValidation;
+
+  public RootProcessorErrorsTest(boolean disableCrossCompilationRootValidation) {
+    this.disableCrossCompilationRootValidation = disableCrossCompilationRootValidation;
+  }
+
+  private Compiler compiler() {
+    return AndroidCompilers.compiler()
+        .withOptions(
+            String.format(
+                "-Adagger.hilt.disableCrossCompilationRootValidation=%s",
+                disableCrossCompilationRootValidation));
+  }
+
   @Test
   public void multipleAppRootsTest() {
     JavaFileObject appRoot1 =
@@ -52,6 +76,7 @@ public final class RootProcessorErrorsTest {
             "@HiltAndroidApp(Application.class)",
             "public class AppRoot2 extends Hilt_AppRoot2 {}");
 
+    // This test case should fail independent of disableCrossCompilationRootValidation.
     Compilation compilation = compiler().compile(appRoot1, appRoot2);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);
@@ -84,6 +109,7 @@ public final class RootProcessorErrorsTest {
             "@HiltAndroidTest",
             "public class TestRoot {}");
 
+    // This test case should fail independent of disableCrossCompilationRootValidation.
     Compilation compilation = compiler().compile(appRoot, testRoot);
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorCount(1);

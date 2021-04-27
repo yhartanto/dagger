@@ -154,6 +154,11 @@ java_library(
 java_library(
     name = "compiler_options",
     srcs = ["HiltCompilerOptions.java"],
+    deps = [
+        ":processor_errors",
+        "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/javapoet",
+    ],
 )
 
 filegroup(

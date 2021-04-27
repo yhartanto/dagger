@@ -17,7 +17,8 @@
 package dagger.hilt.processor.internal.root;
 
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.hilt.processor.internal.HiltCompilerOptions.BooleanOption.SHARE_TEST_COMPONENTS;
+import static dagger.hilt.processor.internal.HiltCompilerOptions.isCrossCompilationRootValidationDisabled;
+import static dagger.hilt.processor.internal.HiltCompilerOptions.isSharedTestComponentsEnabled;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.Comparator.comparing;
@@ -136,7 +137,7 @@ public final class RootProcessor extends BaseProcessor {
 
       boolean isTestEnv = rootsToProcess.stream().anyMatch(Root::isTestRoot);
       ComponentNames componentNames =
-          isTestEnv && SHARE_TEST_COMPONENTS.get(getProcessingEnv())
+          isTestEnv && isSharedTestComponentsEnabled(getProcessingEnv())
               ? ComponentNames.withRenamingIntoPackage(
                   ClassNames.DEFAULT_ROOT.packageName(),
                   rootsToProcess.stream().map(Root::element).collect(toImmutableList()))
@@ -202,23 +203,6 @@ public final class RootProcessor extends BaseProcessor {
             .sorted(QUALIFIED_NAME_COMPARATOR)
             .collect(toImmutableSet());
 
-    ImmutableSet<TypeElement> processedTestRootElements =
-        allRoots.stream()
-            .filter(Root::isTestRoot)
-            .filter(root -> !rootsToProcess.contains(root))
-            .map(Root::element)
-            .sorted(QUALIFIED_NAME_COMPARATOR)
-            .collect(toImmutableSet());
-
-    // TODO(b/185742783): Add an explanation or link to docs to explain why we're forbidding this.
-    ProcessorErrors.checkState(
-        processedTestRootElements.isEmpty(),
-        "Cannot process new roots when there are test roots from a previous compilation unit:"
-            + "\n\tTest roots from previous compilation unit: %s"
-            + "\n\tAll roots from this compilation unit: %s",
-        processedTestRootElements,
-        rootElementsToProcess);
-
     ImmutableSet<TypeElement> appRootElementsToProcess =
         rootsToProcess.stream()
             .filter(root -> !root.isTestRoot())
@@ -226,6 +210,7 @@ public final class RootProcessor extends BaseProcessor {
             .sorted(QUALIFIED_NAME_COMPARATOR)
             .collect(toImmutableSet());
 
+    // Perform validation between roots in this compilation unit.
     if (!appRootElementsToProcess.isEmpty()) {
       ImmutableSet<TypeElement> testRootElementsToProcess =
           rootsToProcess.stream()
@@ -242,6 +227,31 @@ public final class RootProcessor extends BaseProcessor {
           appRootElementsToProcess,
           testRootElementsToProcess);
 
+      ProcessorErrors.checkState(
+          appRootElementsToProcess.size() == 1,
+          "Cannot process multiple app roots in the same compilation unit: %s",
+          appRootElementsToProcess);
+    }
+
+    // Perform validation across roots previous compilation units.
+    if (!isCrossCompilationRootValidationDisabled(rootElementsToProcess, getProcessingEnv())) {
+      ImmutableSet<TypeElement> processedTestRootElements =
+          allRoots.stream()
+              .filter(Root::isTestRoot)
+              .filter(root -> !rootsToProcess.contains(root))
+              .map(Root::element)
+              .sorted(QUALIFIED_NAME_COMPARATOR)
+              .collect(toImmutableSet());
+
+      // TODO(b/185742783): Add an explanation or link to docs to explain why we're forbidding this.
+      ProcessorErrors.checkState(
+          processedTestRootElements.isEmpty(),
+          "Cannot process new roots when there are test roots from a previous compilation unit:"
+              + "\n\tTest roots from previous compilation unit: %s"
+              + "\n\tAll roots from this compilation unit: %s",
+          processedTestRootElements,
+          rootElementsToProcess);
+
       ImmutableSet<TypeElement> processedAppRootElements =
           allRoots.stream()
               .filter(root -> !root.isTestRoot())
@@ -251,17 +261,12 @@ public final class RootProcessor extends BaseProcessor {
               .collect(toImmutableSet());
 
       ProcessorErrors.checkState(
-          processedAppRootElements.isEmpty(),
+          processedAppRootElements.isEmpty() || appRootElementsToProcess.isEmpty(),
           "Cannot process app roots in this compilation unit since there are app roots in a "
               + "previous compilation unit:"
               + "\n\tApp roots in previous compilation unit: %s"
               + "\n\tApp roots in this compilation unit: %s",
           processedAppRootElements,
-          appRootElementsToProcess);
-
-      ProcessorErrors.checkState(
-          appRootElementsToProcess.size() == 1,
-          "Cannot process multiple app roots in the same compilation unit: %s",
           appRootElementsToProcess);
     }
   }

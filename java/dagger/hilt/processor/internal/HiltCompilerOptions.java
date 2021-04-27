@@ -16,36 +16,74 @@
 
 package dagger.hilt.processor.internal;
 
+import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.TypeElement;
 
 /** Hilt annotation processor options. */
 // TODO(danysantiago): Consider consolidating with Dagger compiler options logic.
 public final class HiltCompilerOptions {
 
+  /**
+   * Returns {@code true} if the superclass validation is disabled for
+   * {@link dagger.hilt.android.AndroidEntryPoint}-annotated classes.
+   *
+   * This flag is for internal use only! The superclass validation checks that the super class is a
+   * generated {@code Hilt_} class. This flag is disabled by the Hilt Gradle plugin to enable
+   * bytecode transformation to change the superclass.
+   */
+  public static boolean isAndroidSuperclassValidationDisabled(
+      TypeElement element, ProcessingEnvironment env) {
+    BooleanOption option = BooleanOption.DISABLE_ANDROID_SUPERCLASS_VALIDATION;
+    return option.get(env);
+  }
+
+  /**
+   * Returns {@code true} if cross-compilation root validation is disabled.
+   *
+   * <p>This flag should rarely be needed, but may be used for legacy/migration purposes if
+   * tests require the use of {@link dagger.hilt.android.HiltAndroidApp} rather than
+   * {@link dagger.hilt.android.testing.HiltAndroidTest}.
+   *
+   * <p>Note that Hilt still does validation within a single compilation unit. In particular,
+   * a compilation unit that contains a {@code HiltAndroidApp} usage cannot have other
+   * {@code HiltAndroidApp} or {@code HiltAndroidTest} usages in the same compilation unit.
+   */
+  public static boolean isCrossCompilationRootValidationDisabled(
+      ImmutableSet<TypeElement> rootElements, ProcessingEnvironment env) {
+    BooleanOption option = BooleanOption.DISABLE_CROSS_COMPILATION_ROOT_VALIDATION;
+    return option.get(env);
+  }
+
+  /** Returns {@code true} if the check for {@link dagger.hilt.InstallIn} is disabled. */
+  public static boolean isModuleInstallInCheckDisabled(ProcessingEnvironment env) {
+    return BooleanOption.DISABLE_MODULES_HAVE_INSTALL_IN_CHECK.get(env);
+  }
+
+  /**
+   * Returns {@code true} of unit tests should try to share generated components, rather than using
+   * separate generated components per Hilt test root.
+   *
+   * <p>Tests that provide their own test bindings (e.g. using {@link
+   * dagger.hilt.android.testing.BindValue} or a test {@link dagger.Module}) cannot use the shared
+   * component. In these cases, a component will be generated for the test.
+   */
+  public static boolean isSharedTestComponentsEnabled(ProcessingEnvironment env) {
+    return BooleanOption.SHARE_TEST_COMPONENTS.get(env);
+  }
+
   /** Processor options which can have true or false values. */
-  public enum BooleanOption {
-    /**
-     * Flag that disables validating the superclass of @AndroidEntryPoint are Hilt_ generated,
-     * classes. This flag is to be used internally by the Gradle plugin, enabling the bytecode
-     * transformation to change the superclass.
-     */
+  private enum BooleanOption {
     DISABLE_ANDROID_SUPERCLASS_VALIDATION(
         "android.internal.disableAndroidSuperclassValidation", false),
 
-    /** Flag that disables check on modules to be annotated with @InstallIn. */
+    DISABLE_CROSS_COMPILATION_ROOT_VALIDATION("disableCrossCompilationRootValidation", false),
+
     DISABLE_MODULES_HAVE_INSTALL_IN_CHECK("disableModulesHaveInstallInCheck", false),
 
-    /**
-     * Flag that enables unit tests to share a single generated Component, rather than using a
-     * separate generated Component per Hilt test root.
-     *
-     * <p>Tests that provide their own test bindings (e.g. using {@link
-     * dagger.hilt.android.testing.BindValue} or a test {@link dagger.Module}) cannot use the shared
-     * component. In these cases, a component will be generated for the test.
-     */
     SHARE_TEST_COMPONENTS("shareTestComponents", false);
 
     private final String name;
@@ -56,7 +94,7 @@ public final class HiltCompilerOptions {
       this.defaultValue = defaultValue;
     }
 
-    public boolean get(ProcessingEnvironment env) {
+    boolean get(ProcessingEnvironment env) {
       String value = env.getOptions().get(getQualifiedName());
       if (value == null) {
         return defaultValue;
@@ -65,7 +103,7 @@ public final class HiltCompilerOptions {
       return Boolean.parseBoolean(value);
     }
 
-    public String getQualifiedName() {
+    String getQualifiedName() {
       return "dagger.hilt." + name;
     }
   }
@@ -75,6 +113,4 @@ public final class HiltCompilerOptions {
         .map(BooleanOption::getQualifiedName)
         .collect(Collectors.toSet());
   }
-
-  private HiltCompilerOptions() {}
 }

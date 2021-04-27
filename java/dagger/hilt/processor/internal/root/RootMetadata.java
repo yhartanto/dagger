@@ -18,7 +18,7 @@ package dagger.hilt.processor.internal.root;
 
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Suppliers.memoize;
-import static dagger.hilt.processor.internal.HiltCompilerOptions.BooleanOption.SHARE_TEST_COMPONENTS;
+import static dagger.hilt.processor.internal.HiltCompilerOptions.isSharedTestComponentsEnabled;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -133,7 +133,7 @@ public final class RootMetadata {
   // TODO(groakley): Allow more tests to share modules, e.g. tests that uninstall the same module.
   // In that case, this might instead return which shared dep grouping should be used.
   public boolean canShareTestComponents() {
-    return SHARE_TEST_COMPONENTS.get(env)
+    return isSharedTestComponentsEnabled(env)
         && root.isTestRoot()
         && !deps.includesTestDeps(root.classname());
   }

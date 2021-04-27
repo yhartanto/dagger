@@ -17,17 +17,41 @@
 package dagger.hilt.processor.internal.root;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.hilt.android.processor.AndroidCompilers.compiler;
 
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
+import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.hilt.android.processor.AndroidCompilers;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public final class MyAppPreviousCompilationTest {
+
+  @Parameters(name = "{0}")
+  public static ImmutableCollection<Object[]> parameters() {
+    return ImmutableList.copyOf(new Object[][] {{true}, {false}});
+  }
+
+  private final boolean disableCrossCompilationRootValidation;
+
+  public MyAppPreviousCompilationTest(boolean disableCrossCompilationRootValidation) {
+    this.disableCrossCompilationRootValidation = disableCrossCompilationRootValidation;
+  }
+
+  private Compiler compiler() {
+    return AndroidCompilers.compiler()
+        .withOptions(
+            String.format(
+                "-Adagger.hilt.disableCrossCompilationRootValidation=%s",
+                disableCrossCompilationRootValidation));
+  }
+
   @Test
   public void testRootTest() {
     JavaFileObject testRoot =
@@ -40,6 +64,7 @@ public final class MyAppPreviousCompilationTest {
             "@HiltAndroidTest",
             "public class TestRoot {}");
 
+    // This test case should succeed independent of disableCrossCompilationRootValidation.
     Compilation compilation = compiler().compile(testRoot);
     assertThat(compilation).succeeded();
   }
@@ -58,14 +83,18 @@ public final class MyAppPreviousCompilationTest {
             "public class AppRoot extends Hilt_AppRoot {}");
 
     Compilation compilation = compiler().compile(appRoot);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Cannot process app roots in this compilation unit since there are app roots in a "
-                + "previous compilation unit:"
-                + "\n  \tApp roots in previous compilation unit: ["
-                + "dagger.hilt.processor.internal.root.MyAppPreviousCompilation.MyApp]"
-                + "\n  \tApp roots in this compilation unit: [test.AppRoot]");
+    if (disableCrossCompilationRootValidation) {
+      assertThat(compilation).succeeded();
+    } else {
+      assertThat(compilation).failed();
+      assertThat(compilation).hadErrorCount(1);
+      assertThat(compilation)
+          .hadErrorContaining(
+              "Cannot process app roots in this compilation unit since there are app roots in a "
+                  + "previous compilation unit:"
+                  + "\n  \tApp roots in previous compilation unit: ["
+                  + "dagger.hilt.processor.internal.root.MyAppPreviousCompilation.MyApp]"
+                  + "\n  \tApp roots in this compilation unit: [test.AppRoot]");
+    }
   }
 }
