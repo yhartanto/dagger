@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.hilt.android.processor;
+package dagger.hilt.android.testing.compile;
 
 import static java.util.stream.Collectors.toMap;
 
@@ -32,21 +32,25 @@ import dagger.hilt.processor.internal.uninstallmodules.UninstallModulesProcessor
 import dagger.internal.codegen.ComponentProcessor;
 import dagger.testing.compile.CompilerTests;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import javax.annotation.processing.Processor;
 import com.tschuchort.compiletesting.KotlinCompilation;
 
 /** {@link Compiler} instances for testing Android Hilt. */
-public final class AndroidCompilers {
+public final class HiltCompilerTests {
 
   public static Compiler compiler(Processor... extraProcessors) {
+    return compiler(Arrays.asList(extraProcessors));
+  }
+
+  public static Compiler compiler(Collection<? extends Processor> extraProcessors) {
     Map<Class<?>, Processor> processors =
         defaultProcessors().stream()
             .collect(toMap((Processor e) -> e.getClass(), (Processor e) -> e));
 
     // Adds extra processors, and allows overriding any processors of the same class.
-    Arrays.stream(extraProcessors)
-        .forEach(processor -> processors.put(processor.getClass(), processor));
+    extraProcessors.stream().forEach(processor -> processors.put(processor.getClass(), processor));
 
     return CompilerTests.compiler().withProcessors(processors.values());
   }
@@ -77,5 +81,5 @@ public final class AndroidCompilers {
         new RootProcessor());
   }
 
-  private AndroidCompilers() {}
+  private HiltCompilerTests() {}
 }

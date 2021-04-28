@@ -17,7 +17,7 @@
 package dagger.hilt.processor.internal.root;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.hilt.android.processor.AndroidCompilers.compiler;
+import static dagger.hilt.android.testing.compile.HiltCompilerTests.compiler;
 
 import com.google.common.base.Joiner;
 import com.google.testing.compile.Compilation;

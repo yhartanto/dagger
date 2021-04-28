@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
-import dagger.hilt.android.processor.AndroidCompilers;
+import dagger.hilt.android.testing.compile.HiltCompilerTests;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +45,7 @@ public final class MyTestPreviousCompilationTest {
   }
 
   private Compiler compiler() {
-    return AndroidCompilers.compiler()
+    return HiltCompilerTests.compiler()
         .withOptions(
             String.format(
                 "-Adagger.hilt.disableCrossCompilationRootValidation=%s",

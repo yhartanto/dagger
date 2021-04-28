@@ -17,9 +17,12 @@
 package(default_visibility = ["//:src"])
 
 java_library(
-    name = "android_compilers",
-    srcs = ["AndroidCompilers.java"],
+    name = "compile",
+    testonly = 1,
+    srcs = ["HiltCompilerTests.java"],
     deps = [
+        "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/compile_testing",
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
         "//java/dagger/hilt/android/processor/internal/customtestapplication:processor_lib",
         "//java/dagger/hilt/processor/internal/aggregateddeps:processor_lib",
@@ -30,9 +33,7 @@ java_library(
         "//java/dagger/hilt/processor/internal/root:processor_lib",
         "//java/dagger/hilt/processor/internal/uninstallmodules:processor_lib",
         "//java/dagger/internal/codegen:processor",
-        "//java/dagger/internal/guava:collect",
         "//java/dagger/testing/compile",
-        "@google_bazel_common//third_party/java/compile_testing",
         "@maven//:com_github_tschuchortdev_kotlin_compile_testing",
     ],
 )
