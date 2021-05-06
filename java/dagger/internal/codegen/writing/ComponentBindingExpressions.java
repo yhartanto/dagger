@@ -86,7 +86,7 @@ public final class ComponentBindingExpressions {
   private final SourceVersion sourceVersion;
   private final CompilerOptions compilerOptions;
   private final MembersInjectionMethods membersInjectionMethods;
-  private final InnerSwitchingProviders innerSwitchingProviders;
+  private final SwitchingProviders switchingProviders;
   private final Map<BindingRequest, BindingExpression> expressions = new HashMap<>();
   private final KotlinMetadataUtil metadataUtil;
 
@@ -116,8 +116,7 @@ public final class ComponentBindingExpressions {
     this.membersInjectionMethods =
         new MembersInjectionMethods(
             componentImplementation, this, graph, elements, types, metadataUtil);
-    this.innerSwitchingProviders =
-        new InnerSwitchingProviders(componentImplementation, this, types);
+    this.switchingProviders = new SwitchingProviders(componentImplementation, this, types);
     this.metadataUtil = metadataUtil;
   }
 
@@ -446,7 +445,7 @@ public final class ComponentBindingExpressions {
    * <p>{@code @Binds} bindings that don't {@linkplain #needsCaching(ContributionBinding) need to be
    * cached} can use a {@link DelegateBindingExpression}.
    *
-   * <p>In fastInit mode, use an {@link InnerSwitchingProviders inner switching provider} unless
+   * <p>In fastInit mode, use an {@link SwitchingProviders inner switching provider} unless
    * that provider's case statement will simply call {@code get()} on another {@link Provider} (in
    * which case, just use that Provider directly).
    *
@@ -456,13 +455,13 @@ public final class ComponentBindingExpressions {
     if (binding.kind().equals(DELEGATE) && !needsCaching(binding)) {
       return new DelegateBindingExpression(binding, RequestKind.PROVIDER, this, types, elements);
     } else if (isFastInit()
-        && frameworkInstanceCreationExpression(binding).useInnerSwitchingProvider()
+        && frameworkInstanceCreationExpression(binding).useSwitchingProvider()
         && !(instanceBindingExpression(binding)
             instanceof DerivedFromFrameworkInstanceBindingExpression)) {
       return wrapInMethod(
           binding,
           bindingRequest(binding.key(), RequestKind.PROVIDER),
-          innerSwitchingProviders.newBindingExpression(binding));
+          switchingProviders.newBindingExpression(binding));
     }
     return frameworkInstanceBindingExpression(binding);
   }
