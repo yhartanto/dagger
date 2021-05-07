@@ -20,11 +20,14 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isCrossCompilationRootValidationDisabled;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isSharedTestComponentsEnabled;
+import static dagger.hilt.processor.internal.HiltCompilerOptions.useAggregatingRootProcessor;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.Comparator.comparing;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.AGGREGATING;
+import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.DYNAMIC;
+import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
@@ -59,7 +62,7 @@ import javax.lang.model.util.Elements;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /** Processor that outputs dagger components based on transitive build deps. */
-@IncrementalAnnotationProcessor(AGGREGATING)
+@IncrementalAnnotationProcessor(DYNAMIC)
 @AutoService(Processor.class)
 public final class RootProcessor extends BaseProcessor {
   private static final Comparator<TypeElement> QUALIFIED_NAME_COMPARATOR =
@@ -75,6 +78,13 @@ public final class RootProcessor extends BaseProcessor {
   }
 
   @Override
+  public ImmutableSet<String> additionalProcessingOptions() {
+    return useAggregatingRootProcessor(getProcessingEnv())
+        ? ImmutableSet.of(AGGREGATING.getProcessorOption())
+        : ImmutableSet.of(ISOLATING.getProcessorOption());
+  }
+
+  @Override
   public ImmutableSet<String> getSupportedAnnotationTypes() {
     return ImmutableSet.<String>builder()
         .addAll(
@@ -87,6 +97,8 @@ public final class RootProcessor extends BaseProcessor {
   @Override
   public void processEach(TypeElement annotation, Element element) throws Exception {
     TypeElement rootElement = MoreElements.asType(element);
+    // TODO(bcorso): Move this logic into a separate isolating processor to avoid regenerating it
+    // for unrelated changes in Gradle.
     RootType rootType = RootType.of(rootElement);
     if (rootType.isTestRoot()) {
       new TestInjectorGenerator(
@@ -98,6 +110,9 @@ public final class RootProcessor extends BaseProcessor {
 
   @Override
   public void postRoundProcess(RoundEnvironment roundEnv) throws Exception {
+    if (!useAggregatingRootProcessor(getProcessingEnv())) {
+      return;
+    }
     Set<Element> newElements = generatesRootInputs.getElementsToWaitFor(roundEnv);
     if (processed) {
       checkState(

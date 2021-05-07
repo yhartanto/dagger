@@ -75,10 +75,23 @@ public final class HiltCompilerOptions {
     return BooleanOption.SHARE_TEST_COMPONENTS.get(env);
   }
 
+  /**
+   * Returns {@code true} if the aggregating processor is enabled (default is {@code true}).
+   *
+   * <p>Note:This is for internal use only!
+   */
+  public static boolean useAggregatingRootProcessor(ProcessingEnvironment env) {
+    return BooleanOption.USE_AGGREGATING_ROOT_PROCESSOR.get(env);
+  }
+
   /** Processor options which can have true or false values. */
   private enum BooleanOption {
+    /** Do not use! This is for internal use only. */
     DISABLE_ANDROID_SUPERCLASS_VALIDATION(
         "android.internal.disableAndroidSuperclassValidation", false),
+
+    /** Do not use! This is for internal use only. */
+    USE_AGGREGATING_ROOT_PROCESSOR("internal.useAggregatingRootProcessor", true),
 
     DISABLE_CROSS_COMPILATION_ROOT_VALIDATION("disableCrossCompilationRootValidation", false),
 
