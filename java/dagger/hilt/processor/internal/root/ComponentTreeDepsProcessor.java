@@ -18,6 +18,7 @@ package dagger.hilt.processor.internal.root;
 
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.hilt.processor.internal.HiltCompilerOptions.useAggregatingRootProcessor;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -27,6 +28,8 @@ import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
+import dagger.hilt.android.processor.internal.androidentrypoint.AndroidEntryPointMetadata;
+import dagger.hilt.android.processor.internal.androidentrypoint.ApplicationGenerator;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
@@ -143,6 +146,8 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
                   .map(test -> RootMetadata.create(test, tree, deps, aliasOfs, getProcessingEnv()))
                   .collect(toImmutableList());
           generateTestComponentData(metadataElement, rootMetadatas, componentNames);
+        } else {
+          generateApplication(root.element());
         }
 
       setProcessingState(metadata, root);
@@ -178,6 +183,18 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
       new TestComponentDataGenerator(
               getProcessingEnv(), metadataElement, rootMetadata, componentNames)
           .generate();
+    }
+  }
+
+  private void generateApplication(TypeElement rootElement) throws IOException {
+    // The generated application references the generated component so they must be generated
+    // in the same build unit. Thus, we only generate the application here if we're using the
+    // Hilt Gradle plugin's aggregating task. If we're using the aggregating processor, we need
+    // to generate the application within AndroidEntryPointProcessor instead.
+    if (!useAggregatingRootProcessor(getProcessingEnv())) {
+      AndroidEntryPointMetadata metadata =
+          AndroidEntryPointMetadata.of(getProcessingEnv(), rootElement);
+      new ApplicationGenerator(getProcessingEnv(), metadata).generate();
     }
   }
 }
