@@ -18,7 +18,6 @@ package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
@@ -391,16 +390,8 @@ public final class ComponentBindingExpressions {
   /** Returns a binding expression for a provision binding. */
   private BindingExpression provisionBindingExpression(
       ContributionBinding binding, BindingRequest request) {
-    if (!request.requestKind().isPresent()) {
-      verify(
-          request.frameworkType().get().equals(FrameworkType.PRODUCER_NODE),
-          "expected a PRODUCER_NODE: %s",
-          request);
-      return producerFromProviderBindingExpression(binding);
-    }
-    RequestKind requestKind = request.requestKind().get();
     Key key = request.key();
-    switch (requestKind) {
+    switch (request.requestKind()) {
       case INSTANCE:
         return instanceBindingExpression(binding);
 
@@ -411,7 +402,7 @@ public final class ComponentBindingExpressions {
       case PRODUCED:
       case PROVIDER_OF_LAZY:
         return new DerivedFromFrameworkInstanceBindingExpression(
-            key, FrameworkType.PROVIDER, requestKind, this, types);
+            key, FrameworkType.PROVIDER, request.requestKind(), this, types);
 
       case PRODUCER:
         return producerFromProviderBindingExpression(binding);
@@ -429,14 +420,10 @@ public final class ComponentBindingExpressions {
   /** Returns a binding expression for a production binding. */
   private BindingExpression productionBindingExpression(
       ContributionBinding binding, BindingRequest request) {
-    if (request.frameworkType().isPresent()) {
-      return frameworkInstanceBindingExpression(binding);
-    } else {
-      // If no FrameworkType is present, a RequestKind is guaranteed to be present.
-      RequestKind requestKind = request.requestKind().get();
-      return new DerivedFromFrameworkInstanceBindingExpression(
-          request.key(), FrameworkType.PRODUCER_NODE, requestKind, this, types);
-    }
+    return request.frameworkType().isPresent()
+        ? frameworkInstanceBindingExpression(binding)
+        : new DerivedFromFrameworkInstanceBindingExpression(
+            request.key(), FrameworkType.PRODUCER_NODE, request.requestKind(), this, types);
   }
 
   /**
