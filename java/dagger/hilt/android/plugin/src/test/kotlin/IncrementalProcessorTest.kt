@@ -102,7 +102,7 @@ class IncrementalProcessorTest {
           jcenter()
         }
         dependencies {
-          classpath 'com.android.tools.build:gradle:3.5.3'
+          classpath 'com.android.tools.build:gradle:4.2.0'
         }
       }
 
