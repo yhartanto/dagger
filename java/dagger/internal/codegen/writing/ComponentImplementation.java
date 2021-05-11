@@ -133,6 +133,53 @@ public final class ComponentImplementation {
     SUBCOMPONENT
   }
 
+  /** Returns a component implementation for a top-level component. */
+  public static ComponentImplementation topLevelComponentImplementation(
+      BindingGraph graph,
+      ClassName name,
+      SubcomponentNames subcomponentNames,
+      CompilerOptions compilerOptions) {
+    return create(name, graph, subcomponentNames, compilerOptions);
+  }
+
+  private static ComponentImplementation create(
+      ClassName name,
+      BindingGraph graph,
+      SubcomponentNames subcomponentNames,
+      CompilerOptions compilerOptions) {
+    return new ComponentImplementation(
+        name,
+        /* shardOwner= */ Optional.empty(),
+        /* externalReferenceBlock= */ CodeBlock.of("$T.this", name),
+        graph,
+        subcomponentNames,
+        compilerOptions);
+  }
+
+  private static ComponentImplementation createShard(
+      ClassName shardName, ComponentImplementation shardOwner) {
+    String fieldName =
+        shardOwner.getUniqueFieldName(UPPER_CAMEL.to(LOWER_CAMEL, shardName.simpleName()));
+    ComponentImplementation shardImplementation =
+        new ComponentImplementation(
+            shardName,
+            Optional.of(shardOwner),
+            /* externalReferenceBlock= */ CodeBlock.of("$T.this.$N", shardOwner.name, fieldName),
+            shardOwner.graph,
+            shardOwner.subcomponentNames,
+            shardOwner.compilerOptions);
+
+    // Add the shard class and field to the shardOwner.
+    shardOwner.addTypeSupplier(() -> shardImplementation.generate().build());
+    shardOwner.addField(
+        FieldSpecKind.COMPONENT_SHARD,
+        FieldSpec.builder(shardName, fieldName, PRIVATE, FINAL)
+            .initializer("new $T()", shardName)
+            .build());
+
+    return shardImplementation;
+  }
+
   private ComponentImplementation currentShard = this;
   private final Map<Key, ComponentImplementation> shardsByKey = new HashMap<>();
   private final Optional<ComponentImplementation> shardOwner;
@@ -158,51 +205,26 @@ public final class ComponentImplementation {
   private final List<Supplier<TypeSpec>> typeSuppliers = new ArrayList<>();
 
   private ComponentImplementation(
-      BindingGraph graph,
       ClassName name,
+      Optional<ComponentImplementation> shardOwner,
+      CodeBlock externalReferenceBlock,
+      BindingGraph graph,
       SubcomponentNames subcomponentNames,
       CompilerOptions compilerOptions) {
-    this.graph = graph;
     this.name = name;
+    this.shardOwner = shardOwner;
+    this.externalReferenceBlock = externalReferenceBlock;
+    this.graph = graph;
     this.component = classBuilder(name);
     this.subcomponentNames = subcomponentNames;
-    this.shardOwner = Optional.empty();
-    this.externalReferenceBlock = CodeBlock.of("$T.this", name);
     this.compilerOptions = compilerOptions;
-  }
-
-  private ComponentImplementation(ComponentImplementation shardOwner, ClassName shardName) {
-    this.graph = shardOwner.graph;
-    this.name = shardName;
-    this.component = classBuilder(shardName);
-    this.subcomponentNames = shardOwner.subcomponentNames;
-    this.compilerOptions = shardOwner.compilerOptions;
-    this.shardOwner = Optional.of(shardOwner);
-    String fieldName = UPPER_CAMEL.to(LOWER_CAMEL, name.simpleName());
-    String uniqueFieldName = shardOwner.getUniqueFieldName(fieldName);
-    this.externalReferenceBlock = CodeBlock.of("$T.this.$N", shardOwner.name, uniqueFieldName);
-    shardOwner.addTypeSupplier(() -> generate().build());
-    shardOwner.addField(
-        FieldSpecKind.COMPONENT_SHARD,
-        FieldSpec.builder(name, uniqueFieldName, PRIVATE, FINAL)
-            .initializer("new $T()", name)
-            .build());
-  }
-
-  /** Returns a component implementation for a top-level component. */
-  public static ComponentImplementation topLevelComponentImplementation(
-      BindingGraph graph,
-      ClassName name,
-      SubcomponentNames subcomponentNames,
-      CompilerOptions compilerOptions) {
-    return new ComponentImplementation(graph, name, subcomponentNames, compilerOptions);
   }
 
   /** Returns a component implementation that is a child of the current implementation. */
   public ComponentImplementation childComponentImplementation(BindingGraph graph) {
     checkState(!shardOwner.isPresent(), "Shards cannot create child components.");
     ClassName childName = getSubcomponentName(graph.componentDescriptor());
-    return new ComponentImplementation(graph, childName, subcomponentNames, compilerOptions);
+    return create(childName, graph, subcomponentNames, compilerOptions);
   }
 
   /** Returns a component implementation that is a shard of the current implementation. */
@@ -212,7 +234,7 @@ public final class ComponentImplementation {
       int keysPerShard = compilerOptions.keysPerComponentShard(graph.componentTypeElement());
       if (!shardsByKey.isEmpty() && shardsByKey.size() % keysPerShard == 0) {
         ClassName shardName = name.nestedClass("Shard" + shardsByKey.size() / keysPerShard);
-        currentShard = new ComponentImplementation(this, shardName);
+        currentShard = createShard(shardName, this);
       }
       shardsByKey.put(key, currentShard);
     }
