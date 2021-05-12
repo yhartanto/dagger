@@ -110,19 +110,6 @@ final class SwitchingProviders {
     };
   }
 
-  /** Returns the {@link TypeSpec} for a {@code SwitchingProvider} based on the given builder. */
-  TypeSpec createSwitchingProviderType(TypeSpec.Builder builder) {
-    return builder
-        .addModifiers(PRIVATE, FINAL)
-        .addField(TypeName.INT, "id", PRIVATE, FINAL)
-        .addMethod(
-            MethodSpec.constructorBuilder()
-                .addParameter(TypeName.INT, "id")
-                .addStatement("this.id = id")
-                .build())
-        .build();
-  }
-
   private SwitchingProviderBuilder getSwitchingProviderBuilder() {
     if (switchingProviderBuilders.size() % MAX_CASES_PER_CLASS == 0) {
       String name = switchingProviderNames.getUniqueName("SwitchingProvider");
@@ -175,11 +162,18 @@ final class SwitchingProviders {
     }
 
     private TypeSpec build() {
-      return createSwitchingProviderType(
-          classBuilder(switchingProviderType)
-              .addTypeVariable(T)
-              .addSuperinterface(providerOf(T))
-              .addMethods(getMethods()));
+      return classBuilder(switchingProviderType)
+          .addTypeVariable(T)
+          .addSuperinterface(providerOf(T))
+          .addMethods(getMethods())
+          .addModifiers(PRIVATE, FINAL)
+          .addField(TypeName.INT, "id", PRIVATE, FINAL)
+          .addMethod(
+              MethodSpec.constructorBuilder()
+                  .addParameter(TypeName.INT, "id")
+                  .addStatement("this.id = id")
+                  .build())
+          .build();
     }
 
     private ImmutableList<MethodSpec> getMethods() {
