@@ -90,7 +90,6 @@ gen_maven_artifact(
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/internal/codegen/writing",
-        "//java/dagger/model:internal-proxies",
     ],
     artifact_target_maven_deps = [
         "com.google.auto:auto-common",
