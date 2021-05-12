@@ -21,6 +21,7 @@ import static dagger.internal.codegen.componentgenerator.ComponentGenerator.comp
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.KeyFactory;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.writing.ComponentImplementation;
 import dagger.internal.codegen.writing.SubcomponentNames;
 import java.util.Optional;
@@ -32,15 +33,18 @@ import javax.inject.Singleton;
 final class ComponentImplementationFactory {
   private final KeyFactory keyFactory;
   private final CompilerOptions compilerOptions;
+  private final DaggerElements elements;
   private final TopLevelImplementationComponent.Builder topLevelImplementationComponentBuilder;
 
   @Inject
   ComponentImplementationFactory(
       KeyFactory keyFactory,
       CompilerOptions compilerOptions,
+      DaggerElements elements,
       TopLevelImplementationComponent.Builder topLevelImplementationComponentBuilder) {
     this.keyFactory = keyFactory;
     this.compilerOptions = compilerOptions;
+    this.elements = elements;
     this.topLevelImplementationComponentBuilder = topLevelImplementationComponentBuilder;
   }
 
@@ -53,7 +57,8 @@ final class ComponentImplementationFactory {
             bindingGraph,
             componentName(bindingGraph.componentTypeElement()),
             new SubcomponentNames(bindingGraph, keyFactory),
-            compilerOptions);
+            compilerOptions,
+            elements);
 
     // TODO(dpb): explore using optional bindings for the "parent" bindings
     return topLevelImplementationComponentBuilder
