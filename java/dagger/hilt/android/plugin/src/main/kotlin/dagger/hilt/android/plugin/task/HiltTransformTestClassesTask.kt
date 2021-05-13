@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dagger.hilt.android.plugin
+package dagger.hilt.android.plugin.task
 
 import com.android.build.gradle.api.UnitTestVariant
+import dagger.hilt.android.plugin.AndroidEntryPointClassTransformer
+import dagger.hilt.android.plugin.HiltExtension
+import dagger.hilt.android.plugin.util.getCompileKotlin
 import dagger.hilt.android.plugin.util.isClassFile
 import dagger.hilt.android.plugin.util.isJarFile
 import java.io.File
@@ -31,13 +34,11 @@ import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 import org.gradle.workers.WorkAction
 import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
 import org.jetbrains.kotlin.gradle.plugin.KotlinBasePluginWrapper
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 /**
  * Task that transform classes used by host-side unit tests. See b/37076369
@@ -131,19 +132,13 @@ abstract class HiltTransformTestClassesTask @Inject constructor(
       // Find the test sources Java compile task and add its output directory into our input
       // classpath file collection. This also makes the transform task depend on the test compile
       // task.
-      @Suppress("UNCHECKED_CAST")
-      val testCompileTaskProvider = project.tasks.named(
-        "compile${unitTestVariant.name.capitalize()}JavaWithJavac"
-      ) as TaskProvider<JavaCompile>
+      val testCompileTaskProvider = unitTestVariant.javaCompileProvider
       inputClasspath.from(testCompileTaskProvider.map { it.destinationDirectory })
 
       // Similarly, if the Kotlin plugin is configured, find the test sources Kotlin compile task
       // and add its output directory to our input classpath file collection.
       project.plugins.withType(KotlinBasePluginWrapper::class.java) {
-        @Suppress("UNCHECKED_CAST")
-        val kotlinCompileTaskProvider = project.tasks.named(
-          "compile${unitTestVariant.name.capitalize()}Kotlin"
-        ) as TaskProvider<KotlinCompile>
+        val kotlinCompileTaskProvider = getCompileKotlin(unitTestVariant, project)
         inputClasspath.from(kotlinCompileTaskProvider.map { it.destinationDirectory })
       }
 
@@ -162,6 +157,7 @@ abstract class HiltTransformTestClassesTask @Inject constructor(
       // Configure test classpath by appending the transform output file collection to the start of
       // the test classpath so they override the original ones. This also makes test task (the one
       // that runs the tests) depend on the transform task.
+
       @Suppress("UNCHECKED_CAST")
       val testTaskProvider = project.tasks.named(
         "test${unitTestVariant.name.capitalize()}"
