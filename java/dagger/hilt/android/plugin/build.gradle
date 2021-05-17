@@ -15,6 +15,9 @@
  */
 
 buildscript {
+  ext {
+    agp_version = System.getenv('AGP_VERSION') ?: "7.0.0-alpha15"
+  }
   repositories {
     google()
     mavenCentral()
@@ -38,13 +41,12 @@ configurations {
   additionalTestPlugin {
     canBeConsumed = false
     canBeResolved = true
-    extendsFrom implementation
   }
 }
 
 dependencies {
   implementation gradleApi()
-  compileOnly 'com.android.tools.build:gradle:4.2.0'
+  compileOnly "com.android.tools.build:gradle:$agp_version"
   compileOnly 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.20'
   implementation 'org.javassist:javassist:3.26.0-GA'
   implementation 'org.ow2.asm:asm:9.0'
@@ -67,6 +69,7 @@ tasks.withType(PluginUnderTestMetadata.class).named("pluginUnderTestMetadata").c
 compileKotlin {
   kotlinOptions {
     jvmTarget = "1.8"
+    allWarningsAsErrors = true
   }
 }
 

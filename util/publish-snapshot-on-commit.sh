@@ -21,6 +21,13 @@ if [ "$GITHUB_REPOSITORY" == "google/dagger" ] && \
     "-Durl=https://oss.sonatype.org/content/repositories/snapshots" \
     "--settings=$(dirname $0)/settings.xml"
 
+  bash $(dirname $0)/deploy-hilt-gradle-plugin.sh \
+    "deploy:deploy-file" \
+    "HEAD-SNAPSHOT" \
+    "-DrepositoryId=sonatype-nexus-snapshots" \
+    "-Durl=https://oss.sonatype.org/content/repositories/snapshots" \
+    "--settings=$(dirname $0)/settings.xml"
+
   echo -e "Published maven snapshot"
 else
   echo -e "Not publishing snapshot for branch=${$GITHUB_REF}"

@@ -38,7 +38,7 @@ abstract class AggregateDepsTask : DefaultTask() {
   abstract val testEnvironment: Property<Boolean>
 
   @TaskAction
-  internal fun taskAction(inputs: InputChanges) {
+  internal fun taskAction(@Suppress("UNUSED_PARAMETER") inputs: InputChanges) {
     // TODO(danysantiago): Use Worker API, https://docs.gradle.org/current/userguide/worker_api.html
     val componentTrees = ComponentTreeDepsAggregator(
       logger = logger,

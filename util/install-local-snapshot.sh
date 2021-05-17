@@ -12,6 +12,10 @@ bash $(dirname $0)/deploy-hilt.sh \
   "install:install-file" \
   "LOCAL-SNAPSHOT"
 
+bash $(dirname $0)/deploy-hilt-gradle-plugin.sh \
+  "install:install-file" \
+  "LOCAL-SNAPSHOT"
+
 echo -e "Installed local snapshot"
 
 verify_version_file() {

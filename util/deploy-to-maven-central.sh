@@ -36,6 +36,13 @@ bash $(dirname $0)/deploy-hilt.sh \
   "-Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/" \
   "-Dgpg.keyname=${KEY}"
 
+bash $(dirname $0)/deploy-hilt-gradle-plugin.sh \
+  "gpg:sign-and-deploy-file" \
+  "$VERSION_NAME" \
+  "-DrepositoryId=sonatype-nexus-staging" \
+  "-Durl=https://oss.sonatype.org/service/local/staging/deploy/maven2/" \
+  "-Dgpg.keyname=${KEY}"
+
 # Note: we detach from head before making any sed changes to avoid commiting
 # a particular version to master.
 git checkout --detach

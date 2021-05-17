@@ -36,6 +36,7 @@ import dagger.hilt.android.plugin.task.HiltTransformTestClassesTask
 import dagger.hilt.android.plugin.util.AggregatedPackagesTransform
 import dagger.hilt.android.plugin.util.CopyTransform
 import dagger.hilt.android.plugin.util.SimpleAGPVersion
+import dagger.hilt.android.plugin.util.allTestVariants
 import dagger.hilt.android.plugin.util.getSdkPath
 import java.io.File
 import javax.inject.Inject
@@ -229,7 +230,7 @@ class HiltGradlePlugin @Inject constructor(
     project.dependencies.add(compileOnlyConfigName, artifactView.files)
   }
 
-  @Suppress("UnstableApiUsage")
+  @Suppress("UnstableApiUsage") // ASM Pipeline APIs
   private fun configureBytecodeTransformASM(project: Project, hiltExtension: HiltExtension) {
     var warnAboutLocalTestsFlag = false
     fun registerTransform(androidComponent: Component) {
@@ -255,8 +256,10 @@ class HiltGradlePlugin @Inject constructor(
 
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
     androidComponents.onVariants { registerTransform(it) }
-    androidComponents.androidTests { registerTransform(it) }
-    androidComponents.unitTests { registerTransform(it) }
+    androidComponents.allTestVariants(
+      onAndroidTest = { registerTransform(it) },
+      onUnitTest = { registerTransform(it) }
+    )
   }
 
   private fun configureBytecodeTransform(project: Project, hiltExtension: HiltExtension) {
