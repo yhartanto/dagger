@@ -19,6 +19,7 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedParameterSpecs;
 import static dagger.internal.codegen.javapoet.CodeBlocks.parameterNames;
+import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind.PRIVATE_METHOD_CACHED_PROVIDER_FIELD;
 import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind.PRIVATE_METHOD_SCOPED_FIELD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.VOLATILE;
@@ -95,7 +96,7 @@ abstract class MethodBindingExpression extends BindingExpression {
         returnType(),
         requestingClass.equals(componentImplementation.name())
             ? methodCall
-            : CodeBlock.of("$L.$L", componentImplementation.externalReferenceBlock(), methodCall));
+            : CodeBlock.of("$L.$L", componentImplementation.componentFieldReference(), methodCall));
   }
 
   @Override
@@ -236,7 +237,11 @@ abstract class MethodBindingExpression extends BindingExpression {
       }
 
       FieldSpec field = builder.build();
-      componentImplementation.addField(PRIVATE_METHOD_SCOPED_FIELD, field);
+      componentImplementation.addField(
+          request.isRequestKind(RequestKind.PROVIDER)
+              ? PRIVATE_METHOD_CACHED_PROVIDER_FIELD
+              : PRIVATE_METHOD_SCOPED_FIELD,
+          field);
       return field;
     }
 

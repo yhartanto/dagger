@@ -20,6 +20,7 @@ import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.binding.ComponentCreatorKind.BUILDER;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.javapoet.CodeBlocks.parameterNames;
 import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.BUILDER_METHOD;
 import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.COMPONENT_METHOD;
@@ -29,6 +30,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.auto.common.MoreTypes;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -243,10 +245,18 @@ public final class ComponentImplementationBuilder {
     checkState(parent.isPresent());
     Collection<ParameterSpec> params = getFactoryMethodParameters(graph).values();
     MethodSpec.Builder method = MethodSpec.overriding(factoryMethod, parentType(), types);
-    params.forEach(
-        param -> method.addStatement("$T.checkNotNull($N)", Preconditions.class, param));
+    params.forEach(param -> method.addStatement("$T.checkNotNull($N)", Preconditions.class, param));
     method.addStatement(
-        "return new $T($L)", componentImplementation.name(), parameterNames(params));
+        "return new $T($L)",
+        componentImplementation.name(),
+        parameterNames(
+            ImmutableList.<ParameterSpec>builder()
+            .addAll(
+                componentImplementation.creatorComponentFields().stream()
+                    .map(field -> ParameterSpec.builder(field.type, field.name).build())
+                    .collect(toImmutableList()))
+            .addAll(params)
+            .build()));
 
     parent.get().componentImplementation.addMethod(COMPONENT_METHOD, method.build());
   }

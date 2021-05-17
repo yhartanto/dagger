@@ -25,7 +25,9 @@ import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.binding.ComponentCreatorKind.BUILDER;
+import static dagger.internal.codegen.binding.SourceFiles.simpleVariableName;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.javapoet.CodeBlocks.parameterNames;
@@ -34,10 +36,12 @@ import static dagger.producers.CancellationPolicy.Propagation.PROPAGATE;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
+import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
@@ -71,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 /** The implementation of a component type. */
@@ -88,6 +93,9 @@ public final class ComponentImplementation {
      * private-method scoped bindings}.
      */
     PRIVATE_METHOD_SCOPED_FIELD,
+
+    /** A field for the cached provider of a {@link PrivateMethodBindingExpression}. */
+    PRIVATE_METHOD_CACHED_PROVIDER_FIELD,
 
     /** A framework field for type T, e.g. {@code Provider<T>}. */
     FRAMEWORK_FIELD,
@@ -125,8 +133,7 @@ public final class ComponentImplementation {
      * The {@link dagger.producers.internal.CancellationListener#onProducerFutureCancelled(boolean)}
      * method for a production component.
      */
-    CANCELLATION_LISTENER_METHOD,
-    ;
+    CANCELLATION_LISTENER_METHOD
   }
 
   /** A type of nested class that this component can contain. */
@@ -142,6 +149,16 @@ public final class ComponentImplementation {
 
     /** A class for the subcomponent or subcomponent builder. */
     SUBCOMPONENT
+  }
+
+  private static final class ShardOwner {
+    private final String shardFieldName;
+    private final ComponentImplementation componentImplementation;
+
+    ShardOwner(String shardFieldName, ComponentImplementation componentImplementation) {
+      this.shardFieldName = shardFieldName;
+      this.componentImplementation = componentImplementation;
+    }
   }
 
   /** Returns a component implementation for a top-level component. */
@@ -163,9 +180,8 @@ public final class ComponentImplementation {
       DaggerElements elements) {
     return new ComponentImplementation(
         name,
-        parent,
         /* shardOwner= */ Optional.empty(),
-        /* externalReferenceBlock= */ CodeBlock.of("$T.this", name),
+        parent,
         graph,
         subcomponentNames,
         compilerOptions,
@@ -179,9 +195,8 @@ public final class ComponentImplementation {
     ComponentImplementation shardImplementation =
         new ComponentImplementation(
             shardName,
+            Optional.of(new ShardOwner(fieldName, shardOwner)),
             shardOwner.parent,
-            Optional.of(shardOwner),
-            /* externalReferenceBlock= */ CodeBlock.of("$T.this.$N", shardOwner.name, fieldName),
             shardOwner.graph,
             shardOwner.subcomponentNames,
             shardOwner.compilerOptions,
@@ -212,14 +227,13 @@ public final class ComponentImplementation {
 
   private ComponentImplementation currentShard = this;
   private final Map<Key, ComponentImplementation> shardsByKey = new HashMap<>();
-  private final Optional<ComponentImplementation> shardOwner;
+  private final Optional<ShardOwner> shardOwner;
   private final Optional<ComponentImplementation> parent;
   private final BindingGraph graph;
   private final ClassName name;
   private final SubcomponentNames subcomponentNames;
   private final CompilerOptions compilerOptions;
   private final DaggerElements elements;
-  private final CodeBlock externalReferenceBlock;
   private final UniqueNameSet componentFieldNames = new UniqueNameSet();
   private final UniqueNameSet componentMethodNames = new UniqueNameSet();
   private final List<CodeBlock> initializations = new ArrayList<>();
@@ -234,24 +248,24 @@ public final class ComponentImplementation {
   private final ListMultimap<TypeSpecKind, TypeSpec> typeSpecsMap =
       MultimapBuilder.enumKeys(TypeSpecKind.class).arrayListValues().build();
   private final List<Supplier<TypeSpec>> typeSuppliers = new ArrayList<>();
+  private final ImmutableMap<ComponentImplementation, FieldSpec> componentFieldsByImplementation;
 
   private ComponentImplementation(
       ClassName name,
+      Optional<ShardOwner> shardOwner,
       Optional<ComponentImplementation> parent,
-      Optional<ComponentImplementation> shardOwner,
-      CodeBlock externalReferenceBlock,
       BindingGraph graph,
       SubcomponentNames subcomponentNames,
       CompilerOptions compilerOptions,
       DaggerElements elements) {
     this.name = name;
-    this.parent = parent;
     this.shardOwner = shardOwner;
-    this.externalReferenceBlock = externalReferenceBlock;
+    this.parent = parent;
     this.graph = graph;
     this.subcomponentNames = subcomponentNames;
     this.compilerOptions = compilerOptions;
     this.elements = elements;
+    componentFieldsByImplementation = createComponentFieldsByImplementation(this, compilerOptions);
     if (graph.componentDescriptor().isProduction()) {
       claimMethodName(CANCELLATION_LISTENER_METHOD_NAME);
     }
@@ -279,9 +293,65 @@ public final class ComponentImplementation {
     return shardsByKey.get(key);
   }
 
-  /** Returns a reference to this compenent when called from a class nested in this component. */
-  public CodeBlock externalReferenceBlock() {
-    return externalReferenceBlock;
+  /** Returns a reference to this implementation when called from a different class. */
+  public CodeBlock componentFieldReference() {
+    // TODO(bcorso): This currently relies on all requesting classes having a reference to the
+    // component with the same name, which is kind of sketchy. Try to think of a better way that
+    // can accomodate the component missing in some classes if it's not used.
+    return shardOwner.isPresent()
+        ? CodeBlock.of(
+            "$L.$L",
+            shardOwner.get().componentImplementation.componentFieldReference(),
+            shardOwner.get().shardFieldName)
+        : CodeBlock.of("$N", componentFieldsByImplementation.get(this));
+  }
+
+  /** Returns the fields for all components in the component path. */
+  public ImmutableList<FieldSpec> componentFields() {
+    return ImmutableList.copyOf(componentFieldsByImplementation.values());
+  }
+
+  /** Returns the fields for all components in the component path except the current component. */
+  public ImmutableList<FieldSpec> creatorComponentFields() {
+    return componentFieldsByImplementation.entrySet().stream()
+        .filter(entry -> !this.equals(entry.getKey()))
+        .map(Map.Entry::getValue)
+        .collect(toImmutableList());
+  }
+
+  /** Returns the fields for all components in the component path by component implementation. */
+  public ImmutableMap<ComponentImplementation, FieldSpec> componentFieldsByImplementation() {
+    return componentFieldsByImplementation;
+  }
+
+  private static ImmutableMap<ComponentImplementation, FieldSpec>
+      createComponentFieldsByImplementation(
+          ComponentImplementation componentImplementation, CompilerOptions compilerOptions) {
+    ImmutableList.Builder<ComponentImplementation> builder = ImmutableList.builder();
+    for (ComponentImplementation curr = componentImplementation;
+        curr != null;
+        curr = curr.parent.orElse(null)) {
+      builder.add(curr);
+    }
+    // For better readability when adding these fields/parameters to generated code, we collect the
+    // component implementations in reverse order so that parents appear before children.
+    return builder.build().reverse().stream()
+        .collect(
+            toImmutableMap(
+                componentImpl -> componentImpl,
+                componentImpl -> {
+                  TypeElement component = componentImpl.graph.componentPath().currentComponent();
+                  ClassName fieldType = componentImpl.name;
+                  String fieldName =
+                      componentImpl.isNested()
+                          ? simpleVariableName(componentImpl.name)
+                          : simpleVariableName(component);
+                  FieldSpec.Builder field =
+                      FieldSpec.builder(fieldType, fieldName, PRIVATE, FINAL);
+                  componentImplementation.componentFieldNames.claim(fieldName);
+
+                  return field.build();
+                }));
   }
 
   // TODO(ronshapiro): see if we can remove this method and instead inject it in the objects that
@@ -456,8 +526,11 @@ public final class ComponentImplementation {
   }
 
   private ImmutableSet<Modifier> modifiers() {
-    if (isNested()) {
+    if (shardOwner.isPresent()) {
+      // TODO(bcorso): Consider making shards static and unnested too?
       return ImmutableSet.of(PRIVATE, FINAL);
+    } else if (isNested()) {
+      return ImmutableSet.of(PRIVATE, STATIC, FINAL);
     }
     return graph.componentTypeElement().getModifiers().contains(PUBLIC)
         // TODO(ronshapiro): perhaps all generated components should be non-public?
@@ -469,6 +542,24 @@ public final class ComponentImplementation {
   private void addConstructorAndInitializationMethods() {
     MethodSpec.Builder constructor = constructorBuilder().addModifiers(PRIVATE);
     ImmutableList<ParameterSpec> parameters = constructorParameters();
+
+    // Add a constructor parameter and initialization for each component field. We initialize these
+    // fields immediately so that we don't need to be pass them to each initialize method.
+    componentFieldsByImplementation()
+        .forEach(
+            (componentImplementation, field) -> {
+              if (componentImplementation.equals(this)) {
+                // For the self-referenced component field, just initialize it in the initializer.
+                addField(
+                    FieldSpecKind.COMPONENT_REQUIREMENT_FIELD,
+                    field.toBuilder().initializer("this").build());
+              } else {
+                addField(FieldSpecKind.COMPONENT_REQUIREMENT_FIELD, field);
+                constructor.addStatement("this.$1N = $1N", field);
+                constructor.addParameter(field.type, field.name);
+              }
+            });
+
     constructor.addParameters(parameters);
     constructor.addCode(CodeBlocks.concat(componentRequirementInitializations));
 
@@ -544,8 +635,8 @@ public final class ComponentImplementation {
     return Optional.of(
         CodeBlock.builder()
             .addStatement(
-                "$T.this.$N($N)",
-                parent.get().name(),
+                "$L.$N($N)",
+                parent.get().componentFieldReference(),
                 CANCELLATION_LISTENER_METHOD_NAME,
                 MAY_INTERRUPT_IF_RUNNING_PARAM)
             .build());
