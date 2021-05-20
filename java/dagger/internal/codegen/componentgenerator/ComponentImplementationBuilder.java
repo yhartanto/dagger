@@ -64,7 +64,7 @@ import javax.lang.model.type.DeclaredType;
 /** A builder of {@link ComponentImplementation}s. */
 // This only needs to be public because it's referenced in an entry point.
 public final class ComponentImplementationBuilder {
-  private final Optional<ComponentImplementationBuilder> parent;
+  private final Optional<ComponentImplementation> parent;
   private final BindingGraph graph;
   private final ComponentBindingExpressions bindingExpressions;
   private final ComponentRequirementExpressions componentRequirementExpressions;
@@ -78,7 +78,7 @@ public final class ComponentImplementationBuilder {
 
   @Inject
   ComponentImplementationBuilder(
-      @ParentComponent Optional<ComponentImplementationBuilder> parent,
+      @ParentComponent Optional<ComponentImplementation> parent,
       BindingGraph graph,
       ComponentBindingExpressions bindingExpressions,
       ComponentRequirementExpressions componentRequirementExpressions,
@@ -130,7 +130,7 @@ public final class ComponentImplementationBuilder {
   private void addCreatorClass(TypeSpec creator) {
     if (parent.isPresent()) {
       // In an inner implementation of a subcomponent the creator is a peer class.
-      parent.get().componentImplementation.addType(SUBCOMPONENT, creator);
+      parent.get().addType(SUBCOMPONENT, creator);
     } else {
       componentImplementation.addType(COMPONENT_CREATOR, creator);
     }
@@ -172,22 +172,16 @@ public final class ComponentImplementationBuilder {
   private TypeSpec childComponent(BindingGraph childGraph) {
     return topLevelImplementationComponent
         .currentImplementationSubcomponentBuilder()
-        .componentImplementation(subcomponent(childGraph))
         .bindingGraph(childGraph)
-        .parentBuilder(Optional.of(this))
+        .parentImplementation(Optional.of(componentImplementation))
         .parentBindingExpressions(Optional.of(bindingExpressions))
         .parentRequirementExpressions(Optional.of(componentRequirementExpressions))
         .build()
         .componentImplementationBuilder()
         .build()
-        .generate()
-        .build();
+        .generate();
   }
 
-  /** Creates an inner subcomponent implementation. */
-  private ComponentImplementation subcomponent(BindingGraph childGraph) {
-    return componentImplementation.childComponentImplementation(childGraph);
-  }
   private void createRootComponentFactoryMethod() {
     checkState(!parent.isPresent());
     // Top-level components have a static method that returns a builder or factory for the
@@ -258,11 +252,11 @@ public final class ComponentImplementationBuilder {
             .addAll(params)
             .build()));
 
-    parent.get().componentImplementation.addMethod(COMPONENT_METHOD, method.build());
+    parent.get().addMethod(COMPONENT_METHOD, method.build());
   }
 
   private DeclaredType parentType() {
-    return asDeclared(parent.get().graph.componentTypeElement().asType());
+    return asDeclared(parent.get().graph().componentTypeElement().asType());
   }
   /**
    * Returns the map of {@link ComponentRequirement}s to {@link ParameterSpec}s for the given

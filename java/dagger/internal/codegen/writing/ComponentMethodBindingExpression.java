@@ -45,11 +45,11 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
       ComponentMethodDescriptor componentMethod,
       DaggerTypes types) {
     super(
+        componentImplementation.getComponentShard(),
         request,
         binding,
         methodImplementationStrategy,
         wrappedBindingExpression,
-        componentImplementation,
         types);
     this.componentImplementation = checkNotNull(componentImplementation);
     this.componentMethod = checkNotNull(componentMethod);

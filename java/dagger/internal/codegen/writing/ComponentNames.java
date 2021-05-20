@@ -17,6 +17,8 @@
 package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+import static dagger.internal.codegen.binding.SourceFiles.classFileName;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static java.lang.Character.isUpperCase;
 import static java.lang.String.format;
@@ -28,6 +30,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimaps;
+import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ComponentCreatorDescriptor;
@@ -38,27 +41,38 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import javax.inject.Inject;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 
 /**
- * Holds the unique simple names for all subcomponents, keyed by their {@link ComponentDescriptor}
- * and {@link Key} of the subcomponent builder.
+ * Holds the unique simple names for all components, keyed by their {@link ComponentDescriptor} and
+ * {@link Key} of the subcomponent builder.
  */
-public final class SubcomponentNames {
+public final class ComponentNames {
+  /** Returns the class name for the root component. */
+  public static ClassName getRootComponentClassName(ComponentDescriptor componentDescriptor) {
+    checkState(!componentDescriptor.isSubcomponent());
+    ClassName componentName = ClassName.get(componentDescriptor.typeElement());
+    return ClassName.get(componentName.packageName(), "Dagger" + classFileName(componentName));
+  }
+
   private static final Splitter QUALIFIED_NAME_SPLITTER = Splitter.on('.');
 
   private final ImmutableMap<ComponentDescriptor, String> namesByDescriptor;
   private final ImmutableMap<Key, ComponentDescriptor> descriptorsByCreatorKey;
 
-  public SubcomponentNames(BindingGraph graph, KeyFactory keyFactory) {
+  @Inject
+  ComponentNames(@TopLevel BindingGraph graph, KeyFactory keyFactory) {
     this.namesByDescriptor = namesByDescriptor(graph);
     this.descriptorsByCreatorKey = descriptorsByCreatorKey(keyFactory, namesByDescriptor.keySet());
   }
 
   /** Returns the simple component name for the given {@link ComponentDescriptor}. */
   String get(ComponentDescriptor componentDescriptor) {
-    return namesByDescriptor.get(componentDescriptor);
+    return componentDescriptor.isSubcomponent()
+        ? namesByDescriptor.get(componentDescriptor)
+        : getRootComponentClassName(componentDescriptor).simpleName();
   }
 
   /**
@@ -80,13 +94,10 @@ public final class SubcomponentNames {
 
   private static ImmutableMap<ComponentDescriptor, String> namesByDescriptor(BindingGraph graph) {
     ImmutableListMultimap<String, ComponentDescriptor> componentDescriptorsBySimpleName =
-        Multimaps.index(graph.componentDescriptors(), SubcomponentNames::simpleName);
+        Multimaps.index(graph.componentDescriptors(), ComponentNames::simpleName);
     Map<ComponentDescriptor, String> subcomponentImplSimpleNames = new LinkedHashMap<>();
-    componentDescriptorsBySimpleName
-        .asMap()
-        .values()
-        .stream()
-        .map(SubcomponentNames::disambiguateConflictingSimpleNames)
+    componentDescriptorsBySimpleName.asMap().values().stream()
+        .map(ComponentNames::disambiguateConflictingSimpleNames)
         .forEach(subcomponentImplSimpleNames::putAll);
     subcomponentImplSimpleNames.remove(graph.componentDescriptor());
     return ImmutableMap.copyOf(subcomponentImplSimpleNames);

@@ -53,6 +53,7 @@ import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.internal.codegen.writing.MethodBindingExpression.MethodImplementationStrategy;
 import dagger.model.BindingKind;
@@ -77,7 +78,6 @@ public final class ComponentBindingExpressions {
   private final Optional<ComponentBindingExpressions> parent;
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
-  private final ComponentImplementation topLevelComponentImplementation;
   private final ComponentRequirementExpressions componentRequirementExpressions;
   private final OptionalFactories optionalFactories;
   private final DaggerTypes types;
@@ -94,7 +94,6 @@ public final class ComponentBindingExpressions {
       @ParentComponent Optional<ComponentBindingExpressions> parent,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      @TopLevel ComponentImplementation topLevelComponentImplementation,
       ComponentRequirementExpressions componentRequirementExpressions,
       OptionalFactories optionalFactories,
       DaggerTypes types,
@@ -105,7 +104,6 @@ public final class ComponentBindingExpressions {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
-    this.topLevelComponentImplementation = topLevelComponentImplementation;
     this.componentRequirementExpressions = checkNotNull(componentRequirementExpressions);
     this.optionalFactories = checkNotNull(optionalFactories);
     this.types = checkNotNull(types);
@@ -620,7 +618,8 @@ public final class ComponentBindingExpressions {
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
         graph.componentDescriptor().firstMatchingComponentMethod(request);
 
-    ComponentImplementation shard = componentImplementation.shardImplementation(binding.key());
+    ShardImplementation shardImplementation =
+        componentImplementation.shardImplementation(binding.key());
 
     // Consider the case of a request from a component method like:
     //
@@ -637,7 +636,7 @@ public final class ComponentBindingExpressions {
     // inline the implementation because that would defeat some of the class pool savings if those
     // fields had to communicate across shards. Thus, when a key belongs to a separate shard use a
     // PrivateMethodBindingExpression and put the private method in the shard.
-    if (matchingComponentMethod.isPresent() && componentImplementation == shard) {
+    if (matchingComponentMethod.isPresent() && shardImplementation.isComponentShard()) {
       ComponentMethodDescriptor componentMethod = matchingComponentMethod.get();
       return new ComponentMethodBindingExpression(
           request,
@@ -649,11 +648,11 @@ public final class ComponentBindingExpressions {
           types);
     } else {
       return new PrivateMethodBindingExpression(
+          shardImplementation,
           request,
           binding,
           methodImplementationStrategy,
           bindingExpression,
-          shard,
           types,
           compilerOptions);
     }
@@ -691,6 +690,6 @@ public final class ComponentBindingExpressions {
 
   private boolean isFastInit() {
     return compilerOptions.fastInit(
-        topLevelComponentImplementation.componentDescriptor().typeElement());
+        parent.map(p -> p.graph).orElse(graph).componentDescriptor().typeElement());
   }
 }

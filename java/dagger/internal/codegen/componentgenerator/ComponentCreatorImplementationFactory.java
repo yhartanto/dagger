@@ -98,25 +98,17 @@ final class ComponentCreatorImplementationFactory {
 
     Builder builder =
         creatorDescriptor.isPresent()
-            ? new BuilderForCreatorDescriptor(componentImplementation, creatorDescriptor.get())
-            : new BuilderForGeneratedRootComponentBuilder(componentImplementation);
+            ? new BuilderForCreatorDescriptor(creatorDescriptor.get())
+            : new BuilderForGeneratedRootComponentBuilder();
     return Optional.of(builder.build());
   }
 
   /** Base class for building a creator implementation. */
   private abstract class Builder {
+    private final TypeSpec.Builder classBuilder =
+        classBuilder(componentImplementation.getCreatorName());
     private final UniqueNameSet fieldNames = new UniqueNameSet();
-    private final ComponentImplementation componentImplementation;
-    final ClassName className;
-    final TypeSpec.Builder classBuilder;
-
     private ImmutableMap<ComponentRequirement, FieldSpec> fields;
-
-    Builder(ComponentImplementation componentImplementation) {
-      this.componentImplementation = componentImplementation;
-      this.className = componentImplementation.getCreatorName();
-      this.classBuilder = classBuilder(className);
-    }
 
     /** Builds the {@link ComponentCreatorImplementation}. */
     ComponentCreatorImplementation build() {
@@ -126,7 +118,8 @@ final class ComponentCreatorImplementationFactory {
       this.fields = addFields();
       addSetterMethods();
       addFactoryMethod();
-      return ComponentCreatorImplementation.create(classBuilder.build(), className, fields);
+      return ComponentCreatorImplementation.create(
+          classBuilder.build(), componentImplementation.getCreatorName(), fields);
     }
 
     /** Returns the descriptor for the component. */
@@ -229,7 +222,8 @@ final class ComponentCreatorImplementationFactory {
           // to generate noop setters for impossible cases like when the requirement type
           // is in another package. This avoids unnecessary breakages in Dagger's generated
           // due to the noop setters.
-          if (isElementAccessibleFrom(requirement.typeElement(), className.packageName())) {
+          if (isElementAccessibleFrom(
+              requirement.typeElement(), componentImplementation.name().packageName())) {
             return Optional.of(noopSetterMethod(requirement));
           } else {
             return Optional.empty();
@@ -374,7 +368,8 @@ final class ComponentCreatorImplementationFactory {
 
     private CodeBlock newModuleInstance(ComponentRequirement requirement) {
       checkArgument(requirement.kind().isModule()); // this should be guaranteed to be true here
-      return moduleProxies.newModuleInstance(requirement.typeElement(), className);
+      return moduleProxies.newModuleInstance(
+          requirement.typeElement(), componentImplementation.getCreatorName());
     }
   }
 
@@ -382,10 +377,7 @@ final class ComponentCreatorImplementationFactory {
   private final class BuilderForCreatorDescriptor extends Builder {
     final ComponentCreatorDescriptor creatorDescriptor;
 
-    BuilderForCreatorDescriptor(
-        ComponentImplementation componentImplementation,
-        ComponentCreatorDescriptor creatorDescriptor) {
-      super(componentImplementation);
+    BuilderForCreatorDescriptor(ComponentCreatorDescriptor creatorDescriptor) {
       this.creatorDescriptor = creatorDescriptor;
     }
 
@@ -401,7 +393,7 @@ final class ComponentCreatorImplementationFactory {
 
     @Override
     protected void setSupertype() {
-      addSupertype(classBuilder, creatorDescriptor.typeElement());
+      addSupertype(super.classBuilder, creatorDescriptor.typeElement());
     }
 
     @Override
@@ -465,7 +457,7 @@ final class ComponentCreatorImplementationFactory {
       MethodSpec.Builder method = MethodSpec.overriding(supertypeMethod, creatorType(), types);
       if (!supertypeMethod.getReturnType().getKind().equals(TypeKind.VOID)) {
         // Take advantage of covariant returns so that we don't have to worry about type variables
-        method.returns(className);
+        method.returns(componentImplementation.getCreatorName());
       }
       return method;
     }
@@ -476,9 +468,6 @@ final class ComponentCreatorImplementationFactory {
    * does not have its own user-defined creator type (i.e. a {@code ComponentCreatorDescriptor}).
    */
   private final class BuilderForGeneratedRootComponentBuilder extends Builder {
-    BuilderForGeneratedRootComponentBuilder(ComponentImplementation componentImplementation) {
-      super(componentImplementation);
-    }
 
     @Override
     protected ImmutableMap<ComponentRequirement, RequirementStatus> userSettableRequirements() {
@@ -525,7 +514,7 @@ final class ComponentCreatorImplementationFactory {
       return methodBuilder(name)
           .addModifiers(PUBLIC)
           .addParameter(TypeName.get(requirement.type()), name)
-          .returns(className);
+          .returns(componentImplementation.getCreatorName());
     }
   }
 

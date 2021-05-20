@@ -29,6 +29,7 @@ import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.model.BindingKind;
 
 /**
@@ -37,31 +38,31 @@ import dagger.model.BindingKind;
  * <p>Dependents of this binding expression will just call the no-arg private method.
  */
 final class PrivateMethodBindingExpression extends MethodBindingExpression {
+  private final ShardImplementation shardImplementation;
   private final ContributionBinding binding;
   private final BindingRequest request;
-  private final ComponentImplementation componentImplementation;
   private final CompilerOptions compilerOptions;
   private final DaggerTypes types;
   private String methodName;
 
   PrivateMethodBindingExpression(
+      ShardImplementation shardImplementation,
       BindingRequest request,
       ContributionBinding binding,
       MethodImplementationStrategy methodImplementationStrategy,
       BindingExpression wrappedBindingExpression,
-      ComponentImplementation componentImplementation,
       DaggerTypes types,
       CompilerOptions compilerOptions) {
     super(
+        shardImplementation,
         request,
         binding,
         methodImplementationStrategy,
         wrappedBindingExpression,
-        componentImplementation,
         types);
+    this.shardImplementation = checkNotNull(shardImplementation);
     this.binding = binding;
     this.request = checkNotNull(request);
-    this.componentImplementation = checkNotNull(componentImplementation);
     this.compilerOptions = checkNotNull(compilerOptions);
     this.types = types;
   }
@@ -70,10 +71,10 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
   protected void addMethod() {
     if (methodName == null) {
       // Have to set methodName field before implementing the method in order to handle recursion.
-      methodName = componentImplementation.getUniqueMethodName(request);
+      methodName = shardImplementation.getUniqueMethodName(request);
 
       // TODO(bcorso): Fix the order that these generated methods are written to the component.
-      componentImplementation.addMethod(
+      shardImplementation.addMethod(
           PRIVATE_METHOD,
           methodBuilder(methodName)
               .addModifiers(PRIVATE)
