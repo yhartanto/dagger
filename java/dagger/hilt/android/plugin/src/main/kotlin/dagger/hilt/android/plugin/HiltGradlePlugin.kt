@@ -350,13 +350,13 @@ class HiltGradlePlugin @Inject constructor(
     ) {
       it.compileClasspath.setFrom(getInputClasspath(AGGREGATED_HILT_ARTIFACT_TYPE_VALUE))
       it.outputDir.set(
-        project.file(project.buildDir.resolve("generated/hilt_component_trees/${variant.name}/"))
+        project.file(project.buildDir.resolve("generated/hilt/component_trees/${variant.name}/"))
       )
       it.testEnvironment.set(variant is TestVariant || variant is UnitTestVariant)
     }
 
     val componentClasses = project.files(
-      project.buildDir.resolve("intermediates/hilt_component_classes/${variant.name}/")
+      project.buildDir.resolve("intermediates/hilt/component_classes/${variant.name}/")
     )
     val componentsJavaCompileTask = project.tasks.register(
       "hiltJavaCompile${variant.name.capitalize()}",
@@ -394,7 +394,7 @@ class HiltGradlePlugin @Inject constructor(
           project.dependencies.add(config.name, "com.google.dagger:hilt-compiler:$HILT_VERSION")
         }
         annotationProcessorGeneratedSourcesDirectory = project.file(
-          project.buildDir.resolve("generated/hilt_component_sources/${variant.name}/")
+          project.buildDir.resolve("generated/hilt/component_sources/${variant.name}/")
         )
         if (
           JavaVersion.current().isJava8Compatible &&
