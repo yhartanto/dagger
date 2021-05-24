@@ -53,14 +53,12 @@ abstract class HiltTransformTestClassesTask @Inject constructor(
   @get:OutputDirectory
   abstract val outputDir: DirectoryProperty
 
-  @Suppress("UnstableApiUsage") // Worker API
   internal interface Parameters : WorkParameters {
     val name: Property<String>
     val compiledClasses: ConfigurableFileCollection
     val outputDir: DirectoryProperty
   }
 
-  @Suppress("UnstableApiUsage") // Worker API
   abstract class WorkerAction : WorkAction<Parameters> {
     override fun execute() {
       val outputDir = parameters.outputDir.asFile.get()

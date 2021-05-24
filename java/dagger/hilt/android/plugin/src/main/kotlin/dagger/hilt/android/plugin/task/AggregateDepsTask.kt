@@ -20,6 +20,7 @@ import dagger.hilt.android.plugin.root.AggregatedElementProxyGenerator
 import dagger.hilt.android.plugin.root.ComponentTreeDepsGenerator
 import dagger.hilt.android.plugin.root.ProcessedRootSentinelGenerator
 import dagger.hilt.processor.internal.root.ir.ComponentTreeDepsIrCreator
+import javax.inject.Inject
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
@@ -31,7 +32,11 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import org.gradle.work.InputChanges
+import org.gradle.workers.WorkAction
+import org.gradle.workers.WorkParameters
+import org.gradle.workers.WorkerExecutor
 import org.objectweb.asm.Opcodes
+import org.slf4j.LoggerFactory
 
 /**
  * Aggregates Hilt component dependencies from the compile classpath and outputs Java sources
@@ -41,7 +46,9 @@ import org.objectweb.asm.Opcodes
  * [dagger.hilt.android.plugin.util.AggregatedPackagesTransform].
  */
 @CacheableTask
-abstract class AggregateDepsTask : DefaultTask() {
+abstract class AggregateDepsTask @Inject constructor(
+  private val workerExecutor: WorkerExecutor
+) : DefaultTask() {
 
   // TODO(danysantiago): Make @Incremental and try to use @CompileClasspath
   @get:Classpath
@@ -59,41 +66,61 @@ abstract class AggregateDepsTask : DefaultTask() {
 
   @TaskAction
   internal fun taskAction(@Suppress("UNUSED_PARAMETER") inputs: InputChanges) {
-    // TODO(danysantiago): Use Worker API, https://docs.gradle.org/current/userguide/worker_api.html
-    val aggregator = Aggregator.from(
-      logger = logger,
-      asmApiVersion = asmApiVersion.getOrNull() ?: Opcodes.ASM7,
-      input = compileClasspath
-    )
-    // TODO(danysantiago): Add 3 checks:
-    //   * No new roots when test roots are already processed
-    //   * No app and test roots to process in the same task
-    //   * No multiple app roots
-    val processedRootNames = aggregator.processedRoots.flatMap { it.roots }.toSet()
-    val rootsToProcess = aggregator.roots.filterNot { processedRootNames.contains(it.root) }.toSet()
-    val componentTrees = ComponentTreeDepsIrCreator.components(
-      isTest = testEnvironment.get(),
-      isSharedTestComponentsEnabled = true,
-      aggregatedRoots = rootsToProcess,
-      defineComponentDeps = aggregator.defineComponentDeps,
-      aliasOfDeps = aggregator.aliasOfDeps,
-      aggregatedDeps = aggregator.aggregatedDeps,
-      aggregatedUninstallModulesDeps = aggregator.uninstallModulesDeps,
-      aggregatedEarlyEntryPointDeps = aggregator.earlyEntryPointDeps,
-    )
-    ComponentTreeDepsGenerator(
-      proxies = aggregator.allAggregatedDepProxies.associate { it.value to it.fqName },
-      outputDir = outputDir.get().asFile
-    ).let { generator ->
-      componentTrees.forEach { generator.generate(it) }
+    workerExecutor.noIsolation().submit(WorkerAction::class.java) {
+      it.compileClasspath.from(compileClasspath)
+      it.asmApiVersion.set(asmApiVersion)
+      it.outputDir.set(outputDir)
+      it.testEnvironment.set(testEnvironment)
     }
-    AggregatedElementProxyGenerator(outputDir.get().asFile).let { generator ->
-      (aggregator.allAggregatedDepProxies - aggregator.aggregatedDepProxies).forEach {
-        generator.generate(it)
+  }
+
+  internal interface Parameters : WorkParameters {
+    val compileClasspath: ConfigurableFileCollection
+    val asmApiVersion: Property<Int>
+    val outputDir: DirectoryProperty
+    val testEnvironment: Property<Boolean>
+  }
+
+  abstract class WorkerAction : WorkAction<Parameters> {
+    override fun execute() {
+      // Logger is not an injectable service yet: https://github.com/gradle/gradle/issues/16991
+      val logger = LoggerFactory.getLogger(AggregateDepsTask::class.java)
+      val aggregator = Aggregator.from(
+        logger = logger,
+        asmApiVersion = parameters.asmApiVersion.getOrNull() ?: Opcodes.ASM7,
+        input = parameters.compileClasspath
+      )
+      // TODO(danysantiago): Add 3 checks:
+      //   * No new roots when test roots are already processed
+      //   * No app and test roots to process in the same task
+      //   * No multiple app roots
+      val processedRootNames = aggregator.processedRoots.flatMap { it.roots }.toSet()
+      val rootsToProcess =
+        aggregator.roots.filterNot { processedRootNames.contains(it.root) }.toSet()
+      val componentTrees = ComponentTreeDepsIrCreator.components(
+        isTest = parameters.testEnvironment.get(),
+        isSharedTestComponentsEnabled = true,
+        aggregatedRoots = rootsToProcess,
+        defineComponentDeps = aggregator.defineComponentDeps,
+        aliasOfDeps = aggregator.aliasOfDeps,
+        aggregatedDeps = aggregator.aggregatedDeps,
+        aggregatedUninstallModulesDeps = aggregator.uninstallModulesDeps,
+        aggregatedEarlyEntryPointDeps = aggregator.earlyEntryPointDeps,
+      )
+      ComponentTreeDepsGenerator(
+        proxies = aggregator.allAggregatedDepProxies.associate { it.value to it.fqName },
+        outputDir = parameters.outputDir.get().asFile
+      ).let { generator ->
+        componentTrees.forEach { generator.generate(it) }
       }
-    }
-    ProcessedRootSentinelGenerator(outputDir.get().asFile).let { generator ->
-      rootsToProcess.map { it.root }.forEach { generator.generate(it) }
+      AggregatedElementProxyGenerator(parameters.outputDir.get().asFile).let { generator ->
+        (aggregator.allAggregatedDepProxies - aggregator.aggregatedDepProxies).forEach {
+          generator.generate(it)
+        }
+      }
+      ProcessedRootSentinelGenerator(parameters.outputDir.get().asFile).let { generator ->
+        rootsToProcess.map { it.root }.forEach { generator.generate(it) }
+      }
     }
   }
 }

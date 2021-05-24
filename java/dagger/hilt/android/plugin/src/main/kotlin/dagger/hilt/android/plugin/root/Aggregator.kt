@@ -32,12 +32,12 @@ import dagger.hilt.processor.internal.root.ir.ProcessedRootSentinelIr
 import java.io.File
 import java.io.InputStream
 import java.util.zip.ZipInputStream
-import org.gradle.api.logging.Logger
 import org.objectweb.asm.AnnotationVisitor
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
+import org.slf4j.Logger
 
 /** Aggregates Hilt dependencies. */
 internal class Aggregator private constructor(
