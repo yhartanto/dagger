@@ -47,7 +47,6 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.binding.FrameworkTypeMapper;
 import dagger.internal.codegen.binding.MembersInjectionBinding;
-import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
@@ -76,48 +75,22 @@ public final class ComponentBindingExpressions {
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
   private final ComponentRequirementExpressions componentRequirementExpressions;
-  private final AssistedFactoryBindingExpression.Factory assistedFactoryBindingExpressionFactory;
-  private final ComponentInstanceBindingExpression.Factory
-      componentInstanceBindingExpressionFactory;
   private final ComponentMethodBindingExpression.Factory componentMethodBindingExpressionFactory;
-  private final ComponentProvisionBindingExpression.Factory
-      componentProvisionBindingExpressionFactory;
-  private final ComponentRequirementBindingExpression.Factory
-      componentRequirementBindingExpressionFactory;
   private final DelegateBindingExpression.Factory delegateBindingExpressionFactory;
   private final DerivedFromFrameworkInstanceBindingExpression.Factory
       derivedFromFrameworkInstanceBindingExpressionFactory;
   private final ImmediateFutureBindingExpression.Factory immediateFutureBindingExpressionFactory;
-  private final MapBindingExpression.Factory mapBindingExpressionFactory;
   private final MembersInjectionBindingExpression.Factory membersInjectionBindingExpressionFactory;
-  private final OptionalBindingExpression.Factory optionalBindingExpressionFactory;
   private final PrivateMethodBindingExpression.Factory privateMethodBindingExpressionFactory;
   private final ProducerNodeInstanceBindingExpression.Factory
       producerNodeInstanceBindingExpressionFactory;
   private final ProviderInstanceBindingExpression.Factory providerInstanceBindingExpressionFactory;
-  private final SetBindingExpression.Factory setBindingExpressionFactory;
-  private final SimpleMethodBindingExpression.Factory simpleMethodBindingExpressionFactory;
-  private final SubcomponentCreatorBindingExpression.Factory
-      subcomponentCreatorBindingExpressionFactory;
-  private final AnonymousProviderCreationExpression.Factory
-      anonymousProviderCreationExpressionFactory;
-  private final DelegatingFrameworkInstanceCreationExpression.Factory
-      delegatingFrameworkInstanceCreationExpressionFactory;
-  private final DependencyMethodProducerCreationExpression.Factory
-      dependencyMethodProducerCreationExpressionFactory;
-  private final DependencyMethodProviderCreationExpression.Factory
-      dependencyMethodProviderCreationExpressionFactory;
-  private final InjectionOrProvisionProviderCreationExpression.Factory
-      injectionOrProvisionProviderCreationExpressionFactory;
-  private final MapFactoryCreationExpression.Factory mapFactoryCreationExpressionFactory;
-  private final MembersInjectorProviderCreationExpression.Factory
-      membersInjectorProviderCreationExpressionFactory;
-  private final OptionalFactoryInstanceCreationExpression.Factory
-      optionalFactoryInstanceCreationExpressionFactory;
-  private final ProducerCreationExpression.Factory producerCreationExpressionFactory;
+  private final UnscopedDirectInstanceBindingExpressionFactory
+      unscopedDirectInstanceBindingExpressionFactory;
   private final ProducerFromProviderCreationExpression.Factory
       producerFromProviderCreationExpressionFactory;
-  private final SetFactoryCreationExpression.Factory setFactoryCreationExpressionFactory;
+  private final UnscopedFrameworkInstanceCreationExpressionFactory
+      unscopedFrameworkInstanceCreationExpressionFactory;
   private final DaggerTypes types;
   private final CompilerOptions compilerOptions;
   private final SwitchingProviders switchingProviders;
@@ -129,85 +102,41 @@ public final class ComponentBindingExpressions {
       BindingGraph graph,
       ComponentImplementation componentImplementation,
       ComponentRequirementExpressions componentRequirementExpressions,
-      AssistedFactoryBindingExpression.Factory assistedFactoryBindingExpressionFactory,
-      ComponentInstanceBindingExpression.Factory componentInstanceBindingExpressionFactory,
       ComponentMethodBindingExpression.Factory componentMethodBindingExpressionFactory,
-      ComponentProvisionBindingExpression.Factory componentProvisionBindingExpressionFactory,
-      ComponentRequirementBindingExpression.Factory componentRequirementBindingExpressionFactory,
       DelegateBindingExpression.Factory delegateBindingExpressionFactory,
       DerivedFromFrameworkInstanceBindingExpression.Factory
           derivedFromFrameworkInstanceBindingExpressionFactory,
       ImmediateFutureBindingExpression.Factory immediateFutureBindingExpressionFactory,
-      MapBindingExpression.Factory mapBindingExpressionFactory,
       MembersInjectionBindingExpression.Factory membersInjectionBindingExpressionFactory,
-      OptionalBindingExpression.Factory optionalBindingExpressionFactory,
       PrivateMethodBindingExpression.Factory privateMethodBindingExpressionFactory,
       ProducerNodeInstanceBindingExpression.Factory producerNodeInstanceBindingExpressionFactory,
       ProviderInstanceBindingExpression.Factory providerInstanceBindingExpressionFactory,
-      SetBindingExpression.Factory setBindingExpressionFactory,
-      SimpleMethodBindingExpression.Factory simpleMethodBindingExpressionFactory,
-      SubcomponentCreatorBindingExpression.Factory subcomponentCreatorBindingExpressionFactory,
-      AnonymousProviderCreationExpression.Factory anonymousProviderCreationExpressionFactory,
-      DelegatingFrameworkInstanceCreationExpression.Factory
-          delegatingFrameworkInstanceCreationExpressionFactory,
-      DependencyMethodProducerCreationExpression.Factory
-          dependencyMethodProducerCreationExpressionFactory,
-      DependencyMethodProviderCreationExpression.Factory
-          dependencyMethodProviderCreationExpressionFactory,
-      InjectionOrProvisionProviderCreationExpression.Factory
-          injectionOrProvisionProviderCreationExpressionFactory,
-      MapFactoryCreationExpression.Factory mapFactoryCreationExpressionFactory,
-      MembersInjectorProviderCreationExpression.Factory
-          membersInjectorProviderCreationExpressionFactory,
-      OptionalFactoryInstanceCreationExpression.Factory
-          optionalFactoryInstanceCreationExpressionFactory,
-      ProducerCreationExpression.Factory producerCreationExpressionFactory,
+      UnscopedDirectInstanceBindingExpressionFactory unscopedDirectInstanceBindingExpressionFactory,
       ProducerFromProviderCreationExpression.Factory producerFromProviderCreationExpressionFactory,
-      SetFactoryCreationExpression.Factory setFactoryCreationExpressionFactory,
+      UnscopedFrameworkInstanceCreationExpressionFactory
+          unscopedFrameworkInstanceCreationExpressionFactory,
       DaggerTypes types,
       CompilerOptions compilerOptions) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
     this.componentRequirementExpressions = checkNotNull(componentRequirementExpressions);
-    this.assistedFactoryBindingExpressionFactory = assistedFactoryBindingExpressionFactory;
-    this.componentInstanceBindingExpressionFactory = componentInstanceBindingExpressionFactory;
     this.componentMethodBindingExpressionFactory = componentMethodBindingExpressionFactory;
-    this.componentProvisionBindingExpressionFactory = componentProvisionBindingExpressionFactory;
-    this.componentRequirementBindingExpressionFactory =
-        componentRequirementBindingExpressionFactory;
     this.delegateBindingExpressionFactory = delegateBindingExpressionFactory;
     this.derivedFromFrameworkInstanceBindingExpressionFactory =
         derivedFromFrameworkInstanceBindingExpressionFactory;
     this.immediateFutureBindingExpressionFactory = immediateFutureBindingExpressionFactory;
-    this.mapBindingExpressionFactory = mapBindingExpressionFactory;
     this.membersInjectionBindingExpressionFactory = membersInjectionBindingExpressionFactory;
-    this.optionalBindingExpressionFactory = optionalBindingExpressionFactory;
     this.privateMethodBindingExpressionFactory = privateMethodBindingExpressionFactory;
     this.producerNodeInstanceBindingExpressionFactory =
         producerNodeInstanceBindingExpressionFactory;
     this.providerInstanceBindingExpressionFactory = providerInstanceBindingExpressionFactory;
-    this.setBindingExpressionFactory = setBindingExpressionFactory;
-    this.simpleMethodBindingExpressionFactory = simpleMethodBindingExpressionFactory;
-    this.subcomponentCreatorBindingExpressionFactory = subcomponentCreatorBindingExpressionFactory;
-    this.anonymousProviderCreationExpressionFactory = anonymousProviderCreationExpressionFactory;
-    this.delegatingFrameworkInstanceCreationExpressionFactory =
-        delegatingFrameworkInstanceCreationExpressionFactory;
-    this.dependencyMethodProducerCreationExpressionFactory =
-        dependencyMethodProducerCreationExpressionFactory;
-    this.dependencyMethodProviderCreationExpressionFactory =
-        dependencyMethodProviderCreationExpressionFactory;
-    this.injectionOrProvisionProviderCreationExpressionFactory =
-        injectionOrProvisionProviderCreationExpressionFactory;
-    this.mapFactoryCreationExpressionFactory = mapFactoryCreationExpressionFactory;
-    this.membersInjectorProviderCreationExpressionFactory =
-        membersInjectorProviderCreationExpressionFactory;
-    this.optionalFactoryInstanceCreationExpressionFactory =
-        optionalFactoryInstanceCreationExpressionFactory;
-    this.producerCreationExpressionFactory = producerCreationExpressionFactory;
+    this.unscopedDirectInstanceBindingExpressionFactory =
+        unscopedDirectInstanceBindingExpressionFactory;
     this.producerFromProviderCreationExpressionFactory =
         producerFromProviderCreationExpressionFactory;
-    this.setFactoryCreationExpressionFactory = setFactoryCreationExpressionFactory;
+    this.unscopedFrameworkInstanceCreationExpressionFactory =
+        unscopedFrameworkInstanceCreationExpressionFactory;
     this.types = types;
     this.compilerOptions = compilerOptions;
     this.switchingProviders = new SwitchingProviders(componentImplementation, this, types);
@@ -376,11 +305,12 @@ public final class ComponentBindingExpressions {
         staticMethod.isPresent()
             ? staticMethod::get
             : new FrameworkFieldInitializer(
-                  componentImplementation,
-                  binding,
-                  binding.scope().isPresent()
-                      ? scope(binding, frameworkInstanceCreationExpression(binding))
-                      : frameworkInstanceCreationExpression(binding));
+                componentImplementation,
+                binding,
+                binding.scope().isPresent()
+                    ? scope(
+                        binding, unscopedFrameworkInstanceCreationExpressionFactory.create(binding))
+                    : unscopedFrameworkInstanceCreationExpressionFactory.create(binding));
 
     switch (binding.bindingType()) {
       case PROVISION:
@@ -400,77 +330,6 @@ public final class ComponentBindingExpressions {
             "$T.provider($L)",
             binding.scope().get().isReusable() ? SINGLE_CHECK : DOUBLE_CHECK,
             unscoped.creationExpression());
-  }
-
-  /**
-   * Returns a creation expression for a {@link javax.inject.Provider} for provision bindings or a
-   * {@link dagger.producers.Producer} for production bindings.
-   */
-  private FrameworkInstanceCreationExpression frameworkInstanceCreationExpression(
-      ContributionBinding binding) {
-    switch (binding.kind()) {
-      case COMPONENT:
-        // The cast can be removed when we drop java 7 source support
-        return new InstanceFactoryCreationExpression(
-            () ->
-                CodeBlock.of(
-                    "($T) $L",
-                    binding.key().type(),
-                    componentImplementation.componentFieldReference()));
-
-      case BOUND_INSTANCE:
-        return instanceFactoryCreationExpression(
-            binding, ComponentRequirement.forBoundInstance(binding));
-
-      case COMPONENT_DEPENDENCY:
-        return instanceFactoryCreationExpression(
-            binding, ComponentRequirement.forDependency(binding.key().type()));
-
-      case COMPONENT_PROVISION:
-        return dependencyMethodProviderCreationExpressionFactory.create(binding);
-
-      case SUBCOMPONENT_CREATOR:
-        return anonymousProviderCreationExpressionFactory.create(binding);
-
-      case ASSISTED_FACTORY:
-      case ASSISTED_INJECTION:
-      case INJECTION:
-      case PROVISION:
-        return injectionOrProvisionProviderCreationExpressionFactory.create(binding);
-
-      case COMPONENT_PRODUCTION:
-        return dependencyMethodProducerCreationExpressionFactory.create(binding);
-
-      case PRODUCTION:
-        return producerCreationExpressionFactory.create(binding);
-
-      case MULTIBOUND_SET:
-        return setFactoryCreationExpressionFactory.create(binding);
-
-      case MULTIBOUND_MAP:
-        return mapFactoryCreationExpressionFactory.create(binding);
-
-      case DELEGATE:
-        return delegatingFrameworkInstanceCreationExpressionFactory.create(binding);
-
-      case OPTIONAL:
-        return optionalFactoryInstanceCreationExpressionFactory.create(binding);
-
-      case MEMBERS_INJECTOR:
-        return membersInjectorProviderCreationExpressionFactory.create((ProvisionBinding) binding);
-
-      default:
-        throw new AssertionError(binding);
-    }
-  }
-
-  private InstanceFactoryCreationExpression instanceFactoryCreationExpression(
-      ContributionBinding binding, ComponentRequirement componentRequirement) {
-    return new InstanceFactoryCreationExpression(
-        binding.nullableType().isPresent(),
-        () ->
-            componentRequirementExpressions.getExpressionDuringInitialization(
-                componentRequirement, componentImplementation.name()));
   }
 
   /** Returns a binding expression for a provision binding. */
@@ -528,7 +387,7 @@ public final class ComponentBindingExpressions {
     if (binding.kind().equals(DELEGATE) && !needsCaching(binding)) {
       return delegateBindingExpressionFactory.create(binding, RequestKind.PROVIDER);
     } else if (isFastInit()
-        && frameworkInstanceCreationExpression(binding).useSwitchingProvider()
+        && unscopedFrameworkInstanceCreationExpressionFactory.create(binding).useSwitchingProvider()
         && !(instanceBindingExpression(binding)
             instanceof DerivedFromFrameworkInstanceBindingExpression)) {
       return wrapInMethod(
@@ -557,7 +416,7 @@ public final class ComponentBindingExpressions {
    */
   private BindingExpression instanceBindingExpression(ContributionBinding binding) {
     Optional<BindingExpression> maybeDirectInstanceExpression =
-        unscopedDirectInstanceExpression(binding);
+        unscopedDirectInstanceBindingExpressionFactory.create(binding);
     if (maybeDirectInstanceExpression.isPresent()) {
       // If this is the case where we don't need to use Provider#get() because there's no caching
       // and it isn't an assisted factory, or because we're in fastInit mode (since fastInit avoids
@@ -575,66 +434,6 @@ public final class ComponentBindingExpressions {
     }
     return derivedFromFrameworkInstanceBindingExpressionFactory.create(
         bindingRequest(binding.key(), RequestKind.INSTANCE), FrameworkType.PROVIDER);
-  }
-
-  /**
-   * Returns an unscoped binding expression for an {@link RequestKind#INSTANCE} that does not call
-   * {@code get()} on its provider, if there is one.
-   */
-  private Optional<BindingExpression> unscopedDirectInstanceExpression(
-      ContributionBinding binding) {
-    switch (binding.kind()) {
-      case DELEGATE:
-        return Optional.of(delegateBindingExpressionFactory.create(binding, RequestKind.INSTANCE));
-
-      case COMPONENT:
-        return Optional.of(componentInstanceBindingExpressionFactory.create(binding));
-
-      case COMPONENT_DEPENDENCY:
-        return Optional.of(
-            componentRequirementBindingExpressionFactory.create(
-                binding, ComponentRequirement.forDependency(binding.key().type())));
-
-      case COMPONENT_PROVISION:
-        return Optional.of(
-            componentProvisionBindingExpressionFactory.create((ProvisionBinding) binding));
-
-      case SUBCOMPONENT_CREATOR:
-        return Optional.of(subcomponentCreatorBindingExpressionFactory.create(binding));
-
-      case MULTIBOUND_SET:
-        return Optional.of(setBindingExpressionFactory.create((ProvisionBinding) binding));
-
-      case MULTIBOUND_MAP:
-        return Optional.of(mapBindingExpressionFactory.create((ProvisionBinding) binding));
-
-      case OPTIONAL:
-        return Optional.of(optionalBindingExpressionFactory.create((ProvisionBinding) binding));
-
-      case BOUND_INSTANCE:
-        return Optional.of(
-            componentRequirementBindingExpressionFactory.create(
-                binding, ComponentRequirement.forBoundInstance(binding)));
-
-      case ASSISTED_FACTORY:
-        return Optional.of(
-            assistedFactoryBindingExpressionFactory.create((ProvisionBinding) binding));
-
-      case ASSISTED_INJECTION:
-      case INJECTION:
-      case PROVISION:
-        return Optional.of(simpleMethodBindingExpressionFactory.create((ProvisionBinding) binding));
-
-      case MEMBERS_INJECTOR:
-        return Optional.empty();
-
-      case MEMBERS_INJECTION:
-      case COMPONENT_PRODUCTION:
-      case PRODUCTION:
-        throw new IllegalArgumentException(binding.kind().toString());
-      default:
-        throw new AssertionError("Unexpected binding kind: " + binding.kind());
-    }
   }
 
   /**
