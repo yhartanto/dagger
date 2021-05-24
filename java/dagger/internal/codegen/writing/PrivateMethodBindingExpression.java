@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedParameterSpecs;
@@ -25,6 +24,9 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.TypeName;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
@@ -45,25 +47,26 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
   private final DaggerTypes types;
   private String methodName;
 
+  @AssistedInject
   PrivateMethodBindingExpression(
-      ShardImplementation shardImplementation,
-      BindingRequest request,
-      ContributionBinding binding,
-      MethodImplementationStrategy methodImplementationStrategy,
-      BindingExpression wrappedBindingExpression,
+      @Assisted BindingRequest request,
+      @Assisted ContributionBinding binding,
+      @Assisted MethodImplementationStrategy methodImplementationStrategy,
+      @Assisted BindingExpression wrappedBindingExpression,
+      ComponentImplementation componentImplementation,
       DaggerTypes types,
       CompilerOptions compilerOptions) {
     super(
-        shardImplementation,
+        componentImplementation.shardImplementation(binding.key()),
         request,
         binding,
         methodImplementationStrategy,
         wrappedBindingExpression,
         types);
-    this.shardImplementation = checkNotNull(shardImplementation);
+    this.shardImplementation = componentImplementation.shardImplementation(binding.key());
     this.binding = binding;
-    this.request = checkNotNull(request);
-    this.compilerOptions = checkNotNull(compilerOptions);
+    this.request = request;
+    this.compilerOptions = compilerOptions;
     this.types = types;
   }
 
@@ -93,5 +96,14 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
   protected String methodName() {
     checkState(methodName != null, "addMethod() must be called before methodName()");
     return methodName;
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    PrivateMethodBindingExpression create(
+        BindingRequest request,
+        ContributionBinding binding,
+        MethodImplementationStrategy methodImplementationStrategy,
+        BindingExpression wrappedBindingExpression);
   }
 }

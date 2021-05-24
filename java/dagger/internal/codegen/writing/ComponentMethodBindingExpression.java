@@ -20,6 +20,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.binding.ContributionBinding;
@@ -36,13 +39,14 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
   private final ComponentImplementation componentImplementation;
   private final ComponentMethodDescriptor componentMethod;
 
+  @AssistedInject
   ComponentMethodBindingExpression(
-      BindingRequest request,
-      ContributionBinding binding,
-      MethodImplementationStrategy methodImplementationStrategy,
-      BindingExpression wrappedBindingExpression,
+      @Assisted BindingRequest request,
+      @Assisted ContributionBinding binding,
+      @Assisted MethodImplementationStrategy methodImplementationStrategy,
+      @Assisted BindingExpression wrappedBindingExpression,
+      @Assisted ComponentMethodDescriptor componentMethod,
       ComponentImplementation componentImplementation,
-      ComponentMethodDescriptor componentMethod,
       DaggerTypes types) {
     super(
         componentImplementation.getComponentShard(),
@@ -51,8 +55,8 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
         methodImplementationStrategy,
         wrappedBindingExpression,
         types);
-    this.componentImplementation = checkNotNull(componentImplementation);
     this.componentMethod = checkNotNull(componentMethod);
+    this.componentImplementation = componentImplementation;
   }
 
   @Override
@@ -88,5 +92,15 @@ final class ComponentMethodBindingExpression extends MethodBindingExpression {
   @Override
   protected String methodName() {
     return componentMethod.methodElement().getSimpleName().toString();
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    ComponentMethodBindingExpression create(
+        BindingRequest request,
+        ContributionBinding binding,
+        MethodImplementationStrategy methodImplementationStrategy,
+        BindingExpression wrappedBindingExpression,
+        ComponentMethodDescriptor componentMethod);
   }
 }

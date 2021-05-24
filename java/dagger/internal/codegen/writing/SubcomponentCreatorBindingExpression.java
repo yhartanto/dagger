@@ -18,6 +18,9 @@ package dagger.internal.codegen.writing;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.Expression;
@@ -27,8 +30,9 @@ final class SubcomponentCreatorBindingExpression extends SimpleInvocationBinding
   private final ComponentImplementation owningComponent;
   private final ContributionBinding binding;
 
+  @AssistedInject
   SubcomponentCreatorBindingExpression(
-      ComponentImplementation owningComponent, ContributionBinding binding) {
+      @Assisted ContributionBinding binding, ComponentImplementation owningComponent) {
     super(binding);
     this.binding = binding;
     this.owningComponent = owningComponent;
@@ -43,5 +47,10 @@ final class SubcomponentCreatorBindingExpression extends SimpleInvocationBinding
         owningComponent.componentFieldsByImplementation().values().stream()
             .map(field -> CodeBlock.of("$N", field))
             .collect(CodeBlocks.toParametersCodeBlock()));
+  }
+
+  @AssistedFactory
+  static interface Factory {
+    SubcomponentCreatorBindingExpression create(ContributionBinding binding);
   }
 }
