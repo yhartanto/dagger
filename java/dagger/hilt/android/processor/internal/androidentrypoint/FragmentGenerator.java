@@ -16,6 +16,8 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import static dagger.hilt.processor.internal.HiltCompilerOptions.useFragmentGetContextFix;
+
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -176,12 +178,21 @@ public final class FragmentGenerator {
   //   initializeComponentContext();
   //   return componentContext;
   // }
-  private static MethodSpec getContextMethod() {
-    return MethodSpec.methodBuilder("getContext")
+  private MethodSpec getContextMethod() {
+    MethodSpec.Builder builder = MethodSpec.methodBuilder("getContext")
         .returns(AndroidClassNames.CONTEXT)
         .addAnnotation(Override.class)
-        .addModifiers(Modifier.PUBLIC)
-        .beginControlFlow("if (super.getContext() == null)")
+        .addModifiers(Modifier.PUBLIC);
+
+    if (useFragmentGetContextFix(env)) {
+      builder.beginControlFlow("if (super.getContext() == null)");
+    } else {
+      builder.beginControlFlow(
+          "if (super.getContext() == null && $N == null)",
+          COMPONENT_CONTEXT_FIELD);
+    }
+
+    return builder
         .addStatement("return null")
         .endControlFlow()
         .addStatement("initializeComponentContext()")

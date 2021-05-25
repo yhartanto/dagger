@@ -74,4 +74,16 @@ public final class FragmentContextOnAttachTest {
     assertThat(fragment.onAttachContextContext).isNotNull();
     assertThat(fragment.onAttachActivityContext).isNotNull();
   }
+
+  // Tests the default behavior of the useFragmentGetContextFix flag. Current default is false
+  // so this tests the broken behavior.
+  @Test
+  public void testGetContextDoesNotReturnNullAfterRemoval() throws Exception {
+    FragmentActivity activity = Robolectric.setupActivity(TestActivity.class);
+    TestFragment fragment = new TestFragment();
+    activity.getSupportFragmentManager().beginTransaction().add(fragment, "").commitNow();
+    assertThat(fragment.getContext()).isNotNull();
+    activity.getSupportFragmentManager().beginTransaction().remove(fragment).commitNow();
+    assertThat(fragment.getContext()).isNotNull();
+  }
 }
