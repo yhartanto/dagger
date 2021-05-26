@@ -71,13 +71,6 @@ _deploy \
   "" \
   ""
 
-# b/37741866 and https://github.com/google/dagger/issues/715
-_deploy \
-  java/dagger/android/libandroid.jar \
-  java/dagger/android/jarimpl-pom.xml \
-  java/dagger/android/libandroid-src.jar \
-  java/dagger/android/android-javadoc.jar
-
 _deploy \
   java/dagger/android/support/support.aar \
   java/dagger/android/support/pom.xml \
