@@ -28,12 +28,12 @@ java_library(
         "//java/dagger:core",
         "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/javac",
+        "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/internal/guava:collect",
         "//java/dagger/producers",
         "//java/dagger/spi",
-        "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:service",
     ],
 )

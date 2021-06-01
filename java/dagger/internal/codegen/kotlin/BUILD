@@ -33,6 +33,7 @@ java_library(
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/auto:value",
+        "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/jsr305_annotations",
         "@google_bazel_common//third_party/java/jsr330_inject",
         "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
