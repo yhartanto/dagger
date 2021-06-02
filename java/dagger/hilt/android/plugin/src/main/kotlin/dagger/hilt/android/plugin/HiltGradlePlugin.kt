@@ -471,9 +471,5 @@ class HiltGradlePlugin @Inject constructor(
     val missingDepError: (String) -> String = { depCoordinate ->
       "The Hilt Android Gradle plugin is applied but no $depCoordinate dependency was found."
     }
-
-    // Temporarily default 'enableAggregatingTask' to false
-    private val HiltExtension.enableAggregatingTask: Boolean
-     get() = false
   }
 }
