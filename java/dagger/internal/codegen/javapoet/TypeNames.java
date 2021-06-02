@@ -69,7 +69,7 @@ public final class TypeNames {
       ClassName.get("dagger.internal", "ProviderOfLazy");
   public static final ClassName SET_FACTORY = ClassName.get("dagger.internal", "SetFactory");
   public static final ClassName SINGLE_CHECK = ClassName.get("dagger.internal", "SingleCheck");
-  public static final ClassName LAZY = ClassName.get("dagger.internal", "Lazy");
+  public static final ClassName LAZY = ClassName.get("dagger", "Lazy");
 
   // Dagger Producers classnames
   public static final ClassName ABSTRACT_PRODUCER =
