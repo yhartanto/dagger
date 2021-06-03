@@ -91,13 +91,10 @@ public final class MyAppPreviousCompilationTest {
       assertThat(compilation)
           .hadErrorContaining(
               "Cannot process new app roots when there are app roots from a "
-                  + "previous compilation unit:");
-      assertThat(compilation)
-          .hadErrorContaining(
-              "App roots in previous compilation unit: "
-                  + "dagger.hilt.processor.internal.root.MyAppPreviousCompilation.MyApp");
-      assertThat(compilation)
-          .hadErrorContaining("App roots in this compilation unit: test.AppRoot");
+                  + "previous compilation unit:"
+                  + "\n    App roots in previous compilation unit: "
+                  + "dagger.hilt.processor.internal.root.MyAppPreviousCompilation.MyApp"
+                  + "\n    App roots in this compilation unit: test.AppRoot");
     }
   }
 }
