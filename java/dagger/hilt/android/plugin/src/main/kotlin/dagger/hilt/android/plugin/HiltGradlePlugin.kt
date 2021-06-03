@@ -353,6 +353,9 @@ class HiltGradlePlugin @Inject constructor(
         project.file(project.buildDir.resolve("generated/hilt/component_trees/${variant.name}/"))
       )
       it.testEnvironment.set(variant is TestVariant || variant is UnitTestVariant)
+      it.crossCompilationRootValidationDisabled.set(
+        hiltExtension.disableCrossCompilationRootValidation
+      )
     }
 
     val componentClasses = project.files(
@@ -429,14 +432,21 @@ class HiltGradlePlugin @Inject constructor(
       argument("dagger.fastInit", "enabled")
       // Pass annotation processor flag to disable @AndroidEntryPoint superclass validation.
       argument("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
-      // Pass annotation processor flag to disable the aggregating processor via a
-      // CommandLineArgumentProvider so that the property is populated from the user's build
-      // file. Checking the option too early would make it seem like it is never set.
+      // Pass certain annotation processor flags via a CommandLineArgumentProvider so that plugin
+      // options defined in the extension are populated from the user's build file. Checking the
+      // option too early would make it seem like it is never set.
       compilerArgumentProvider {
-        if (hiltExtension.enableAggregatingTask) {
-          listOf("-Adagger.hilt.internal.useAggregatingRootProcessor=false")
-        } else {
-          emptyList()
+        mutableListOf<String>().apply {
+          // Pass annotation processor flag to disable the aggregating processor if aggregating task
+          // is enabled.
+          if (hiltExtension.enableAggregatingTask) {
+            add("-Adagger.hilt.internal.useAggregatingRootProcessor=false")
+          }
+          // Pass annotation processor flag to disable cross compilation root validation. The plugin
+          // option duplicates the processor flag because it is an input of the aggregating task.
+          if (hiltExtension.disableCrossCompilationRootValidation) {
+            add("-Adagger.hilt.disableCrossCompilationRootValidation=true")
+          }
         }
       }
     }

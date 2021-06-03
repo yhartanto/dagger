@@ -46,8 +46,8 @@ internal class Aggregator private constructor(
 ) {
   private val classVisitor = AggregatedDepClassVisitor(logger, asmApiVersion)
 
-  val roots: Set<AggregatedRootIr>
-    get() = classVisitor.roots
+  val aggregatedRoots: Set<AggregatedRootIr>
+    get() = classVisitor.aggregatedRoots
 
   val processedRoots: Set<ProcessedRootSentinelIr>
     get() = classVisitor.processedRoots
@@ -78,7 +78,7 @@ internal class Aggregator private constructor(
     private val asmApiVersion: Int,
   ) : ClassVisitor(asmApiVersion) {
 
-    val roots = mutableSetOf<AggregatedRootIr>()
+    val aggregatedRoots = mutableSetOf<AggregatedRootIr>()
     val processedRoots = mutableSetOf<ProcessedRootSentinelIr>()
     val defineComponentDeps = mutableSetOf<DefineComponentClassesIr>()
     val aliasOfDeps = mutableSetOf<AliasOfPropagatedDataIr>()
@@ -134,7 +134,7 @@ internal class Aggregator private constructor(
             }
 
             override fun visitEnd() {
-              roots.add(
+              aggregatedRoots.add(
                 AggregatedRootIr(
                   fqName = annotatedClassName,
                   root = rootClass.toClassName(),

@@ -49,10 +49,19 @@ interface HiltExtension {
    * classpath aggregation will be done by default.
    */
   var enableAggregatingTask: Boolean
+
+  /**
+   * If set to `true`, Hilt will disable cross compilation root validation.
+   *
+   * See [documentation](https://dagger.dev/hilt/compiler-options#disable-cross-compilation-root-validation)
+   * for more information.
+   */
+  var disableCrossCompilationRootValidation: Boolean
 }
 
 internal open class HiltExtensionImpl : HiltExtension {
   override var enableExperimentalClasspathAggregation: Boolean = false
   override var enableTransformForLocalTests: Boolean = false
   override var enableAggregatingTask: Boolean = false
+  override var disableCrossCompilationRootValidation: Boolean = false
 }
