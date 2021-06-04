@@ -51,6 +51,7 @@ import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentBindingExpressions;
 import dagger.internal.codegen.writing.ComponentCreatorImplementation;
 import dagger.internal.codegen.writing.ComponentImplementation;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.ComponentRequirementExpressions;
 import dagger.internal.codegen.writing.ParentComponent;
 import java.util.Collection;
@@ -69,6 +70,7 @@ public final class ComponentImplementationBuilder {
   private final ComponentBindingExpressions bindingExpressions;
   private final ComponentRequirementExpressions componentRequirementExpressions;
   private final ComponentImplementation componentImplementation;
+  private final ShardImplementation componentShard;
   private final ComponentCreatorImplementationFactory componentCreatorImplementationFactory;
   private final TopLevelImplementationComponent topLevelImplementationComponent;
   private final DaggerTypes types;
@@ -98,6 +100,9 @@ public final class ComponentImplementationBuilder {
     this.elements = elements;
     this.topLevelImplementationComponent = topLevelImplementationComponent;
     this.metadataUtil = metadataUtil;
+
+    // All fields/methods/types added by this class apply only to the component shard.
+    this.componentShard = componentImplementation.getComponentShard();
   }
 
   /**
@@ -115,10 +120,6 @@ public final class ComponentImplementationBuilder {
         .map(ComponentCreatorImplementation::spec)
         .ifPresent(this::addCreatorClass);
 
-    elements
-        .getLocalAndInheritedMethods(graph.componentTypeElement())
-        .forEach(method -> componentImplementation.claimMethodName(method.getSimpleName()));
-
     addFactoryMethods();
     addInterfaceMethods();
     addChildComponents();
@@ -130,9 +131,9 @@ public final class ComponentImplementationBuilder {
   private void addCreatorClass(TypeSpec creator) {
     if (parent.isPresent()) {
       // In an inner implementation of a subcomponent the creator is a peer class.
-      parent.get().addType(SUBCOMPONENT, creator);
+      parent.get().getComponentShard().addType(SUBCOMPONENT, creator);
     } else {
-      componentImplementation.addType(COMPONENT_CREATOR, creator);
+      componentShard.addType(COMPONENT_CREATOR, creator);
     }
   }
 
@@ -154,7 +155,7 @@ public final class ComponentImplementationBuilder {
       ComponentMethodDescriptor anyOneMethod = methodsWithSameSignature.stream().findAny().get();
       MethodSpec methodSpec = bindingExpressions.getComponentMethod(anyOneMethod);
 
-      componentImplementation.addMethod(COMPONENT_METHOD, methodSpec);
+      componentShard.addMethod(COMPONENT_METHOD, methodSpec);
     }
   }
 
@@ -165,7 +166,7 @@ public final class ComponentImplementationBuilder {
 
   private void addChildComponents() {
     for (BindingGraph subgraph : graph.subgraphs()) {
-      componentImplementation.addType(SUBCOMPONENT, childComponent(subgraph));
+      componentShard.addType(SUBCOMPONENT, childComponent(subgraph));
     }
   }
 
@@ -216,9 +217,9 @@ public final class ComponentImplementationBuilder {
             .returns(creatorType)
             .addStatement("return new $T()", componentImplementation.getCreatorName())
             .build();
-    componentImplementation.addMethod(BUILDER_METHOD, creatorFactoryMethod);
+    componentShard.addMethod(BUILDER_METHOD, creatorFactoryMethod);
     if (noArgFactoryMethod && canInstantiateAllRequirements()) {
-      componentImplementation.addMethod(
+      componentShard.addMethod(
           BUILDER_METHOD,
           methodBuilder("create")
               .returns(ClassName.get(graph.componentTypeElement()))
@@ -242,17 +243,17 @@ public final class ComponentImplementationBuilder {
     params.forEach(param -> method.addStatement("$T.checkNotNull($N)", Preconditions.class, param));
     method.addStatement(
         "return new $T($L)",
-        componentImplementation.name(),
+        componentShard.name(),
         parameterNames(
             ImmutableList.<ParameterSpec>builder()
-            .addAll(
-                componentImplementation.creatorComponentFields().stream()
-                    .map(field -> ParameterSpec.builder(field.type, field.name).build())
-                    .collect(toImmutableList()))
-            .addAll(params)
-            .build()));
+                .addAll(
+                    componentImplementation.creatorComponentFields().stream()
+                        .map(field -> ParameterSpec.builder(field.type, field.name).build())
+                        .collect(toImmutableList()))
+                .addAll(params)
+                .build()));
 
-    parent.get().addMethod(COMPONENT_METHOD, method.build());
+    parent.get().getComponentShard().addMethod(COMPONENT_METHOD, method.build());
   }
 
   private DeclaredType parentType() {

@@ -44,6 +44,7 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.HashMap;
@@ -80,9 +81,8 @@ final class SwitchingProviders {
   private final Map<Key, SwitchingProviderBuilder> switchingProviderBuilders =
       new LinkedHashMap<>();
 
-  private final ComponentImplementation componentImplementation;
+  private final ShardImplementation shardImplementation;
   private final ComponentBindingExpressions componentBindingExpressions;
-  private final ClassName owningComponent;
   private final DaggerTypes types;
   private final UniqueNameSet switchingProviderNames = new UniqueNameSet();
 
@@ -90,10 +90,10 @@ final class SwitchingProviders {
       ComponentImplementation componentImplementation,
       ComponentBindingExpressions componentBindingExpressions,
       DaggerTypes types) {
-    this.componentImplementation = checkNotNull(componentImplementation);
+    // Currently, the SwitchingProviders types are only added to the componentShard.
+    this.shardImplementation = checkNotNull(componentImplementation).getComponentShard();
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
     this.types = checkNotNull(types);
-    this.owningComponent = checkNotNull(componentImplementation).name();
   }
 
   /**
@@ -115,8 +115,8 @@ final class SwitchingProviders {
     if (switchingProviderBuilders.size() % MAX_CASES_PER_CLASS == 0) {
       String name = switchingProviderNames.getUniqueName("SwitchingProvider");
       SwitchingProviderBuilder switchingProviderBuilder =
-          new SwitchingProviderBuilder(owningComponent.nestedClass(name));
-      componentImplementation.addTypeSupplier(switchingProviderBuilder::build);
+          new SwitchingProviderBuilder(shardImplementation.name().nestedClass(name));
+      shardImplementation.addTypeSupplier(switchingProviderBuilder::build);
       return switchingProviderBuilder;
     }
     return getLast(switchingProviderBuilders.values());
@@ -147,7 +147,7 @@ final class SwitchingProviders {
           CodeBlock.of(
               "new $T<>($L, $L)",
               switchingProviderType,
-              componentImplementation.componentFieldsByImplementation().values().stream()
+              shardImplementation.componentFieldsByImplementation().values().stream()
                   .map(field -> CodeBlock.of("$N", field))
                   .collect(CodeBlocks.toParametersCodeBlock()),
               switchIds.get(key)));
@@ -178,7 +178,7 @@ final class SwitchingProviders {
 
       // The SwitchingProvider constructor lists all component parameters first and switch id last.
       MethodSpec.Builder constructor = MethodSpec.constructorBuilder();
-      componentImplementation
+      shardImplementation
           .componentFieldsByImplementation()
           .values()
           .forEach(

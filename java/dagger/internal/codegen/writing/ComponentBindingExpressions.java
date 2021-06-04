@@ -169,23 +169,25 @@ public final class ComponentBindingExpressions {
    * Returns the {@link CodeBlock} for the method arguments used with the factory {@code create()}
    * method for the given {@link ContributionBinding binding}.
    */
-  CodeBlock getCreateMethodArgumentsCodeBlock(ContributionBinding binding) {
-    return makeParametersCodeBlock(getCreateMethodArgumentsCodeBlocks(binding));
+  CodeBlock getCreateMethodArgumentsCodeBlock(
+      ContributionBinding binding, ClassName requestingClass) {
+    return makeParametersCodeBlock(getCreateMethodArgumentsCodeBlocks(binding, requestingClass));
   }
 
-  private ImmutableList<CodeBlock> getCreateMethodArgumentsCodeBlocks(ContributionBinding binding) {
+  private ImmutableList<CodeBlock> getCreateMethodArgumentsCodeBlocks(
+      ContributionBinding binding, ClassName requestingClass) {
     ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
 
     if (binding.requiresModuleInstance()) {
       arguments.add(
           componentRequirementExpressions.getExpressionDuringInitialization(
               ComponentRequirement.forModule(binding.contributingModule().get().asType()),
-              componentImplementation.name()));
+              requestingClass));
     }
 
     binding.dependencies().stream()
         .map(dependency -> frameworkRequest(binding, dependency))
-        .map(request -> getDependencyExpression(request, componentImplementation.name()))
+        .map(request -> getDependencyExpression(request, requestingClass))
         .map(Expression::codeBlock)
         .forEach(arguments::add);
 
@@ -455,8 +457,7 @@ public final class ComponentBindingExpressions {
     Optional<ComponentMethodDescriptor> matchingComponentMethod =
         graph.componentDescriptor().firstMatchingComponentMethod(request);
 
-    ShardImplementation shardImplementation =
-        componentImplementation.shardImplementation(binding.key());
+    ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
 
     // Consider the case of a request from a component method like:
     //

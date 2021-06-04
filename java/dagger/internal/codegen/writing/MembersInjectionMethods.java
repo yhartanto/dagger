@@ -34,9 +34,11 @@ import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.ProvisionBinding;
+import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
 import dagger.model.Key;
 import java.util.LinkedHashMap;
@@ -49,7 +51,7 @@ import javax.lang.model.type.TypeMirror;
 /** Manages the member injection methods for a component. */
 @PerComponentImplementation
 final class MembersInjectionMethods {
-  private final Map<Key, MethodSpec> membersInjectionMethods = new LinkedHashMap<>();
+  private final Map<Key, Expression> injectMethodExpressions = new LinkedHashMap<>();
   private final ComponentImplementation componentImplementation;
   private final ComponentBindingExpressions bindingExpressions;
   private final BindingGraph graph;
@@ -74,28 +76,32 @@ final class MembersInjectionMethods {
   }
 
   /**
-   * Returns the members injection {@link MethodSpec} for the given {@link Key}, creating it if
+   * Returns the members injection {@link Expression} for the given {@link Key}, creating it if
    * necessary.
    */
-  MethodSpec getOrCreate(Key key) {
-    return reentrantComputeIfAbsent(membersInjectionMethods, key, this::membersInjectionMethod);
+  Expression getInjectExpression(Key key, CodeBlock instance) {
+    Expression expression =
+        reentrantComputeIfAbsent(injectMethodExpressions, key, this::injectMethodExpression);
+    return Expression.create(
+        expression.type(), CodeBlock.of("$L($L)", expression.codeBlock(), instance));
   }
 
-  private MethodSpec membersInjectionMethod(Key key) {
+  private Expression injectMethodExpression(Key key) {
     Binding binding =
         graph.membersInjectionBinding(key).isPresent()
             ? graph.membersInjectionBinding(key).get()
             : graph.contributionBinding(key);
+    ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
     TypeMirror keyType = binding.key().type();
     TypeMirror membersInjectedType =
-        isTypeAccessibleFrom(keyType, componentImplementation.name().packageName())
+        isTypeAccessibleFrom(keyType, shardImplementation.name().packageName())
             ? keyType
             : elements.getTypeElement(Object.class).asType();
     TypeName membersInjectedTypeName = TypeName.get(membersInjectedType);
     Name bindingTypeName = binding.bindingTypeElement().get().getSimpleName();
     // TODO(ronshapiro): include type parameters in this name e.g. injectFooOfT, and outer class
     // simple names Foo.Builder -> injectFooBuilder
-    String methodName = componentImplementation.getUniqueMethodName("inject" + bindingTypeName);
+    String methodName = shardImplementation.getUniqueMethodName("inject" + bindingTypeName);
     ParameterSpec parameter = ParameterSpec.builder(membersInjectedTypeName, "instance").build();
     MethodSpec.Builder methodBuilder =
         methodBuilder(methodName)
@@ -111,20 +117,25 @@ final class MembersInjectionMethods {
     methodBuilder.addCode(
         InjectionSiteMethod.invokeAll(
             injectionSites(binding),
-            componentImplementation.name(),
+            shardImplementation.name(),
             instance,
             membersInjectedType,
             request ->
                 bindingExpressions
-                    .getDependencyArgumentExpression(request, componentImplementation.name())
+                    .getDependencyArgumentExpression(request, shardImplementation.name())
                     .codeBlock(),
             types,
             metadataUtil));
     methodBuilder.addStatement("return $L", instance);
 
     MethodSpec method = methodBuilder.build();
-    componentImplementation.addMethod(MEMBERS_INJECTION_METHOD, method);
-    return method;
+    shardImplementation.addMethod(MEMBERS_INJECTION_METHOD, method);
+
+    CodeBlock methodCall =
+        shardImplementation.isComponentShard()
+            ? CodeBlock.of("$N", method)
+            : CodeBlock.of("$L.$N", shardImplementation.shardFieldReference(), method);
+    return Expression.create(membersInjectedType, methodCall);
   }
 
   private static ImmutableSet<InjectionSite> injectionSites(Binding binding) {

@@ -67,7 +67,7 @@ abstract class MethodBindingExpression extends BindingExpression {
     this.binding = checkNotNull(binding);
     this.bindingMethodImplementation = bindingMethodImplementation(methodImplementationStrategy);
     this.wrappedBindingExpression = checkNotNull(wrappedBindingExpression);
-    this.producerEntryPointView = new ProducerEntryPointView(types);
+    this.producerEntryPointView = new ProducerEntryPointView(shardImplementation, types);
     this.types = checkNotNull(types);
   }
 
@@ -97,15 +97,14 @@ abstract class MethodBindingExpression extends BindingExpression {
         returnType(),
         requestingClass.equals(shardImplementation.name())
             ? methodCall
-            : CodeBlock.of("$L.$L", shardImplementation.fieldReference(), methodCall));
+            : CodeBlock.of("$L.$L", shardImplementation.shardFieldReference(), methodCall));
   }
 
   @Override
-  Expression getDependencyExpressionForComponentMethod(ComponentMethodDescriptor componentMethod,
-      ComponentImplementation component) {
+  Expression getDependencyExpressionForComponentMethod(
+      ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
     return producerEntryPointView
-        .getProducerEntryPointField(
-            this, componentMethod, shardImplementation.getComponentImplementation())
+        .getProducerEntryPointField(this, componentMethod, component.name())
         .orElseGet(
             () -> super.getDependencyExpressionForComponentMethod(componentMethod, component));
   }

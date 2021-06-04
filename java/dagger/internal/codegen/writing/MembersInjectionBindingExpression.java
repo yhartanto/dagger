@@ -65,13 +65,13 @@ final class MembersInjectionBindingExpression extends BindingExpression {
           : CodeBlock.of("return $N;", parameter);
     } else {
       return methodElement.getReturnType().getKind().equals(VOID)
-          ? CodeBlock.of("$L;", membersInjectionInvocation(parameter))
-          : CodeBlock.of("return $L;", membersInjectionInvocation(parameter));
+          ? CodeBlock.of("$L;", membersInjectionInvocation(parameter).codeBlock())
+          : CodeBlock.of("return $L;", membersInjectionInvocation(parameter).codeBlock());
     }
   }
 
-  CodeBlock membersInjectionInvocation(ParameterSpec target) {
-    return CodeBlock.of("$N($N)", membersInjectionMethods.getOrCreate(binding.key()), target);
+  private Expression membersInjectionInvocation(ParameterSpec target) {
+    return membersInjectionMethods.getInjectExpression(binding.key(), CodeBlock.of("$N", target));
   }
 
   @AssistedFactory

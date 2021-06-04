@@ -17,9 +17,12 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
+import static dagger.internal.codegen.CompilerMode.DEFAULT_MODE;
+import static dagger.internal.codegen.CompilerMode.FAST_INIT_MODE;
 import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static java.util.stream.Collectors.joining;
 
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.testing.compile.Compilation;
@@ -29,211 +32,500 @@ import java.util.Arrays;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class ComponentShardTest {
-  private static final int BINDINGS_PER_SHARD = 10;
+  private static final int BINDINGS_PER_SHARD = 2;
+
+  @Parameters(name = "{0}")
+  public static ImmutableCollection<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public ComponentShardTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
 
   @Test
   public void testNewShardCreated() {
-    // Create 2N + 1 bindings: N in DaggerTestComponent, N in Shard1, and 1 in Shard2
-    int numBindings = 2 * BINDINGS_PER_SHARD + 1;
+    // Add all bindings.
+    //
+    //     1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
+    //          ^--------/
+    //
     ImmutableList.Builder<JavaFileObject> javaFileObjects = ImmutableList.builder();
-    ImmutableList.Builder<String> entryPoints = ImmutableList.builder();
-    for (int i = 0; i < numBindings; i++) {
-      String bindingName = "Binding" + i;
-      entryPoints.add(String.format("%1$s get%1$s();", bindingName));
-      entryPoints.add(String.format("Provider<%1$s> get%1$sProvider();", bindingName));
+    javaFileObjects
+        // Shard 2: Bindings (1)
+        .add(createBinding("Binding1", "Binding2 binding2"))
+        // Shard 1: Bindings (2, 3, 4, 5). Contains more than 2 bindings due to cycle.
+        .add(createBinding("Binding2", "Binding3 binding3"))
+        .add(createBinding("Binding3", "Binding4 binding4"))
+        .add(createBinding("Binding4", "Binding5 binding5, Provider<Binding2> binding2Provider"))
+        .add(createBinding("Binding5", "Binding6 binding6"))
+        // Component shard: Bindings (6, 7)
+        .add(createBinding("Binding6", "Binding7 binding7"))
+        .add(createBinding("Binding7"));
 
-      // Add dependencies between main component and shard1: 9 -> 10 -> Provider<9>
-      // Add dependencies between shard1 and shard2:        19 -> 20 -> Provider<19>
-      switch (i) {
-        case 9:
-          javaFileObjects.add(createBinding(bindingName, "Binding10 dep"));
-          break;
-        case 10:
-          javaFileObjects.add(createBinding(bindingName, "Provider<Binding9> dep"));
-          break;
-        case 19:
-          javaFileObjects.add(createBinding(bindingName, "Binding20 dep"));
-          break;
-        case 20:
-          javaFileObjects.add(createBinding(bindingName, "Provider<Binding19> dep"));
-          break;
-        default:
-          javaFileObjects.add(createBinding(bindingName));
-          break;
-      }
-    }
-
-    javaFileObjects.add(createComponent(entryPoints.build()));
-
-    // This generated component shows a couple things:
-    //   1. Binding locations:
-    //     * Binding #9 belongs to DaggerTestComponent
-    //     * Binding #10 belongs to Shard1
-    //     * Binding #20 belongs to Shard2
-    //   2. DaggerTestComponent entry point methods:
-    //     * Binding #9 implementation is inlined DaggerTestComponent.
-    //     * Binding #10 implementation is delegated to Shard1.
-    //     * Binding #20 implementation is delegated to Shard2.
-    //   3. Dependencies between component and shard:
-    //     * Binding #9 in DaggerTestComponent depends on #10 in Shard1.
-    //     * Binding #10 in Shard1 depends on Provider<#9> in DaggerTestComponent.
-    //   4. Dependencies between shard and shard:
-    //     * Binding #19 in Shard1 depends on #20 in Shard2.
-    //     * Binding #20 in Shard2 depends on Provider<#19> in Shard1.
-    JavaFileObject generatedComponent =
+    // Add the component with entry points for each binding and its provider.
+    javaFileObjects.add(
         JavaFileObjects.forSourceLines(
-            "dagger.internal.codegen.DaggerTestComponent",
-                "package dagger.internal.codegen;",
-            GeneratedLines.generatedAnnotations(),
-                "final class DaggerTestComponent implements TestComponent {",
-                "  private final Shard1 shard1 = new Shard1();",
-                "",
-                "  private volatile Object binding9 = new MemoizedSentinel();",
-                "",
-                "  private volatile Provider<Binding9> binding9Provider;",
-                "",
-                "  @Override",
-                "  public Binding9 getBinding9() {",
-                "    Object local = binding9;",
-                "    if (local instanceof MemoizedSentinel) {",
-                "      synchronized (local) {",
-                "        local = binding9;",
-                "        if (local instanceof MemoizedSentinel) {",
-                "          local = new Binding9(testComponent.shard1.binding10());",
-                "          binding9 = DoubleCheck.reentrantCheck(binding9, local);",
-                "        }",
-                "      }",
-                "    }",
-                "    return (Binding9) local;",
-                "  }",
-                "",
-                "  @Override",
-                "  public Provider<Binding9> getBinding9Provider() {",
-                "    Object local = binding9Provider;",
-                "    if (local == null) {",
-                "      local = new SwitchingProvider<>(testComponent, 9);",
-                "      binding9Provider = (Provider<Binding9>) local;",
-                "    }",
-                "    return (Provider<Binding9>) local;",
-                "  }",
-                "",
-                "  @Override",
-                "  public Binding10 getBinding10() {",
-                "    return testComponent.shard1.binding10();",
-                "  }",
-                "",
-                "  @Override",
-                "  public Provider<Binding10> getBinding10Provider() {",
-                "    return testComponent.shard1.binding10Provider();",
-                "  }",
-                "",
-                "  @Override",
-                "  public Binding20 getBinding20() {",
-                "    return testComponent.shard2.binding20();",
-                "  }",
-                "",
-                "  @Override",
-                "  public Provider<Binding20> getBinding20Provider() {",
-                "    return testComponent.shard2.binding20Provider();",
-                "  }",
-                "",
-                "  private final class Shard1 {",
-                "    private volatile Object binding10 = new MemoizedSentinel();",
-                "",
-                "    private volatile Object binding19 = new MemoizedSentinel();",
-                "",
-                "    private volatile Provider<Binding10> binding10Provider;",
-                "",
-                "    private volatile Provider<Binding19> binding19Provider;",
-                "",
-                "    private Binding10 binding10() {",
-                "      Object local = binding10;",
-                "      if (local instanceof MemoizedSentinel) {",
-                "        synchronized (local) {",
-                "          local = binding10;",
-                "          if (local instanceof MemoizedSentinel) {",
-                "            local = new Binding10(",
-                "                testComponent.getBinding9Provider());",
-                "            binding10 = DoubleCheck.reentrantCheck(binding10, local);",
-                "          }",
-                "        }",
-                "      }",
-                "      return (Binding10) local;",
-                "    }",
-                "",
-                "    private Provider<Binding10> binding10Provider() {",
-                "      Object local = binding10Provider;",
-                "      if (local == null) {",
-                "        local = new SwitchingProvider<>(testComponent, 10);",
-                "        binding10Provider = (Provider<Binding10>) local;",
-                "      }",
-                "      return (Provider<Binding10>) local;",
-                "    }",
-                "",
-                "    private Provider<Binding19> binding19Provider() {",
-                "      Object local = binding19Provider;",
-                "      if (local == null) {",
-                "        local = new SwitchingProvider<>(testComponent, 19);",
-                "        binding19Provider = (Provider<Binding19>) local;",
-                "      }",
-                "      return (Provider<Binding19>) local;",
-                "    }",
-                "",
-                "    private Binding19 binding19() {",
-                "      Object local = binding19;",
-                "      if (local instanceof MemoizedSentinel) {",
-                "        synchronized (local) {",
-                "          local = binding19;",
-                "          if (local instanceof MemoizedSentinel) {",
-                "            local = new Binding19(testComponent.shard2.binding20());",
-                "            binding19 = DoubleCheck.reentrantCheck(binding19, local);",
-                "          }",
-                "        }",
-                "      }",
-                "      return (Binding19) local;",
-                "    }",
-                "  }",
-                "",
-                "  private final class Shard2 {",
-                "    private volatile Object binding20 = new MemoizedSentinel();",
-                "",
-                "    private volatile Provider<Binding20> binding20Provider;",
-                "",
-                "    private Binding20 binding20() {",
-                "      Object local = binding20;",
-                "      if (local instanceof MemoizedSentinel) {",
-                "        synchronized (local) {",
-                "          local = binding20;",
-                "          if (local instanceof MemoizedSentinel) {",
-                "            local = new Binding20(",
-                "                testComponent.shard1.binding19Provider());",
-                "            binding20 = DoubleCheck.reentrantCheck(binding20, local);",
-                "          }",
-                "        }",
-                "      }",
-                "      return (Binding20) local;",
-                "    }",
-                "",
-                "    private Provider<Binding20> binding20Provider() {",
-                "      Object local = binding20Provider;",
-                "      if (local == null) {",
-                "        local = new SwitchingProvider<>(testComponent, 20);",
-                "        binding20Provider = (Provider<Binding20>) local;",
-                "      }",
-                "      return (Provider<Binding20>) local;",
-                "    }",
-                "  }",
-                "}");
+            "dagger.internal.codegen.TestComponent",
+            "package dagger.internal.codegen;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Provider;",
+            "import javax.inject.Singleton;",
+            "",
+            "@Singleton",
+            "@Component",
+            "interface TestComponent {",
+            "  Binding1 binding1();",
+            "  Binding2 binding2();",
+            "  Binding3 binding3();",
+            "  Binding4 binding4();",
+            "  Binding5 binding5();",
+            "  Binding6 binding6();",
+            "  Binding7 binding7();",
+            "  Provider<Binding1> providerBinding1();",
+            "  Provider<Binding2> providerBinding2();",
+            "  Provider<Binding3> providerBinding3();",
+            "  Provider<Binding4> providerBinding4();",
+            "  Provider<Binding5> providerBinding5();",
+            "  Provider<Binding6> providerBinding6();",
+            "  Provider<Binding7> providerBinding7();",
+            "}"));
 
-    Compilation compilation = compilerWithAndroidMode().compile(javaFileObjects.build());
+    Compilation compilation = compiler().compile(javaFileObjects.build());
     assertThat(compilation).succeededWithoutWarnings();
     assertThat(compilation)
         .generatedSourceFile("dagger.internal.codegen.DaggerTestComponent")
-        .containsElementsIn(generatedComponent);
+        .containsElementsIn(
+            compilerMode
+                .javaFileBuilder("dagger.internal.codegen.DaggerTestComponent")
+                .addLines(
+                    "package dagger.internal.codegen;",
+                    "",
+                    GeneratedLines.generatedAnnotations(),
+                    "final class DaggerTestComponent implements TestComponent {")
+                .addLinesIn(
+                    FAST_INIT_MODE,
+                    "  private Shard1 shard1;",
+                    "  private Shard2 shard2;",
+                    "  private final DaggerTestComponent testComponent = this;",
+                    "  private volatile Object binding6 = new MemoizedSentinel();",
+                    "  private volatile Object binding7 = new MemoizedSentinel();",
+                    "  private volatile Provider<Binding6> binding6Provider;",
+                    "  private volatile Provider<Binding7> binding7Provider;",
+                    "",
+                    "  private DaggerTestComponent() {",
+                    "    shard1 = new Shard1();",
+                    "    shard2 = new Shard2();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding1 binding1() {",
+                    "    return testComponent.shard2.binding1();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding2 binding2() {",
+                    "    return testComponent.shard1.binding2();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding3 binding3() {",
+                    "    return testComponent.shard1.binding3();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding4 binding4() {",
+                    "    return testComponent.shard1.binding4();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding5 binding5() {",
+                    "    return testComponent.shard1.binding5();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding6 binding6() {",
+                    "    Object local = binding6;",
+                    "    if (local instanceof MemoizedSentinel) {",
+                    "      synchronized (local) {",
+                    "        local = binding6;",
+                    "        if (local instanceof MemoizedSentinel) {",
+                    "          local = new Binding6(binding7());",
+                    "          binding6 = DoubleCheck.reentrantCheck(binding6, local);",
+                    "        }",
+                    "      }",
+                    "    }",
+                    "    return (Binding6) local;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding7 binding7() {",
+                    "    Object local = binding7;",
+                    "    if (local instanceof MemoizedSentinel) {",
+                    "      synchronized (local) {",
+                    "        local = binding7;",
+                    "        if (local instanceof MemoizedSentinel) {",
+                    "          local = new Binding7();",
+                    "          binding7 = DoubleCheck.reentrantCheck(binding7, local);",
+                    "        }",
+                    "      }",
+                    "    }",
+                    "    return (Binding7) local;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding1> providerBinding1() {",
+                    "    return testComponent.shard2.binding1Provider();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding2> providerBinding2() {",
+                    "    return testComponent.shard1.binding2Provider();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding3> providerBinding3() {",
+                    "    return testComponent.shard1.binding3Provider();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding4> providerBinding4() {",
+                    "    return testComponent.shard1.binding4Provider();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding5> providerBinding5() {",
+                    "    return testComponent.shard1.binding5Provider();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding6> providerBinding6() {",
+                    "    Object local = binding6Provider;",
+                    "    if (local == null) {",
+                    "      local = new SwitchingProvider<>(testComponent, 5);",
+                    "      binding6Provider = (Provider<Binding6>) local;",
+                    "    }",
+                    "    return (Provider<Binding6>) local;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding7> providerBinding7() {",
+                    "    Object local = binding7Provider;",
+                    "    if (local == null) {",
+                    "      local = new SwitchingProvider<>(testComponent, 6);",
+                    "      binding7Provider = (Provider<Binding7>) local;",
+                    "    }",
+                    "    return (Provider<Binding7>) local;",
+                    "  }",
+                    "",
+                    "  private final class Shard1 {",
+                    "    private volatile Object binding5 = new MemoizedSentinel();",
+                    "    private volatile Object binding4 = new MemoizedSentinel();",
+                    "    private volatile Object binding3 = new MemoizedSentinel();",
+                    "    private volatile Object binding2 = new MemoizedSentinel();",
+                    "    private volatile Provider<Binding2> binding2Provider;",
+                    "    private volatile Provider<Binding3> binding3Provider;",
+                    "    private volatile Provider<Binding4> binding4Provider;",
+                    "    private volatile Provider<Binding5> binding5Provider;",
+                    "",
+                    "    private Shard1() {}",
+                    "",
+                    "    private Binding5 binding5() {",
+                    "      Object local = binding5;",
+                    "      if (local instanceof MemoizedSentinel) {",
+                    "        synchronized (local) {",
+                    "          local = binding5;",
+                    "          if (local instanceof MemoizedSentinel) {",
+                    "            local = new Binding5(testComponent.binding6());",
+                    "            binding5 = DoubleCheck.reentrantCheck(binding5, local);",
+                    "          }",
+                    "        }",
+                    "      }",
+                    "      return (Binding5) local;",
+                    "    }",
+                    "",
+                    "    private Provider<Binding2> binding2Provider() {",
+                    "      Object local = binding2Provider;",
+                    "      if (local == null) {",
+                    "        local = new SwitchingProvider<>(testComponent, 0);",
+                    "        binding2Provider = (Provider<Binding2>) local;",
+                    "      }",
+                    "      return (Provider<Binding2>) local;",
+                    "    }",
+                    "",
+                    "    private Binding4 binding4() {",
+                    "      Object local = binding4;",
+                    "      if (local instanceof MemoizedSentinel) {",
+                    "        synchronized (local) {",
+                    "          local = binding4;",
+                    "          if (local instanceof MemoizedSentinel) {",
+                    "            local = new Binding4(binding5(), binding2Provider());",
+                    "            binding4 = DoubleCheck.reentrantCheck(binding4, local);",
+                    "          }",
+                    "        }",
+                    "      }",
+                    "      return (Binding4) local;",
+                    "    }",
+                    "",
+                    "    private Binding3 binding3() {",
+                    "      Object local = binding3;",
+                    "      if (local instanceof MemoizedSentinel) {",
+                    "        synchronized (local) {",
+                    "          local = binding3;",
+                    "          if (local instanceof MemoizedSentinel) {",
+                    "            local = new Binding3(binding4());",
+                    "            binding3 = DoubleCheck.reentrantCheck(binding3, local);",
+                    "          }",
+                    "        }",
+                    "      }",
+                    "      return (Binding3) local;",
+                    "    }",
+                    "",
+                    "    private Binding2 binding2() {",
+                    "      Object local = binding2;",
+                    "      if (local instanceof MemoizedSentinel) {",
+                    "        synchronized (local) {",
+                    "          local = binding2;",
+                    "          if (local instanceof MemoizedSentinel) {",
+                    "            local = new Binding2(binding3());",
+                    "            binding2 = DoubleCheck.reentrantCheck(binding2, local);",
+                    "          }",
+                    "        }",
+                    "      }",
+                    "      return (Binding2) local;",
+                    "    }",
+                    "",
+                    "    private Provider<Binding3> binding3Provider() {",
+                    "      Object local = binding3Provider;",
+                    "      if (local == null) {",
+                    "        local = new SwitchingProvider<>(testComponent, 2);",
+                    "        binding3Provider = (Provider<Binding3>) local;",
+                    "      }",
+                    "      return (Provider<Binding3>) local;",
+                    "    }",
+                    "",
+                    "    private Provider<Binding4> binding4Provider() {",
+                    "      Object local = binding4Provider;",
+                    "      if (local == null) {",
+                    "        local = new SwitchingProvider<>(testComponent, 3);",
+                    "        binding4Provider = (Provider<Binding4>) local;",
+                    "      }",
+                    "      return (Provider<Binding4>) local;",
+                    "    }",
+                    "",
+                    "    private Provider<Binding5> binding5Provider() {",
+                    "      Object local = binding5Provider;",
+                    "      if (local == null) {",
+                    "        local = new SwitchingProvider<>(testComponent, 4);",
+                    "        binding5Provider = (Provider<Binding5>) local;",
+                    "      }",
+                    "      return (Provider<Binding5>) local;",
+                    "    }",
+                    "  }",
+                    "",
+                    "  private final class Shard2 {",
+                    "    private volatile Object binding1 = new MemoizedSentinel();",
+                    "    private volatile Provider<Binding1> binding1Provider;",
+                    "",
+                    "    private Shard2() {}",
+                    "",
+                    "    private Binding1 binding1() {",
+                    "      Object local = binding1;",
+                    "      if (local instanceof MemoizedSentinel) {",
+                    "        synchronized (local) {",
+                    "          local = binding1;",
+                    "          if (local instanceof MemoizedSentinel) {",
+                    "            local = new Binding1(testComponent.shard1.binding2());",
+                    "            binding1 = DoubleCheck.reentrantCheck(binding1, local);",
+                    "          }",
+                    "        }",
+                    "      }",
+                    "      return (Binding1) local;",
+                    "    }",
+                    "",
+                    "    private Provider<Binding1> binding1Provider() {",
+                    "      Object local = binding1Provider;",
+                    "      if (local == null) {",
+                    "        local = new SwitchingProvider<>(testComponent, 1);",
+                    "        binding1Provider = (Provider<Binding1>) local;",
+                    "      }",
+                    "      return (Provider<Binding1>) local;",
+                    "    }",
+                    "  }",
+                    "",
+                    "  private static final class SwitchingProvider<T> implements Provider<T> {",
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    @Override",
+                    "    public T get() {",
+                    "      switch (id) {",
+                    "        case 0: // dagger.internal.codegen.Binding2 ",
+                    "        return (T) testComponent.shard1.binding2();",
+                    "",
+                    "        case 1: // dagger.internal.codegen.Binding1 ",
+                    "        return (T) testComponent.shard2.binding1();",
+                    "",
+                    "        case 2: // dagger.internal.codegen.Binding3 ",
+                    "        return (T) testComponent.shard1.binding3();",
+                    "",
+                    "        case 3: // dagger.internal.codegen.Binding4 ",
+                    "        return (T) testComponent.shard1.binding4();",
+                    "",
+                    "        case 4: // dagger.internal.codegen.Binding5 ",
+                    "        return (T) testComponent.shard1.binding5();",
+                    "",
+                    "        case 5: // dagger.internal.codegen.Binding6 ",
+                    "        return (T) testComponent.binding6();",
+                    "",
+                    "        case 6: // dagger.internal.codegen.Binding7 ",
+                    "        return (T) testComponent.binding7();",
+                    "",
+                    "        default: throw new AssertionError(id);",
+                    "      }",
+                    "    }",
+                    "  }")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "  private Shard1 shard1;",
+                    "  private Shard2 shard2;",
+                    "  private final DaggerTestComponent testComponent = this;",
+                    "  private Provider<Binding7> binding7Provider;",
+                    "  private Provider<Binding6> binding6Provider;",
+                    "",
+                    "  private DaggerTestComponent() {",
+                    "    initialize();",
+                    "    shard1 = new Shard1();",
+                    "    shard2 = new Shard2();",
+                    "  }",
+                    "",
+                    "  @SuppressWarnings(\"unchecked\")",
+                    "  private void initialize() {",
+                    "    this.binding7Provider =",
+                    "        DoubleCheck.provider(Binding7_Factory.create());",
+                    "    this.binding6Provider =",
+                    "        DoubleCheck.provider(Binding6_Factory.create(binding7Provider));",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding1 binding1() {",
+                    "    return testComponent.shard2.binding1Provider.get();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding2 binding2() {",
+                    "    return testComponent.shard1.binding2Provider.get();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding3 binding3() {",
+                    "    return testComponent.shard1.binding3Provider.get();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding4 binding4() {",
+                    "    return testComponent.shard1.binding4Provider.get();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding5 binding5() {",
+                    "    return testComponent.shard1.binding5Provider.get();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding6 binding6() {",
+                    "    return binding6Provider.get();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Binding7 binding7() {",
+                    "    return binding7Provider.get();",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding1> providerBinding1() {",
+                    "    return testComponent.shard2.binding1Provider;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding2> providerBinding2() {",
+                    "    return testComponent.shard1.binding2Provider;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding3> providerBinding3() {",
+                    "    return testComponent.shard1.binding3Provider;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding4> providerBinding4() {",
+                    "    return testComponent.shard1.binding4Provider;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding5> providerBinding5() {",
+                    "    return testComponent.shard1.binding5Provider;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding6> providerBinding6() {",
+                    "    return binding6Provider;",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public Provider<Binding7> providerBinding7() {",
+                    "    return binding7Provider;",
+                    "  }",
+                    "",
+                    "  private final class Shard1 {",
+                    "    private Provider<Binding5> binding5Provider;",
+                    "    private Provider<Binding2> binding2Provider;",
+                    "    private Provider<Binding4> binding4Provider;",
+                    "    private Provider<Binding3> binding3Provider;",
+                    "",
+                    "    private Shard1() {",
+                    "      initialize();",
+                    "    }",
+                    "",
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    private void initialize() {",
+                    "      this.binding5Provider =",
+                    "          DoubleCheck.provider(",
+                    "              Binding5_Factory.create(testComponent.binding6Provider));",
+                    "      this.binding2Provider = new DelegateFactory<>();",
+                    "      this.binding4Provider =",
+                    "          DoubleCheck.provider(",
+                    "              Binding4_Factory.create(binding5Provider, binding2Provider));",
+                    "      this.binding3Provider =",
+                    "          DoubleCheck.provider(Binding3_Factory.create(binding4Provider));",
+                    "      DelegateFactory.setDelegate(",
+                    "          binding2Provider,",
+                    "          DoubleCheck.provider(Binding2_Factory.create(binding3Provider)));",
+                    "    }",
+                    "  }",
+                    "",
+                    "  private final class Shard2 {",
+                    "    private Provider<Binding1> binding1Provider;",
+                    "",
+                    "    private Shard2() {",
+                    "      initialize();",
+                    "    }",
+                    "",
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    private void initialize() {",
+                    "      this.binding1Provider =",
+                    "          DoubleCheck.provider(",
+                    "              Binding1_Factory.create(",
+                    "                  testComponent.shard1.binding2Provider));",
+                    "    }",
+                    "  }")
+                .build());
   }
 
   private static JavaFileObject createBinding(String bindingName, String... deps) {
@@ -252,27 +544,11 @@ public class ComponentShardTest {
         "}");
   }
 
-  private static JavaFileObject createComponent(ImmutableList<String> entryPoints) {
-    return JavaFileObjects.forSourceLines(
-        "dagger.internal.codegen.TestComponent",
-        "package dagger.internal.codegen;",
-        "",
-        "import dagger.Component;",
-        "import javax.inject.Provider;",
-        "import javax.inject.Singleton;",
-        "",
-        "@Singleton",
-        "@Component",
-        "interface TestComponent {",
-        "  " + entryPoints.stream().collect(joining("\n  ")),
-        "}");
-  }
-
-  private static Compiler compilerWithAndroidMode() {
+  private Compiler compiler() {
     return compilerWithOptions(
         ImmutableSet.<String>builder()
             .add("-Adagger.keysPerComponentShard=" + BINDINGS_PER_SHARD)
-            .addAll(CompilerMode.FAST_INIT_MODE.javacopts())
+            .addAll(compilerMode.javacopts())
             .build());
   }
 }

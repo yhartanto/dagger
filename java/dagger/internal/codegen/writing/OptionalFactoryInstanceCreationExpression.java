@@ -59,7 +59,7 @@ final class OptionalFactoryInstanceCreationExpression
                 .getDependencyExpression(
                     bindingRequest(
                         getOnlyElement(binding.dependencies()).key(), binding.frameworkType()),
-                    componentImplementation.name())
+                    componentImplementation.shardImplementation(binding).name())
                 .codeBlock());
   }
 

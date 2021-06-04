@@ -55,7 +55,7 @@ final class ProducerFromProviderCreationExpression implements FrameworkInstanceC
         componentBindingExpressions
             .getDependencyExpression(
                 bindingRequest(binding.key(), FrameworkType.PROVIDER),
-                componentImplementation.name())
+                componentImplementation.shardImplementation(binding).name())
             .codeBlock());
   }
 

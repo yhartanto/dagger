@@ -39,6 +39,7 @@ import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.BindingType;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.CodeBlocks;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import java.util.List;
 import java.util.Optional;
 import javax.lang.model.type.DeclaredType;
@@ -56,17 +57,17 @@ abstract class MemberSelect {
    * MemberSelect} will not be valid for accessing the field from a different class (regardless of
    * accessibility).
    */
-  static MemberSelect localField(ComponentImplementation owningComponent, String fieldName) {
-    return new LocalField(owningComponent, fieldName);
+  static MemberSelect localField(ShardImplementation owningShard, String fieldName) {
+    return new LocalField(owningShard, fieldName);
   }
 
   private static final class LocalField extends MemberSelect {
-    final ComponentImplementation owningComponent;
+    final ShardImplementation owningShard;
     final String fieldName;
 
-    LocalField(ComponentImplementation owningComponent, String fieldName) {
-      super(owningComponent.name(), false);
-      this.owningComponent = owningComponent;
+    LocalField(ShardImplementation owningShard, String fieldName) {
+      super(owningShard.name(), false);
+      this.owningShard = owningShard;
       this.fieldName = checkNotNull(fieldName);
     }
 
@@ -74,7 +75,7 @@ abstract class MemberSelect {
     CodeBlock getExpressionFor(ClassName usingClass) {
       return owningClass().equals(usingClass)
           ? CodeBlock.of("$N", fieldName)
-          : CodeBlock.of("$L.$N", owningComponent.componentFieldReference(), fieldName);
+          : CodeBlock.of("$L.$N", owningShard.shardFieldReference(), fieldName);
     }
   }
 

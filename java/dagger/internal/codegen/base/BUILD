@@ -43,6 +43,7 @@ java_library(
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "//java/dagger/internal/guava:concurrent",
+        "//java/dagger/internal/guava:graph",
         "//java/dagger/producers",
         "//java/dagger/spi",
         "@google_bazel_common//third_party/java/auto:common",

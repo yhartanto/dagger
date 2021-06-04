@@ -34,6 +34,7 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkField;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.model.BindingKind;
 import dagger.producers.internal.DelegateProducer;
 import java.util.Optional;
@@ -73,7 +74,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     }
   }
 
-  private final ComponentImplementation componentImplementation;
+  private final ShardImplementation shardImplementation;
   private final ContributionBinding binding;
   private final FrameworkInstanceCreationExpression frameworkInstanceCreationExpression;
   private FieldSpec fieldSpec;
@@ -83,8 +84,8 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       ComponentImplementation componentImplementation,
       ContributionBinding binding,
       FrameworkInstanceCreationExpression frameworkInstanceCreationExpression) {
-    this.componentImplementation = checkNotNull(componentImplementation);
     this.binding = checkNotNull(binding);
+    this.shardImplementation = checkNotNull(componentImplementation).shardImplementation(binding);
     this.frameworkInstanceCreationExpression = checkNotNull(frameworkInstanceCreationExpression);
   }
 
@@ -95,7 +96,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
   @Override
   public final MemberSelect memberSelect() {
     initializeField();
-    return MemberSelect.localField(componentImplementation, checkNotNull(fieldSpec).name);
+    return MemberSelect.localField(shardImplementation, checkNotNull(fieldSpec).name);
   }
 
   /** Adds the field and its initialization code to the component. */
@@ -114,7 +115,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
         } else {
           codeBuilder.add(initCode);
         }
-        componentImplementation.addInitialization(codeBuilder.build());
+        shardImplementation.addInitialization(codeBuilder.build());
 
         fieldInitializationState = InitializationState.INITIALIZED;
         break;
@@ -122,7 +123,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       case INITIALIZING:
         // We were recursively invoked, so create a delegate factory instead
         fieldInitializationState = InitializationState.DELEGATED;
-        componentImplementation.addInitialization(
+        shardImplementation.addInitialization(
             CodeBlock.of("this.$N = new $T<>();", getOrCreateField(), delegateType()));
         break;
 
@@ -140,7 +141,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     if (fieldSpec != null) {
       return fieldSpec;
     }
-    boolean useRawType = !componentImplementation.isTypeAccessible(binding.key().type());
+    boolean useRawType = !shardImplementation.isTypeAccessible(binding.key().type());
     FrameworkField contributionBindingField =
         FrameworkField.forBinding(
             binding, frameworkInstanceCreationExpression.alternativeFrameworkClass());
@@ -163,14 +164,14 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
 
     FieldSpec.Builder contributionField =
         FieldSpec.builder(
-            fieldType, componentImplementation.getUniqueFieldName(contributionBindingField.name()));
+            fieldType, shardImplementation.getUniqueFieldName(contributionBindingField.name()));
     contributionField.addModifiers(PRIVATE);
     if (useRawType) {
       contributionField.addAnnotation(AnnotationSpecs.suppressWarnings(RAWTYPES));
     }
 
     fieldSpec = contributionField.build();
-    componentImplementation.addField(FRAMEWORK_FIELD, fieldSpec);
+    shardImplementation.addField(FRAMEWORK_FIELD, fieldSpec);
 
     return fieldSpec;
   }

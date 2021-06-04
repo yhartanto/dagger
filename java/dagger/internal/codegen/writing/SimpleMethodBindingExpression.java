@@ -27,7 +27,6 @@ import static dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod.r
 import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
@@ -37,7 +36,6 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod;
 import dagger.model.DependencyRequest;
 import java.util.Optional;
@@ -57,7 +55,6 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   private final ComponentBindingExpressions componentBindingExpressions;
   private final MembersInjectionMethods membersInjectionMethods;
   private final ComponentRequirementExpressions componentRequirementExpressions;
-  private final DaggerElements elements;
   private final SourceVersion sourceVersion;
   private final KotlinMetadataUtil metadataUtil;
 
@@ -68,7 +65,6 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       CompilerOptions compilerOptions,
       ComponentBindingExpressions componentBindingExpressions,
       ComponentRequirementExpressions componentRequirementExpressions,
-      DaggerElements elements,
       SourceVersion sourceVersion,
       KotlinMetadataUtil metadataUtil) {
     super(binding);
@@ -82,7 +78,6 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
     this.componentBindingExpressions = componentBindingExpressions;
     this.membersInjectionMethods = membersInjectionMethods;
     this.componentRequirementExpressions = componentRequirementExpressions;
-    this.elements = elements;
     this.sourceVersion = sourceVersion;
   }
 
@@ -166,12 +161,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
         instance = CodeBlock.of("($T) ($T) $L", keyType, rawTypeName(keyType), instance);
       }
     }
-    MethodSpec membersInjectionMethod = membersInjectionMethods.getOrCreate(provisionBinding.key());
-    TypeMirror returnType =
-        membersInjectionMethod.returnType.equals(TypeName.OBJECT)
-            ? elements.getTypeElement(Object.class).asType()
-            : provisionBinding.key().type();
-    return Expression.create(returnType, CodeBlock.of("$N($L)", membersInjectionMethod, instance));
+    return membersInjectionMethods.getInjectExpression(provisionBinding.key(), instance);
   }
 
   private Optional<CodeBlock> moduleReference(ClassName requestingClass) {

@@ -31,17 +31,20 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import com.google.common.graph.ImmutableNetwork;
 import com.google.common.graph.Traverser;
+import dagger.internal.codegen.base.TarjanSCCs;
 import dagger.model.BindingGraph.ChildFactoryMethodEdge;
 import dagger.model.BindingGraph.ComponentNode;
 import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.Node;
 import dagger.model.ComponentPath;
 import dagger.model.Key;
-import java.util.HashMap;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -56,8 +59,12 @@ import javax.lang.model.element.VariableElement;
 @AutoValue
 public abstract class BindingGraph {
 
+  /**
+   * A graph that represents the entire network of nodes from all components, subcomponents and
+   * their bindings.
+   */
   @AutoValue
-  abstract static class TopLevelBindingGraph extends dagger.model.BindingGraph {
+  public abstract static class TopLevelBindingGraph extends dagger.model.BindingGraph {
     static TopLevelBindingGraph create(
         ImmutableNetwork<Node, Edge> network, boolean isFullBindingGraph) {
       TopLevelBindingGraph topLevelBindingGraph =
@@ -116,6 +123,29 @@ public abstract class BindingGraph {
     ImmutableListMultimap<ComponentPath, BindingNode> bindingsByComponent() {
       return Multimaps.index(transform(bindings(), BindingNode.class::cast), Node::componentPath);
     }
+
+    /** Returns a {@link Comparator} in the same order as {@link Network#nodes()}. */
+    @Memoized
+    Comparator<Node> nodeOrder() {
+      Map<Node, Integer> nodeOrderMap = Maps.newHashMapWithExpectedSize(network().nodes().size());
+      int i = 0;
+      for (Node node : network().nodes()) {
+        nodeOrderMap.put(node, i++);
+      }
+      return (n1, n2) -> nodeOrderMap.get(n1).compareTo(nodeOrderMap.get(n2));
+    }
+
+    /** Returns the set of strongly connected nodes in this graph in reverse topological order. */
+    @Memoized
+    public ImmutableSet<ImmutableSet<Node>> stronglyConnectedNodes() {
+      return TarjanSCCs.<Node>compute(
+          ImmutableSet.copyOf(network().nodes()),
+          // NetworkBuilder does not have a stable successor order, so we have to roll our own
+          // based on the node order, which is stable.
+          // TODO(bcorso): Fix once https://github.com/google/guava/issues/2650 is fixed.
+          node ->
+              network().successors(node).stream().sorted(nodeOrder()).collect(toImmutableList()));
+    }
   }
 
   static BindingGraph create(
@@ -135,8 +165,8 @@ public abstract class BindingGraph {
     // In particular, rather than using a Binding's list of DependencyRequests (which only
     // contains the key) we would use the top-level network to find the DependencyEdges for a
     // particular BindingNode.
-    Map<Key, BindingNode> contributionBindings = new HashMap<>();
-    Map<Key, BindingNode> membersInjectionBindings = new HashMap<>();
+    Map<Key, BindingNode> contributionBindings = new LinkedHashMap<>();
+    Map<Key, BindingNode> membersInjectionBindings = new LinkedHashMap<>();
 
     // Construct the maps of the ContributionBindings and MembersInjectionBindings by iterating
     // bindings from this component and then from each successive parent. If a binding exists in
@@ -339,6 +369,11 @@ public abstract class BindingGraph {
     return topLevelBindingGraph().subcomponentNodes(componentNode()).stream()
         .map(subcomponent -> create(Optional.of(this), subcomponent, topLevelBindingGraph()))
         .collect(toImmutableList());
+  }
+
+  /** Returns the list of all {@link BindingNode}s local to this component. */
+  public ImmutableList<BindingNode> localBindingNodes() {
+    return topLevelBindingGraph().bindingsByComponent().get(componentPath());
   }
 
   @Memoized

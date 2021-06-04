@@ -28,6 +28,7 @@ import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ProvisionBinding;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
@@ -36,13 +37,17 @@ import javax.lang.model.type.TypeMirror;
 final class MembersInjectorProviderCreationExpression
     implements FrameworkInstanceCreationExpression {
 
+  private final ShardImplementation shardImplementation;
   private final ComponentBindingExpressions componentBindingExpressions;
   private final ProvisionBinding binding;
 
   @AssistedInject
   MembersInjectorProviderCreationExpression(
-      @Assisted ProvisionBinding binding, ComponentBindingExpressions componentBindingExpressions) {
+      @Assisted ProvisionBinding binding,
+      ComponentImplementation componentImplementation,
+      ComponentBindingExpressions componentBindingExpressions) {
     this.binding = checkNotNull(binding);
+    this.shardImplementation = componentImplementation.shardImplementation(binding);
     this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
   }
 
@@ -64,10 +69,12 @@ final class MembersInjectorProviderCreationExpression
         injectedTypeElement = MoreTypes.asTypeElement(injectedTypeElement.getSuperclass());
       }
 
-      membersInjector = CodeBlock.of(
-          "$T.create($L)",
-          membersInjectorNameForType(injectedTypeElement),
-          componentBindingExpressions.getCreateMethodArgumentsCodeBlock(binding));
+      membersInjector =
+          CodeBlock.of(
+              "$T.create($L)",
+              membersInjectorNameForType(injectedTypeElement),
+              componentBindingExpressions.getCreateMethodArgumentsCodeBlock(
+                  binding, shardImplementation.name()));
     }
 
     // TODO(ronshapiro): consider adding a MembersInjectorBindingExpression to return this directly
@@ -79,12 +86,12 @@ final class MembersInjectorProviderCreationExpression
     // a second cast. If we just cast to the raw type InstanceFactory though, that becomes
     // assignable.
     return castThroughRawType
-        ? CodeBlock.of("($T) $L", INSTANCE_FACTORY, providerExpression) : providerExpression;
+        ? CodeBlock.of("($T) $L", INSTANCE_FACTORY, providerExpression)
+        : providerExpression;
   }
 
   private boolean hasLocalInjectionSites(TypeElement injectedTypeElement) {
-    return binding.injectionSites()
-        .stream()
+    return binding.injectionSites().stream()
         .anyMatch(
             injectionSite ->
                 injectionSite.element().getEnclosingElement().equals(injectedTypeElement));

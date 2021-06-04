@@ -27,12 +27,13 @@ import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.model.Key;
 import dagger.producers.internal.Producers;
 
 /** Binding expression for producer node instances. */
 final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindingExpression {
-  private final ComponentImplementation componentImplementation;
+  private final ShardImplementation shardImplementation;
   private final Key key;
   private final ProducerEntryPointView producerEntryPointView;
 
@@ -44,9 +45,9 @@ final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindi
       DaggerElements elements,
       ComponentImplementation componentImplementation) {
     super(binding, frameworkInstanceSupplier, types, elements);
-    this.componentImplementation = componentImplementation;
+    this.shardImplementation = componentImplementation.shardImplementation(binding);
     this.key = binding.key();
-    this.producerEntryPointView = new ProducerEntryPointView(types);
+    this.producerEntryPointView = new ProducerEntryPointView(shardImplementation, types);
   }
 
   @Override
@@ -57,7 +58,7 @@ final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindi
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     Expression result = super.getDependencyExpression(requestingClass);
-    componentImplementation.addCancellation(
+    shardImplementation.addCancellation(
         key,
         CodeBlock.of(
             "$T.cancel($L, $N);",
@@ -71,7 +72,7 @@ final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindi
   Expression getDependencyExpressionForComponentMethod(
       ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
     return producerEntryPointView
-        .getProducerEntryPointField(this, componentMethod, component)
+        .getProducerEntryPointField(this, componentMethod, component.name())
         .orElseGet(
             () -> super.getDependencyExpressionForComponentMethod(componentMethod, component));
   }

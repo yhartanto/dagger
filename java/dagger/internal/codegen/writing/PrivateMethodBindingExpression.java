@@ -57,13 +57,13 @@ final class PrivateMethodBindingExpression extends MethodBindingExpression {
       DaggerTypes types,
       CompilerOptions compilerOptions) {
     super(
-        componentImplementation.shardImplementation(binding.key()),
+        componentImplementation.shardImplementation(binding),
         request,
         binding,
         methodImplementationStrategy,
         wrappedBindingExpression,
         types);
-    this.shardImplementation = componentImplementation.shardImplementation(binding.key());
+    this.shardImplementation = componentImplementation.shardImplementation(binding);
     this.binding = binding;
     this.request = request;
     this.compilerOptions = compilerOptions;
