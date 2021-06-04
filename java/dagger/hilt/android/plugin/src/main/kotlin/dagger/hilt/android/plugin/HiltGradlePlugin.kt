@@ -314,8 +314,8 @@ class HiltGradlePlugin @Inject constructor(
         )
         variant.productFlavors.forEach { flavor ->
           attrContainer.attribute(
-            Attribute.of(flavor.name, ProductFlavorAttr::class.java),
-            project.objects.named(ProductFlavorAttr::class.java, flavor.getName())
+            Attribute.of(flavor.dimension!!, ProductFlavorAttr::class.java),
+            project.objects.named(ProductFlavorAttr::class.java, flavor.name)
           )
         }
       }
