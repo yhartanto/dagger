@@ -41,11 +41,10 @@ import dagger.model.BindingGraph.Edge;
 import dagger.model.BindingGraph.Node;
 import dagger.model.ComponentPath;
 import dagger.model.Key;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -128,42 +127,34 @@ public abstract class BindingGraph {
       Optional<BindingGraph> parent,
       ComponentNode componentNode,
       TopLevelBindingGraph topLevelBindingGraph) {
-    List<BindingNode> reachableBindingNodes = new ArrayList<>();
-    for (ComponentPath path = componentNode.componentPath();
-        !path.components().isEmpty();
-        path = ComponentPath.create(path.components().subList(0, path.components().size() - 1))) {
-      reachableBindingNodes.addAll(topLevelBindingGraph.bindingsByComponent().get(path));
-    }
-
-    // Construct the maps of the ContributionBindings and MembersInjectionBindings.
+    // TODO(bcorso): Mapping binding nodes by key is flawed since bindings that depend on local
+    // multibindings can have multiple nodes (one in each component). In this case, we choose the
+    // node in the child-most component since this is likely the node that users of this
+    // BindingGraph will want (and to remain consistent with LegacyBindingGraph). However, ideally
+    // we would avoid this ambiguity by getting dependencies directly from the top-level network.
+    // In particular, rather than using a Binding's list of DependencyRequests (which only
+    // contains the key) we would use the top-level network to find the DependencyEdges for a
+    // particular BindingNode.
     Map<Key, BindingNode> contributionBindings = new HashMap<>();
     Map<Key, BindingNode> membersInjectionBindings = new HashMap<>();
-    for (BindingNode bindingNode : reachableBindingNodes) {
-      Map<Key, BindingNode> bindingsMap;
-      if (bindingNode.delegate() instanceof ContributionBinding) {
-        bindingsMap = contributionBindings;
-      } else if (bindingNode.delegate() instanceof MembersInjectionBinding) {
-        bindingsMap = membersInjectionBindings;
-      } else {
-        throw new AssertionError("Unexpected binding node type: " + bindingNode.delegate());
-      }
 
-      // TODO(bcorso): Mapping binding nodes by key is flawed since bindings that depend on local
-      // multibindings can have multiple nodes (one in each component). In this case, we choose the
-      // node in the child-most component since this is likely the node that users of this
-      // BindingGraph will want (and to remain consisted with LegacyBindingGraph). However, ideally
-      // we would avoid this ambiguity by getting dependencies directly from the top-level network.
-      // In particular, rather than using a Binding's list of DependencyRequests (which only
-      // contains the key) we would use the top-level network to find the DependencyEdges for a
-      // particular BindingNode.
-      Key key = bindingNode.key();
-      if (!bindingsMap.containsKey(key)
-          // Always choose the child-most binding node.
-          || bindingNode.componentPath().components().size()
-              > bindingsMap.get(key).componentPath().components().size()) {
-        bindingsMap.put(key, bindingNode);
-      }
-    }
+    // Construct the maps of the ContributionBindings and MembersInjectionBindings by iterating
+    // bindings from this component and then from each successive parent. If a binding exists in
+    // multple components, this order ensures that the child-most binding is always chosen first.
+    Stream.iterate(componentNode.componentPath(), ComponentPath::parent)
+        // Stream.iterate is inifinte stream so we need limit it to the known size of the path.
+        .limit(componentNode.componentPath().components().size())
+        .flatMap(path -> topLevelBindingGraph.bindingsByComponent().get(path).stream())
+        .forEach(
+            bindingNode -> {
+              if (bindingNode.delegate() instanceof ContributionBinding) {
+                contributionBindings.putIfAbsent(bindingNode.key(), bindingNode);
+              } else if (bindingNode.delegate() instanceof MembersInjectionBinding) {
+                membersInjectionBindings.putIfAbsent(bindingNode.key(), bindingNode);
+              } else {
+                throw new AssertionError("Unexpected binding node type: " + bindingNode.delegate());
+              }
+            });
 
     BindingGraph bindingGraph = new AutoValue_BindingGraph(componentNode, topLevelBindingGraph);
 
