@@ -205,6 +205,30 @@ public abstract class BindingGraph {
     return ((ComponentNodeImpl) componentNode()).componentDescriptor();
   }
 
+  /**
+   * Returns the {@link ContributionBinding} for the given {@link Key} in this component or {@link
+   * Optional#empty()} if one doesn't exist.
+   */
+  public final Optional<Binding> localContributionBinding(Key key) {
+    return contributionBindings.containsKey(key)
+        ? Optional.of(contributionBindings.get(key))
+            .filter(bindingNode -> bindingNode.componentPath().equals(componentPath()))
+            .map(BindingNode::delegate)
+        : Optional.empty();
+  }
+
+  /**
+   * Returns the {@link MembersInjectionBinding} for the given {@link Key} in this component or
+   * {@link Optional#empty()} if one doesn't exist.
+   */
+  public final Optional<Binding> localMembersInjectionBinding(Key key) {
+    return membersInjectionBindings.containsKey(key)
+        ? Optional.of(membersInjectionBindings.get(key))
+            .filter(bindingNode -> bindingNode.componentPath().equals(componentPath()))
+            .map(BindingNode::delegate)
+        : Optional.empty();
+  }
+
   /** Returns the {@link ContributionBinding} for the given {@link Key}. */
   public final ContributionBinding contributionBinding(Key key) {
     return (ContributionBinding) contributionBindings.get(key).delegate();
@@ -315,17 +339,6 @@ public abstract class BindingGraph {
     return topLevelBindingGraph().subcomponentNodes(componentNode()).stream()
         .map(subcomponent -> create(Optional.of(this), subcomponent, topLevelBindingGraph()))
         .collect(toImmutableList());
-  }
-
-  public final ImmutableSet<BindingNode> bindingNodes(Key key) {
-    ImmutableSet.Builder<BindingNode> builder = ImmutableSet.builder();
-    if (contributionBindings.containsKey(key)) {
-      builder.add(contributionBindings.get(key));
-    }
-    if (membersInjectionBindings.containsKey(key)) {
-      builder.add(membersInjectionBindings.get(key));
-    }
-    return builder.build();
   }
 
   @Memoized

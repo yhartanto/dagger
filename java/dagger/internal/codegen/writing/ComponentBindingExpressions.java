@@ -19,7 +19,6 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
-import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECK;
@@ -38,7 +37,6 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingGraph;
-import dagger.internal.codegen.binding.BindingNode;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.BindingType;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
@@ -249,26 +247,13 @@ public final class ComponentBindingExpressions {
       return expressions.get(request);
     }
 
-    Optional<Binding> optionalBinding =
-        graph.bindingNodes(request.key()).stream()
-            // Filter out nodes we don't own.
-            .filter(bindingNode -> bindingNode.componentPath().equals(graph.componentPath()))
-            // Filter out nodes that don't match the request kind
-            .filter(
-                bindingNode ->
-                    // The binding used for the binding expression depends on the request:
-                    //   1. MembersInjectionBinding: satisfies MEMBERS_INJECTION requests
-                    //   2. ContributionBindings: satisfies all other requests.
-                    request.isRequestKind(RequestKind.MEMBERS_INJECTION)
-                        ? bindingNode.delegate().bindingType() == BindingType.MEMBERS_INJECTION
-                        : bindingNode.delegate().bindingType() == BindingType.PROVISION
-                            || bindingNode.delegate().bindingType() == BindingType.PRODUCTION)
-            .map(BindingNode::delegate)
-            // We expect at most one binding to match since this graph is already validated.
-            .collect(toOptional());
+    Optional<Binding> localBinding =
+        request.isRequestKind(RequestKind.MEMBERS_INJECTION)
+            ? graph.localMembersInjectionBinding(request.key())
+            : graph.localContributionBinding(request.key());
 
-    if (optionalBinding.isPresent()) {
-      BindingExpression expression = createBindingExpression(optionalBinding.get(), request);
+    if (localBinding.isPresent()) {
+      BindingExpression expression = createBindingExpression(localBinding.get(), request);
       expressions.put(request, expression);
       return expression;
     }
