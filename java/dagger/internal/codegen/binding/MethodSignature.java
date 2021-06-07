@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen.componentgenerator;
+package dagger.internal.codegen.binding;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 
@@ -31,7 +31,7 @@ import javax.lang.model.type.TypeMirror;
 
 /** A class that defines proper {@code equals} and {@code hashcode} for a method signature. */
 @AutoValue
-abstract class MethodSignature {
+public abstract class MethodSignature {
 
   abstract String name();
 
@@ -39,7 +39,7 @@ abstract class MethodSignature {
 
   abstract ImmutableList<? extends Equivalence.Wrapper<? extends TypeMirror>> thrownTypes();
 
-  static MethodSignature forComponentMethod(
+  public static MethodSignature forComponentMethod(
       ComponentMethodDescriptor componentMethod, DeclaredType componentType, DaggerTypes types) {
     ExecutableType methodType =
         MoreTypes.asExecutable(types.asMemberOf(componentType, componentMethod.methodElement()));

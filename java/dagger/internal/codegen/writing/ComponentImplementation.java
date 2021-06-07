@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
@@ -33,6 +34,7 @@ import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHE
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.javapoet.CodeBlocks.parameterNames;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.COMPONENT_METHOD;
 import static dagger.producers.CancellationPolicy.Propagation.PROPAGATE;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -44,9 +46,12 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -54,6 +59,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
+import dagger.internal.Preconditions;
 import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingGraph;
@@ -62,34 +68,53 @@ import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ComponentCreatorDescriptor;
 import dagger.internal.codegen.binding.ComponentCreatorKind;
 import dagger.internal.codegen.binding.ComponentDescriptor;
+import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.KeyVariableNamer;
+import dagger.internal.codegen.binding.MethodSignature;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.javapoet.TypeSpecs;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind;
+import dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
+import dagger.internal.codegen.writing.ComponentImplementation.TypeSpecKind;
 import dagger.model.BindingGraph.Node;
 import dagger.model.Key;
 import dagger.model.RequestKind;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /** The implementation of a component type. */
 @PerComponentImplementation
 public final class ComponentImplementation {
+  /** A factory for creating a {@link ComponentImplementation}. */
+  public interface ChildComponentImplementationFactory {
+    /** Creates a {@link ComponentImplementation} for the given {@code childGraph}. */
+    ComponentImplementation create(BindingGraph childGraph);
+  }
+
   /** A type of field that this component can contain. */
   public enum FieldSpecKind {
     /** A field for a component shard. */
-    COMPONENT_SHARD,
+    COMPONENT_SHARD_FIELD,
 
     /** A field required by the component, e.g. module instances. */
     COMPONENT_REQUIREMENT_FIELD,
@@ -152,6 +177,9 @@ public final class ComponentImplementation {
 
     /** A provider class for a component provision. */
     COMPONENT_PROVISION_FACTORY,
+
+    /** A class for a component shard. */
+    COMPONENT_SHARD_TYPE,
 
     /** A class for the subcomponent or subcomponent builder. */
     SUBCOMPONENT
@@ -226,24 +254,42 @@ public final class ComponentImplementation {
   private final List<CodeBlock> shardInitializations = new ArrayList<>();
   private final List<CodeBlock> shardCancellations = new ArrayList<>();
   private final Optional<ComponentImplementation> parent;
+  private final ChildComponentImplementationFactory childComponentImplementationFactory;
+  private final Provider<ComponentBindingExpressions> bindingExpressionsProvider;
+  private final Provider<ComponentCreatorImplementationFactory>
+      componentCreatorImplementationFactoryProvider;
   private final BindingGraph graph;
   private final ComponentNames componentNames;
   private final CompilerOptions compilerOptions;
   private final DaggerElements elements;
+  private final DaggerTypes types;
+  private final KotlinMetadataUtil metadataUtil;
   private final ImmutableMap<ComponentImplementation, FieldSpec> componentFieldsByImplementation;
 
   @Inject
   ComponentImplementation(
       @ParentComponent Optional<ComponentImplementation> parent,
+      ChildComponentImplementationFactory childComponentImplementationFactory,
+      // Inject as Provider<> to prevent a cycle.
+      Provider<ComponentBindingExpressions> bindingExpressionsProvider,
+      Provider<ComponentCreatorImplementationFactory> componentCreatorImplementationFactoryProvider,
       BindingGraph graph,
       ComponentNames componentNames,
       CompilerOptions compilerOptions,
-      DaggerElements elements) {
+      DaggerElements elements,
+      DaggerTypes types,
+      KotlinMetadataUtil metadataUtil) {
     this.parent = parent;
+    this.childComponentImplementationFactory = childComponentImplementationFactory;
+    this.bindingExpressionsProvider = bindingExpressionsProvider;
+    this.componentCreatorImplementationFactoryProvider =
+        componentCreatorImplementationFactoryProvider;
     this.graph = graph;
     this.componentNames = componentNames;
     this.compilerOptions = compilerOptions;
     this.elements = elements;
+    this.types = types;
+    this.metadataUtil = metadataUtil;
 
     // The first group of keys belong to the component itself. We call this the componentShard.
     this.componentShard = new ShardImplementation(getComponentName(graph, parent, componentNames));
@@ -602,20 +648,16 @@ public final class ComponentImplementation {
     }
 
     /** Generates the component and returns the resulting {@link TypeSpec.Builder}. */
-    public TypeSpec generate() {
+    private TypeSpec generate() {
       TypeSpec.Builder builder = classBuilder(name);
 
       if (isComponentShard()) {
         TypeSpecs.addSupertype(builder, graph.componentTypeElement());
-
-        // Generate all shards and add them to this component implementation.
-        for (ShardImplementation shard : ImmutableSet.copyOf(shardsByBinding.values())) {
-          if (shardFieldsByImplementation.containsKey(shard)) {
-            builder.addField(shardFieldsByImplementation.get(shard));
-            TypeSpec shardTypeSpec = shard.generate();
-            builder.addType(shardTypeSpec);
-          }
-        }
+        addCreator();
+        addFactoryMethods();
+        addInterfaceMethods();
+        addChildComponents();
+        addShards();
       }
 
       addConstructorAndInitializationMethods();
@@ -647,6 +689,137 @@ public final class ComponentImplementation {
           // TODO(ronshapiro): perhaps all generated components should be non-public?
           ? ImmutableSet.of(PUBLIC, FINAL)
           : ImmutableSet.of(FINAL);
+    }
+
+    private void addCreator() {
+      componentCreatorImplementationFactoryProvider
+          .get()
+          .create()
+          .map(ComponentCreatorImplementation::spec)
+          .ifPresent(
+              creator -> {
+                if (parent.isPresent()) {
+                  // In an inner implementation of a subcomponent the creator is a peer class.
+                  parent.get().componentShard.addType(TypeSpecKind.SUBCOMPONENT, creator);
+                } else {
+                  addType(TypeSpecKind.COMPONENT_CREATOR, creator);
+                }
+              });
+    }
+
+    private void addFactoryMethods() {
+      if (parent.isPresent()) {
+        graph.factoryMethod().ifPresent(this::createSubcomponentFactoryMethod);
+      } else {
+        createRootComponentFactoryMethod();
+      }
+    }
+
+    private void createRootComponentFactoryMethod() {
+      checkState(!parent.isPresent());
+      // Top-level components have a static method that returns a builder or factory for the
+      // component. If the user defined a @Component.Builder or @Component.Factory, an
+      // implementation of their type is returned. Otherwise, an autogenerated Builder type is
+      // returned.
+      // TODO(cgdecker): Replace this abomination with a small class?
+      // Better yet, change things so that an autogenerated builder type has a descriptor of sorts
+      // just like a user-defined creator type.
+      ComponentCreatorKind creatorKind;
+      ClassName creatorType;
+      String factoryMethodName;
+      boolean noArgFactoryMethod;
+      Optional<ComponentCreatorDescriptor> creatorDescriptor =
+          graph.componentDescriptor().creatorDescriptor();
+      if (creatorDescriptor.isPresent()) {
+        ComponentCreatorDescriptor descriptor = creatorDescriptor.get();
+        creatorKind = descriptor.kind();
+        creatorType = ClassName.get(descriptor.typeElement());
+        factoryMethodName = descriptor.factoryMethod().getSimpleName().toString();
+        noArgFactoryMethod = descriptor.factoryParameters().isEmpty();
+      } else {
+        creatorKind = BUILDER;
+        creatorType = getCreatorName();
+        factoryMethodName = "build";
+        noArgFactoryMethod = true;
+      }
+
+      MethodSpec creatorFactoryMethod =
+          methodBuilder(creatorKind.methodName())
+              .addModifiers(PUBLIC, STATIC)
+              .returns(creatorType)
+              .addStatement("return new $T()", getCreatorName())
+              .build();
+      addMethod(MethodSpecKind.BUILDER_METHOD, creatorFactoryMethod);
+      if (noArgFactoryMethod && canInstantiateAllRequirements()) {
+        addMethod(
+            MethodSpecKind.BUILDER_METHOD,
+            methodBuilder("create")
+                .returns(ClassName.get(graph.componentTypeElement()))
+                .addModifiers(PUBLIC, STATIC)
+                .addStatement("return new $L().$L()", creatorKind.typeName(), factoryMethodName)
+                .build());
+      }
+    }
+
+    /** {@code true} if all of the graph's required dependencies can be automatically constructed */
+    private boolean canInstantiateAllRequirements() {
+      return !Iterables.any(
+          graph.componentRequirements(),
+          dependency -> dependency.requiresAPassedInstance(elements, metadataUtil));
+    }
+
+    private void createSubcomponentFactoryMethod(ExecutableElement factoryMethod) {
+      checkState(parent.isPresent());
+      Collection<ParameterSpec> params =
+          Maps.transformValues(graph.factoryMethodParameters(), ParameterSpec::get).values();
+      DeclaredType parentType = asDeclared(parent.get().graph().componentTypeElement().asType());
+      MethodSpec.Builder method = MethodSpec.overriding(factoryMethod, parentType, types);
+      params.forEach(
+          param -> method.addStatement("$T.checkNotNull($N)", Preconditions.class, param));
+      method.addStatement(
+          "return new $T($L)",
+          name(),
+          parameterNames(
+              ImmutableList.<ParameterSpec>builder()
+                  .addAll(
+                      creatorComponentFields().stream()
+                          .map(field -> ParameterSpec.builder(field.type, field.name).build())
+                          .collect(toImmutableList()))
+                  .addAll(params)
+                  .build()));
+
+      parent.get().getComponentShard().addMethod(COMPONENT_METHOD, method.build());
+    }
+
+    private void addInterfaceMethods() {
+      // Each component method may have been declared by several supertypes. We want to implement
+      // only one method for each distinct signature.
+      DeclaredType componentType = asDeclared(graph.componentTypeElement().asType());
+      Set<MethodSignature> signatures = Sets.newHashSet();
+      for (ComponentMethodDescriptor method : graph.componentDescriptor().entryPointMethods()) {
+        if (signatures.add(MethodSignature.forComponentMethod(method, componentType, types))) {
+          addMethod(COMPONENT_METHOD, bindingExpressionsProvider.get().getComponentMethod(method));
+        }
+      }
+    }
+
+    private void addChildComponents() {
+      for (BindingGraph subgraph : graph.subgraphs()) {
+        addType(
+            TypeSpecKind.SUBCOMPONENT,
+            childComponentImplementationFactory.create(subgraph).generate());
+      }
+    }
+
+    private void addShards() {
+      // Generate all shards and add them to this component implementation.
+      for (ShardImplementation shard : ImmutableSet.copyOf(shardsByBinding.values())) {
+        if (shardFieldsByImplementation.containsKey(shard)) {
+          addField(FieldSpecKind.COMPONENT_SHARD_FIELD, shardFieldsByImplementation.get(shard));
+          TypeSpec shardTypeSpec = shard.generate();
+          addType(TypeSpecKind.COMPONENT_SHARD_TYPE, shardTypeSpec);
+        }
+      }
     }
 
     /** Creates and adds the constructor and methods needed for initializing the component. */

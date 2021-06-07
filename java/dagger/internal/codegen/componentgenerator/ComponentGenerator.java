@@ -26,6 +26,7 @@ import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.writing.ComponentImplementation;
+import java.util.Optional;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
@@ -33,16 +34,16 @@ import javax.lang.model.element.Element;
 
 /** Generates the implementation of the abstract types annotated with {@link Component}. */
 final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
-  private final ComponentImplementationFactory componentImplementationFactory;
+  private final TopLevelImplementationComponent.Factory topLevelImplementationComponentFactory;
 
   @Inject
   ComponentGenerator(
       Filer filer,
       DaggerElements elements,
       SourceVersion sourceVersion,
-      ComponentImplementationFactory componentImplementationFactory) {
+      TopLevelImplementationComponent.Factory topLevelImplementationComponentFactory) {
     super(filer, elements, sourceVersion);
-    this.componentImplementationFactory = componentImplementationFactory;
+    this.topLevelImplementationComponentFactory = topLevelImplementationComponentFactory;
   }
 
   @Override
@@ -53,7 +54,15 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
   @Override
   public ImmutableList<TypeSpec.Builder> topLevelTypes(BindingGraph bindingGraph) {
     ComponentImplementation componentImplementation =
-        componentImplementationFactory.createComponentImplementation(bindingGraph);
+        topLevelImplementationComponentFactory
+            .create(bindingGraph)
+            .currentImplementationSubcomponentBuilder()
+            .bindingGraph(bindingGraph)
+            .parentImplementation(Optional.empty())
+            .parentBindingExpressions(Optional.empty())
+            .parentRequirementExpressions(Optional.empty())
+            .build()
+            .componentImplementation();
     verify(
         componentImplementation
             .name()

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen.componentgenerator;
+package dagger.internal.codegen.writing;
 
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -52,9 +52,6 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.internal.codegen.writing.ComponentCreatorImplementation;
-import dagger.internal.codegen.writing.ComponentImplementation;
-import dagger.internal.codegen.writing.ModuleProxies;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
