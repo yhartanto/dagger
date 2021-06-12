@@ -178,7 +178,15 @@ public final class DiagnosticMessageGenerator {
         appendComponentPathUnlessAtRoot(message, source(getLast(dependencyTrace)));
       }
     }
+    message.append(getRequestsNotInTrace(dependencyTrace, requests, entryPoints));
+    return message.toString();
+  }
 
+  public String getRequestsNotInTrace(
+      ImmutableList<DependencyEdge> dependencyTrace,
+      ImmutableSet<DependencyEdge> requests,
+      ImmutableSet<DependencyEdge> entryPoints) {
+    StringBuilder message = new StringBuilder();
     // Print any dependency requests that aren't shown as part of the dependency trace.
     ImmutableSet<Element> requestsToPrint =
         requests.stream()
@@ -254,7 +262,7 @@ public final class DiagnosticMessageGenerator {
    */
   // TODO(ronshapiro): Adding a DependencyPath type to dagger.model could be useful, i.e.
   // bindingGraph.shortestPathFromEntryPoint(DependencyEdge, MaybeBindingNode)
-  ImmutableList<DependencyEdge> dependencyTrace(
+  public ImmutableList<DependencyEdge> dependencyTrace(
       MaybeBinding binding, ImmutableSet<DependencyEdge> entryPoints) {
     // Module binding graphs may have bindings unreachable from any entry points. If there are
     // no entry points for this DiagnosticInfo, don't try to print a dependency trace.
@@ -299,7 +307,7 @@ public final class DiagnosticMessageGenerator {
   }
 
   /** Returns all the nonsynthetic dependency requests for a binding. */
-  ImmutableSet<DependencyEdge> requests(MaybeBinding binding) {
+  public ImmutableSet<DependencyEdge> requests(MaybeBinding binding) {
     return graph.network().inEdges(binding).stream()
         .flatMap(instancesOf(DependencyEdge.class))
         .filter(edge -> edge.dependencyRequest().requestElement().isPresent())
