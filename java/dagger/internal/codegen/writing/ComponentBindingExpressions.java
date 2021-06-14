@@ -500,8 +500,7 @@ public final class ComponentBindingExpressions {
     // PrivateMethodBindingExpression and put the private method in the shard.
     if (matchingComponentMethod.isPresent() && shardImplementation.isComponentShard()) {
       ComponentMethodDescriptor componentMethod = matchingComponentMethod.get();
-      return componentMethodBindingExpressionFactory.create(
-          request, binding, bindingExpression, componentMethod);
+      return componentMethodBindingExpressionFactory.create(bindingExpression, componentMethod);
     } else {
       return privateMethodBindingExpressionFactory.create(request, binding, bindingExpression);
     }
