@@ -130,45 +130,17 @@ public class MapBindingExpressionWithGuavaTest {
                 "final class DaggerTestComponent implements TestComponent {")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "  private volatile Provider<Integer> provideIntProvider;",
-                "  private volatile Provider<Long> provideLong0Provider;",
-                "  private volatile Provider<Long> provideLong1Provider;",
-                "  private volatile Provider<Long> provideLong2Provider;",
+                "  private Provider<Integer> provideIntProvider;",
+                "  private Provider<Long> provideLong0Provider;",
+                "  private Provider<Long> provideLong1Provider;",
+                "  private Provider<Long> provideLong2Provider;",
                 "",
-                "  private Provider<Integer> provideIntProvider() {",
-                "    Object local = provideIntProvider;",
-                "    if (local == null) {",
-                "      local = new SwitchingProvider<>(testComponent, 0);",
-                "      provideIntProvider = (Provider<Integer>) local;",
-                "    }",
-                "    return (Provider<Integer>) local;",
-                "  }",
-                "",
-                "  private Provider<Long> provideLong0Provider() {",
-                "    Object local = provideLong0Provider;",
-                "    if (local == null) {",
-                "      local = new SwitchingProvider<>(testComponent, 1);",
-                "      provideLong0Provider = (Provider<Long>) local;",
-                "    }",
-                "    return (Provider<Long>) local;",
-                "  }",
-                "",
-                "  private Provider<Long> provideLong1Provider() {",
-                "    Object local = provideLong1Provider;",
-                "    if (local == null) {",
-                "      local = new SwitchingProvider<>(testComponent, 2);",
-                "      provideLong1Provider = (Provider<Long>) local;",
-                "    }",
-                "    return (Provider<Long>) local;",
-                "  }",
-                "",
-                "  private Provider<Long> provideLong2Provider() {",
-                "    Object local = provideLong2Provider;",
-                "    if (local == null) {",
-                "      local = new SwitchingProvider<>(testComponent, 3);",
-                "      provideLong2Provider = (Provider<Long>) local;",
-                "    }",
-                "    return (Provider<Long>) local;",
+                "  @SuppressWarnings(\"unchecked\")",
+                "  private void initialize() {",
+                "    this.provideIntProvider = new SwitchingProvider<>(testComponent, 0);",
+                "    this.provideLong0Provider = new SwitchingProvider<>(testComponent, 1);",
+                "    this.provideLong1Provider = new SwitchingProvider<>(testComponent, 2);",
+                "    this.provideLong2Provider = new SwitchingProvider<>(testComponent, 3);",
                 "  }")
             .addLines(
                 "  @Override",
@@ -184,44 +156,47 @@ public class MapBindingExpressionWithGuavaTest {
                 "  @Override",
                 "  public Map<Integer, Integer> ints() {",
                 "    return ImmutableMap.<Integer, Integer>of(0, MapModule.provideInt());",
-                "  }",
-                "",
+                "  }")
+            .addLinesIn(
+                DEFAULT_MODE,
                 "  @Override",
                 "  public Map<Integer, Provider<Integer>> providerInts() {",
-                "    return ImmutableMap.<Integer, Provider<Integer>>of(")
+                "    return ImmutableMap.<Integer, Provider<Integer>>of(",
+                "        0, MapModule_ProvideIntFactory.create());",
+                "  }")
             .addLinesIn(
-                DEFAULT_MODE, //
-                "        0, MapModule_ProvideIntFactory.create());")
-            .addLinesIn(
-                FAST_INIT_MODE, //
-                "        0, provideIntProvider());")
+                FAST_INIT_MODE,
+                "  @Override",
+                "  public Map<Integer, Provider<Integer>> providerInts() {",
+                "    return ImmutableMap.<Integer, Provider<Integer>>of(0, provideIntProvider);",
+                "  }")
             .addLines(
-                "  }",
-                "",
                 "  @Override",
                 "  public Map<Long, Long> longs() {",
                 "    return ImmutableMap.<Long, Long>of(",
                 "      0L, MapModule.provideLong0(),",
                 "      1L, MapModule.provideLong1(),",
                 "      2L, MapModule.provideLong2());",
-                "  }",
-                "",
-                "  @Override",
-                "  public Map<Long, Provider<Long>> providerLongs() {",
-                "    return ImmutableMap.<Long, Provider<Long>>of(")
+                "  }")
             .addLinesIn(
                 DEFAULT_MODE,
+                "  @Override",
+                "  public Map<Long, Provider<Long>> providerLongs() {",
+                "    return ImmutableMap.<Long, Provider<Long>>of(",
                 "      0L, MapModule_ProvideLong0Factory.create(),",
                 "      1L, MapModule_ProvideLong1Factory.create(),",
-                "      2L, MapModule_ProvideLong2Factory.create());")
+                "      2L, MapModule_ProvideLong2Factory.create());",
+                "  }")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "      0L, provideLong0Provider(),",
-                "      1L, provideLong1Provider(),",
-                "      2L, provideLong2Provider());")
+                "  @Override",
+                "  public Map<Long, Provider<Long>> providerLongs() {",
+                "    return ImmutableMap.<Long, Provider<Long>>of(",
+                "      0L, provideLong0Provider,",
+                "      1L, provideLong1Provider,",
+                "      2L, provideLong2Provider);",
+                "  }")
             .addLines(
-                "  }",
-                "",
                 "  @Override",
                 "  public Sub sub() {",
                 "    return new SubImpl(testComponent);",
@@ -230,35 +205,18 @@ public class MapBindingExpressionWithGuavaTest {
                 "  private static final class SubImpl implements Sub {")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "    private volatile Provider<Long> provideLong3Provider;",
-                "    private volatile Provider<Long> provideLong4Provider;",
-                "    private volatile Provider<Long> provideLong5Provider;",
+                "    private Provider<Long> provideLong3Provider;",
+                "    private Provider<Long> provideLong4Provider;",
+                "    private Provider<Long> provideLong5Provider;",
                 "",
-                "    private Provider<Long> provideLong3Provider() {",
-                "      Object local = provideLong3Provider;",
-                "      if (local == null) {",
-                "        local = new SwitchingProvider<>(testComponent, subImpl, 0);",
-                "        provideLong3Provider = (Provider<Long>) local;",
-                "      }",
-                "      return (Provider<Long>) local;",
-                "    }",
-                "",
-                "    private Provider<Long> provideLong4Provider() {",
-                "      Object local = provideLong4Provider;",
-                "      if (local == null) {",
-                "        local = new SwitchingProvider<>(testComponent, subImpl, 1);",
-                "        provideLong4Provider = (Provider<Long>) local;",
-                "      }",
-                "      return (Provider<Long>) local;",
-                "    }",
-                "",
-                "    private Provider<Long> provideLong5Provider() {",
-                "      Object local = provideLong5Provider;",
-                "      if (local == null) {",
-                "        local = new SwitchingProvider<>(testComponent, subImpl, 2);",
-                "        provideLong5Provider = (Provider<Long>) local;",
-                "      }",
-                "      return (Provider<Long>) local;",
+                "    @SuppressWarnings(\"unchecked\")",
+                "    private void initialize() {",
+                "      this.provideLong3Provider =",
+                "          new SwitchingProvider<>(testComponent, subImpl, 0);",
+                "      this.provideLong4Provider =",
+                "          new SwitchingProvider<>(testComponent, subImpl, 1);",
+                "      this.provideLong5Provider =",
+                "          new SwitchingProvider<>(testComponent, subImpl, 2);",
                 "    }")
             .addLines(
                 "    @Override",
@@ -271,29 +229,33 @@ public class MapBindingExpressionWithGuavaTest {
                 "          .put(4L, SubcomponentMapModule.provideLong4())",
                 "          .put(5L, SubcomponentMapModule.provideLong5())",
                 "          .build();",
-                "    }",
-                "",
-                "    @Override",
-                "    public Map<Long, Provider<Long>> providerLongs() {",
-                "      return ImmutableMap.<Long, Provider<Long>>builderWithExpectedSize(6)")
+                "    }")
             .addLinesIn(
                 DEFAULT_MODE,
+                "    @Override",
+                "    public Map<Long, Provider<Long>> providerLongs() {",
+                "      return ImmutableMap.<Long, Provider<Long>>builderWithExpectedSize(6)",
                 "          .put(0L, MapModule_ProvideLong0Factory.create())",
                 "          .put(1L, MapModule_ProvideLong1Factory.create())",
                 "          .put(2L, MapModule_ProvideLong2Factory.create())",
                 "          .put(3L, SubcomponentMapModule_ProvideLong3Factory.create())",
                 "          .put(4L, SubcomponentMapModule_ProvideLong4Factory.create())",
-                "          .put(5L, SubcomponentMapModule_ProvideLong5Factory.create())")
+                "          .put(5L, SubcomponentMapModule_ProvideLong5Factory.create())",
+                "          .build();",
+                "    }")
             .addLinesIn(
                 FAST_INIT_MODE,
-                "          .put(0L, testComponent.provideLong0Provider())",
-                "          .put(1L, testComponent.provideLong1Provider())",
-                "          .put(2L, testComponent.provideLong2Provider())",
-                "          .put(3L, provideLong3Provider())",
-                "          .put(4L, provideLong4Provider())",
-                "          .put(5L, provideLong5Provider())")
-            .addLines( //
-                "          .build();", "    }")
+                "    @Override",
+                "    public Map<Long, Provider<Long>> providerLongs() {",
+                "      return ImmutableMap.<Long, Provider<Long>>builderWithExpectedSize(6)",
+                "          .put(0L, testComponent.provideLong0Provider)",
+                "          .put(1L, testComponent.provideLong1Provider)",
+                "          .put(2L, testComponent.provideLong2Provider)",
+                "          .put(3L, provideLong3Provider)",
+                "          .put(4L, provideLong4Provider)",
+                "          .put(5L, provideLong5Provider)",
+                "          .build();",
+                "    }")
             .addLinesIn(
                 FAST_INIT_MODE,
                 "    private static final class SwitchingProvider<T> implements Provider<T> {",

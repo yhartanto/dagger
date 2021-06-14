@@ -64,14 +64,17 @@ final class MembersInjectionBindingExpression extends BindingExpression {
           ? CodeBlock.of("")
           : CodeBlock.of("return $N;", parameter);
     } else {
+      ClassName requestingClass = component.name();
       return methodElement.getReturnType().getKind().equals(VOID)
-          ? CodeBlock.of("$L;", membersInjectionInvocation(parameter).codeBlock())
-          : CodeBlock.of("return $L;", membersInjectionInvocation(parameter).codeBlock());
+          ? CodeBlock.of("$L;", membersInjectionInvocation(parameter, requestingClass).codeBlock())
+          : CodeBlock.of(
+              "return $L;", membersInjectionInvocation(parameter, requestingClass).codeBlock());
     }
   }
 
-  private Expression membersInjectionInvocation(ParameterSpec target) {
-    return membersInjectionMethods.getInjectExpression(binding.key(), CodeBlock.of("$N", target));
+  private Expression membersInjectionInvocation(ParameterSpec target, ClassName requestingClass) {
+    return membersInjectionMethods.getInjectExpression(
+        binding.key(), CodeBlock.of("$N", target), requestingClass);
   }
 
   @AssistedFactory

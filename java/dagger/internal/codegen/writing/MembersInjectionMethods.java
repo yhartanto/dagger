@@ -79,18 +79,27 @@ final class MembersInjectionMethods {
    * Returns the members injection {@link Expression} for the given {@link Key}, creating it if
    * necessary.
    */
-  Expression getInjectExpression(Key key, CodeBlock instance) {
-    Expression expression =
-        reentrantComputeIfAbsent(injectMethodExpressions, key, this::injectMethodExpression);
-    return Expression.create(
-        expression.type(), CodeBlock.of("$L($L)", expression.codeBlock(), instance));
-  }
-
-  private Expression injectMethodExpression(Key key) {
+  Expression getInjectExpression(Key key, CodeBlock instance, ClassName requestingClass) {
     Binding binding =
         graph.membersInjectionBinding(key).isPresent()
             ? graph.membersInjectionBinding(key).get()
             : graph.contributionBinding(key);
+    Expression expression =
+        reentrantComputeIfAbsent(
+            injectMethodExpressions, key, k -> injectMethodExpression(binding, requestingClass));
+    ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
+    return Expression.create(
+        expression.type(),
+        shardImplementation.name().equals(requestingClass)
+            ? CodeBlock.of("$L($L)", expression.codeBlock(), instance)
+            : CodeBlock.of(
+                "$L.$L($L)",
+                shardImplementation.shardFieldReference(),
+                expression.codeBlock(),
+                instance));
+  }
+
+  private Expression injectMethodExpression(Binding binding, ClassName requestingClass) {
     ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
     TypeMirror keyType = binding.key().type();
     TypeMirror membersInjectedType =
@@ -130,12 +139,7 @@ final class MembersInjectionMethods {
 
     MethodSpec method = methodBuilder.build();
     shardImplementation.addMethod(MEMBERS_INJECTION_METHOD, method);
-
-    CodeBlock methodCall =
-        shardImplementation.isComponentShard()
-            ? CodeBlock.of("$N", method)
-            : CodeBlock.of("$L.$N", shardImplementation.shardFieldReference(), method);
-    return Expression.create(membersInjectedType, methodCall);
+    return Expression.create(membersInjectedType, CodeBlock.of("$N", method));
   }
 
   private static ImmutableSet<InjectionSite> injectionSites(Binding binding) {

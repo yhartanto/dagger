@@ -33,7 +33,9 @@ import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ProvisionBinding;
+import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.model.DependencyRequest;
@@ -136,9 +138,17 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
 
   private CodeBlock getContributionExpression(
       DependencyRequest dependency, ClassName requestingClass) {
-    return componentBindingExpressions
-        .getDependencyExpression(bindingRequest(dependency), requestingClass)
-        .codeBlock();
+    BindingExpression bindingExpression =
+        componentBindingExpressions.getBindingExpression(bindingRequest(dependency));
+    CodeBlock expression = bindingExpression.getDependencyExpression(requestingClass).codeBlock();
+
+    // Add a cast to "(Set)" when the contribution is a raw "Provider" type because the "addAll()"
+    // method expects a collection. For example, ".addAll((Set) provideInaccessibleSetOfFoo.get())"
+    return !isSingleValue(dependency)
+            && bindingExpression instanceof DerivedFromFrameworkInstanceBindingExpression
+            && !isTypeAccessibleFrom(binding.key().type(), requestingClass.packageName())
+        ? CodeBlocks.cast(expression, TypeNames.SET)
+        : expression;
   }
 
   private Expression collectionsStaticFactoryInvocation(

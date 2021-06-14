@@ -119,15 +119,6 @@ public final class ComponentImplementation {
     /** A field required by the component, e.g. module instances. */
     COMPONENT_REQUIREMENT_FIELD,
 
-    /**
-     * A field for the lock and cached value for {@linkplain PrivateMethodBindingExpression
-     * private-method scoped bindings}.
-     */
-    PRIVATE_METHOD_SCOPED_FIELD,
-
-    /** A field for the cached provider of a {@link PrivateMethodBindingExpression}. */
-    PRIVATE_METHOD_CACHED_PROVIDER_FIELD,
-
     /** A framework field for type T, e.g. {@code Provider<T>}. */
     FRAMEWORK_FIELD,
 
@@ -863,6 +854,10 @@ public final class ComponentImplementation {
       ImmutableList<MethodSpec> initializationMethods =
           createPartitionedMethods(
               "initialize",
+              // TODO(bcorso): Rather than passing in all of the constructor parameters, keep track
+              // of which parameters are used during initialization and only pass those. This could
+              // be useful for FastInit, where most of the initializations are just calling
+              // SwitchingProvider with no parameters.
               makeFinal(parameters),
               initializations,
               methodName ->

@@ -141,14 +141,15 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
             requestingClass,
             moduleReference(requestingClass),
             compilerOptions,
-            metadataUtil));
+            metadataUtil),
+        requestingClass);
   }
 
   private Expression dependencyArgument(DependencyRequest dependency, ClassName requestingClass) {
     return componentBindingExpressions.getDependencyArgumentExpression(dependency, requestingClass);
   }
 
-  private Expression injectMembers(CodeBlock instance) {
+  private Expression injectMembers(CodeBlock instance, ClassName requestingClass) {
     if (provisionBinding.injectionSites().isEmpty()) {
       return Expression.create(simpleMethodReturnType(), instance);
     }
@@ -161,7 +162,8 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
         instance = CodeBlock.of("($T) ($T) $L", keyType, rawTypeName(keyType), instance);
       }
     }
-    return membersInjectionMethods.getInjectExpression(provisionBinding.key(), instance);
+    return membersInjectionMethods.getInjectExpression(
+        provisionBinding.key(), instance, requestingClass);
   }
 
   private Optional<CodeBlock> moduleReference(ClassName requestingClass) {
