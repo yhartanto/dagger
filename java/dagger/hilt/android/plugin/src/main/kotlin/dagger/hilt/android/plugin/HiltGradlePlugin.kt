@@ -45,6 +45,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Attribute
+import org.gradle.api.attributes.Usage
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.compile.JavaCompile
 
@@ -308,6 +309,10 @@ class HiltGradlePlugin @Inject constructor(
       isCanBeConsumed = false
       isCanBeResolved = true
       attributes { attrContainer ->
+        attrContainer.attribute(
+          Usage.USAGE_ATTRIBUTE,
+          project.objects.named(Usage::class.java, Usage.JAVA_RUNTIME)
+        )
         attrContainer.attribute(
           BuildTypeAttr.ATTRIBUTE,
           project.objects.named(BuildTypeAttr::class.java, variant.buildType.name)
