@@ -44,6 +44,11 @@ public abstract class PkgPrivateMetadata {
     return publicDep(element, elements, ClassNames.EARLY_ENTRY_POINT);
   }
 
+  /** Returns the public Hilt wrapped type or the type itself if it is already public. */
+  public static TypeElement publicEntryPoint(TypeElement element, Elements elements) {
+    return publicDep(element, elements, ClassNames.ENTRY_POINT);
+  }
+
   private static TypeElement publicDep(
       TypeElement element, Elements elements, ClassName annotation) {
     return of(elements, element, annotation)
