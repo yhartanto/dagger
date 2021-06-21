@@ -44,7 +44,7 @@ import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
-import dagger.model.Key;
+import dagger.spi.model.Key;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;

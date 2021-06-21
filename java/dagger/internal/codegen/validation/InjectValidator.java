@@ -39,7 +39,7 @@ import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.Accessibility;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.Scope;
+import dagger.spi.model.Scope;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;

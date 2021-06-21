@@ -28,8 +28,8 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
-import dagger.model.RequestKind;
 import dagger.producers.Producer;
+import dagger.spi.model.RequestKind;
 import java.util.Optional;
 
 /** An {@link Producer} creation expression for provision bindings. */

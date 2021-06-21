@@ -48,12 +48,13 @@ import dagger.internal.codegen.base.ElementFormatter;
 import dagger.internal.codegen.base.Formatter;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.DependencyEdge;
-import dagger.model.BindingGraph.Edge;
-import dagger.model.BindingGraph.MaybeBinding;
-import dagger.model.BindingGraph.Node;
-import dagger.model.ComponentPath;
+import dagger.spi.model.Binding;
+import dagger.spi.model.BindingGraph;
+import dagger.spi.model.BindingGraph.DependencyEdge;
+import dagger.spi.model.BindingGraph.Edge;
+import dagger.spi.model.BindingGraph.MaybeBinding;
+import dagger.spi.model.BindingGraph.Node;
+import dagger.spi.model.ComponentPath;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.function.Function;
@@ -149,7 +150,7 @@ public final class DiagnosticMessageGenerator {
       dependencyTrace = ImmutableList.of(dependencyEdge);
     } else {
       // It's not an entry point, so it's part of a binding
-      dagger.model.Binding binding = (dagger.model.Binding) source(dependencyEdge);
+      Binding binding = (Binding) source(dependencyEdge);
       entryPoints = graph.entryPointEdgesDependingOnBinding(binding);
       dependencyTrace =
           ImmutableList.<DependencyEdge>builder()
@@ -260,7 +261,7 @@ public final class DiagnosticMessageGenerator {
    * Returns the dependency trace from one of the {@code entryPoints} to {@code binding} to {@code
    * message} as a list <i>ending with</i> the entry point.
    */
-  // TODO(ronshapiro): Adding a DependencyPath type to dagger.model could be useful, i.e.
+  // TODO(ronshapiro): Adding a DependencyPath type to dagger.spi.model could be useful, i.e.
   // bindingGraph.shortestPathFromEntryPoint(DependencyEdge, MaybeBindingNode)
   public ImmutableList<DependencyEdge> dependencyTrace(
       MaybeBinding binding, ImmutableSet<DependencyEdge> entryPoints) {

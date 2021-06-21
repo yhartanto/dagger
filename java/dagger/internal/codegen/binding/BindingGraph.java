@@ -37,12 +37,12 @@ import com.google.common.collect.Sets;
 import com.google.common.graph.ImmutableNetwork;
 import com.google.common.graph.Traverser;
 import dagger.internal.codegen.base.TarjanSCCs;
-import dagger.model.BindingGraph.ChildFactoryMethodEdge;
-import dagger.model.BindingGraph.ComponentNode;
-import dagger.model.BindingGraph.Edge;
-import dagger.model.BindingGraph.Node;
-import dagger.model.ComponentPath;
-import dagger.model.Key;
+import dagger.spi.model.BindingGraph.ChildFactoryMethodEdge;
+import dagger.spi.model.BindingGraph.ComponentNode;
+import dagger.spi.model.BindingGraph.Edge;
+import dagger.spi.model.BindingGraph.Node;
+import dagger.spi.model.ComponentPath;
+import dagger.spi.model.Key;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -64,7 +64,7 @@ public abstract class BindingGraph {
    * their bindings.
    */
   @AutoValue
-  public abstract static class TopLevelBindingGraph extends dagger.model.BindingGraph {
+  public abstract static class TopLevelBindingGraph extends dagger.spi.model.BindingGraph {
     static TopLevelBindingGraph create(
         ImmutableNetwork<Node, Edge> network, boolean isFullBindingGraph) {
       TopLevelBindingGraph topLevelBindingGraph =
@@ -96,7 +96,7 @@ public abstract class BindingGraph {
 
     TopLevelBindingGraph() {}
 
-    // This overrides dagger.model.BindingGraph with a more efficient implementation.
+    // This overrides dagger.spi.model.BindingGraph with a more efficient implementation.
     @Override
     public Optional<ComponentNode> componentNode(ComponentPath componentPath) {
       return componentNodes.containsKey(componentPath)

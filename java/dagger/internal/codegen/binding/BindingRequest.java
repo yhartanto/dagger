@@ -20,9 +20,9 @@ import static dagger.internal.codegen.base.RequestKinds.requestType;
 
 import com.google.auto.value.AutoValue;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
-import dagger.model.RequestKind;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Key;
+import dagger.spi.model.RequestKind;
 import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
 

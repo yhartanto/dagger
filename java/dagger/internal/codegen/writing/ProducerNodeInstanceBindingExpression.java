@@ -28,8 +28,8 @@ import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
-import dagger.model.Key;
 import dagger.producers.internal.Producers;
+import dagger.spi.model.Key;
 
 /** Binding expression for producer node instances. */
 final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindingExpression {

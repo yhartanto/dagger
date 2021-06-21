@@ -28,8 +28,8 @@ import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.Key;
-import dagger.model.RequestKind;
+import dagger.spi.model.Key;
+import dagger.spi.model.RequestKind;
 import javax.lang.model.SourceVersion;
 
 final class ImmediateFutureBindingExpression extends BindingExpression {

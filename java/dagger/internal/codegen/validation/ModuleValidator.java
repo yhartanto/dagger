@@ -65,7 +65,7 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.BindingGraph;
+import dagger.spi.model.BindingGraph;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;

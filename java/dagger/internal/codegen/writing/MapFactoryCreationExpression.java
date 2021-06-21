@@ -29,9 +29,9 @@ import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.model.DependencyRequest;
 import dagger.producers.Produced;
 import dagger.producers.Producer;
+import dagger.spi.model.DependencyRequest;
 import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 

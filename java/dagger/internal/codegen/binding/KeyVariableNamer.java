@@ -22,8 +22,8 @@ import static dagger.internal.codegen.binding.SourceFiles.protectAgainstKeywords
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Key;
 import java.util.Iterator;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;

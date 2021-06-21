@@ -26,9 +26,9 @@ import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessibl
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.writing.DelegateBindingExpression.isBindsScopeStrongerThanDependencyScope;
 import static dagger.internal.codegen.writing.MemberSelect.staticFactoryCreation;
-import static dagger.model.BindingKind.DELEGATE;
-import static dagger.model.BindingKind.MULTIBOUND_MAP;
-import static dagger.model.BindingKind.MULTIBOUND_SET;
+import static dagger.spi.model.BindingKind.DELEGATE;
+import static dagger.spi.model.BindingKind.MULTIBOUND_MAP;
+import static dagger.spi.model.BindingKind.MULTIBOUND_SET;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
@@ -50,10 +50,10 @@ import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
-import dagger.model.BindingKind;
-import dagger.model.DependencyRequest;
-import dagger.model.Key;
-import dagger.model.RequestKind;
+import dagger.spi.model.BindingKind;
+import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Key;
+import dagger.spi.model.RequestKind;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;

@@ -30,6 +30,7 @@ filegroup(
     name = "spi-srcs",
     srcs = glob(["*.java"]) + [
         "//java/dagger/model:model-srcs",
+        "//java/dagger/spi/model:model-srcs",
     ],
 )
 
@@ -40,15 +41,13 @@ java_library(
     tags = ["maven_coordinates=com.google.dagger:dagger-spi:" + POM_VERSION],
     exports = [
         "//java/dagger/model",
+        "//java/dagger/spi/model",
     ],
     deps = [
         "//java/dagger:core",
-        "//java/dagger/internal/guava:base",
-        "//java/dagger/internal/guava:collect",
         "//java/dagger/model",
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/error_prone:annotations",
-        "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )
 
@@ -60,6 +59,7 @@ gen_maven_artifact(
     artifact_target_libs = [
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/model",
+        "//java/dagger/spi/model",
     ],
     artifact_target_maven_deps = [
         "com.google.auto:auto-common",

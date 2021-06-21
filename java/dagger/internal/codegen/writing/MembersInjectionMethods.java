@@ -40,7 +40,7 @@ import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
-import dagger.model.Key;
+import dagger.spi.model.Key;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.inject.Inject;

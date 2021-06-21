@@ -23,7 +23,6 @@ import com.google.auto.service.AutoService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.BindsInstance;
 import dagger.Component;
@@ -40,13 +39,14 @@ import dagger.internal.codegen.bindinggraphvalidation.BindingGraphValidationModu
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ProcessingEnvironmentCompilerOptions;
 import dagger.internal.codegen.componentgenerator.ComponentGeneratorModule;
-import dagger.internal.codegen.validation.BindingGraphPlugins;
 import dagger.internal.codegen.validation.BindingMethodProcessingStep;
 import dagger.internal.codegen.validation.BindingMethodValidatorsModule;
 import dagger.internal.codegen.validation.BindsInstanceProcessingStep;
+import dagger.internal.codegen.validation.ExternalBindingGraphPlugins;
 import dagger.internal.codegen.validation.InjectBindingRegistryModule;
 import dagger.internal.codegen.validation.MonitoringModuleProcessingStep;
 import dagger.internal.codegen.validation.MultibindingAnnotationsProcessingStep;
+import dagger.internal.codegen.validation.ValidationBindingGraphPlugins;
 import dagger.spi.BindingGraphPlugin;
 import java.util.Arrays;
 import java.util.Optional;
@@ -74,7 +74,8 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   @Inject SourceFileGenerator<ProvisionBinding> factoryGenerator;
   @Inject SourceFileGenerator<MembersInjectionBinding> membersInjectorGenerator;
   @Inject ImmutableList<Step> processingSteps;
-  @Inject BindingGraphPlugins bindingGraphPlugins;
+  @Inject ValidationBindingGraphPlugins validationBindingGraphPlugins;
+  @Inject ExternalBindingGraphPlugins externalBindingGraphPlugins;
   @Inject Set<ClearableCache> clearableCaches;
 
   public ComponentProcessor() {
@@ -109,18 +110,20 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
   }
 
   @Override
-  public Set<String> getSupportedOptions() {
-    return Sets.union(
-            ProcessingEnvironmentCompilerOptions.supportedOptions(),
-            bindingGraphPlugins.allSupportedOptions())
-        .immutableCopy();
+  public ImmutableSet<String> getSupportedOptions() {
+    return ImmutableSet.<String>builder()
+        .addAll(ProcessingEnvironmentCompilerOptions.supportedOptions())
+        .addAll(validationBindingGraphPlugins.allSupportedOptions())
+        .addAll(externalBindingGraphPlugins.allSupportedOptions())
+        .build();
   }
 
   @Override
   protected Iterable<? extends Step> steps() {
     ProcessorComponent.factory().create(processingEnv, testingPlugins).inject(this);
 
-    bindingGraphPlugins.initializePlugins();
+    validationBindingGraphPlugins.initializePlugins();
+    externalBindingGraphPlugins.initializePlugins();
 
     return processingSteps;
   }

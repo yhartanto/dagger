@@ -36,7 +36,7 @@ import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.model.RequestKind;
+import dagger.spi.model.RequestKind;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;

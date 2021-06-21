@@ -38,7 +38,7 @@ import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.DependencyRequest;
+import dagger.spi.model.DependencyRequest;
 import java.util.Collections;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;

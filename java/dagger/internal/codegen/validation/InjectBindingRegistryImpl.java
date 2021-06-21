@@ -47,7 +47,7 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.Key;
+import dagger.spi.model.Key;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;

@@ -30,7 +30,7 @@ import dagger.internal.codegen.base.OptionalType.OptionalKind;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.DependencyRequest;
+import dagger.spi.model.DependencyRequest;
 import javax.lang.model.SourceVersion;
 
 /** A binding expression for optional bindings. */

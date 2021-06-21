@@ -27,10 +27,10 @@ import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescri
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
-import dagger.model.RequestKind;
 import dagger.producers.Producer;
 import dagger.producers.internal.CancellationListener;
 import dagger.producers.internal.Producers;
+import dagger.spi.model.RequestKind;
 import java.util.Optional;
 import javax.lang.model.type.TypeMirror;
 

@@ -16,7 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
-import static dagger.model.BindingKind.MEMBERS_INJECTOR;
+import static dagger.spi.model.BindingKind.MEMBERS_INJECTOR;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.CaseFormat;

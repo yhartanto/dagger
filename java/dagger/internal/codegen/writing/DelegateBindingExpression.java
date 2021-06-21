@@ -22,7 +22,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.RequestKinds.requestType;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
-import static dagger.model.BindingKind.DELEGATE;
+import static dagger.spi.model.BindingKind.DELEGATE;
 
 import com.squareup.javapoet.ClassName;
 import dagger.assisted.Assisted;
@@ -35,7 +35,7 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.RequestKind;
+import dagger.spi.model.RequestKind;
 import javax.lang.model.type.TypeMirror;
 
 /** A {@link dagger.internal.codegen.writing.BindingExpression} for {@code @Binds} methods. */

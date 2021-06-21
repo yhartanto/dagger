@@ -54,7 +54,7 @@ import dagger.internal.codegen.compileroption.ValidationType;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.model.Scope;
+import dagger.spi.model.Scope;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;

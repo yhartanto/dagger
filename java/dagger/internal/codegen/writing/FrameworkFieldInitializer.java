@@ -35,8 +35,8 @@ import dagger.internal.codegen.binding.FrameworkField;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
-import dagger.model.BindingKind;
 import dagger.producers.internal.DelegateProducer;
+import dagger.spi.model.BindingKind;
 import java.util.Optional;
 
 /**

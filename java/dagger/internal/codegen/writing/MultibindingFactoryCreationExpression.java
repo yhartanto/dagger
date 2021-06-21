@@ -24,7 +24,7 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
-import dagger.model.DependencyRequest;
+import dagger.spi.model.DependencyRequest;
 
 /** An abstract factory creation expression for multibindings. */
 abstract class MultibindingFactoryCreationExpression

@@ -34,8 +34,8 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
-import dagger.model.BindingKind;
-import dagger.model.RequestKind;
+import dagger.spi.model.BindingKind;
+import dagger.spi.model.RequestKind;
 import javax.lang.model.type.TypeMirror;
 
 /**

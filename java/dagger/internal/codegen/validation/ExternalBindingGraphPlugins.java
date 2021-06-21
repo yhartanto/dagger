@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Dagger Authors.
+ * Copyright (C) 2021 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,36 +17,41 @@
 package dagger.internal.codegen.validation;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static javax.tools.Diagnostic.Kind.ERROR;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import dagger.internal.codegen.compileroption.ProcessingOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.validation.DiagnosticReporterFactory.DiagnosticReporterImpl;
+import dagger.model.BindingGraph;
 import dagger.spi.BindingGraphPlugin;
+import dagger.spi.DiagnosticReporter;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 
 /** Initializes {@link BindingGraphPlugin}s. */
-public final class BindingGraphPlugins {
+public final class ExternalBindingGraphPlugins {
   private final ImmutableSet<BindingGraphPlugin> plugins;
+  private final DiagnosticReporterFactory diagnosticReporterFactory;
   private final Filer filer;
   private final DaggerTypes types;
   private final DaggerElements elements;
   private final Map<String, String> processingOptions;
 
   @Inject
-  BindingGraphPlugins(
-      @Validation ImmutableSet<BindingGraphPlugin> validationPlugins,
-      ImmutableSet<BindingGraphPlugin> externalPlugins,
+  ExternalBindingGraphPlugins(
+      ImmutableSet<BindingGraphPlugin> plugins,
+      DiagnosticReporterFactory diagnosticReporterFactory,
       Filer filer,
       DaggerTypes types,
       DaggerElements elements,
       @ProcessingOptions Map<String, String> processingOptions) {
-    this.plugins = Sets.union(validationPlugins, externalPlugins).immutableCopy();
+    this.plugins = plugins;
+    this.diagnosticReporterFactory = diagnosticReporterFactory;
     this.filer = filer;
     this.types = types;
     this.elements = elements;
@@ -74,5 +79,22 @@ public final class BindingGraphPlugins {
     if (!supportedOptions.isEmpty()) {
       plugin.initOptions(Maps.filterKeys(processingOptions, supportedOptions::contains));
     }
+  }
+
+  /** Returns {@code false} if any of the plugins reported an error. */
+  boolean visit(dagger.spi.model.BindingGraph spiGraph) {
+    BindingGraph graph = ExternalBindingGraphConverter.fromSpiModel(spiGraph);
+    boolean isClean = true;
+    for (BindingGraphPlugin plugin : plugins) {
+      DiagnosticReporterImpl spiReporter =
+          diagnosticReporterFactory.reporter(
+              spiGraph, plugin.pluginName(), /* reportErrorsAsWarnings= */ false);
+      DiagnosticReporter reporter = ExternalBindingGraphConverter.fromSpiModel(spiReporter);
+      plugin.visitGraph(graph, reporter);
+      if (spiReporter.reportedDiagnosticKinds().contains(ERROR)) {
+        isClean = false;
+      }
+    }
+    return isClean;
   }
 }

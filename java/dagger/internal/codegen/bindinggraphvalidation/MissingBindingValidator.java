@@ -31,17 +31,17 @@ import dagger.internal.codegen.binding.DependencyRequestFormatter;
 import dagger.internal.codegen.binding.InjectBindingRegistry;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.validation.DiagnosticMessageGenerator;
-import dagger.model.Binding;
-import dagger.model.BindingGraph;
-import dagger.model.BindingGraph.ComponentNode;
-import dagger.model.BindingGraph.DependencyEdge;
-import dagger.model.BindingGraph.Edge;
-import dagger.model.BindingGraph.MissingBinding;
-import dagger.model.BindingGraph.Node;
-import dagger.model.ComponentPath;
-import dagger.model.Key;
-import dagger.spi.BindingGraphPlugin;
-import dagger.spi.DiagnosticReporter;
+import dagger.spi.model.Binding;
+import dagger.spi.model.BindingGraph;
+import dagger.spi.model.BindingGraph.ComponentNode;
+import dagger.spi.model.BindingGraph.DependencyEdge;
+import dagger.spi.model.BindingGraph.Edge;
+import dagger.spi.model.BindingGraph.MissingBinding;
+import dagger.spi.model.BindingGraph.Node;
+import dagger.spi.model.BindingGraphPlugin;
+import dagger.spi.model.ComponentPath;
+import dagger.spi.model.DiagnosticReporter;
+import dagger.spi.model.Key;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -195,11 +195,11 @@ final class MissingBindingValidator implements BindingGraphPlugin {
     if (source instanceof ComponentNode) {
       return canBeSatisfiedByProductionBinding(edge.dependencyRequest().kind());
     }
-    if (source instanceof dagger.model.Binding) {
-      return ((dagger.model.Binding) source).isProduction();
+    if (source instanceof dagger.spi.model.Binding) {
+      return ((dagger.spi.model.Binding) source).isProduction();
     }
     throw new IllegalArgumentException(
-        "expected a dagger.model.Binding or ComponentNode: " + source);
+        "expected a dagger.spi.model.Binding or ComponentNode: " + source);
   }
 
   private boolean typeHasInjectionSites(Key key) {
