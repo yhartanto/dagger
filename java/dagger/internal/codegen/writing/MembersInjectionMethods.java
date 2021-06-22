@@ -101,7 +101,7 @@ final class MembersInjectionMethods {
 
   private Expression injectMethodExpression(Binding binding, ClassName requestingClass) {
     ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
-    TypeMirror keyType = binding.key().type();
+    TypeMirror keyType = binding.key().type().java();
     TypeMirror membersInjectedType =
         isTypeAccessibleFrom(keyType, shardImplementation.name().packageName())
             ? keyType

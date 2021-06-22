@@ -119,7 +119,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
             .addModifiers(PUBLIC, FINAL)
             .addTypeVariables(typeParameters);
 
-    TypeName injectedTypeName = TypeName.get(binding.key().type());
+    TypeName injectedTypeName = TypeName.get(binding.key().type().java());
     TypeName implementedType = membersInjectorOf(injectedTypeName);
     injectorTypeBuilder.addSuperinterface(implementedType);
 
@@ -159,7 +159,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
       // If the dependency type is not visible to this members injector, then use the raw framework
       // type for the field.
       boolean useRawFrameworkType =
-          !isTypeAccessibleFrom(dependency.key().type(), generatedTypeName.packageName());
+          !isTypeAccessibleFrom(dependency.key().type().java(), generatedTypeName.packageName());
 
       String fieldName = fieldNames.getUniqueName(bindingField.name());
       TypeName fieldType = useRawFrameworkType ? bindingField.type().rawType : bindingField.type();
@@ -198,7 +198,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
             binding.injectionSites(),
             generatedTypeName,
             CodeBlock.of("instance"),
-            binding.key().type(),
+            binding.key().type().java(),
             frameworkFieldUsages(binding.dependencies(), dependencyFields)::get,
             types,
             metadataUtil));

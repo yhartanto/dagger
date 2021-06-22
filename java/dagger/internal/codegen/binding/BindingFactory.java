@@ -44,6 +44,7 @@ import static dagger.spi.model.BindingKind.OPTIONAL;
 import static dagger.spi.model.BindingKind.PRODUCTION;
 import static dagger.spi.model.BindingKind.PROVISION;
 import static dagger.spi.model.BindingKind.SUBCOMPONENT_CREATOR;
+import static dagger.spi.model.DaggerType.fromJava;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.METHOD;
 
@@ -167,7 +168,7 @@ public final class BindingFactory {
             .scope(uniqueScopeOf(constructorElement.getEnclosingElement()));
 
     TypeElement bindingTypeElement = MoreElements.asType(constructorElement.getEnclosingElement());
-    if (hasNonDefaultTypeParameters(bindingTypeElement, key.type(), types)) {
+    if (hasNonDefaultTypeParameters(bindingTypeElement, key.type().java(), types)) {
       builder.unresolved(injectionBinding(constructorElement, Optional.empty()));
     }
     return builder.build();
@@ -196,12 +197,12 @@ public final class BindingFactory {
         MoreTypes.asExecutable(types.asMemberOf(factoryType, factoryMethod));
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .key(Key.builder(factoryType).build())
+        .key(Key.builder(fromJava(factoryType)).build())
         .bindingElement(factory)
         .provisionDependencies(
             ImmutableSet.of(
                 DependencyRequest.builder()
-                    .key(Key.builder(factoryMethodType.getReturnType()).build())
+                    .key(Key.builder(fromJava(factoryMethodType.getReturnType())).build())
                     .kind(RequestKind.PROVIDER)
                     .build()))
         .kind(ASSISTED_FACTORY)
@@ -530,7 +531,7 @@ public final class BindingFactory {
         .key(key)
         .contributionType(ContributionType.UNIQUE)
         .kind(MEMBERS_INJECTOR)
-        .bindingElement(MoreTypes.asTypeElement(membersInjectionBinding.key().type()))
+        .bindingElement(MoreTypes.asTypeElement(membersInjectionBinding.key().type().java()))
         .provisionDependencies(membersInjectionBinding.dependencies())
         .injectionSites(membersInjectionBinding.injectionSites())
         .build();
@@ -569,7 +570,7 @@ public final class BindingFactory {
         key,
         dependencies,
         typeElement,
-        hasNonDefaultTypeParameters(typeElement, key.type(), types)
+        hasNonDefaultTypeParameters(typeElement, key.type().java(), types)
             ? Optional.of(
                 membersInjectionBinding(asDeclared(typeElement.asType()), Optional.empty()))
             : Optional.empty(),

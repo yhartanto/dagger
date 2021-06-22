@@ -131,7 +131,7 @@ public abstract class ContributionBinding extends Binding implements HasContribu
         return SetType.from(key()).elementType();
       case SET_VALUES:
       case UNIQUE:
-        return key().type();
+        return key().type().java();
     }
     throw new AssertionError();
   }

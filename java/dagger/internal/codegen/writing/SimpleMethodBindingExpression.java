@@ -124,7 +124,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   }
 
   private TypeName constructorTypeName(ClassName requestingClass) {
-    DeclaredType type = MoreTypes.asDeclared(provisionBinding.key().type());
+    DeclaredType type = MoreTypes.asDeclared(provisionBinding.key().type().java());
     TypeName typeName = TypeName.get(type);
     if (type.getTypeArguments().stream()
         .allMatch(t -> isTypeAccessibleFrom(t, requestingClass.packageName()))) {
@@ -157,8 +157,10 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       // Java 7 type inference can't figure out that instance in
       // injectParameterized(Parameterized_Factory.newParameterized()) is Parameterized<T> and not
       // Parameterized<Object>
-      if (!MoreTypes.asDeclared(provisionBinding.key().type()).getTypeArguments().isEmpty()) {
-        TypeName keyType = TypeName.get(provisionBinding.key().type());
+      if (!MoreTypes.asDeclared(provisionBinding.key().type().java())
+          .getTypeArguments()
+          .isEmpty()) {
+        TypeName keyType = TypeName.get(provisionBinding.key().type().java());
         instance = CodeBlock.of("($T) ($T) $L", keyType, rawTypeName(keyType), instance);
       }
     }
@@ -177,7 +179,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   }
 
   private TypeMirror simpleMethodReturnType() {
-    return provisionBinding.contributedPrimitiveType().orElse(provisionBinding.key().type());
+    return provisionBinding.contributedPrimitiveType().orElse(provisionBinding.key().type().java());
   }
 
   @AssistedFactory

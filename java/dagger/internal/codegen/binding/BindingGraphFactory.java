@@ -411,19 +411,20 @@ public final class BindingGraphFactory implements ClearableCache {
       }
 
       // Add members injector binding
-      if (isType(requestKey.type()) && isTypeOf(MembersInjector.class, requestKey.type())) {
+      if (isType(requestKey.type().java())
+          && isTypeOf(MembersInjector.class, requestKey.type().java())) {
         injectBindingRegistry
             .getOrFindMembersInjectorProvisionBinding(requestKey)
             .ifPresent(bindings::add);
       }
 
       // Add Assisted Factory binding
-      if (isType(requestKey.type())
-          && requestKey.type().getKind() == TypeKind.DECLARED
-          && isAssistedFactoryType(asTypeElement(requestKey.type()))) {
+      if (isType(requestKey.type().java())
+          && requestKey.type().java().getKind() == TypeKind.DECLARED
+          && isAssistedFactoryType(asTypeElement(requestKey.type().java()))) {
         bindings.add(
             bindingFactory.assistedFactoryBinding(
-                asTypeElement(requestKey.type()), Optional.of(requestKey.type())));
+                asTypeElement(requestKey.type().java()), Optional.of(requestKey.type().java())));
       }
 
       // If there are no bindings, add the implicit @Inject-constructed binding if there is one.
@@ -486,7 +487,8 @@ public final class BindingGraphFactory implements ClearableCache {
       checkArgument(subcomponentCreatorBinding.kind().equals(SUBCOMPONENT_CREATOR));
       Resolver owningResolver = getOwningResolver(subcomponentCreatorBinding).get();
 
-      TypeElement builderType = MoreTypes.asTypeElement(subcomponentCreatorBinding.key().type());
+      TypeElement builderType =
+          MoreTypes.asTypeElement(subcomponentCreatorBinding.key().type().java());
       owningResolver.subcomponentsToResolve.add(
           owningResolver.componentDescriptor.getChildComponentWithBuilderType(builderType));
     }

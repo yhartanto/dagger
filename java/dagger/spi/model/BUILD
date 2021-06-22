@@ -34,9 +34,7 @@ package(
 
 filegroup(
     name = "model-srcs",
-    srcs = glob(
-        ["*.java"],
-    ),
+    srcs = glob(["*.java"]),
 )
 
 java_library(
@@ -54,6 +52,7 @@ java_library(
         "@google_bazel_common//third_party/java/auto:value",
         "@google_bazel_common//third_party/java/error_prone:annotations",
         "@google_bazel_common//third_party/java/javapoet",
+        "@google_bazel_common//third_party/java/jsr305_annotations",
         "@google_bazel_common//third_party/java/jsr330_inject",
     ],
 )

@@ -134,7 +134,7 @@ public abstract class MapType {
    * {@code true} if {@code key.type()} is a {@link Map} type.
    */
   public static boolean isMap(Key key) {
-    return isMap(key.type());
+    return isMap(key.type().java());
   }
 
   /**
@@ -153,6 +153,6 @@ public abstract class MapType {
    * @throws IllegalArgumentException if {@code key.type()} is not a {@link Map} type
    */
   public static MapType from(Key key) {
-    return from(key.type());
+    return from(key.type().java());
   }
 }

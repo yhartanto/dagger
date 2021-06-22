@@ -99,7 +99,7 @@ public class SourceFiles {
             FrameworkField.create(
                 ClassName.get(
                     frameworkTypeMapper.getFrameworkType(dependency.kind()).frameworkClass()),
-                TypeName.get(dependency.key().type()),
+                TypeName.get(dependency.key().type().java()),
                 DependencyVariableNamer.name(dependency)));
   }
 

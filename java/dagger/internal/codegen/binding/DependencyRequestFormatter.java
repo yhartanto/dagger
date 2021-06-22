@@ -24,10 +24,10 @@ import dagger.Provides;
 import dagger.internal.codegen.base.Formatter;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.producers.Produces;
+import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.DependencyRequest;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
@@ -101,7 +101,8 @@ public final class DependencyRequestFormatter extends Formatter<DependencyReques
 
         @Override
         public String visitVariable(VariableElement variable, DependencyRequest request) {
-          TypeMirror requestedType = requestType(request.kind(), request.key().type(), types);
+          TypeMirror requestedType =
+              requestType(request.kind(), request.key().type().java(), types);
           return INDENT
               + formatQualifier(request.key().qualifier())
               + requestedType
@@ -122,7 +123,7 @@ public final class DependencyRequestFormatter extends Formatter<DependencyReques
         }
       };
 
-  private String formatQualifier(Optional<AnnotationMirror> maybeQualifier) {
+  private String formatQualifier(Optional<DaggerAnnotation> maybeQualifier) {
     return maybeQualifier.map(qualifier -> qualifier + " ").orElse("");
   }
 

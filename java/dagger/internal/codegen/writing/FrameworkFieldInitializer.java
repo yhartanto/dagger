@@ -141,7 +141,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     if (fieldSpec != null) {
       return fieldSpec;
     }
-    boolean useRawType = !shardImplementation.isTypeAccessible(binding.key().type());
+    boolean useRawType = !shardImplementation.isTypeAccessible(binding.key().type().java());
     FrameworkField contributionBindingField =
         FrameworkField.forBinding(
             binding, frameworkInstanceCreationExpression.alternativeFrameworkClass());
@@ -153,7 +153,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       // An assisted injection factory doesn't extend Provider, so we reference the generated
       // factory type directly (i.e. Foo_Factory<T> instead of Provider<Foo<T>>).
       TypeName[] typeParameters =
-          MoreTypes.asDeclared(binding.key().type()).getTypeArguments().stream()
+          MoreTypes.asDeclared(binding.key().type().java()).getTypeArguments().stream()
               .map(TypeName::get)
               .toArray(TypeName[]::new);
       fieldType =

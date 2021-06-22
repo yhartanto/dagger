@@ -215,7 +215,7 @@ public final class ComponentBindingExpressions {
   Expression getDependencyArgumentExpression(
       DependencyRequest dependencyRequest, ClassName requestingClass) {
 
-    TypeMirror dependencyType = dependencyRequest.key().type();
+    TypeMirror dependencyType = dependencyRequest.key().type().java();
     BindingRequest bindingRequest = bindingRequest(dependencyRequest);
     Expression dependencyExpression = getDependencyExpression(bindingRequest, requestingClass);
 

@@ -16,68 +16,30 @@
 
 package dagger.spi.model;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.util.stream.Collectors.joining;
-
-import com.google.auto.common.AnnotationMirrors;
-import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
-import com.google.common.base.Equivalence;
-import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
-import com.squareup.javapoet.CodeBlock;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleAnnotationValueVisitor8;
 
 /**
- * A {@linkplain TypeMirror type} and an optional {@linkplain javax.inject.Qualifier qualifier} that
+ * A {@linkplain DaggerType type} and an optional {@linkplain javax.inject.Qualifier qualifier} that
  * is the lookup key for a binding.
  */
 @AutoValue
 public abstract class Key {
   /**
-   * A {@link javax.inject.Qualifier} annotation that provides a unique namespace prefix
-   * for the type of this key.
+   * A {@link javax.inject.Qualifier} annotation that provides a unique namespace prefix for the
+   * type of this key.
    */
-  public final Optional<AnnotationMirror> qualifier() {
-    return wrappedQualifier().map(Wrapper::get);
-  }
+  public abstract Optional<DaggerAnnotation> qualifier();
 
-  /**
-   * The type represented by this key.
-   */
-  public final TypeMirror type() {
-    return wrappedType().get();
-  }
-
-  /**
-   * A {@link javax.inject.Qualifier} annotation that provides a unique namespace prefix
-   * for the type of this key.
-   *
-   * Despite documentation in {@link AnnotationMirror}, equals and hashCode aren't implemented
-   * to represent logical equality, so {@link AnnotationMirrors#equivalence()}
-   * provides this facility.
-   */
-  abstract Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedQualifier();
-
-  /**
-   * The type represented by this key.
-   *
-   * As documented in {@link TypeMirror}, equals and hashCode aren't implemented to represent
-   * logical equality, so {@link MoreTypes#equivalence()} wraps this type.
-   */
-  abstract Equivalence.Wrapper<TypeMirror> wrappedType();
+  /** The type represented by this key. */
+  public abstract DaggerType type();
 
   /**
    * Distinguishes keys for multibinding contributions that share a {@link #type()} and {@link
@@ -103,77 +65,18 @@ public abstract class Key {
   @Override
   public abstract boolean equals(Object o);
 
-  /**
-   * Returns a String rendering of an {@link AnnotationMirror} that includes attributes in the order
-   * defined in the annotation type. This will produce the same output for {@linkplain
-   * AnnotationMirrors#equivalence() equal} {@link AnnotationMirror}s even if default values are
-   * omitted or their attributes were written in different orders, e.g. {@code @A(b = "b", c = "c")}
-   * and {@code @A(c = "c", b = "b", attributeWithDefaultValue = "default value")}.
-   */
-  // TODO(ronshapiro): move this to auto-common
-  static String stableAnnotationMirrorToString(AnnotationMirror qualifier) {
-    StringBuilder builder = new StringBuilder("@").append(qualifier.getAnnotationType());
-    ImmutableMap<ExecutableElement, AnnotationValue> elementValues =
-        AnnotationMirrors.getAnnotationValuesWithDefaults(qualifier);
-    if (!elementValues.isEmpty()) {
-      ImmutableMap.Builder<String, String> namedValuesBuilder = ImmutableMap.builder();
-      elementValues.forEach(
-          (key, value) ->
-              namedValuesBuilder.put(
-                  key.getSimpleName().toString(), stableAnnotationValueToString(value)));
-      ImmutableMap<String, String> namedValues = namedValuesBuilder.build();
-      builder.append('(');
-      if (namedValues.size() == 1 && namedValues.containsKey("value")) {
-        // Omit "value ="
-        builder.append(namedValues.get("value"));
-      } else {
-        builder.append(Joiner.on(", ").withKeyValueSeparator("=").join(namedValues));
-      }
-      builder.append(')');
-    }
-    return builder.toString();
-  }
-
-  private static String stableAnnotationValueToString(AnnotationValue annotationValue) {
-    return annotationValue.accept(
-        new SimpleAnnotationValueVisitor8<String, Void>() {
-          @Override
-          protected String defaultAction(Object value, Void ignore) {
-            return value.toString();
-          }
-
-          @Override
-          public String visitString(String value, Void ignore) {
-            return CodeBlock.of("$S", value).toString();
-          }
-
-          @Override
-          public String visitAnnotation(AnnotationMirror value, Void ignore) {
-            return stableAnnotationMirrorToString(value);
-          }
-
-          @Override
-          public String visitArray(List<? extends AnnotationValue> value, Void ignore) {
-            return value.stream()
-                .map(Key::stableAnnotationValueToString)
-                .collect(joining(", ", "{", "}"));
-          }
-        },
-        null);
-  }
-
   @Override
   public final String toString() {
     return Joiner.on(' ')
         .skipNulls()
         .join(
-            qualifier().map(Key::stableAnnotationMirrorToString).orElse(null),
+            qualifier().map(MoreAnnotationMirrors::toStableString).orElse(null),
             type(),
             multibindingContributionIdentifier().orElse(null));
   }
 
   /** Returns a builder for {@link Key}s. */
-  public static Builder builder(TypeMirror type) {
+  public static Builder builder(DaggerType type) {
     return new AutoValue_Key.Builder().type(type);
   }
 
@@ -181,24 +84,11 @@ public abstract class Key {
   @CanIgnoreReturnValue
   @AutoValue.Builder
   public abstract static class Builder {
-    abstract Builder wrappedType(Equivalence.Wrapper<TypeMirror> wrappedType);
+    public abstract Builder type(DaggerType type);
 
-    public final Builder type(TypeMirror type) {
-      return wrappedType(MoreTypes.equivalence().wrap(checkNotNull(type)));
-    }
+    public abstract Builder qualifier(Optional<DaggerAnnotation> qualifier);
 
-    abstract Builder wrappedQualifier(
-        Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedQualifier);
-
-    abstract Builder wrappedQualifier(Equivalence.Wrapper<AnnotationMirror> wrappedQualifier);
-
-    public final Builder qualifier(AnnotationMirror qualifier) {
-      return wrappedQualifier(AnnotationMirrors.equivalence().wrap(checkNotNull(qualifier)));
-    }
-
-    public final Builder qualifier(Optional<AnnotationMirror> qualifier) {
-      return wrappedQualifier(checkNotNull(qualifier).map(AnnotationMirrors.equivalence()::wrap));
-    }
+    public abstract Builder qualifier(DaggerAnnotation qualifier);
 
     public abstract Builder multibindingContributionIdentifier(
         Optional<MultibindingContributionIdentifier> identifier);

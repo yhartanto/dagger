@@ -126,7 +126,7 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
         }
         instantiation.add(".build()");
         return Expression.create(
-            isImmutableSetAvailable ? immutableSetType() : binding.key().type(),
+            isImmutableSetAvailable ? immutableSetType() : binding.key().type().java(),
             instantiation.build());
     }
   }
@@ -146,7 +146,7 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
     // method expects a collection. For example, ".addAll((Set) provideInaccessibleSetOfFoo.get())"
     return !isSingleValue(dependency)
             && bindingExpression instanceof DerivedFromFrameworkInstanceBindingExpression
-            && !isTypeAccessibleFrom(binding.key().type(), requestingClass.packageName())
+            && !isTypeAccessibleFrom(binding.key().type().java(), requestingClass.packageName())
         ? CodeBlocks.cast(expression, TypeNames.SET)
         : expression;
   }
@@ -154,7 +154,7 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
   private Expression collectionsStaticFactoryInvocation(
       ClassName requestingClass, CodeBlock methodInvocation) {
     return Expression.create(
-        binding.key().type(),
+        binding.key().type().java(),
         CodeBlock.builder()
             .add("$T.", Collections.class)
             .add(maybeTypeParameter(requestingClass))

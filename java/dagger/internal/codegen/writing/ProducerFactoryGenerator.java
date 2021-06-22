@@ -495,7 +495,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
   }
 
   private static TypeName asyncDependencyType(DependencyRequest dependency) {
-    TypeName keyName = TypeName.get(dependency.key().type());
+    TypeName keyName = TypeName.get(dependency.key().type().java());
     switch (dependency.kind()) {
       case INSTANCE:
         return keyName;

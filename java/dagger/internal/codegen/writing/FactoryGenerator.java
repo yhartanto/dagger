@@ -264,7 +264,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
                   binding.injectionSites(),
                   generatedClassNameForBinding(binding),
                   instance,
-                  binding.key().type(),
+                  binding.key().type().java(),
                   frameworkFieldUsages(binding.dependencies(), frameworkFields)::get,
                   types,
                   metadataUtil))

@@ -96,7 +96,7 @@ public abstract class SetType {
    * {@code true} if {@code key.type()} is a {@link Set} type.
    */
   public static boolean isSet(Key key) {
-    return isSet(key.type());
+    return isSet(key.type().java());
   }
 
   /**
@@ -115,6 +115,6 @@ public abstract class SetType {
    * @throws IllegalArgumentException if {@code key.type()} is not a {@link Set} type
    */
   public static SetType from(Key key) {
-    return from (key.type());
+    return from(key.type().java());
   }
 }

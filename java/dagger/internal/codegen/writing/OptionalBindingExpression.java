@@ -64,12 +64,13 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
         // issues
         // when used as an argument to some members injection proxy methods (see
         // https://github.com/google/dagger/issues/916)
-        if (isTypeAccessibleFrom(binding.key().type(), requestingClass.packageName())) {
+        if (isTypeAccessibleFrom(binding.key().type().java(), requestingClass.packageName())) {
           return Expression.create(
-              binding.key().type(), optionalKind.parameterizedAbsentValueExpression(optionalType));
+              binding.key().type().java(),
+              optionalKind.parameterizedAbsentValueExpression(optionalType));
         }
       }
-      return Expression.create(binding.key().type(), optionalKind.absentValueExpression());
+      return Expression.create(binding.key().type().java(), optionalKind.absentValueExpression());
     }
     DependencyRequest dependency = getOnlyElement(binding.dependencies());
 
@@ -80,11 +81,11 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
 
     // If the dependency type is inaccessible, then we have to use Optional.<Object>of(...), or else
     // we will get "incompatible types: inference variable has incompatible bounds.
-    return isTypeAccessibleFrom(dependency.key().type(), requestingClass.packageName())
+    return isTypeAccessibleFrom(dependency.key().type().java(), requestingClass.packageName())
         ? Expression.create(
-            binding.key().type(), optionalKind.presentExpression(dependencyExpression))
+            binding.key().type().java(), optionalKind.presentExpression(dependencyExpression))
         : Expression.create(
-            types.erasure(binding.key().type()),
+            types.erasure(binding.key().type().java()),
             optionalKind.presentObjectExpression(dependencyExpression));
   }
 

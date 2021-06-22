@@ -39,7 +39,7 @@ final class DependencyVariableNamer {
 
   static String name(DependencyRequest dependency) {
     if (!dependency.requestElement().isPresent()) {
-      return simpleVariableName(MoreTypes.asTypeElement(dependency.key().type()));
+      return simpleVariableName(MoreTypes.asTypeElement(dependency.key().type().java()));
     }
 
     String variableName = dependency.requestElement().get().getSimpleName().toString();

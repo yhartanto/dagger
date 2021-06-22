@@ -188,7 +188,7 @@ final class BindingGraphConverter {
               && binding.componentPath().equals(currentComponent.componentPath())) {
             network.addEdge(
                 binding,
-                subcomponentNode(binding.key().type(), graph),
+                subcomponentNode(binding.key().type().java(), graph),
                 new SubcomponentCreatorBindingEdgeImpl(
                     resolvedBindings.subcomponentDeclarations()));
           }

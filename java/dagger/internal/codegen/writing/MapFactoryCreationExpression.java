@@ -61,7 +61,7 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
   public CodeBlock creationExpression() {
     CodeBlock.Builder builder = CodeBlock.builder().add("$T.", mapFactoryClassName(binding));
     if (!useRawType()) {
-      MapType mapType = MapType.from(binding.key().type());
+      MapType mapType = MapType.from(binding.key().type().java());
       // TODO(ronshapiro): either inline this into mapFactoryClassName, or add a
       // mapType.unwrappedValueType() method that doesn't require a framework type
       TypeMirror valueType = mapType.valueType();

@@ -81,7 +81,7 @@ public abstract class FrameworkField {
   private static TypeMirror fieldValueType(ContributionBinding binding) {
     return binding.contributionType().isMultibinding()
         ? binding.contributedType()
-        : binding.key().type();
+        : binding.key().type().java();
   }
 
   private static String frameworkFieldName(ContributionBinding binding) {

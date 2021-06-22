@@ -53,7 +53,7 @@ final class ImmediateFutureBindingExpression extends BindingExpression {
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     return Expression.create(
-        types.wrapType(key.type(), ListenableFuture.class),
+        types.wrapType(key.type().java(), ListenableFuture.class),
         CodeBlock.of("$T.immediateFuture($L)", Futures.class, instanceExpression(requestingClass)));
   }
 
@@ -67,9 +67,11 @@ final class ImmediateFutureBindingExpression extends BindingExpression {
       //
       // For example, javac7 cannot detect that Futures.immediateFuture(ImmutableSet.of("T"))
       // can safely be assigned to ListenableFuture<Set<T>>.
-      if (!types.isSameType(expression.type(), key.type())) {
+      if (!types.isSameType(expression.type(), key.type().java())) {
         return CodeBlock.of(
-            "($T) $L", types.accessibleType(key.type(), requestingClass), expression.codeBlock());
+            "($T) $L",
+            types.accessibleType(key.type().java(), requestingClass),
+            expression.codeBlock());
       }
     }
     return expression.codeBlock();

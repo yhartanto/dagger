@@ -97,7 +97,7 @@ abstract class MemberSelect {
 
         case INJECTION:
         case PROVISION:
-          TypeMirror keyType = contributionBinding.key().type();
+          TypeMirror keyType = contributionBinding.key().type().java();
           if (keyType.getKind().equals(DECLARED)) {
             ImmutableList<TypeVariableName> typeVariables =
                 bindingTypeElementTypeVariableNames(contributionBinding);
@@ -152,7 +152,7 @@ abstract class MemberSelect {
     BindingType bindingType = contributionBinding.bindingType();
     ImmutableList<TypeMirror> typeParameters =
         ImmutableList.copyOf(
-            MoreTypes.asDeclared(contributionBinding.key().type()).getTypeArguments());
+            MoreTypes.asDeclared(contributionBinding.key().type().java()).getTypeArguments());
     if (bindingType.equals(BindingType.PRODUCTION)) {
       return new ParameterizedStaticMethod(
           PRODUCERS, typeParameters, CodeBlock.of("emptyMapProducer()"), PRODUCER);

@@ -86,7 +86,7 @@ final class AssistedFactoryBindingExpression extends SimpleInvocationBindingExpr
 
   private TypeSpec anonymousfactoryImpl(Expression assistedInjectionExpression) {
     TypeElement factory = asType(binding.bindingElement().get());
-    DeclaredType factoryType = asDeclared(binding.key().type());
+    DeclaredType factoryType = asDeclared(binding.key().type().java());
     ExecutableElement factoryMethod = assistedFactoryMethod(factory, elements);
 
     // We can't use MethodSpec.overriding directly because we need to control the parameter names.

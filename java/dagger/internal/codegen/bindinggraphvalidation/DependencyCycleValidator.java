@@ -204,7 +204,8 @@ final class DependencyCycleValidator implements BindingGraphPlugin {
     if (edge.dependencyRequest().key().multibindingContributionIdentifier().isPresent()) {
       return false;
     }
-    if (breaksCycle(edge.dependencyRequest().key().type(), edge.dependencyRequest().kind())) {
+    if (breaksCycle(
+        edge.dependencyRequest().key().type().java(), edge.dependencyRequest().kind())) {
       return true;
     }
     Node target = graph.network().incidentNodes(edge).target();

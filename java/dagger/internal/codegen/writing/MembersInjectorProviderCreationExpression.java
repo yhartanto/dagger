@@ -54,7 +54,7 @@ final class MembersInjectorProviderCreationExpression
   @Override
   public CodeBlock creationExpression() {
     TypeMirror membersInjectedType =
-        getOnlyElement(MoreTypes.asDeclared(binding.key().type()).getTypeArguments());
+        getOnlyElement(MoreTypes.asDeclared(binding.key().type().java()).getTypeArguments());
 
     boolean castThroughRawType = false;
     CodeBlock membersInjector;

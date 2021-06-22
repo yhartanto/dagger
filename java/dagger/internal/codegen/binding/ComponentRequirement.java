@@ -214,7 +214,7 @@ public abstract class ComponentRequirement {
   static ComponentRequirement forBoundInstance(Key key, boolean nullable, String variableName) {
     return new AutoValue_ComponentRequirement(
         Kind.BOUND_INSTANCE,
-        MoreTypes.equivalence().wrap(key.type()),
+        MoreTypes.equivalence().wrap(key.type().java()),
         nullable ? Optional.of(NullPolicy.ALLOW) : Optional.empty(),
         Optional.of(key),
         variableName);

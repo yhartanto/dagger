@@ -40,7 +40,7 @@ final class ComponentInstanceBindingExpression extends SimpleInvocationBindingEx
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     return Expression.create(
-        binding.key().type(),
+        binding.key().type().java(),
         componentImplementation.name().equals(requestingClass)
             ? CodeBlock.of("this")
             : componentImplementation.componentFieldReference());

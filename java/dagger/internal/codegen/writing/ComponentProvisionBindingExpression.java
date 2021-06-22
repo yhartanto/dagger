@@ -56,7 +56,7 @@ final class ComponentProvisionBindingExpression extends SimpleInvocationBindingE
             componentRequirementExpressions.getExpression(componentRequirement(), requestingClass),
             binding.bindingElement().get().getSimpleName());
     return Expression.create(
-        binding.contributedPrimitiveType().orElse(binding.key().type()),
+        binding.contributedPrimitiveType().orElse(binding.key().type().java()),
         maybeCheckForNull(binding, compilerOptions, invocation));
   }
 

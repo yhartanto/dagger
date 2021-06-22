@@ -66,7 +66,7 @@ abstract class MultibindingFactoryCreationExpression
    * component, and therefore a raw type must be used.
    */
   protected final boolean useRawType() {
-    return !shardImplementation.isTypeAccessible(binding.key().type());
+    return !shardImplementation.isTypeAccessible(binding.key().type().java());
   }
 
   @Override

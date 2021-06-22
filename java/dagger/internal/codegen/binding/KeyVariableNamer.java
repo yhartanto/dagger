@@ -97,10 +97,10 @@ public final class KeyVariableNamer {
 
     if (key.qualifier().isPresent()) {
       // TODO(gak): Use a better name for fields with qualifiers with members.
-      builder.append(key.qualifier().get().getAnnotationType().asElement().getSimpleName());
+      builder.append(key.qualifier().get().java().getAnnotationType().asElement().getSimpleName());
     }
 
-    key.type().accept(TYPE_NAMER, builder);
+    key.type().java().accept(TYPE_NAMER, builder);
 
     return protectAgainstKeywords(UPPER_CAMEL.to(LOWER_CAMEL, builder.toString()));
   }

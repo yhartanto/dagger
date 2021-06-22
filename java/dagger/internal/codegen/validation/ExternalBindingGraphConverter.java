@@ -47,6 +47,7 @@ import dagger.model.Key.MultibindingContributionIdentifier;
 import dagger.model.RequestKind;
 import dagger.model.Scope;
 import dagger.spi.DiagnosticReporter;
+import dagger.spi.model.DaggerAnnotation;
 import java.util.Optional;
 import javax.tools.Diagnostic;
 
@@ -121,8 +122,8 @@ public final class ExternalBindingGraphConverter {
   }
 
   private static Key fromSpiModel(dagger.spi.model.Key key) {
-    return Key.builder(key.type())
-        .qualifier(key.qualifier())
+    return Key.builder(key.type().java())
+        .qualifier(key.qualifier().map(DaggerAnnotation::java))
         .multibindingContributionIdentifier(
             key.multibindingContributionIdentifier().isPresent()
                 ? Optional.of(fromSpiModel(key.multibindingContributionIdentifier().get()))

@@ -325,7 +325,7 @@ public abstract class ComponentDescriptor {
         return returnType;
       }
       return BindingRequest.bindingRequest(dependencyRequest().get())
-          .requestedType(dependencyRequest().get().key().type(), types);
+          .requestedType(dependencyRequest().get().key().type().java(), types);
     }
 
     /** A {@link ComponentMethodDescriptor}builder for a method. */

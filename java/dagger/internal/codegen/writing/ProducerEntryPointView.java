@@ -113,6 +113,7 @@ final class ProducerEntryPointView {
   // TODO(cgdecker): Can we use producerExpression.getDependencyExpression().type() instead of
   // needing to (re)compute this?
   private TypeMirror fieldType(ComponentMethodDescriptor componentMethod) {
-    return types.wrapType(componentMethod.dependencyRequest().get().key().type(), Producer.class);
+    return types.wrapType(
+        componentMethod.dependencyRequest().get().key().type().java(), Producer.class);
   }
 }

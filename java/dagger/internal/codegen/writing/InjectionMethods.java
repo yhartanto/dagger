@@ -65,6 +65,7 @@ import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.RequestKind;
 import java.util.List;
@@ -276,7 +277,8 @@ final class InjectionMethods {
                   // methods for fields have a single dependency request
                   .collect(DaggerCollectors.onlyElement())
                   .key()
-                  .qualifier();
+                  .qualifier()
+                  .map(DaggerAnnotation::java);
           return fieldProxy(asVariable(injectionSite.element()), methodName, qualifier);
       }
       throw new AssertionError(injectionSite);
@@ -373,7 +375,7 @@ final class InjectionMethods {
 
   private static CodeBlock injectionMethodArgument(
       DependencyRequest dependency, CodeBlock argument, ClassName generatedTypeName) {
-    TypeMirror keyType = dependency.key().type();
+    TypeMirror keyType = dependency.key().type().java();
     CodeBlock.Builder codeBlock = CodeBlock.builder();
     if (!isRawTypeAccessible(keyType, generatedTypeName.packageName())
         && isTypeAccessibleFrom(keyType, generatedTypeName.packageName())) {
@@ -392,7 +394,8 @@ final class InjectionMethods {
    * {@link Object}.
    */
   private static TypeName accessibleType(DependencyRequest dependency) {
-    TypeName typeName = requestTypeName(dependency.kind(), accessibleType(dependency.key().type()));
+    TypeName typeName =
+        requestTypeName(dependency.kind(), accessibleType(dependency.key().type().java()));
     return dependency
             .requestElement()
             .map(element -> element.asType().getKind().isPrimitive())

@@ -95,7 +95,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
           binding != null;
           binding = bindingsRequiringGeneration.poll()) {
         checkState(!binding.unresolved().isPresent());
-        if (injectValidatorWhenGeneratingCode.isValidType(binding.key().type())) {
+        if (injectValidatorWhenGeneratingCode.isValidType(binding.key().type().java())) {
           generator.generate(binding);
         }
         materializedBindingKeys.add(binding.key());
@@ -135,7 +135,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
                   "Generating a %s for %s. "
                       + "Prefer to run the dagger processor over that class instead.",
                   factoryClass.getSimpleName(),
-                  types.erasure(binding.key().type()))); // erasure to strip <T> from msgs.
+                  types.erasure(binding.key().type().java()))); // erasure to strip <T> from msgs.
         }
       }
     }
@@ -312,7 +312,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     }
 
     // ok, let's see if we can find an @Inject constructor
-    TypeElement element = MoreElements.asType(types.asElement(key.type()));
+    TypeElement element = MoreElements.asType(types.asElement(key.type().java()));
     ImmutableSet<ExecutableElement> injectConstructors =
         ImmutableSet.<ExecutableElement>builder()
             .addAll(injectedConstructors(element))
@@ -324,7 +324,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
         return Optional.empty();
       case 1:
         return tryRegisterConstructor(
-            Iterables.getOnlyElement(injectConstructors), Optional.of(key.type()), true);
+            Iterables.getOnlyElement(injectConstructors), Optional.of(key.type().java()), true);
       default:
         throw new IllegalStateException("Found multiple @Inject constructors: "
             + injectConstructors);
@@ -341,10 +341,8 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     if (binding != null) {
       return Optional.of(binding);
     }
-    Optional<MembersInjectionBinding> newBinding =
-        tryRegisterMembersInjectedType(
-            MoreTypes.asTypeElement(key.type()), Optional.of(key.type()), true);
-    return newBinding;
+    return tryRegisterMembersInjectedType(
+        MoreTypes.asTypeElement(key.type().java()), Optional.of(key.type().java()), true);
   }
 
   @Override
@@ -352,7 +350,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     if (!isValidMembersInjectionKey(key)) {
       return Optional.empty();
     }
-    Key membersInjectionKey = keyFactory.forMembersInjectedType(unwrapType(key.type()));
+    Key membersInjectionKey = keyFactory.forMembersInjectedType(unwrapType(key.type().java()));
     return getOrFindMembersInjectionBinding(membersInjectionKey)
         .map(binding -> bindingFactory.membersInjectorBinding(key, binding));
   }

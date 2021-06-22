@@ -120,7 +120,7 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
           instantiation.add(".put($L)", keyAndValueExpression(dependency, requestingClass));
         }
         return Expression.create(
-            isImmutableMapAvailable ? immutableMapType() : binding.key().type(),
+            isImmutableMapAvailable ? immutableMapType() : binding.key().type().java(),
             instantiation.add(".build()").build());
     }
   }
@@ -143,7 +143,7 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
   private Expression collectionsStaticFactoryInvocation(
       ClassName requestingClass, CodeBlock methodInvocation) {
     return Expression.create(
-        binding.key().type(),
+        binding.key().type().java(),
         CodeBlock.builder()
             .add("$T.", Collections.class)
             .add(maybeTypeParameters(requestingClass))
@@ -152,7 +152,7 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
   }
 
   private CodeBlock maybeTypeParameters(ClassName requestingClass) {
-    TypeMirror bindingKeyType = binding.key().type();
+    TypeMirror bindingKeyType = binding.key().type().java();
     MapType mapType = MapType.from(binding.key());
     return isTypeAccessibleFrom(bindingKeyType, requestingClass.packageName())
         ? CodeBlock.of("<$T, $T>", mapType.keyType(), mapType.valueType())

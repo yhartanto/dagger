@@ -86,7 +86,7 @@ final class UnscopedDirectInstanceBindingExpressionFactory {
       case COMPONENT_DEPENDENCY:
         return Optional.of(
             componentRequirementBindingExpressionFactory.create(
-                binding, ComponentRequirement.forDependency(binding.key().type())));
+                binding, ComponentRequirement.forDependency(binding.key().type().java())));
 
       case COMPONENT_PROVISION:
         return Optional.of(
