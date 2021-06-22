@@ -357,11 +357,16 @@ public abstract class BindingGraph {
     return requirements.build();
   }
 
-  /** Returns all {@link ComponentDescriptor}s in the {@link TopLevelBindingGraph}. */
-  public final ImmutableSet<ComponentDescriptor> componentDescriptors() {
+  /**
+   * Returns all {@link ComponentDescriptor}s in the {@link TopLevelBindingGraph} mapped by the
+   * component path.
+   */
+  @Memoized
+  public ImmutableMap<ComponentPath, ComponentDescriptor> componentDescriptorsByPath() {
     return topLevelBindingGraph().componentNodes().stream()
-        .map(componentNode -> ((ComponentNodeImpl) componentNode).componentDescriptor())
-        .collect(toImmutableSet());
+        .map(ComponentNodeImpl.class::cast)
+        .collect(
+            toImmutableMap(ComponentNode::componentPath, ComponentNodeImpl::componentDescriptor));
   }
 
   @Memoized

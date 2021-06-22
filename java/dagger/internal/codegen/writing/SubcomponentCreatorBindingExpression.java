@@ -43,7 +43,7 @@ final class SubcomponentCreatorBindingExpression extends SimpleInvocationBinding
   Expression getDependencyExpression(ClassName requestingClass) {
     return Expression.create(
         binding.key().type().java(),
-        "new $L($L)",
+        "new $T($L)",
         shardImplementation.getSubcomponentCreatorSimpleName(binding.key()),
         shardImplementation.componentFieldsByImplementation().values().stream()
             .map(field -> CodeBlock.of("$N", field))
