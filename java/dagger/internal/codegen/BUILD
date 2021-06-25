@@ -112,8 +112,14 @@ gen_maven_artifact(
     # The javadocs should only include ComponentProcessor.java, since that is the only class used
     # externally. Specifically, ComponentProcessor.forTesting() is required for testing SPI plugins.
     javadoc_srcs = ["ComponentProcessor.java"],
-    shaded_deps = ["@com_google_auto_auto_common//jar"],
-    shaded_rules = ["rule com.google.auto.common.** dagger.shaded.auto.common.@1"],
+    shaded_deps = [
+        "@com_google_auto_auto_common//jar",
+        "//java/dagger/internal/codegen/xprocessing",
+    ],
+    shaded_rules = [
+        "rule androidx.room.compiler.processing.** dagger.shaded.androidx.room.compiler.processing.@1",
+        "rule com.google.auto.common.** dagger.shaded.auto.common.@1",
+    ],
 )
 
 java_plugin(
