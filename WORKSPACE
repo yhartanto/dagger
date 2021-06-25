@@ -163,6 +163,7 @@ maven_install(
         "com.android.tools.lint:lint-tests:%s" % ANDROID_LINT_VERSION,
         "com.android.tools:testutils:%s" % ANDROID_LINT_VERSION,
         "com.github.tschuchortdev:kotlin-compile-testing:1.2.8",
+        "com.google.devtools.ksp:symbol-processing-api:1.5.20-1.0.0-beta03",
         "com.google.guava:guava:27.1-android",
         "junit:junit:4.13",
         "org.jetbrains.kotlin:kotlin-stdlib:%s" % KOTLIN_VERSION,

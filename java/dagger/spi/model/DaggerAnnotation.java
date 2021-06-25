@@ -20,6 +20,7 @@ import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Preconditions;
+import com.google.devtools.ksp.symbol.KSAnnotation;
 import javax.annotation.Nullable;
 import javax.lang.model.element.AnnotationMirror;
 
@@ -29,7 +30,14 @@ public abstract class DaggerAnnotation {
 
   public static DaggerAnnotation fromJava(AnnotationMirror annotationMirror) {
     return new AutoValue_DaggerAnnotation(
-        AnnotationMirrors.equivalence().wrap(Preconditions.checkNotNull(annotationMirror)));
+        AnnotationMirrors.equivalence().wrap(Preconditions.checkNotNull(annotationMirror)),
+        null);
+  }
+
+  public static DaggerAnnotation fromKsp(KSAnnotation ksAnnotation) {
+    return new AutoValue_DaggerAnnotation(
+        null,
+        Preconditions.checkNotNull(ksAnnotation));
   }
 
   @Nullable
@@ -39,6 +47,9 @@ public abstract class DaggerAnnotation {
   public AnnotationMirror java() {
     return annotationMirror().get();
   }
+
+  @Nullable
+  public abstract KSAnnotation ksp();
 
   @Override
   public final String toString() {
