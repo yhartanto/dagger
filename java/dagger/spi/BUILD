@@ -66,7 +66,6 @@ gen_maven_artifact(
         "com.google.code.findbugs:jsr305",
         "com.google.dagger:dagger-producers",
         "com.google.dagger:dagger",
-        "com.google.devtools.ksp:symbol-processing-api",
         "com.google.guava:failureaccess",
         "com.google.guava:guava",
         "com.squareup:javapoet",

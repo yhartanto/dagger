@@ -20,7 +20,6 @@ import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Preconditions;
-import com.google.devtools.ksp.symbol.KSType;
 import javax.annotation.Nullable;
 import javax.lang.model.type.TypeMirror;
 
@@ -30,14 +29,7 @@ public abstract class DaggerType {
 
   public static DaggerType fromJava(TypeMirror typeMirror) {
     return new AutoValue_DaggerType(
-        MoreTypes.equivalence().wrap(Preconditions.checkNotNull(typeMirror)),
-        null);
-  }
-
-  public static DaggerType fromKsp(KSType ksType) {
-    return new AutoValue_DaggerType(
-        null,
-        Preconditions.checkNotNull(ksType));
+        MoreTypes.equivalence().wrap(Preconditions.checkNotNull(typeMirror)));
   }
 
   @Nullable
@@ -47,9 +39,6 @@ public abstract class DaggerType {
   public TypeMirror java() {
     return typeMirror().get();
   }
-
-  @Nullable
-  public abstract KSType ksp();
 
   @Override
   public final String toString() {

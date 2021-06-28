@@ -54,6 +54,5 @@ java_library(
         "@google_bazel_common//third_party/java/javapoet",
         "@google_bazel_common//third_party/java/jsr305_annotations",
         "@google_bazel_common//third_party/java/jsr330_inject",
-        "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )
