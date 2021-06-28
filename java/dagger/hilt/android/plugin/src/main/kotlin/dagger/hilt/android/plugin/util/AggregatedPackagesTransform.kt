@@ -77,7 +77,10 @@ abstract class AggregatedPackagesTransform : TransformAction<TransformParameters
         outputs.file(JAR_NAME).outputStream().use { tmpOutputStream.writeTo(it) }
       }
     } else if (file.isClassFile()) {
-      val parentDirectory = file.parent
+      // If transforming a file, check if the parent directory matches one of the known aggregated
+      // packages structure. File and Path APIs are used to avoid OS-specific issues when comparing
+      // paths.
+      val parentDirectory: File = file.parentFile
       val match = AGGREGATED_PACKAGES.any { aggregatedPackage ->
         parentDirectory.endsWith(aggregatedPackage)
       }
