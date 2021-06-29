@@ -19,7 +19,8 @@ package dagger.internal.codegen;
 import static dagger.internal.codegen.binding.MapKeys.getUnwrappedMapKeyType;
 import static javax.lang.model.element.ElementKind.ANNOTATION_TYPE;
 
-import com.google.auto.common.MoreElements;
+import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -27,8 +28,8 @@ import dagger.MapKey;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.validation.MapKeyValidator;
-import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
+import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
 import dagger.internal.codegen.writing.AnnotationCreatorGenerator;
 import dagger.internal.codegen.writing.UnwrappedMapKeyGenerator;
 import javax.annotation.processing.Messager;
@@ -42,7 +43,7 @@ import javax.lang.model.type.DeclaredType;
  * The annotation processor responsible for validating the mapKey annotation and auto-generate
  * implementation of annotations marked with {@link MapKey @MapKey} where necessary.
  */
-final class MapKeyProcessingStep extends TypeCheckingProcessingStep<TypeElement> {
+final class MapKeyProcessingStep extends XTypeCheckingProcessingStep<XTypeElement> {
   private final Messager messager;
   private final DaggerTypes types;
   private final MapKeyValidator mapKeyValidator;
@@ -56,7 +57,6 @@ final class MapKeyProcessingStep extends TypeCheckingProcessingStep<TypeElement>
       MapKeyValidator mapKeyValidator,
       AnnotationCreatorGenerator annotationCreatorGenerator,
       UnwrappedMapKeyGenerator unwrappedMapKeyGenerator) {
-    super(MoreElements::asType);
     this.messager = messager;
     this.types = types;
     this.mapKeyValidator = mapKeyValidator;
@@ -70,7 +70,9 @@ final class MapKeyProcessingStep extends TypeCheckingProcessingStep<TypeElement>
   }
 
   @Override
-  protected void process(TypeElement mapKeyAnnotationType, ImmutableSet<ClassName> annotations) {
+  protected void process(XTypeElement xElement, ImmutableSet<ClassName> annotations) {
+    // TODO(bcorso): Remove conversion to javac type and use XProcessing throughout.
+    TypeElement mapKeyAnnotationType = XConverters.toJavac(xElement);
     ValidationReport<Element> mapKeyReport = mapKeyValidator.validate(mapKeyAnnotationType);
     mapKeyReport.printMessagesTo(messager);
 
