@@ -35,7 +35,6 @@ import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
-import dagger.internal.codegen.SpiModule.TestingPlugins;
 import dagger.internal.codegen.base.ClearableCache;
 import dagger.internal.codegen.base.SourceFileGenerationException;
 import dagger.internal.codegen.base.SourceFileGenerator;
@@ -128,12 +127,18 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
 
   @Override
   protected Iterable<? extends Step> steps() {
-    ProcessorComponent.factory().create(processingEnv, testingPlugins).inject(this);
+    ProcessorComponent.factory()
+        .create(processingEnv, testingPlugins.orElseGet(this::loadExternalPlugins))
+        .inject(this);
 
     validationBindingGraphPlugins.initializePlugins();
     externalBindingGraphPlugins.initializePlugins();
 
     return processingSteps;
+  }
+
+  private ImmutableSet<BindingGraphPlugin> loadExternalPlugins() {
+    return ServiceLoaders.load(processingEnv, BindingGraphPlugin.class);
   }
 
   @Singleton
@@ -147,7 +152,6 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
         ProcessingRoundCacheModule.class,
         ProcessingStepsModule.class,
         SourceFileGeneratorsModule.class,
-        SpiModule.class
       })
   interface ProcessorComponent {
     void inject(ComponentProcessor processor);
@@ -161,7 +165,7 @@ public class ComponentProcessor extends BasicAnnotationProcessor {
       @CheckReturnValue
       ProcessorComponent create(
           @BindsInstance ProcessingEnvironment processingEnv,
-          @BindsInstance @TestingPlugins Optional<ImmutableSet<BindingGraphPlugin>> testingPlugins);
+          @BindsInstance ImmutableSet<BindingGraphPlugin> externalPlugins);
     }
   }
 
