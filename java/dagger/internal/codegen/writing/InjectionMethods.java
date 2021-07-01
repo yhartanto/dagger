@@ -143,13 +143,15 @@ final class InjectionMethods {
     static CodeBlock invoke(
         ProvisionBinding binding,
         Function<DependencyRequest, CodeBlock> dependencyUsage,
+        Function<VariableElement, String> uniqueAssistedParameterName,
         ClassName requestingClass,
         Optional<CodeBlock> moduleReference,
         CompilerOptions compilerOptions,
         KotlinMetadataUtil metadataUtil) {
       ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
       moduleReference.ifPresent(arguments::add);
-      invokeArguments(binding, dependencyUsage, requestingClass).forEach(arguments::add);
+      invokeArguments(binding, dependencyUsage, uniqueAssistedParameterName, requestingClass)
+          .forEach(arguments::add);
 
       ClassName enclosingClass = generatedClassNameForBinding(binding);
       MethodSpec methodSpec = create(binding, compilerOptions, metadataUtil);
@@ -159,6 +161,7 @@ final class InjectionMethods {
     static ImmutableList<CodeBlock> invokeArguments(
         ProvisionBinding binding,
         Function<DependencyRequest, CodeBlock> dependencyUsage,
+        Function<VariableElement, String> uniqueAssistedParameterName,
         ClassName requestingClass) {
       ImmutableMap<VariableElement, DependencyRequest> dependencyRequestMap =
           binding.provisionDependencies().stream()
@@ -168,10 +171,10 @@ final class InjectionMethods {
                       request -> request));
 
       ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
-      for (VariableElement parameter :
-          asExecutable(binding.bindingElement().get()).getParameters()) {
+      ExecutableElement method = asExecutable(binding.bindingElement().get());
+      for (VariableElement parameter : method.getParameters()) {
         if (AssistedInjectionAnnotations.isAssistedParameter(parameter)) {
-          arguments.add(CodeBlock.of("$L", parameter.getSimpleName()));
+          arguments.add(CodeBlock.of("$L", uniqueAssistedParameterName.apply(parameter)));
         } else if (dependencyRequestMap.containsKey(parameter)) {
           DependencyRequest request = dependencyRequestMap.get(parameter);
           arguments.add(

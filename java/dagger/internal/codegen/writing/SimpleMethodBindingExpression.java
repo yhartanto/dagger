@@ -36,6 +36,7 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
+import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod;
 import dagger.spi.model.DependencyRequest;
 import java.util.Optional;
@@ -57,6 +58,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
   private final ComponentRequirementExpressions componentRequirementExpressions;
   private final SourceVersion sourceVersion;
   private final KotlinMetadataUtil metadataUtil;
+  private final ShardImplementation shardImplementation;
 
   @AssistedInject
   SimpleMethodBindingExpression(
@@ -66,7 +68,8 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
       ComponentBindingExpressions componentBindingExpressions,
       ComponentRequirementExpressions componentRequirementExpressions,
       SourceVersion sourceVersion,
-      KotlinMetadataUtil metadataUtil) {
+      KotlinMetadataUtil metadataUtil,
+      ComponentImplementation componentImplementation) {
     super(binding);
     this.compilerOptions = compilerOptions;
     this.provisionBinding = binding;
@@ -79,6 +82,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
     this.membersInjectionMethods = membersInjectionMethods;
     this.componentRequirementExpressions = componentRequirementExpressions;
     this.sourceVersion = sourceVersion;
+    this.shardImplementation = componentImplementation.shardImplementation(binding);
   }
 
   @Override
@@ -95,6 +99,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
             ProvisionMethod.invokeArguments(
                 provisionBinding,
                 request -> dependencyArgument(request, requestingClass).codeBlock(),
+                shardImplementation::getUniqueFieldNameForAssistedParam,
                 requestingClass));
     ExecutableElement method = asExecutable(provisionBinding.bindingElement().get());
     CodeBlock invocation;
@@ -138,6 +143,7 @@ final class SimpleMethodBindingExpression extends SimpleInvocationBindingExpress
         ProvisionMethod.invoke(
             provisionBinding,
             request -> dependencyArgument(request, requestingClass).codeBlock(),
+            shardImplementation::getUniqueFieldNameForAssistedParam,
             requestingClass,
             moduleReference(requestingClass),
             compilerOptions,

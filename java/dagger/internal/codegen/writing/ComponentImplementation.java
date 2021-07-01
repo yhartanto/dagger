@@ -79,10 +79,6 @@ import dagger.internal.codegen.javapoet.TypeSpecs;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind;
-import dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind;
-import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
-import dagger.internal.codegen.writing.ComponentImplementation.TypeSpecKind;
 import dagger.spi.model.BindingGraph.Node;
 import dagger.spi.model.Key;
 import dagger.spi.model.RequestKind;
@@ -99,6 +95,7 @@ import javax.inject.Provider;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
@@ -251,7 +248,6 @@ public final class ComponentImplementation {
       componentCreatorImplementationFactoryProvider;
   private final BindingGraph graph;
   private final ComponentNames componentNames;
-  private final CompilerOptions compilerOptions;
   private final DaggerElements elements;
   private final DaggerTypes types;
   private final KotlinMetadataUtil metadataUtil;
@@ -277,7 +273,6 @@ public final class ComponentImplementation {
         componentCreatorImplementationFactoryProvider;
     this.graph = graph;
     this.componentNames = componentNames;
-    this.compilerOptions = compilerOptions;
     this.elements = elements;
     this.types = types;
     this.metadataUtil = metadataUtil;
@@ -423,6 +418,7 @@ public final class ComponentImplementation {
     private final UniqueNameSet componentMethodNames = new UniqueNameSet();
     private final List<CodeBlock> initializations = new ArrayList<>();
     private final Map<Key, CodeBlock> cancellations = new LinkedHashMap<>();
+    private final Map<VariableElement, String> uniqueAssistedName = new LinkedHashMap<>();
     private final List<CodeBlock> componentRequirementInitializations = new ArrayList<>();
     private final ImmutableMap<ComponentRequirement, ParameterSpec> constructorParameters;
     private final ListMultimap<FieldSpecKind, FieldSpec> fieldSpecsMap =
@@ -567,6 +563,15 @@ public final class ComponentImplementation {
     /** Returns a new, unique field name for the component based on the given name. */
     String getUniqueFieldName(String name) {
       return componentFieldNames.getUniqueName(name);
+    }
+
+    public String getUniqueFieldNameForAssistedParam(VariableElement element) {
+      if (uniqueAssistedName.containsKey(element)) {
+        return uniqueAssistedName.get(element);
+      }
+      String name = getUniqueFieldName(element.getSimpleName().toString());
+      uniqueAssistedName.put(element, name);
+      return name;
     }
 
     /** Returns a new, unique method name for the component based on the given name. */
