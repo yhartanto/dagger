@@ -433,12 +433,14 @@ public final class ComponentBindingExpressions {
     Optional<BindingExpression> maybeDirectInstanceExpression =
         unscopedDirectInstanceBindingExpressionFactory.create(binding);
     if (maybeDirectInstanceExpression.isPresent()) {
+
       BindingExpression directInstanceExpression = maybeDirectInstanceExpression.get();
       if (binding.kind() == BindingKind.ASSISTED_INJECTION) {
         BindingRequest request = bindingRequest(binding.key(), RequestKind.INSTANCE);
         return assistedPrivateMethodBindingExpressionFactory.create(
             request, binding, directInstanceExpression);
       }
+
       boolean isDefaultModeAssistedFactory =
           binding.kind() == BindingKind.ASSISTED_FACTORY && !isFastInit();
 
