@@ -18,8 +18,6 @@ package dagger.hilt.android.plugin
 
 import com.android.build.api.attributes.BuildTypeAttr
 import com.android.build.api.attributes.ProductFlavorAttr
-import com.android.build.api.component.Component
-import com.android.build.api.extension.AndroidComponentsExtension
 import com.android.build.api.instrumentation.FramesComputationMode
 import com.android.build.api.instrumentation.InstrumentationScope
 import com.android.build.gradle.AppExtension
@@ -34,9 +32,10 @@ import com.android.build.gradle.api.UnitTestVariant
 import dagger.hilt.android.plugin.task.AggregateDepsTask
 import dagger.hilt.android.plugin.task.HiltTransformTestClassesTask
 import dagger.hilt.android.plugin.util.AggregatedPackagesTransform
+import dagger.hilt.android.plugin.util.AndroidComponentsExtensionCompat.Companion.getAndroidComponentsExtension
+import dagger.hilt.android.plugin.util.ComponentCompat
 import dagger.hilt.android.plugin.util.CopyTransform
 import dagger.hilt.android.plugin.util.SimpleAGPVersion
-import dagger.hilt.android.plugin.util.allTestVariants
 import dagger.hilt.android.plugin.util.getSdkPath
 import java.io.File
 import javax.inject.Inject
@@ -234,7 +233,7 @@ class HiltGradlePlugin @Inject constructor(
   @Suppress("UnstableApiUsage") // ASM Pipeline APIs
   private fun configureBytecodeTransformASM(project: Project, hiltExtension: HiltExtension) {
     var warnAboutLocalTestsFlag = false
-    fun registerTransform(androidComponent: Component) {
+    fun registerTransform(androidComponent: ComponentCompat) {
       if (hiltExtension.enableTransformForLocalTests && !warnAboutLocalTestsFlag) {
         project.logger.warn(
           "The Hilt configuration option 'enableTransformForLocalTests' is no longer necessary " +
@@ -254,13 +253,7 @@ class HiltGradlePlugin @Inject constructor(
         FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS
       )
     }
-
-    val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
-    androidComponents.onVariants { registerTransform(it) }
-    androidComponents.allTestVariants(
-      onAndroidTest = { registerTransform(it) },
-      onUnitTest = { registerTransform(it) }
-    )
+    getAndroidComponentsExtension(project).onAllVariants { registerTransform(it) }
   }
 
   private fun configureBytecodeTransform(project: Project, hiltExtension: HiltExtension) {
