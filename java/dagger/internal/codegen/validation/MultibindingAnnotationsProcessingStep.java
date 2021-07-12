@@ -19,8 +19,7 @@ package dagger.internal.codegen.validation;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
-import androidx.room.compiler.processing.XExecutableElement;
-import androidx.room.compiler.processing.compat.XConverters;
+import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
@@ -34,13 +33,14 @@ import javax.lang.model.element.ExecutableElement;
  * non-binding methods.
  */
 public final class MultibindingAnnotationsProcessingStep
-    extends XTypeCheckingProcessingStep<XExecutableElement> {
+    extends TypeCheckingProcessingStep<ExecutableElement> {
   private final AnyBindingMethodValidator anyBindingMethodValidator;
   private final Messager messager;
 
   @Inject
   MultibindingAnnotationsProcessingStep(
       AnyBindingMethodValidator anyBindingMethodValidator, Messager messager) {
+    super(MoreElements::asExecutable);
     this.anyBindingMethodValidator = anyBindingMethodValidator;
     this.messager = messager;
   }
@@ -51,8 +51,7 @@ public final class MultibindingAnnotationsProcessingStep
   }
 
   @Override
-  protected void process(XExecutableElement xElement, ImmutableSet<ClassName> annotations) {
-    ExecutableElement method = XConverters.toJavac(xElement);
+  protected void process(ExecutableElement method, ImmutableSet<ClassName> annotations) {
     if (!anyBindingMethodValidator.isBindingMethod(method)) {
       annotations.forEach(
           annotation ->

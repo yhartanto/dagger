@@ -93,7 +93,6 @@ gen_maven_artifact(
         "//java/dagger/internal/codegen/writing",
     ],
     artifact_target_maven_deps = [
-        "androidx.annotation:annotation",  # TODO(b/192608164): Required for xprocessing jar
         "com.google.auto:auto-common",
         "com.google.code.findbugs:jsr305",
         "com.google.dagger:dagger-producers",

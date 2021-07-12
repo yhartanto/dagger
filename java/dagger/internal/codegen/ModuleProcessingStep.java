@@ -16,17 +16,14 @@
 
 package dagger.internal.codegen;
 
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 import static javax.lang.model.util.ElementFilter.methodsIn;
+import static javax.lang.model.util.ElementFilter.typesIn;
 
-import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.SourceFileGenerator;
@@ -39,14 +36,15 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.validation.ModuleValidator;
+import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
-import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
 import dagger.internal.codegen.writing.InaccessibleMapKeyProxyGenerator;
 import dagger.internal.codegen.writing.ModuleGenerator;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.inject.Inject;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 
@@ -54,7 +52,7 @@ import javax.lang.model.element.TypeElement;
  * A {@link ProcessingStep} that validates module classes and generates factories for binding
  * methods.
  */
-final class ModuleProcessingStep extends XTypeCheckingProcessingStep<XTypeElement> {
+final class ModuleProcessingStep extends TypeCheckingProcessingStep<TypeElement> {
   private final Messager messager;
   private final ModuleValidator moduleValidator;
   private final BindingFactory bindingFactory;
@@ -77,6 +75,7 @@ final class ModuleProcessingStep extends XTypeCheckingProcessingStep<XTypeElemen
       InaccessibleMapKeyProxyGenerator inaccessibleMapKeyProxyGenerator,
       Factory delegateDeclarationFactory,
       KotlinMetadataUtil metadataUtil) {
+    super(MoreElements::asType);
     this.messager = messager;
     this.moduleValidator = moduleValidator;
     this.bindingFactory = bindingFactory;
@@ -94,21 +93,14 @@ final class ModuleProcessingStep extends XTypeCheckingProcessingStep<XTypeElemen
   }
 
   @Override
-  public ImmutableSet<XElement> process(
-      XProcessingEnv env, Map<String, ? extends Set<? extends XElement>> elementsByAnnotation) {
-    moduleValidator.addKnownModules(
-        elementsByAnnotation.values().stream()
-            .flatMap(Set::stream)
-            .map(XConverters::toJavac)
-            .map(MoreElements::asType)
-            .collect(toImmutableSet()));
-    return super.process(env, elementsByAnnotation);
+  public ImmutableSet<Element> process(ImmutableSetMultimap<String, Element> elementsByAnnotation) {
+    List<TypeElement> modules = typesIn(elementsByAnnotation.values());
+    moduleValidator.addKnownModules(modules);
+    return super.process(elementsByAnnotation);
   }
 
   @Override
-  protected void process(XTypeElement xElement, ImmutableSet<ClassName> annotations) {
-    // TODO(bcorso): Remove conversion to javac type and use XProcessing throughout.
-    TypeElement module = XConverters.toJavac(xElement);
+  protected void process(TypeElement module, ImmutableSet<ClassName> annotations) {
     if (processedModuleElements.contains(module)) {
       return;
     }

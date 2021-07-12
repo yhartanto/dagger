@@ -20,8 +20,7 @@ import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
 
-import androidx.room.compiler.processing.XExecutableElement;
-import androidx.room.compiler.processing.compat.XConverters;
+import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -29,8 +28,8 @@ import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedParameter;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
-import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.processing.Messager;
@@ -40,12 +39,13 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 
 /** An annotation processor for {@link dagger.assisted.AssistedInject}-annotated elements. */
-final class AssistedInjectProcessingStep extends XTypeCheckingProcessingStep<XExecutableElement> {
+final class AssistedInjectProcessingStep extends TypeCheckingProcessingStep<ExecutableElement> {
   private final DaggerTypes types;
   private final Messager messager;
 
   @Inject
   AssistedInjectProcessingStep(DaggerTypes types, Messager messager) {
+    super(MoreElements::asExecutable);
     this.types = types;
     this.messager = messager;
   }
@@ -56,9 +56,8 @@ final class AssistedInjectProcessingStep extends XTypeCheckingProcessingStep<XEx
   }
 
   @Override
-  protected void process(XExecutableElement xElement, ImmutableSet<ClassName> annotations) {
-    // TODO(bcorso): Remove conversion to javac type and use XProcessing throughout.
-    ExecutableElement assistedInjectElement = XConverters.toJavac(xElement);
+  protected void process(
+      ExecutableElement assistedInjectElement, ImmutableSet<ClassName> annotations) {
     new AssistedInjectValidator().validate(assistedInjectElement).printMessagesTo(messager);
   }
 

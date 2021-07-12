@@ -33,8 +33,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
-import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
+import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -56,8 +55,8 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
-import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -75,7 +74,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /** An annotation processor for {@link dagger.assisted.AssistedFactory}-annotated types. */
-final class AssistedFactoryProcessingStep extends XTypeCheckingProcessingStep<XTypeElement> {
+final class AssistedFactoryProcessingStep extends TypeCheckingProcessingStep<TypeElement> {
   private final Messager messager;
   private final Filer filer;
   private final SourceVersion sourceVersion;
@@ -91,6 +90,7 @@ final class AssistedFactoryProcessingStep extends XTypeCheckingProcessingStep<XT
       DaggerElements elements,
       DaggerTypes types,
       BindingFactory bindingFactory) {
+    super(MoreElements::asType);
     this.messager = messager;
     this.filer = filer;
     this.sourceVersion = sourceVersion;
@@ -105,9 +105,7 @@ final class AssistedFactoryProcessingStep extends XTypeCheckingProcessingStep<XT
   }
 
   @Override
-  protected void process(XTypeElement xElement, ImmutableSet<ClassName> annotations) {
-    // TODO(bcorso): Remove conversion to javac type and use XProcessing throughout.
-    TypeElement factory = XConverters.toJavac(xElement);
+  protected void process(TypeElement factory, ImmutableSet<ClassName> annotations) {
     ValidationReport<TypeElement> report = new AssistedFactoryValidator().validate(factory);
     report.printMessagesTo(messager);
     if (report.isClean()) {
