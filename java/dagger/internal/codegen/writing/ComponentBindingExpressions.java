@@ -58,7 +58,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
 /** A central repository of code expressions used to access any binding available to a component. */
@@ -400,16 +399,13 @@ public final class ComponentBindingExpressions {
    * <p>{@code @Binds} bindings that don't {@linkplain #needsCaching(ContributionBinding) need to be
    * cached} can use a {@link DelegateBindingExpression}.
    *
-   * <p>In fastInit mode, use an {@link SwitchingProviders inner switching provider} unless
-   * that provider's case statement will simply call {@code get()} on another {@link Provider} (in
-   * which case, just use that Provider directly).
-   *
    * <p>Otherwise, return a {@link FrameworkInstanceBindingExpression}.
    */
   private BindingExpression providerBindingExpression(ContributionBinding binding) {
     if (binding.kind().equals(DELEGATE) && !needsCaching(binding)) {
       return delegateBindingExpressionFactory.create(binding, RequestKind.PROVIDER);
     }
+
     return frameworkInstanceBindingExpression(binding);
   }
 
@@ -433,7 +429,6 @@ public final class ComponentBindingExpressions {
     Optional<BindingExpression> maybeDirectInstanceExpression =
         unscopedDirectInstanceBindingExpressionFactory.create(binding);
     if (maybeDirectInstanceExpression.isPresent()) {
-
       BindingExpression directInstanceExpression = maybeDirectInstanceExpression.get();
       if (binding.kind() == BindingKind.ASSISTED_INJECTION) {
         BindingRequest request = bindingRequest(binding.key(), RequestKind.INSTANCE);

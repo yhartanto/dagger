@@ -25,6 +25,7 @@ import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ContributionBinding;
+import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.spi.model.DependencyRequest;
@@ -36,15 +37,18 @@ final class DelegatingFrameworkInstanceCreationExpression
   private final ContributionBinding binding;
   private final ComponentImplementation componentImplementation;
   private final ComponentBindingExpressions componentBindingExpressions;
+  private final CompilerOptions compilerOptions;
 
   @AssistedInject
   DelegatingFrameworkInstanceCreationExpression(
       @Assisted ContributionBinding binding,
       ComponentImplementation componentImplementation,
-      ComponentBindingExpressions componentBindingExpressions) {
+      ComponentBindingExpressions componentBindingExpressions,
+      CompilerOptions compilerOptions) {
     this.binding = checkNotNull(binding);
     this.componentImplementation = componentImplementation;
     this.componentBindingExpressions = componentBindingExpressions;
+    this.compilerOptions = compilerOptions;
   }
 
   @Override
@@ -61,6 +65,7 @@ final class DelegatingFrameworkInstanceCreationExpression
 
   @Override
   public boolean useSwitchingProvider() {
+
     // For delegate expressions, we just want to return the delegate field directly using the above
     // creationExpression(). Using SwitchingProviders would be less efficient because it would
     // create a new SwitchingProvider that just returns "delegateField.get()".
