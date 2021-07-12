@@ -22,4 +22,7 @@ package(default_visibility = ["//:src"])
 java_import(
     name = "xprocessing",
     jars = ["xprocessing.jar"],
+    exports = [
+        "@maven//:androidx_annotation_annotation",  # For androidx.annotations.NonNull
+    ],
 )
