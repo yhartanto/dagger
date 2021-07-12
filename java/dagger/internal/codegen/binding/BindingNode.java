@@ -27,12 +27,13 @@ import dagger.Module;
 import dagger.multibindings.Multibinds;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.ComponentPath;
+import dagger.spi.model.DaggerElement;
+import dagger.spi.model.DaggerTypeElement;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import dagger.spi.model.Scope;
 import java.util.Optional;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 
 /**
  * An implementation of {@link dagger.spi.model.Binding} that also exposes {@link
@@ -97,13 +98,13 @@ public abstract class BindingNode implements dagger.spi.model.Binding {
   }
 
   @Override
-  public Optional<Element> bindingElement() {
-    return delegate().bindingElement();
+  public Optional<DaggerElement> bindingElement() {
+    return delegate().bindingElement().map(DaggerElement::fromJava);
   }
 
   @Override
-  public Optional<TypeElement> contributingModule() {
-    return delegate().contributingModule();
+  public Optional<DaggerTypeElement> contributingModule() {
+    return delegate().contributingModule().map(DaggerTypeElement::fromJava);
   }
 
   @Override

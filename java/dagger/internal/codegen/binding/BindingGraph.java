@@ -42,6 +42,7 @@ import dagger.spi.model.BindingGraph.ComponentNode;
 import dagger.spi.model.BindingGraph.Edge;
 import dagger.spi.model.BindingGraph.Node;
 import dagger.spi.model.ComponentPath;
+import dagger.spi.model.DaggerTypeElement;
 import dagger.spi.model.Key;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -206,6 +207,7 @@ public abstract class BindingGraph {
         contributionBindings.values().stream()
             .map(BindingNode::contributingModule)
             .flatMap(presentValues())
+            .map(DaggerTypeElement::java)
             .collect(toImmutableSet());
 
     return bindingGraph;

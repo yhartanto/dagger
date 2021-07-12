@@ -48,6 +48,8 @@ import dagger.model.RequestKind;
 import dagger.model.Scope;
 import dagger.spi.DiagnosticReporter;
 import dagger.spi.model.DaggerAnnotation;
+import dagger.spi.model.DaggerElement;
+import dagger.spi.model.DaggerTypeElement;
 import java.util.Optional;
 import javax.tools.Diagnostic;
 
@@ -216,8 +218,8 @@ public final class ExternalBindingGraphConverter {
           binding.dependencies().stream()
               .map(ExternalBindingGraphConverter::fromSpiModel)
               .collect(toImmutableSet()),
-          binding.bindingElement(),
-          binding.contributingModule(),
+          binding.bindingElement().map(DaggerElement::java),
+          binding.contributingModule().map(DaggerTypeElement::java),
           binding.requiresModuleInstance(),
           binding.scope().map(ExternalBindingGraphConverter::fromSpiModel),
           binding.isNullable(),

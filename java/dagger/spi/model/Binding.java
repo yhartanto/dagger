@@ -19,8 +19,6 @@ package dagger.spi.model;
 import com.google.common.collect.ImmutableSet;
 import dagger.spi.model.BindingGraph.MaybeBinding;
 import java.util.Optional;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 
 /**
  * The association between a {@link Key} and the way in which instances of the key are provided.
@@ -47,8 +45,8 @@ public interface Binding extends MaybeBinding {
   ImmutableSet<DependencyRequest> dependencies();
 
   /**
-   * The {@link Element} that declares this binding. Absent for {@linkplain BindingKind binding
-   * kinds} that are not always declared by exactly one element.
+   * The {@link DaggerElement} that declares this binding. Absent for
+   * {@linkplain BindingKind binding kinds} that are not always declared by exactly one element.
    *
    * <p>For example, consider {@link BindingKind#MULTIBOUND_SET}. A component with many
    * {@code @IntoSet} bindings for the same key will have a synthetic binding that depends on all
@@ -56,13 +54,13 @@ public interface Binding extends MaybeBinding {
    * contribute a synthetic binding, but since multiple {@code @Multibinds} methods can coexist in
    * the same component (and contribute to one single binding), it has no binding element.
    */
-  Optional<Element> bindingElement();
+  Optional<DaggerElement> bindingElement();
 
   /**
-   * The {@link TypeElement} of the module which contributes this binding. Absent for bindings that
-   * have no {@link #bindingElement() binding element}.
+   * The {@link DaggerTypeElement} of the module which contributes this binding. Absent for bindings
+   * that have no {@link #bindingElement() binding element}.
    */
-  Optional<TypeElement> contributingModule();
+  Optional<DaggerTypeElement> contributingModule();
 
   /**
    * Returns {@code true} if using this binding requires an instance of the {@link

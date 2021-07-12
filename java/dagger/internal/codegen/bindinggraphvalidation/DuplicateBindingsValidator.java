@@ -48,6 +48,8 @@ import dagger.spi.model.BindingGraph.ComponentNode;
 import dagger.spi.model.BindingGraphPlugin;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.ComponentPath;
+import dagger.spi.model.DaggerElement;
+import dagger.spi.model.DaggerTypeElement;
 import dagger.spi.model.DiagnosticReporter;
 import dagger.spi.model.Key;
 import java.util.Comparator;
@@ -339,7 +341,9 @@ final class DuplicateBindingsValidator implements BindingGraphPlugin {
 
     private static BindingElement forBinding(Binding binding) {
       return new AutoValue_DuplicateBindingsValidator_BindingElement(
-          binding.kind(), binding.bindingElement(), binding.contributingModule());
+          binding.kind(),
+          binding.bindingElement().map(DaggerElement::java),
+          binding.contributingModule().map(DaggerTypeElement::java));
     }
   }
 }

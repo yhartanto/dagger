@@ -96,7 +96,7 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
         .filter(binding -> binding.componentPath().equals(child.componentPath()))
         // that require a module instance
         .filter(binding -> binding.requiresModuleInstance())
-        .map(binding -> binding.contributingModule().get())
+        .map(binding -> binding.contributingModule().get().java())
         .distinct()
         // module owned by child
         .filter(module -> modulesOwnedByChild.contains(module))
