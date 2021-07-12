@@ -303,7 +303,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
 
   /** Returns a name of the variable representing this dependency's future. */
   private static String dependencyFutureName(DependencyRequest dependency) {
-    return dependency.requestElement().get().getSimpleName() + "Future";
+    return dependency.requestElement().get().java().getSimpleName() + "Future";
   }
 
   /** Represents the transformation of an input future by a producer method. */
@@ -405,7 +405,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
 
     @Override
     String applyArgName() {
-      String argName = asyncDependency.requestElement().get().getSimpleName().toString();
+      String argName = asyncDependency.requestElement().get().java().getSimpleName().toString();
       if (argName.equals("module")) {
         return "moduleArg";
       }

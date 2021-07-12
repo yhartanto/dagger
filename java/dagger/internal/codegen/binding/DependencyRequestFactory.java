@@ -37,6 +37,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Lazy;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
+import dagger.spi.model.DaggerElement;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import dagger.spi.model.RequestKind;
@@ -167,7 +168,7 @@ public final class DependencyRequestFactory {
       return DependencyRequest.builder()
           .kind(FUTURE)
           .key(keyFactory.forQualifiedType(qualifier, unwrapType(type)))
-          .requestElement(productionMethod)
+          .requestElement(DaggerElement.fromJava(productionMethod))
           .build();
     } else {
       return newDependencyRequest(productionMethod, type, qualifier);
@@ -185,7 +186,7 @@ public final class DependencyRequestFactory {
     return DependencyRequest.builder()
         .kind(MEMBERS_INJECTION)
         .key(keyFactory.forMembersInjectedType(membersInjectedType))
-        .requestElement(membersInjectionMethod)
+        .requestElement(DaggerElement.fromJava(membersInjectionMethod))
         .build();
   }
 
@@ -224,7 +225,7 @@ public final class DependencyRequestFactory {
     return DependencyRequest.builder()
         .kind(requestKind)
         .key(keyFactory.forQualifiedType(qualifier, extractKeyType(type)))
-        .requestElement(requestElement)
+        .requestElement(DaggerElement.fromJava(requestElement))
         .isNullable(allowsNull(requestKind, getNullableType(requestElement)))
         .build();
   }

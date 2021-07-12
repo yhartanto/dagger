@@ -22,7 +22,6 @@ import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.Provides;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
 
 /**
  * Represents a request for a {@link Key} at an injection point. For example, parameters to {@link
@@ -30,7 +29,7 @@ import javax.lang.model.element.Element;
  * requests.
  *
  * <p id="synthetic">A dependency request is considered to be <em>synthetic</em> if it does not have
- * an {@link Element} in code that requests the key directly. For example, an {@link
+ * an {@link DaggerElement} in code that requests the key directly. For example, an {@link
  * java.util.concurrent.Executor} is required for all {@code @Produces} methods to run
  * asynchronously even though it is not directly specified as a parameter to the binding method.
  */
@@ -46,7 +45,7 @@ public abstract class DependencyRequest {
    * The element that declares this dependency request. Absent for <a href="#synthetic">synthetic
    * </a> requests.
    */
-  public abstract Optional<Element> requestElement();
+  public abstract Optional<DaggerElement> requestElement();
 
   /**
    * Returns {@code true} if this request allows null objects. A request is nullable if it is
@@ -67,7 +66,7 @@ public abstract class DependencyRequest {
 
     public abstract Builder key(Key key);
 
-    public abstract Builder requestElement(Element element);
+    public abstract Builder requestElement(DaggerElement element);
 
     public abstract Builder isNullable(boolean isNullable);
 

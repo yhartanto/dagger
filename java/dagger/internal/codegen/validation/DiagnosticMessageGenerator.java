@@ -55,6 +55,7 @@ import dagger.spi.model.BindingGraph.Edge;
 import dagger.spi.model.BindingGraph.MaybeBinding;
 import dagger.spi.model.BindingGraph.Node;
 import dagger.spi.model.ComponentPath;
+import dagger.spi.model.DaggerElement;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.function.Function;
@@ -198,6 +199,7 @@ public final class DiagnosticMessageGenerator {
                         || (!request.isEntryPoint() && !isTracedRequest(dependencyTrace, request)))
             .map(request -> request.dependencyRequest().requestElement())
             .flatMap(presentValues())
+            .map(DaggerElement::java)
             .collect(toImmutableSet());
     if (!requestsToPrint.isEmpty()) {
       message
@@ -238,7 +240,7 @@ public final class DiagnosticMessageGenerator {
       new Formatter<DependencyEdge>() {
         @Override
         public String format(DependencyEdge object) {
-          Element requestElement = object.dependencyRequest().requestElement().get();
+          Element requestElement = object.dependencyRequest().requestElement().get().java();
           StringBuilder element = new StringBuilder(elementToString(requestElement));
 
           // For entry points declared in subcomponents or supertypes of the root component,
@@ -367,7 +369,7 @@ public final class DiagnosticMessageGenerator {
 
   TypeElement typeDeclaringEntryPoint(DependencyEdge entryPoint) {
     return MoreElements.asType(
-        entryPoint.dependencyRequest().requestElement().get().getEnclosingElement());
+        entryPoint.dependencyRequest().requestElement().get().java().getEnclosingElement());
   }
 
   /**
@@ -377,7 +379,7 @@ public final class DiagnosticMessageGenerator {
   Comparator<DependencyEdge> requestEnclosingTypeName() {
     return comparing(
         edge ->
-            closestEnclosingTypeElement(edge.dependencyRequest().requestElement().get())
+            closestEnclosingTypeElement(edge.dependencyRequest().requestElement().get().java())
                 .getQualifiedName()
                 .toString());
   }
@@ -389,7 +391,8 @@ public final class DiagnosticMessageGenerator {
    * <p>Only useful to compare edges whose request elements were declared in the same type.
    */
   Comparator<DependencyEdge> requestElementDeclarationOrder() {
-    return comparing(edge -> edge.dependencyRequest().requestElement().get(), DECLARATION_ORDER);
+    return comparing(
+        edge -> edge.dependencyRequest().requestElement().get().java(), DECLARATION_ORDER);
   }
 
   private Node source(Edge edge) {

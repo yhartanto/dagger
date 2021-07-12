@@ -42,7 +42,7 @@ final class DependencyVariableNamer {
       return simpleVariableName(MoreTypes.asTypeElement(dependency.key().type().java()));
     }
 
-    String variableName = dependency.requestElement().get().getSimpleName().toString();
+    String variableName = dependency.requestElement().get().java().getSimpleName().toString();
     if (Ascii.isUpperCase(variableName.charAt(0))) {
       variableName = toLowerCamel(variableName);
     }

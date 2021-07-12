@@ -146,7 +146,7 @@ public final class ExternalBindingGraphConverter {
             .key(fromSpiModel(request.key()))
             .isNullable(request.isNullable());
 
-    request.requestElement().ifPresent(builder::requestElement);
+    request.requestElement().ifPresent(e -> builder.requestElement(e.java()));
     return builder.build();
   }
 

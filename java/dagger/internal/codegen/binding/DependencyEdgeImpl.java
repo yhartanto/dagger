@@ -18,6 +18,7 @@ package dagger.internal.codegen.binding;
 
 import dagger.internal.codegen.base.ElementFormatter;
 import dagger.spi.model.BindingGraph.DependencyEdge;
+import dagger.spi.model.DaggerElement;
 import dagger.spi.model.DependencyRequest;
 
 /** An implementation of {@link DependencyEdge}. */
@@ -46,6 +47,7 @@ final class DependencyEdgeImpl implements DependencyEdge {
     String string =
         dependencyRequest
             .requestElement()
+            .map(DaggerElement::java)
             .map(ElementFormatter::elementToString)
             .orElseGet(
                 () ->
