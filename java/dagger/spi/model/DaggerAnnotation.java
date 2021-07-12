@@ -16,6 +16,9 @@
 
 package dagger.spi.model;
 
+import static dagger.spi.model.CompilerEnvironment.JAVA;
+import static dagger.spi.model.CompilerEnvironment.KSP;
+
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -32,18 +35,17 @@ public abstract class DaggerAnnotation {
 
   public static DaggerAnnotation fromJava(AnnotationMirror annotationMirror) {
     return new AutoValue_DaggerAnnotation(
+        JAVA,
         AnnotationMirrors.equivalence().wrap(Preconditions.checkNotNull(annotationMirror)),
         null);
   }
 
   public static DaggerAnnotation fromKsp(KSAnnotation ksAnnotation) {
     return new AutoValue_DaggerAnnotation(
+        KSP,
         null,
         Preconditions.checkNotNull(ksAnnotation));
   }
-
-  @Nullable
-  abstract Equivalence.Wrapper<AnnotationMirror> annotationMirror();
 
   public DaggerTypeElement annotationTypeElement() {
     return DaggerTypeElement.fromJava(
@@ -54,16 +56,26 @@ public abstract class DaggerAnnotation {
     return annotationTypeElement().className();
   }
 
-  @Nullable
   public AnnotationMirror java() {
+    Preconditions.checkState(compiler() == JAVA);
     return annotationMirror().get();
   }
 
+  public KSAnnotation ksp() {
+    Preconditions.checkState(compiler() == KSP);
+    return kspInternal();
+  }
+
+  public abstract CompilerEnvironment compiler();
+
   @Nullable
-  public abstract KSAnnotation ksp();
+  abstract Equivalence.Wrapper<AnnotationMirror> annotationMirror();
+
+  @Nullable
+  abstract KSAnnotation kspInternal();
 
   @Override
   public final String toString() {
-    return (ksp() != null ? ksp() : java()).toString();
+    return (compiler() == JAVA ? java() : ksp()).toString();
   }
 }

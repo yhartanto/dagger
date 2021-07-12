@@ -16,6 +16,9 @@
 
 package dagger.spi.model;
 
+import static dagger.spi.model.CompilerEnvironment.JAVA;
+import static dagger.spi.model.CompilerEnvironment.KSP;
+
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.google.devtools.ksp.symbol.KSClassDeclaration;
@@ -28,17 +31,25 @@ import javax.lang.model.element.TypeElement;
 public abstract class DaggerTypeElement {
 
   public static DaggerTypeElement fromJava(TypeElement element) {
-    return new AutoValue_DaggerTypeElement(Preconditions.checkNotNull(element), null);
+    return new AutoValue_DaggerTypeElement(JAVA, Preconditions.checkNotNull(element), null);
   }
 
-  @Nullable
-  public abstract TypeElement java();
+  public static DaggerTypeElement fromKsp(KSClassDeclaration element) {
+    return new AutoValue_DaggerTypeElement(KSP, null, Preconditions.checkNotNull(element));
+  }
 
-  @Nullable
-  public abstract KSClassDeclaration ksp();
+  public TypeElement java() {
+    Preconditions.checkState(compiler() == JAVA);
+    return javaInternal();
+  }
+
+  public KSClassDeclaration ksp() {
+    Preconditions.checkState(compiler() == KSP);
+    return kspInternal();
+  }
 
   public ClassName className() {
-    if (ksp() != null) {
+    if (compiler() == KSP) {
       // TODO(bcorso): Add support for KSP. Consider using xprocessing types internally since that
       // already has support for KSP class names?
       throw new UnsupportedOperationException("Method className() is not yet supported in KSP.");
@@ -47,8 +58,16 @@ public abstract class DaggerTypeElement {
     }
   }
 
+  public abstract CompilerEnvironment compiler();
+
+  @Nullable
+  abstract TypeElement javaInternal();
+
+  @Nullable
+  abstract KSClassDeclaration kspInternal();
+
   @Override
   public final String toString() {
-    return (ksp() != null ? ksp() : java()).toString();
+    return (compiler() == JAVA ? java() : ksp()).toString();
   }
 }

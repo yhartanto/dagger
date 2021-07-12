@@ -16,6 +16,9 @@
 
 package dagger.spi.model;
 
+import static dagger.spi.model.CompilerEnvironment.JAVA;
+import static dagger.spi.model.CompilerEnvironment.KSP;
+
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration;
@@ -27,17 +30,33 @@ import javax.lang.model.element.ExecutableElement;
 public abstract class DaggerExecutableElement {
 
   public static DaggerExecutableElement fromJava(ExecutableElement element) {
-    return new AutoValue_DaggerExecutableElement(Preconditions.checkNotNull(element), null);
+    return new AutoValue_DaggerExecutableElement(JAVA, Preconditions.checkNotNull(element), null);
   }
 
-  @Nullable
-  public abstract ExecutableElement java();
+  public static DaggerExecutableElement fromKsp(KSFunctionDeclaration element) {
+    return new AutoValue_DaggerExecutableElement(KSP, null, Preconditions.checkNotNull(element));
+  }
+
+  public ExecutableElement java() {
+    Preconditions.checkState(compiler() == JAVA);
+    return javaInternal();
+  }
+
+  public KSFunctionDeclaration ksp() {
+    Preconditions.checkState(compiler() == KSP);
+    return kspInternal();
+  }
+
+  public abstract CompilerEnvironment compiler();
 
   @Nullable
-  public abstract KSFunctionDeclaration ksp();
+  abstract ExecutableElement javaInternal();
+
+  @Nullable
+  abstract KSFunctionDeclaration kspInternal();
 
   @Override
   public final String toString() {
-    return (ksp() != null ? ksp() : java()).toString();
+    return (compiler() == JAVA ? java() : ksp()).toString();
   }
 }
