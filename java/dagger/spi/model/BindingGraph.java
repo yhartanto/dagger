@@ -34,8 +34,6 @@ import com.google.common.graph.NetworkBuilder;
 import dagger.Module;
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 
 /**
  * A graph of bindings, dependency requests, and components.
@@ -161,7 +159,7 @@ public abstract class BindingGraph {
   }
 
   /** Returns the component nodes for a component. */
-  public ImmutableSet<ComponentNode> componentNodes(TypeElement component) {
+  public ImmutableSet<ComponentNode> componentNodes(DaggerTypeElement component) {
     return componentNodes().stream()
         .filter(node -> node.componentPath().currentComponent().equals(component))
         .collect(toImmutableSet());
@@ -347,7 +345,7 @@ public abstract class BindingGraph {
    */
   public interface ChildFactoryMethodEdge extends Edge {
     /** The subcomponent factory method element. */
-    ExecutableElement factoryMethod();
+    DaggerExecutableElement factoryMethod();
   }
 
   /**
@@ -366,7 +364,7 @@ public abstract class BindingGraph {
      * this edge. Empty if the parent component has a subcomponent creator method and there are no
      * declaring modules.
      */
-    ImmutableSet<TypeElement> declaringModules();
+    ImmutableSet<DaggerTypeElement> declaringModules();
   }
 
   /** A node in the binding graph. Either a {@link Binding} or a {@link ComponentNode}. */

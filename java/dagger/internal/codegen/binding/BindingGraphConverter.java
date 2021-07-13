@@ -41,6 +41,7 @@ import dagger.spi.model.BindingGraph.Edge;
 import dagger.spi.model.BindingGraph.MissingBinding;
 import dagger.spi.model.BindingGraph.Node;
 import dagger.spi.model.ComponentPath;
+import dagger.spi.model.DaggerExecutableElement;
 import dagger.spi.model.DaggerTypeElement;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
@@ -241,7 +242,7 @@ final class BindingGraphConverter {
       network.addEdge(
           parentComponent,
           currentComponent,
-          new ChildFactoryMethodEdgeImpl(factoryMethod));
+          new ChildFactoryMethodEdgeImpl(DaggerExecutableElement.fromJava(factoryMethod)));
     }
 
     /**

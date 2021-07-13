@@ -279,7 +279,7 @@ public final class ExternalBindingGraphConverter {
     static ChildFactoryMethodEdge create(
         dagger.spi.model.BindingGraph.ChildFactoryMethodEdge childFactoryMethodEdge) {
       return new AutoValue_ExternalBindingGraphConverter_ChildFactoryMethodEdgeImpl(
-          childFactoryMethodEdge.factoryMethod(), childFactoryMethodEdge);
+          childFactoryMethodEdge.factoryMethod().java(), childFactoryMethodEdge);
     }
 
     abstract dagger.spi.model.BindingGraph.ChildFactoryMethodEdge spiDelegate();
@@ -297,7 +297,10 @@ public final class ExternalBindingGraphConverter {
         dagger.spi.model.BindingGraph.SubcomponentCreatorBindingEdge
             subcomponentCreatorBindingEdge) {
       return new AutoValue_ExternalBindingGraphConverter_SubcomponentCreatorBindingEdgeImpl(
-          subcomponentCreatorBindingEdge.declaringModules(), subcomponentCreatorBindingEdge);
+          subcomponentCreatorBindingEdge.declaringModules().stream()
+              .map(DaggerTypeElement::java)
+              .collect(toImmutableSet()),
+          subcomponentCreatorBindingEdge);
     }
 
     abstract dagger.spi.model.BindingGraph.SubcomponentCreatorBindingEdge spiDelegate();
