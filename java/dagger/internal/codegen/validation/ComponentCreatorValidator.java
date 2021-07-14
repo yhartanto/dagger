@@ -20,6 +20,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.getCreatorAnnotations;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
+import static javax.lang.model.SourceVersion.isKeyword;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
@@ -34,6 +35,7 @@ import dagger.internal.codegen.binding.ComponentCreatorAnnotation;
 import dagger.internal.codegen.binding.ErrorMessages;
 import dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.HashMap;
@@ -58,11 +60,14 @@ public final class ComponentCreatorValidator implements ClearableCache {
   private final DaggerElements elements;
   private final DaggerTypes types;
   private final Map<TypeElement, ValidationReport<TypeElement>> reports = new HashMap<>();
+  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
-  ComponentCreatorValidator(DaggerElements elements, DaggerTypes types) {
+  ComponentCreatorValidator(
+      DaggerElements elements, DaggerTypes types, KotlinMetadataUtil metadataUtil) {
     this.elements = elements;
     this.types = types;
+    this.metadataUtil = metadataUtil;
   }
 
   @Override
@@ -206,6 +211,7 @@ public final class ComponentCreatorValidator implements ClearableCache {
     }
 
     private void validateBuilder() {
+      validateClassMethodName();
       ExecutableElement buildMethod = null;
       for (ExecutableElement method : elements.getUnimplementedMethods(type)) {
         switch (method.getParameters().size()) {
@@ -241,6 +247,21 @@ public final class ComponentCreatorValidator implements ClearableCache {
         report.addError(messages.missingFactoryMethod());
       } else {
         validateNotGeneric(buildMethod);
+      }
+    }
+
+    private void validateClassMethodName() {
+      // Only Kotlin class can have method name the same as a Java reserved keyword, so only check
+      // the method name if this class is a Kotlin class.
+      if (metadataUtil.hasMetadata(type)) {
+        metadataUtil
+            .getAllMethodNamesBySignature(type)
+            .forEach(
+                (signature, name) -> {
+                  if (isKeyword(name)) {
+                    report.addError("Can not use a Java keyword as method name: " + signature);
+                  }
+                });
       }
     }
 

@@ -65,6 +65,7 @@ import dagger.internal.codegen.binding.ErrorMessages;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.binding.ModuleKind;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.producers.ProductionComponent;
@@ -79,6 +80,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -105,6 +107,7 @@ public final class ComponentValidator implements ClearableCache {
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final DependencyRequestFactory dependencyRequestFactory;
   private final Map<TypeElement, ValidationReport<TypeElement>> reports = new HashMap<>();
+  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
   ComponentValidator(
@@ -115,7 +118,8 @@ public final class ComponentValidator implements ClearableCache {
       DependencyRequestValidator dependencyRequestValidator,
       MembersInjectionValidator membersInjectionValidator,
       MethodSignatureFormatter methodSignatureFormatter,
-      DependencyRequestFactory dependencyRequestFactory) {
+      DependencyRequestFactory dependencyRequestFactory,
+      KotlinMetadataUtil metadataUtil) {
     this.elements = elements;
     this.types = types;
     this.moduleValidator = moduleValidator;
@@ -124,6 +128,7 @@ public final class ComponentValidator implements ClearableCache {
     this.membersInjectionValidator = membersInjectionValidator;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.dependencyRequestFactory = dependencyRequestFactory;
+    this.metadataUtil = metadataUtil;
   }
 
   @Override
@@ -241,9 +246,23 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private void validateComponentMethods() {
+      validateClassMethodName();
       elements.getUnimplementedMethods(component).stream()
           .map(ComponentMethodValidator::new)
           .forEachOrdered(ComponentMethodValidator::validateMethod);
+    }
+
+    private void validateClassMethodName() {
+      if (metadataUtil.hasMetadata(component)) {
+        metadataUtil
+            .getAllMethodNamesBySignature(component)
+            .forEach(
+                (signature, name) -> {
+                  if (SourceVersion.isKeyword(name)) {
+                    report.addError("Can not use a Java keyword as method name: " + signature);
+                  }
+                });
+      }
     }
 
     private class ComponentMethodValidator {
