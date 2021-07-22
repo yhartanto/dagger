@@ -37,7 +37,6 @@ final class DelegatingFrameworkInstanceCreationExpression
   private final ContributionBinding binding;
   private final ComponentImplementation componentImplementation;
   private final ComponentBindingExpressions componentBindingExpressions;
-  private final CompilerOptions compilerOptions;
 
   @AssistedInject
   DelegatingFrameworkInstanceCreationExpression(
@@ -48,7 +47,6 @@ final class DelegatingFrameworkInstanceCreationExpression
     this.binding = checkNotNull(binding);
     this.componentImplementation = componentImplementation;
     this.componentBindingExpressions = componentBindingExpressions;
-    this.compilerOptions = compilerOptions;
   }
 
   @Override
@@ -65,7 +63,6 @@ final class DelegatingFrameworkInstanceCreationExpression
 
   @Override
   public boolean useSwitchingProvider() {
-
     // For delegate expressions, we just want to return the delegate field directly using the above
     // creationExpression(). Using SwitchingProviders would be less efficient because it would
     // create a new SwitchingProvider that just returns "delegateField.get()".

@@ -405,7 +405,6 @@ public final class ComponentBindingExpressions {
     if (binding.kind().equals(DELEGATE) && !needsCaching(binding)) {
       return delegateBindingExpressionFactory.create(binding, RequestKind.PROVIDER);
     }
-
     return frameworkInstanceBindingExpression(binding);
   }
 

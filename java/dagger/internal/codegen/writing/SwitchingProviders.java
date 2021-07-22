@@ -53,8 +53,8 @@ import java.util.TreeMap;
 /**
  * Keeps track of all provider expression requests for a component.
  *
- * <p>The provider expression request will be satisfied by a single generated {@code Provider}
- * class that can provide instances for all types by switching on an id.
+ * <p>The provider expression request will be satisfied by a single generated {@code Provider} class
+ * that can provide instances for all types by switching on an id.
  */
 final class SwitchingProviders {
   /**
@@ -81,9 +81,7 @@ final class SwitchingProviders {
   private final DaggerTypes types;
   private final UniqueNameSet switchingProviderNames = new UniqueNameSet();
 
-  SwitchingProviders(
-      ComponentImplementation componentImplementation,
-      DaggerTypes types) {
+  SwitchingProviders(ComponentImplementation componentImplementation, DaggerTypes types) {
     // Currently, the SwitchingProviders types are only added to the componentShard.
     this.shardImplementation = checkNotNull(componentImplementation).getComponentShard();
     this.types = checkNotNull(types);
