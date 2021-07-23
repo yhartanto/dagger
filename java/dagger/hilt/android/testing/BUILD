@@ -146,7 +146,7 @@ android_library(
     ],
 )
 
-java_library(
+android_library(
     name = "bind_value",
     testonly = 1,
     srcs = [
