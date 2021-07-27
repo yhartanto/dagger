@@ -17,12 +17,14 @@ readonly EXTRA_MAVEN_ARGS=("$@")
 # @param {string} module_name the JPMS module name to include in the jar. This
 # is an optional parameter and can only be used with jar files.
 _deploy() {
-  local library=$1
-  local pomfile=$2
-  local srcjar=$3
-  local javadoc=$4
-  local module_name=$5
+  local shaded_rules=$1
+  local library=$2
+  local pomfile=$3
+  local srcjar=$4
+  local javadoc=$5
+  local module_name=$6
   bash $(dirname $0)/deploy-library.sh \
+      "$shaded_rules" \
       "$library" \
       "$pomfile" \
       "$srcjar" \
@@ -34,6 +36,7 @@ _deploy() {
 }
 
 _deploy \
+  "" \
   java/dagger/libcore.jar \
   java/dagger/pom.xml \
   java/dagger/libcore-src.jar \
@@ -41,6 +44,7 @@ _deploy \
   "dagger"
 
 _deploy \
+  "" \
   gwt/libgwt.jar \
   gwt/pom.xml \
   gwt/libgwt.jar \
@@ -48,6 +52,7 @@ _deploy \
   ""
 
 _deploy \
+  "com.google.auto.common,dagger.shaded.auto.common;androidx.room.compiler.processing,dagger.shaded.androidx.room.compiler.processing" \
   java/dagger/internal/codegen/artifact.jar \
   java/dagger/internal/codegen/pom.xml \
   java/dagger/internal/codegen/artifact-src.jar \
@@ -55,6 +60,7 @@ _deploy \
   ""
 
 _deploy \
+  "" \
   java/dagger/producers/artifact.jar \
   java/dagger/producers/pom.xml \
   java/dagger/producers/artifact-src.jar \
@@ -62,6 +68,7 @@ _deploy \
   ""
 
 _deploy \
+  "com.google.auto.common,dagger.spi.shaded.auto.common" \
   java/dagger/spi/artifact.jar \
   java/dagger/spi/pom.xml \
   java/dagger/spi/artifact-src.jar \
@@ -69,6 +76,7 @@ _deploy \
   ""
 
 _deploy \
+  "" \
   java/dagger/android/android.aar \
   java/dagger/android/pom.xml \
   java/dagger/android/libandroid-src.jar \
@@ -76,6 +84,7 @@ _deploy \
   ""
 
 _deploy \
+  "" \
   java/dagger/android/android-legacy.aar \
   java/dagger/android/legacy-pom.xml \
   "" \
@@ -83,6 +92,7 @@ _deploy \
   ""
 
 _deploy \
+  "" \
   java/dagger/android/support/support.aar \
   java/dagger/android/support/pom.xml \
   java/dagger/android/support/libsupport-src.jar \
@@ -90,6 +100,7 @@ _deploy \
   ""
 
 _deploy \
+  "" \
   java/dagger/android/support/support-legacy.aar \
   java/dagger/android/support/legacy-pom.xml \
   "" \
@@ -97,6 +108,7 @@ _deploy \
   ""
 
 _deploy \
+  "" \
   shaded_android_processor.jar \
   java/dagger/android/processor/pom.xml \
   java/dagger/android/processor/libprocessor-src.jar \
@@ -104,6 +116,7 @@ _deploy \
   ""
 
 _deploy \
+  "" \
   java/dagger/grpc/server/libserver.jar \
   java/dagger/grpc/server/server-pom.xml \
   java/dagger/grpc/server/libserver-src.jar \
@@ -111,6 +124,7 @@ _deploy \
   ""
 
 _deploy \
+  "" \
   java/dagger/grpc/server/libannotations.jar \
   java/dagger/grpc/server/annotations-pom.xml \
   java/dagger/grpc/server/libannotations-src.jar \
@@ -118,6 +132,7 @@ _deploy \
   ""
 
 _deploy \
+  "" \
   shaded_grpc_server_processor.jar \
   java/dagger/grpc/server/processor/pom.xml \
   java/dagger/grpc/server/processor/libprocessor-src.jar \
@@ -125,6 +140,7 @@ _deploy \
   ""
 
 _deploy \
+  "" \
   java/dagger/lint/lint-artifact.jar \
   java/dagger/lint/lint-pom.xml \
   java/dagger/lint/lint-artifact-src.jar \
@@ -132,6 +148,7 @@ _deploy \
   ""
 
 _deploy \
+  "" \
   java/dagger/lint/lint-android-artifact.aar \
   java/dagger/lint/lint-android-pom.xml \
   "" \

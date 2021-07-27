@@ -12,18 +12,27 @@ set -eu
 # @param {string} module_name the JPMS module name to include in the jar. This
 # is an optional parameter and can only be used with jar files.
 deploy_library() {
-  local library=$1
-  local pomfile=$2
-  local srcjar=$3
-  local javadoc=$4
-  local module_name=$5
-  local mvn_goal=$6
-  local version_name=$7
-  shift 7
+  local shaded_rules=$1
+  local library=$2
+  local pomfile=$3
+  local srcjar=$4
+  local javadoc=$5
+  local module_name=$6
+  local mvn_goal=$7
+  local version_name=$8
+  shift 8
   local extra_maven_args=("$@")
 
   bazel build --define=pom_version="$version_name" \
     $library $pomfile
+
+  # Shade the library if shaded_rules exist
+  if [[ ! -z "$shaded_rules" ]]; then
+    bash $(dirname $0)/shade-library.sh \
+      $(bazel_output_file $library) $shaded_rules
+    # The output jar name is the same as the input library appended with -shaded
+    library="${library%.*}-shaded.${library##*.}"
+  fi
 
   # TODO(bcorso): Consider moving this into the "gen_maven_artifact" macro, this
   # requires having the version checked-in for the build system.
