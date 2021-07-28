@@ -6,7 +6,7 @@ import com.android.build.api.instrumentation.ClassData
 import com.android.build.api.instrumentation.InstrumentationParameters
 import java.io.File
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.FieldVisitor
@@ -25,7 +25,7 @@ class AndroidEntryPointClassVisitor(
 
   @Suppress("UnstableApiUsage") // ASM Pipeline APIs
   interface AndroidEntryPointParams : InstrumentationParameters {
-    @get:Input
+    @get:Internal
     val additionalClassesDir: Property<File>
   }
 
