@@ -91,8 +91,10 @@ abstract class AggregatedPackagesTransform : TransformAction<TransformParameters
   }
 
   companion object {
+    // TODO(b/195125455): Make this more robust when adding new metadata.
     // The list packages for generated classes used to pass information between compilation units.
     val AGGREGATED_PACKAGES = listOf(
+      "dagger/hilt/android/internal/earlyentrypoint/codegen",
       "dagger/hilt/android/internal/uninstallmodules/codegen",
       "dagger/hilt/internal/aggregatedroot/codegen",
       "dagger/hilt/internal/processedrootsentinel/codegen",
