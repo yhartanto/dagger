@@ -16,6 +16,7 @@
 
 package dagger.hilt.android.plugin.util
 
+import dagger.hilt.android.plugin.root.AggregatedAnnotation
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.zip.ZipEntry
@@ -61,7 +62,7 @@ abstract class AggregatedPackagesTransform : TransformAction<TransformParameters
         ZipInputStream(file.inputStream()).forEachZipEntry { inputStream, inputEntry ->
           if (inputEntry.isClassFile()) {
             val parentDirectory = inputEntry.name.substringBeforeLast('/')
-            val match = AGGREGATED_PACKAGES.any { aggregatedPackage ->
+            val match = AggregatedAnnotation.AGGREGATED_PACKAGES.any { aggregatedPackage ->
               parentDirectory.endsWith(aggregatedPackage)
             }
             if (match) {
@@ -81,7 +82,7 @@ abstract class AggregatedPackagesTransform : TransformAction<TransformParameters
       // packages structure. File and Path APIs are used to avoid OS-specific issues when comparing
       // paths.
       val parentDirectory: File = file.parentFile
-      val match = AGGREGATED_PACKAGES.any { aggregatedPackage ->
+      val match = AggregatedAnnotation.AGGREGATED_PACKAGES.any { aggregatedPackage ->
         parentDirectory.endsWith(aggregatedPackage)
       }
       if (match) {
@@ -91,18 +92,6 @@ abstract class AggregatedPackagesTransform : TransformAction<TransformParameters
   }
 
   companion object {
-    // TODO(b/195125455): Make this more robust when adding new metadata.
-    // The list packages for generated classes used to pass information between compilation units.
-    val AGGREGATED_PACKAGES = listOf(
-      "dagger/hilt/android/internal/earlyentrypoint/codegen",
-      "dagger/hilt/android/internal/uninstallmodules/codegen",
-      "dagger/hilt/internal/aggregatedroot/codegen",
-      "dagger/hilt/internal/processedrootsentinel/codegen",
-      "dagger/hilt/processor/internal/aliasof/codegen",
-      "dagger/hilt/processor/internal/definecomponent/codegen",
-      "hilt_aggregated_deps",
-    )
-
     // The output file name containing classes in the aggregated packages.
     val JAR_NAME = "hiltAggregated.jar"
   }
