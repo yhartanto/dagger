@@ -22,20 +22,18 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
 // Test that verifies the hilt class transform does not break the Gradle's remote build cache.
-class BuildCacheTest {
-  @get:Rule
-  val gradleHomeFolder = TemporaryFolder()
+@RunWith(Parameterized::class)
+class BuildCacheTest(private val enableAggregatingTask: Boolean) {
+  @get:Rule val gradleHomeFolder = TemporaryFolder()
 
-  @get:Rule
-  val firstProjectDir = TemporaryFolder()
-
+  @get:Rule val firstProjectDir = TemporaryFolder()
   lateinit var firstGradleRunner: GradleTestRunner
 
-  @get:Rule
-  val secondProjectDir = TemporaryFolder()
-
+  @get:Rule val secondProjectDir = TemporaryFolder()
   lateinit var secondGradleRunner: GradleTestRunner
 
   private val testId = UUID.randomUUID().toString()
@@ -57,7 +55,7 @@ class BuildCacheTest {
     gradleRunner.addSrc(
       srcPath = "minimal/MyApp.java",
       srcContent =
-      """
+        """
         package minimal;
 
         import android.app.Application;
@@ -71,6 +69,7 @@ class BuildCacheTest {
         """.trimIndent()
     )
     gradleRunner.setAppClassName(".MyApp")
+    gradleRunner.addHiltOption("enableAggregatingTask = $enableAggregatingTask")
     return gradleRunner
   }
 
@@ -81,32 +80,44 @@ class BuildCacheTest {
     assertEquals(firstResult.getTask(":transformDebugClassesWithAsm").outcome, SUCCESS)
 
     val secondResult = secondGradleRunner.build()
-    val cacheableTasks = listOf(
-      ":checkDebugAarMetadata",
-      ":checkDebugDuplicateClasses",
-      ":compileDebugJavaWithJavac",
-      ":compressDebugAssets",
-      ":extractDeepLinksDebug",
-      ":generateDebugBuildConfig",
-      ":generateDebugResValues",
-      ":javaPreCompileDebug",
-      ":mergeDebugAssets",
-      ":mergeDebugJavaResource",
-      ":mergeDebugJniLibFolders",
-      ":mergeDebugNativeLibs",
-      ":mergeDebugShaders",
-      ":mergeExtDexDebug",
-      ":mergeLibDexDebug",
-      ":mergeProjectDexDebug",
-      ":processDebugManifestForPackage",
-      ":transformDebugClassesWithAsm",
-      ":validateSigningDebug",
-      ":writeDebugAppMetadata",
-      ":writeDebugSigningConfigVersions",
-    )
+    val cacheableTasks: List<String> = mutableListOf<String>().apply {
+      add(":checkDebugAarMetadata")
+      add(":checkDebugDuplicateClasses")
+      add(":compileDebugJavaWithJavac")
+      add(":compressDebugAssets")
+      add(":extractDeepLinksDebug")
+      add(":generateDebugBuildConfig")
+      add(":generateDebugResValues")
+      // When aggregating task is enabled, the plugin adds two more tasks that should be
+      // cacheable.
+      if (enableAggregatingTask) {
+        add(":hiltAggregateDepsDebug")
+        add(":hiltJavaCompileDebug")
+      }
+      add(":javaPreCompileDebug")
+      add(":mergeDebugAssets")
+      add(":mergeDebugJavaResource")
+      add(":mergeDebugJniLibFolders")
+      add(":mergeDebugNativeLibs")
+      add(":mergeDebugShaders")
+      add(":mergeExtDexDebug")
+      add(":mergeLibDexDebug")
+      add(":mergeProjectDexDebug")
+      add(":processDebugManifestForPackage")
+      add(":transformDebugClassesWithAsm")
+      add(":validateSigningDebug")
+      add(":writeDebugAppMetadata")
+      add(":writeDebugSigningConfigVersions")
+    }
 
     val tasksFromCache =
       secondResult.tasks.filter { it.outcome == FROM_CACHE }.map { it.path }.sorted()
     assertEquals(cacheableTasks, tasksFromCache)
+  }
+
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "enableAggregatingTask = {0}")
+    fun parameters() = listOf(false, true)
   }
 }
