@@ -19,7 +19,13 @@ load("@rules_java//java:defs.bzl", "java_import")
 
 package(default_visibility = ["//:src"])
 
-java_import(
+alias(
     name = "xprocessing",
+    actual = ":xprocessing-jar",
+)
+
+java_import(
+    name = "xprocessing-jar",
     jars = ["xprocessing.jar"],
+    visibility = ["//visibility:private"],
 )
