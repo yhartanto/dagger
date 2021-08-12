@@ -395,15 +395,14 @@ internal class Aggregator private constructor(
     // by '$' instead of '.'
     fun Type.toClassName(): ClassName {
       val binaryName = this.className
-      val packageName = binaryName.substringBeforeLast('.')
-      return if (packageName == binaryName) {
-        // Type is at root package
-        val shortNames = binaryName.split('$')
-        ClassName.get("", shortNames.first(), *shortNames.drop(1).toTypedArray())
+      val packageNameEndIndex = binaryName.lastIndexOf('.')
+      val packageName = if (packageNameEndIndex != -1) {
+        binaryName.substring(0, packageNameEndIndex)
       } else {
-        val shortNames = binaryName.substring(packageName.length + 1).split('$')
-        ClassName.get(packageName, shortNames.first(), *shortNames.drop(1).toTypedArray())
+        ""
       }
+      val shortNames = binaryName.substring(packageNameEndIndex + 1).split('$')
+      return ClassName.get(packageName, shortNames.first(), *shortNames.drop(1).toTypedArray())
     }
 
     // Converts this String representing the canonical name of a class to a ClassName.
