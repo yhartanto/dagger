@@ -50,7 +50,6 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Stream.concat;
 
-import com.google.auto.common.MoreElements;
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -64,17 +63,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
-/** {@link CompilerOptions} for the given {@link ProcessingEnvironment}. */
+/** {@link CompilerOptions} for the given processor. */
 public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions {
   // EnumOption<T> doesn't support integer inputs so just doing this as a 1-off for now.
   private static final String KEYS_PER_COMPONENT_SHARD = "dagger.keysPerComponentShard";
 
-  private final ProcessingEnvironment processingEnvironment;
+  private final Messager messager;
+  private final Map<String, String> options;
   private final DaggerElements elements;
   private final Map<EnumOption<?>, Object> enumOptions = new HashMap<>();
   private final Map<EnumOption<?>, ImmutableMap<String, ? extends Enum<?>>> allCommandLineOptions =
@@ -82,9 +82,9 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
 
   @Inject
   ProcessingEnvironmentCompilerOptions(
-      ProcessingEnvironment processingEnvironment,
-      DaggerElements elements) {
-    this.processingEnvironment = processingEnvironment;
+      Messager messager, @ProcessingOptions Map<String, String> options, DaggerElements elements) {
+    this.messager = messager;
+    this.options = options;
     this.elements = elements;
     checkValid();
   }
@@ -181,17 +181,18 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
 
   @Override
   public int keysPerComponentShard(TypeElement component) {
-    if (processingEnvironment.getOptions().containsKey(KEYS_PER_COMPONENT_SHARD)) {
+    if (options.containsKey(KEYS_PER_COMPONENT_SHARD)) {
       checkArgument(
-          MoreElements.getPackage(component).getQualifiedName().toString().startsWith("dagger."),
+          com.google.auto.common.MoreElements.getPackage(component)
+              .getQualifiedName().toString().startsWith("dagger."),
           "Cannot set %s. It is only meant for internal testing.", KEYS_PER_COMPONENT_SHARD);
-      return Integer.parseInt(processingEnvironment.getOptions().get(KEYS_PER_COMPONENT_SHARD));
+      return Integer.parseInt(options.get(KEYS_PER_COMPONENT_SHARD));
     }
     return super.keysPerComponentShard(component);
   }
 
   private boolean isEnabled(KeyOnlyOption keyOnlyOption) {
-    return processingEnvironment.getOptions().containsKey(keyOnlyOption.toString());
+    return options.containsKey(keyOnlyOption.toString());
   }
 
   private boolean isEnabled(Feature feature) {
@@ -221,11 +222,9 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   private void noLongerRecognized(CommandLineOption commandLineOption) {
-    if (processingEnvironment.getOptions().containsKey(commandLineOption.toString())) {
-      processingEnvironment
-          .getMessager()
-          .printMessage(
-              Diagnostic.Kind.WARNING, commandLineOption + " is no longer recognized by Dagger");
+    if (options.containsKey(commandLineOption.toString())) {
+      messager.printMessage(
+          Diagnostic.Kind.WARNING, commandLineOption + " is no longer recognized by Dagger");
     }
   }
 
@@ -456,13 +455,11 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
 
   private void reportUseOfDifferentNamesForOption(
       Diagnostic.Kind diagnosticKind, EnumOption<?> option, ImmutableSet<String> usedNames) {
-    processingEnvironment
-        .getMessager()
-        .printMessage(
-            diagnosticKind,
-            String.format(
-                "Only one of the equivalent options (%s) should be used; prefer -A%s",
-                usedNames.stream().map(name -> "-A" + name).collect(joining(", ")), option));
+    messager.printMessage(
+        diagnosticKind,
+        String.format(
+            "Only one of the equivalent options (%s) should be used; prefer -A%s",
+            usedNames.stream().map(name -> "-A" + name).collect(joining(", ")), option));
   }
 
   private <T extends Enum<T>> ImmutableMap<String, T> parseOptionWithAllNames(
@@ -484,12 +481,10 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   private <T extends Enum<T>> Optional<T> parseOptionWithName(EnumOption<T> option, String key) {
-    checkArgument(processingEnvironment.getOptions().containsKey(key), "key %s not found", key);
-    String stringValue = processingEnvironment.getOptions().get(key);
+    checkArgument(options.containsKey(key), "key %s not found", key);
+    String stringValue = options.get(key);
     if (stringValue == null) {
-      processingEnvironment
-          .getMessager()
-          .printMessage(Diagnostic.Kind.ERROR, "Processor option -A" + key + " needs a value");
+      messager.printMessage(Diagnostic.Kind.ERROR, "Processor option -A" + key + " needs a value");
     } else {
       try {
         T value =
@@ -500,19 +495,16 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
       } catch (IllegalArgumentException e) {
         // handled below
       }
-      processingEnvironment
-          .getMessager()
-          .printMessage(
-              Diagnostic.Kind.ERROR,
-              String.format(
-                  "Processor option -A%s may only have the values %s "
-                      + "(case insensitive), found: %s",
-                  key, option.validValues(), stringValue));
+      messager.printMessage(
+          Diagnostic.Kind.ERROR,
+          String.format(
+              "Processor option -A%s may only have the values %s (case insensitive), found: %s",
+              key, option.validValues(), stringValue));
     }
     return Optional.empty();
   }
 
   private Stream<String> getUsedNames(CommandLineOption option) {
-    return option.allNames().filter(name -> processingEnvironment.getOptions().containsKey(name));
+    return option.allNames().filter(options::containsKey);
   }
 }

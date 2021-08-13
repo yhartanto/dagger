@@ -54,7 +54,6 @@ import dagger.spi.BindingGraphPlugin;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -123,7 +122,7 @@ public class ComponentProcessor extends JavacBasicAnnotationProcessor {
   @Override
   public Iterable<XProcessingStep> processingSteps() {
     ProcessorComponent.factory()
-        .create(processingEnv, testingPlugins.orElseGet(this::loadExternalPlugins))
+        .create(getXProcessingEnv(), testingPlugins.orElseGet(this::loadExternalPlugins))
         .inject(this);
 
     validationBindingGraphPlugins.initializePlugins();
@@ -159,7 +158,7 @@ public class ComponentProcessor extends JavacBasicAnnotationProcessor {
     interface Factory {
       @CheckReturnValue
       ProcessorComponent create(
-          @BindsInstance ProcessingEnvironment processingEnv,
+          @BindsInstance XProcessingEnv xProcessingEnv,
           @BindsInstance ImmutableSet<BindingGraphPlugin> externalPlugins);
     }
   }

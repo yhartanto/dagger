@@ -16,6 +16,9 @@
 
 package dagger.internal.codegen;
 
+import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.googlejavaformat.java.filer.FormattingFiler;
 import dagger.Binds;
 import dagger.Module;
@@ -31,11 +34,10 @@ import dagger.multibindings.IntoSet;
 import java.util.Map;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.inject.Singleton;
 import javax.lang.model.SourceVersion;
 
-/** Bindings that depend on the {@link ProcessingEnvironment}. */
+/** Bindings that depend on the {@link XProcessingEnv}. */
 @Module
 interface ProcessingEnvironmentModule {
   @Binds
@@ -45,41 +47,47 @@ interface ProcessingEnvironmentModule {
 
   @Provides
   @ProcessingOptions
-  static Map<String, String> processingOptions(ProcessingEnvironment processingEnvironment) {
-    return processingEnvironment.getOptions();
+  static Map<String, String> processingOptions(XProcessingEnv xProcessingEnv) {
+    return xProcessingEnv.getOptions();
   }
 
   @Provides
-  static Messager messager(ProcessingEnvironment processingEnvironment) {
-    return processingEnvironment.getMessager();
+  static XMessager xMessager(XProcessingEnv xProcessingEnv) {
+    return xProcessingEnv.getMessager();
+  }
+
+  // TODO(bcorso): Remove this once we've replaced all inject sites with XMessager.
+  @Provides
+  static Messager messager(XMessager messager) {
+    return XConverters.toJavac(messager);
+  }
+
+  // TODO(bcorso): Return XFiler. We'll likely need a XConverters.toXProcessing(Filer) so that we
+  // can convert our custom FormattingFiler into an XFiler.
+  @Provides
+  static Filer filer(CompilerOptions compilerOptions, XProcessingEnv xProcessingEnv) {
+    return compilerOptions.headerCompilation() || !compilerOptions.formatGeneratedSource()
+        ? XConverters.toJavac(xProcessingEnv).getFiler()
+        : new FormattingFiler(XConverters.toJavac(xProcessingEnv).getFiler());
   }
 
   @Provides
-  static Filer filer(CompilerOptions compilerOptions, ProcessingEnvironment processingEnvironment) {
-    if (compilerOptions.headerCompilation() || !compilerOptions.formatGeneratedSource()) {
-      return processingEnvironment.getFiler();
-    } else {
-      return new FormattingFiler(processingEnvironment.getFiler());
-    }
-  }
-
-  @Provides
-  static SourceVersion sourceVersion(ProcessingEnvironment processingEnvironment) {
-    return processingEnvironment.getSourceVersion();
+  static SourceVersion sourceVersion(XProcessingEnv xProcessingEnv) {
+    return XConverters.toJavac(xProcessingEnv).getSourceVersion();
   }
 
   @Provides
   @Singleton
-  static DaggerElements daggerElements(ProcessingEnvironment processingEnvironment) {
+  static DaggerElements daggerElements(XProcessingEnv xProcessingEnv) {
     return new DaggerElements(
-        processingEnvironment.getElementUtils(), processingEnvironment.getTypeUtils());
+        XConverters.toJavac(xProcessingEnv).getElementUtils(),
+        XConverters.toJavac(xProcessingEnv).getTypeUtils());
   }
 
   @Provides
   @Singleton
-  static DaggerTypes daggerTypes(
-      ProcessingEnvironment processingEnvironment, DaggerElements elements) {
-    return new DaggerTypes(processingEnvironment.getTypeUtils(), elements);
+  static DaggerTypes daggerTypes(XProcessingEnv xProcessingEnv, DaggerElements elements) {
+    return new DaggerTypes(XConverters.toJavac(xProcessingEnv).getTypeUtils(), elements);
   }
 
   @Binds
