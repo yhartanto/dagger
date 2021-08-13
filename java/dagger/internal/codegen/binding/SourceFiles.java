@@ -38,6 +38,8 @@ import static dagger.spi.model.BindingKind.MULTIBOUND_MAP;
 import static dagger.spi.model.BindingKind.MULTIBOUND_SET;
 import static javax.lang.model.SourceVersion.isName;
 
+import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -200,6 +202,10 @@ public class SourceFiles {
 
   public static String classFileName(ClassName className) {
     return CLASS_FILE_NAME_JOINER.join(className.simpleNames());
+  }
+
+  public static ClassName generatedMonitoringModuleName(XTypeElement componentElement) {
+    return generatedMonitoringModuleName(XConverters.toJavac(componentElement));
   }
 
   public static ClassName generatedMonitoringModuleName(TypeElement componentElement) {

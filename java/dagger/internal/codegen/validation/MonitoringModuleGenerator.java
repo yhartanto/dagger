@@ -26,8 +26,9 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableList;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.Module;
@@ -43,10 +44,9 @@ import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 
 /** Generates a monitoring module for use with production components. */
-final class MonitoringModuleGenerator extends SourceFileGenerator<TypeElement> {
+final class MonitoringModuleGenerator extends SourceFileGenerator<XTypeElement> {
 
   @Inject
   MonitoringModuleGenerator(Filer filer, DaggerElements elements, SourceVersion sourceVersion) {
@@ -54,12 +54,12 @@ final class MonitoringModuleGenerator extends SourceFileGenerator<TypeElement> {
   }
 
   @Override
-  public Element originatingElement(TypeElement componentElement) {
-    return componentElement;
+  public Element originatingElement(XTypeElement componentElement) {
+    return XConverters.toJavac(componentElement);
   }
 
   @Override
-  public ImmutableList<TypeSpec.Builder> topLevelTypes(TypeElement componentElement) {
+  public ImmutableList<TypeSpec.Builder> topLevelTypes(XTypeElement componentElement) {
     return ImmutableList.of(
         classBuilder(SourceFiles.generatedMonitoringModuleName(componentElement))
             .addAnnotation(Module.class)
@@ -81,17 +81,15 @@ final class MonitoringModuleGenerator extends SourceFileGenerator<TypeElement> {
         .build();
   }
 
-  private MethodSpec monitor(TypeElement componentElement) {
+  private MethodSpec monitor(XTypeElement componentElement) {
     return methodBuilder("monitor")
         .returns(ProductionComponentMonitor.class)
         .addModifiers(STATIC)
         .addAnnotation(Provides.class)
         .addAnnotation(ProductionScope.class)
-        .addParameter(providerOf(ClassName.get(componentElement.asType())), "component")
-        .addParameter(
-            providerOf(setOf(PRODUCTION_COMPONENT_MONITOR_FACTORY)), "factories")
-        .addStatement(
-            "return $T.createMonitorForComponent(component, factories)", Monitors.class)
+        .addParameter(providerOf(componentElement.getType().getTypeName()), "component")
+        .addParameter(providerOf(setOf(PRODUCTION_COMPONENT_MONITOR_FACTORY)), "factories")
+        .addStatement("return $T.createMonitorForComponent(component, factories)", Monitors.class)
         .build();
   }
 }

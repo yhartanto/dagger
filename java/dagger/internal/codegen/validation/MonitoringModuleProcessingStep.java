@@ -16,15 +16,12 @@
 
 package dagger.internal.codegen.validation;
 
+import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
-import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
-import javax.annotation.processing.Messager;
 import javax.inject.Inject;
-import javax.lang.model.element.TypeElement;
 
 /**
  * A processing step that is responsible for generating a special module for a {@link
@@ -32,12 +29,12 @@ import javax.lang.model.element.TypeElement;
  */
 public final class MonitoringModuleProcessingStep
     extends XTypeCheckingProcessingStep<XTypeElement> {
-  private final Messager messager;
+  private final XMessager messager;
   private final MonitoringModuleGenerator monitoringModuleGenerator;
 
   @Inject
   MonitoringModuleProcessingStep(
-      Messager messager, MonitoringModuleGenerator monitoringModuleGenerator) {
+      XMessager messager, MonitoringModuleGenerator monitoringModuleGenerator) {
     this.messager = messager;
     this.monitoringModuleGenerator = monitoringModuleGenerator;
   }
@@ -48,9 +45,7 @@ public final class MonitoringModuleProcessingStep
   }
 
   @Override
-  protected void process(XTypeElement xElement, ImmutableSet<ClassName> annotations) {
-    // TODO(bcorso): Remove conversion to javac type and use XProcessing throughout.
-    TypeElement element = XConverters.toJavac(xElement);
-    monitoringModuleGenerator.generate(MoreElements.asType(element), messager);
+  protected void process(XTypeElement productionComponent, ImmutableSet<ClassName> annotations) {
+    monitoringModuleGenerator.generate(productionComponent, messager);
   }
 }

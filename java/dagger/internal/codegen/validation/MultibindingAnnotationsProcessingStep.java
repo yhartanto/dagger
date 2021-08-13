@@ -16,17 +16,15 @@
 
 package dagger.internal.codegen.validation;
 
-import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
-import javax.annotation.processing.Messager;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
 
 /**
  * Processing step that verifies that {@link dagger.multibindings.IntoSet}, {@link
@@ -36,11 +34,11 @@ import javax.lang.model.element.ExecutableElement;
 public final class MultibindingAnnotationsProcessingStep
     extends XTypeCheckingProcessingStep<XExecutableElement> {
   private final AnyBindingMethodValidator anyBindingMethodValidator;
-  private final Messager messager;
+  private final XMessager messager;
 
   @Inject
   MultibindingAnnotationsProcessingStep(
-      AnyBindingMethodValidator anyBindingMethodValidator, Messager messager) {
+      AnyBindingMethodValidator anyBindingMethodValidator, XMessager messager) {
     this.anyBindingMethodValidator = anyBindingMethodValidator;
     this.messager = messager;
   }
@@ -51,16 +49,15 @@ public final class MultibindingAnnotationsProcessingStep
   }
 
   @Override
-  protected void process(XExecutableElement xElement, ImmutableSet<ClassName> annotations) {
-    ExecutableElement method = XConverters.toJavac(xElement);
-    if (!anyBindingMethodValidator.isBindingMethod(method)) {
+  protected void process(XExecutableElement method, ImmutableSet<ClassName> annotations) {
+    if (!anyBindingMethodValidator.isBindingMethod(XConverters.toJavac(method))) {
       annotations.forEach(
           annotation ->
               messager.printMessage(
                   ERROR,
                   "Multibinding annotations may only be on @Provides, @Produces, or @Binds methods",
                   method,
-                  getAnnotationMirror(method, annotation).get()));
+                  method.getAnnotation(annotation)));
     }
   }
 }
