@@ -24,6 +24,7 @@ import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnot
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.allCreatorAnnotations;
 import static java.util.Collections.disjoint;
 
+import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
@@ -43,7 +44,6 @@ import dagger.internal.codegen.validation.ComponentValidator;
 import dagger.internal.codegen.validation.ValidationReport;
 import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
 import java.util.Set;
-import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -53,7 +53,7 @@ import javax.lang.model.element.TypeElement;
  * as part of the {@link ComponentProcessor}.
  */
 final class ComponentProcessingStep extends XTypeCheckingProcessingStep<XTypeElement> {
-  private final Messager messager;
+  private final XMessager messager;
   private final ComponentValidator componentValidator;
   private final ComponentCreatorValidator creatorValidator;
   private final ComponentDescriptorValidator componentDescriptorValidator;
@@ -64,7 +64,7 @@ final class ComponentProcessingStep extends XTypeCheckingProcessingStep<XTypeEle
 
   @Inject
   ComponentProcessingStep(
-      Messager messager,
+      XMessager messager,
       ComponentValidator componentValidator,
       ComponentCreatorValidator creatorValidator,
       ComponentDescriptorValidator componentDescriptorValidator,

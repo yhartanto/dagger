@@ -43,6 +43,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XFiler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -69,7 +70,6 @@ import dagger.spi.model.DependencyRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -86,7 +86,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
 
   @Inject
   FactoryGenerator(
-      Filer filer,
+      XFiler filer,
       SourceVersion sourceVersion,
       DaggerTypes types,
       DaggerElements elements,

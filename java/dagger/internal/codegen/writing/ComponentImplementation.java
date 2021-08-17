@@ -42,6 +42,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
+import androidx.room.compiler.processing.XMessager;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -92,7 +93,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.lang.model.element.ExecutableElement;
@@ -254,7 +254,7 @@ public final class ComponentImplementation {
   private final DaggerTypes types;
   private final KotlinMetadataUtil metadataUtil;
   private final ImmutableMap<ComponentImplementation, FieldSpec> componentFieldsByImplementation;
-  private final Messager messager;
+  private final XMessager messager;
 
   @Inject
   ComponentImplementation(
@@ -269,7 +269,7 @@ public final class ComponentImplementation {
       DaggerElements elements,
       DaggerTypes types,
       KotlinMetadataUtil metadataUtil,
-      Messager messager) {
+      XMessager messager) {
     this.parent = parent;
     this.childComponentImplementationFactory = childComponentImplementationFactory;
     this.bindingExpressionsProvider = bindingExpressionsProvider;

@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static dagger.internal.codegen.binding.MapKeys.getUnwrappedMapKeyType;
 import static javax.lang.model.element.ElementKind.ANNOTATION_TYPE;
 
+import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreTypes;
@@ -32,7 +33,6 @@ import dagger.internal.codegen.validation.ValidationReport;
 import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
 import dagger.internal.codegen.writing.AnnotationCreatorGenerator;
 import dagger.internal.codegen.writing.UnwrappedMapKeyGenerator;
-import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
@@ -43,7 +43,7 @@ import javax.lang.model.type.DeclaredType;
  * implementation of annotations marked with {@link MapKey @MapKey} where necessary.
  */
 final class MapKeyProcessingStep extends XTypeCheckingProcessingStep<XTypeElement> {
-  private final Messager messager;
+  private final XMessager messager;
   private final DaggerTypes types;
   private final MapKeyValidator mapKeyValidator;
   private final AnnotationCreatorGenerator annotationCreatorGenerator;
@@ -51,7 +51,7 @@ final class MapKeyProcessingStep extends XTypeCheckingProcessingStep<XTypeElemen
 
   @Inject
   MapKeyProcessingStep(
-      Messager messager,
+      XMessager messager,
       DaggerTypes types,
       MapKeyValidator mapKeyValidator,
       AnnotationCreatorGenerator annotationCreatorGenerator,

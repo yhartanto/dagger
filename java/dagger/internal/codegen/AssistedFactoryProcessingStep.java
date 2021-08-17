@@ -32,6 +32,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
@@ -62,7 +63,6 @@ import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -78,7 +78,7 @@ import javax.lang.model.type.TypeMirror;
 final class AssistedFactoryProcessingStep extends XTypeCheckingProcessingStep<XTypeElement> {
   private final XProcessingEnv processingEnv;
   private final XMessager messager;
-  private final Filer filer;
+  private final XFiler filer;
   private final SourceVersion sourceVersion;
   private final DaggerElements elements;
   private final DaggerTypes types;
@@ -88,7 +88,7 @@ final class AssistedFactoryProcessingStep extends XTypeCheckingProcessingStep<XT
   AssistedFactoryProcessingStep(
       XProcessingEnv processingEnv,
       XMessager messager,
-      Filer filer,
+      XFiler filer,
       SourceVersion sourceVersion,
       DaggerElements elements,
       DaggerTypes types,

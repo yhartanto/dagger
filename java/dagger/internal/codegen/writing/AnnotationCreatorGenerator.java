@@ -28,6 +28,7 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import androidx.room.compiler.processing.XFiler;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -40,7 +41,6 @@ import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -82,7 +82,7 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<TypeElement>
       ClassName.get("com.google.auto.value", "AutoAnnotation");
 
   @Inject
-  AnnotationCreatorGenerator(Filer filer, DaggerElements elements, SourceVersion sourceVersion) {
+  AnnotationCreatorGenerator(XFiler filer, DaggerElements elements, SourceVersion sourceVersion) {
     super(filer, elements, sourceVersion);
   }
 

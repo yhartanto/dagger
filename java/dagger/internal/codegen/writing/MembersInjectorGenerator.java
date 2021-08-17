@@ -39,6 +39,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XFiler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
@@ -61,7 +62,6 @@ import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.InjectionMethods.InjectionSiteMethod;
 import dagger.spi.model.DependencyRequest;
 import java.util.Map.Entry;
-import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -75,7 +75,7 @@ public final class MembersInjectorGenerator extends SourceFileGenerator<MembersI
 
   @Inject
   MembersInjectorGenerator(
-      Filer filer,
+      XFiler filer,
       DaggerElements elements,
       DaggerTypes types,
       SourceVersion sourceVersion,

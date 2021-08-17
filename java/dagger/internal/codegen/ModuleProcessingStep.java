@@ -21,6 +21,7 @@ import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPrese
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
@@ -45,7 +46,6 @@ import dagger.internal.codegen.writing.InaccessibleMapKeyProxyGenerator;
 import dagger.internal.codegen.writing.ModuleGenerator;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -55,7 +55,7 @@ import javax.lang.model.element.TypeElement;
  * methods.
  */
 final class ModuleProcessingStep extends XTypeCheckingProcessingStep<XTypeElement> {
-  private final Messager messager;
+  private final XMessager messager;
   private final ModuleValidator moduleValidator;
   private final BindingFactory bindingFactory;
   private final SourceFileGenerator<ProvisionBinding> factoryGenerator;
@@ -68,7 +68,7 @@ final class ModuleProcessingStep extends XTypeCheckingProcessingStep<XTypeElemen
 
   @Inject
   ModuleProcessingStep(
-      Messager messager,
+      XMessager messager,
       ModuleValidator moduleValidator,
       BindingFactory bindingFactory,
       SourceFileGenerator<ProvisionBinding> factoryGenerator,

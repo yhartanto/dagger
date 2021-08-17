@@ -19,6 +19,7 @@ package dagger.internal.codegen.componentgenerator;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.writing.ComponentNames.getRootComponentClassName;
 
+import androidx.room.compiler.processing.XFiler;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.TypeSpec;
 import dagger.Component;
@@ -27,7 +28,6 @@ import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.writing.ComponentImplementation;
 import java.util.Optional;
-import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -38,7 +38,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
 
   @Inject
   ComponentGenerator(
-      Filer filer,
+      XFiler filer,
       DaggerElements elements,
       SourceVersion sourceVersion,
       TopLevelImplementationComponent.Factory topLevelImplementationComponentFactory) {

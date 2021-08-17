@@ -19,6 +19,8 @@ package dagger.internal.codegen.validation;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
+import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import dagger.internal.codegen.compileroption.CompilerOptions;
@@ -31,14 +33,13 @@ import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraphPlugin;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 
 /** Initializes {@link BindingGraphPlugin}s. */
 public final class ValidationBindingGraphPlugins {
   private final ImmutableSet<BindingGraphPlugin> plugins;
   private final DiagnosticReporterFactory diagnosticReporterFactory;
-  private final Filer filer;
+  private final XFiler filer;
   private final DaggerTypes types;
   private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
@@ -48,7 +49,7 @@ public final class ValidationBindingGraphPlugins {
   ValidationBindingGraphPlugins(
       @Validation ImmutableSet<BindingGraphPlugin> plugins,
       DiagnosticReporterFactory diagnosticReporterFactory,
-      Filer filer,
+      XFiler filer,
       DaggerTypes types,
       DaggerElements elements,
       CompilerOptions compilerOptions,
@@ -76,7 +77,7 @@ public final class ValidationBindingGraphPlugins {
   }
 
   private void initializePlugin(BindingGraphPlugin plugin) {
-    plugin.initFiler(filer);
+    plugin.initFiler(XConverters.toJavac(filer));
     plugin.initTypes(types);
     plugin.initElements(elements);
     Set<String> supportedOptions = plugin.supportedOptions();

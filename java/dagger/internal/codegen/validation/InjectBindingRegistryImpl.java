@@ -26,6 +26,7 @@ import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConst
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
 
+import androidx.room.compiler.processing.XMessager;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
@@ -53,7 +54,6 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -73,7 +73,7 @@ import javax.tools.Diagnostic.Kind;
 final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   private final DaggerElements elements;
   private final DaggerTypes types;
-  private final Messager messager;
+  private final XMessager messager;
   private final InjectValidator injectValidator;
   private final InjectValidator injectValidatorWhenGeneratingCode;
   private final KeyFactory keyFactory;
@@ -172,7 +172,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   InjectBindingRegistryImpl(
       DaggerElements elements,
       DaggerTypes types,
-      Messager messager,
+      XMessager messager,
       InjectValidator injectValidator,
       KeyFactory keyFactory,
       BindingFactory bindingFactory,

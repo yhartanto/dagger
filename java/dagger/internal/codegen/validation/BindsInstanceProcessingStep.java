@@ -17,12 +17,12 @@
 package dagger.internal.codegen.validation;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
-import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 
@@ -33,13 +33,13 @@ import javax.lang.model.element.Element;
 public final class BindsInstanceProcessingStep extends XTypeCheckingProcessingStep<XElement> {
   private final BindsInstanceMethodValidator methodValidator;
   private final BindsInstanceParameterValidator parameterValidator;
-  private final Messager messager;
+  private final XMessager messager;
 
   @Inject
   BindsInstanceProcessingStep(
       BindsInstanceMethodValidator methodValidator,
       BindsInstanceParameterValidator parameterValidator,
-      Messager messager) {
+      XMessager messager) {
     this.methodValidator = methodValidator;
     this.parameterValidator = parameterValidator;
     this.messager = messager;

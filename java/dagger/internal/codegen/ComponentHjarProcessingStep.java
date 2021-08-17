@@ -22,6 +22,7 @@ import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnno
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
 import static java.util.Collections.disjoint;
 
+import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
@@ -35,7 +36,6 @@ import dagger.internal.codegen.validation.ComponentValidator;
 import dagger.internal.codegen.validation.ValidationReport;
 import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
 import java.util.Set;
-import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.TypeElement;
 
@@ -53,7 +53,7 @@ import javax.lang.model.element.TypeElement;
  * normal step. Method bodies are omitted as Turbine ignores them entirely.
  */
 final class ComponentHjarProcessingStep extends XTypeCheckingProcessingStep<XTypeElement> {
-  private final Messager messager;
+  private final XMessager messager;
   private final ComponentValidator componentValidator;
   private final ComponentCreatorValidator creatorValidator;
   private final ComponentDescriptorFactory componentDescriptorFactory;
@@ -61,7 +61,7 @@ final class ComponentHjarProcessingStep extends XTypeCheckingProcessingStep<XTyp
 
   @Inject
   ComponentHjarProcessingStep(
-      Messager messager,
+      XMessager messager,
       ComponentValidator componentValidator,
       ComponentCreatorValidator creatorValidator,
       ComponentDescriptorFactory componentDescriptorFactory,

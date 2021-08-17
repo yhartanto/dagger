@@ -19,10 +19,10 @@ package dagger.internal.codegen.validation;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
-import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 
@@ -30,12 +30,12 @@ import javax.lang.model.element.ExecutableElement;
 public final class BindingMethodProcessingStep
     extends XTypeCheckingProcessingStep<XExecutableElement> {
 
-  private final Messager messager;
+  private final XMessager messager;
   private final AnyBindingMethodValidator anyBindingMethodValidator;
 
   @Inject
   BindingMethodProcessingStep(
-      Messager messager, AnyBindingMethodValidator anyBindingMethodValidator) {
+      XMessager messager, AnyBindingMethodValidator anyBindingMethodValidator) {
     this.messager = messager;
     this.anyBindingMethodValidator = anyBindingMethodValidator;
   }

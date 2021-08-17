@@ -26,6 +26,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableList;
@@ -40,7 +41,6 @@ import dagger.multibindings.Multibinds;
 import dagger.producers.ProductionScope;
 import dagger.producers.monitoring.ProductionComponentMonitor;
 import dagger.producers.monitoring.internal.Monitors;
-import javax.annotation.processing.Filer;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -49,7 +49,7 @@ import javax.lang.model.element.Element;
 final class MonitoringModuleGenerator extends SourceFileGenerator<XTypeElement> {
 
   @Inject
-  MonitoringModuleGenerator(Filer filer, DaggerElements elements, SourceVersion sourceVersion) {
+  MonitoringModuleGenerator(XFiler filer, DaggerElements elements, SourceVersion sourceVersion) {
     super(filer, elements, sourceVersion);
   }
 

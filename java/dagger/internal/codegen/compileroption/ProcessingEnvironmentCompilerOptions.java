@@ -50,6 +50,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Stream.concat;
 
+import androidx.room.compiler.processing.XMessager;
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -63,7 +64,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import javax.annotation.processing.Messager;
 import javax.inject.Inject;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
@@ -73,7 +73,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   // EnumOption<T> doesn't support integer inputs so just doing this as a 1-off for now.
   private static final String KEYS_PER_COMPONENT_SHARD = "dagger.keysPerComponentShard";
 
-  private final Messager messager;
+  private final XMessager messager;
   private final Map<String, String> options;
   private final DaggerElements elements;
   private final Map<EnumOption<?>, Object> enumOptions = new HashMap<>();
@@ -82,7 +82,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
 
   @Inject
   ProcessingEnvironmentCompilerOptions(
-      Messager messager, @ProcessingOptions Map<String, String> options, DaggerElements elements) {
+      XMessager messager, @ProcessingOptions Map<String, String> options, DaggerElements elements) {
     this.messager = messager;
     this.options = options;
     this.elements = elements;
