@@ -31,8 +31,8 @@ import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedParameter;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
-import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
 import java.util.HashSet;
 import java.util.Set;
 import javax.inject.Inject;
@@ -41,7 +41,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 
 /** An annotation processor for {@link dagger.assisted.AssistedInject}-annotated elements. */
-final class AssistedInjectProcessingStep extends XTypeCheckingProcessingStep<XExecutableElement> {
+final class AssistedInjectProcessingStep extends TypeCheckingProcessingStep<XExecutableElement> {
   private final DaggerTypes types;
   private final XMessager messager;
   private final XProcessingEnv processingEnv;

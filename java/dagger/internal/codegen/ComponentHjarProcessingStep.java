@@ -33,8 +33,8 @@ import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
 import dagger.internal.codegen.validation.ComponentCreatorValidator;
 import dagger.internal.codegen.validation.ComponentValidator;
+import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
-import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.element.TypeElement;
@@ -52,7 +52,7 @@ import javax.lang.model.element.TypeElement;
  * <p>The components emitted by this processing step include all of the API elements exposed by the
  * normal step. Method bodies are omitted as Turbine ignores them entirely.
  */
-final class ComponentHjarProcessingStep extends XTypeCheckingProcessingStep<XTypeElement> {
+final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<XTypeElement> {
   private final XMessager messager;
   private final ComponentValidator componentValidator;
   private final ComponentCreatorValidator creatorValidator;

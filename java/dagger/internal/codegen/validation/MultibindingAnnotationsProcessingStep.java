@@ -32,7 +32,7 @@ import javax.inject.Inject;
  * non-binding methods.
  */
 public final class MultibindingAnnotationsProcessingStep
-    extends XTypeCheckingProcessingStep<XExecutableElement> {
+    extends TypeCheckingProcessingStep<XExecutableElement> {
   private final AnyBindingMethodValidator anyBindingMethodValidator;
   private final XMessager messager;
 

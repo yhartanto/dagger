@@ -41,8 +41,8 @@ import dagger.internal.codegen.validation.BindingGraphValidator;
 import dagger.internal.codegen.validation.ComponentCreatorValidator;
 import dagger.internal.codegen.validation.ComponentDescriptorValidator;
 import dagger.internal.codegen.validation.ComponentValidator;
+import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
-import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
@@ -52,7 +52,7 @@ import javax.lang.model.element.TypeElement;
  * A {@link ProcessingStep} that is responsible for dealing with a component or production component
  * as part of the {@link ComponentProcessor}.
  */
-final class ComponentProcessingStep extends XTypeCheckingProcessingStep<XTypeElement> {
+final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElement> {
   private final XMessager messager;
   private final ComponentValidator componentValidator;
   private final ComponentCreatorValidator creatorValidator;

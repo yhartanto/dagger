@@ -24,7 +24,7 @@ import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.binding.InjectBindingRegistry;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
+import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
@@ -38,7 +38,7 @@ import javax.lang.model.util.ElementKindVisitor8;
  * annotation.
  */
 // TODO(gak): add some error handling for bad source files
-final class InjectProcessingStep extends XTypeCheckingProcessingStep<XElement> {
+final class InjectProcessingStep extends TypeCheckingProcessingStep<XElement> {
   private final ElementVisitor<Void, Void> visitor;
   private final Set<Element> processedElements = Sets.newLinkedHashSet();
 

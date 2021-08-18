@@ -27,8 +27,7 @@ import javax.inject.Inject;
  * A processing step that is responsible for generating a special module for a {@link
  * dagger.producers.ProductionComponent} or {@link dagger.producers.ProductionSubcomponent}.
  */
-public final class MonitoringModuleProcessingStep
-    extends XTypeCheckingProcessingStep<XTypeElement> {
+public final class MonitoringModuleProcessingStep extends TypeCheckingProcessingStep<XTypeElement> {
   private final XMessager messager;
   private final MonitoringModuleGenerator monitoringModuleGenerator;
 

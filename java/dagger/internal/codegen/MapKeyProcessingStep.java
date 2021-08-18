@@ -29,8 +29,8 @@ import dagger.MapKey;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.validation.MapKeyValidator;
+import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
-import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
 import dagger.internal.codegen.writing.AnnotationCreatorGenerator;
 import dagger.internal.codegen.writing.UnwrappedMapKeyGenerator;
 import javax.inject.Inject;
@@ -42,7 +42,7 @@ import javax.lang.model.type.DeclaredType;
  * The annotation processor responsible for validating the mapKey annotation and auto-generate
  * implementation of annotations marked with {@link MapKey @MapKey} where necessary.
  */
-final class MapKeyProcessingStep extends XTypeCheckingProcessingStep<XTypeElement> {
+final class MapKeyProcessingStep extends TypeCheckingProcessingStep<XTypeElement> {
   private final XMessager messager;
   private final DaggerTypes types;
   private final MapKeyValidator mapKeyValidator;

@@ -28,7 +28,7 @@ import javax.lang.model.element.ExecutableElement;
 
 /** A step that validates all binding methods that were not validated while processing modules. */
 public final class BindingMethodProcessingStep
-    extends XTypeCheckingProcessingStep<XExecutableElement> {
+    extends TypeCheckingProcessingStep<XExecutableElement> {
 
   private final XMessager messager;
   private final AnyBindingMethodValidator anyBindingMethodValidator;

@@ -31,8 +31,8 @@ import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
+import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
-import dagger.internal.codegen.validation.XTypeCheckingProcessingStep;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -44,7 +44,7 @@ import javax.lang.model.element.VariableElement;
  *
  * <p>This processing step should run after {@link AssistedFactoryProcessingStep}.
  */
-final class AssistedProcessingStep extends XTypeCheckingProcessingStep<XVariableElement> {
+final class AssistedProcessingStep extends TypeCheckingProcessingStep<XVariableElement> {
   private final KotlinMetadataUtil kotlinMetadataUtil;
   private final InjectionAnnotations injectionAnnotations;
   private final DaggerElements elements;
