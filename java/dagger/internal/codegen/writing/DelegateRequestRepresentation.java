@@ -38,24 +38,24 @@ import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.RequestKind;
 import javax.lang.model.type.TypeMirror;
 
-/** A {@link dagger.internal.codegen.writing.BindingExpression} for {@code @Binds} methods. */
-final class DelegateBindingExpression extends BindingExpression {
+/** A {@link dagger.internal.codegen.writing.RequestRepresentation} for {@code @Binds} methods. */
+final class DelegateRequestRepresentation extends RequestRepresentation {
   private final ContributionBinding binding;
   private final RequestKind requestKind;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  private final ComponentRequestRepresentations componentRequestRepresentations;
   private final DaggerTypes types;
   private final BindsTypeChecker bindsTypeChecker;
 
   @AssistedInject
-  DelegateBindingExpression(
+  DelegateRequestRepresentation(
       @Assisted ContributionBinding binding,
       @Assisted RequestKind requestKind,
-      ComponentBindingExpressions componentBindingExpressions,
+      ComponentRequestRepresentations componentRequestRepresentations,
       DaggerTypes types,
       DaggerElements elements) {
     this.binding = checkNotNull(binding);
     this.requestKind = checkNotNull(requestKind);
-    this.componentBindingExpressions = componentBindingExpressions;
+    this.componentRequestRepresentations = componentRequestRepresentations;
     this.types = types;
     this.bindsTypeChecker = new BindsTypeChecker(types, elements);
   }
@@ -77,7 +77,7 @@ final class DelegateBindingExpression extends BindingExpression {
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     Expression delegateExpression =
-        componentBindingExpressions.getDependencyExpression(
+        componentRequestRepresentations.getDependencyExpression(
             bindingRequest(getOnlyElement(binding.dependencies()).key(), requestKind),
             requestingClass);
 
@@ -137,6 +137,6 @@ final class DelegateBindingExpression extends BindingExpression {
 
   @AssistedFactory
   static interface Factory {
-    DelegateBindingExpression create(ContributionBinding binding, RequestKind requestKind);
+    DelegateRequestRepresentation create(ContributionBinding binding, RequestKind requestKind);
   }
 }

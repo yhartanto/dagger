@@ -45,7 +45,7 @@ import javax.lang.model.element.TypeElement;
 @PerComponentImplementation
 public final class ComponentRequirementExpressions {
 
-  // TODO(dpb,ronshapiro): refactor this and ComponentBindingExpressions into a
+  // TODO(dpb,ronshapiro): refactor this and ComponentRequestRepresentations into a
   // HierarchicalComponentMap<K, V>, or perhaps this use a flattened ImmutableMap, built from its
   // parents? If so, maybe make ComponentRequirementExpression.Factory create it.
 

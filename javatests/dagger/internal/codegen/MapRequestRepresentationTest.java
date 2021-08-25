@@ -33,7 +33,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class MapBindingExpressionTest {
+public class MapRequestRepresentationTest {
   @Parameters(name = "{0}")
   public static Collection<Object[]> parameters() {
     return CompilerMode.TEST_PARAMETERS;
@@ -41,7 +41,7 @@ public class MapBindingExpressionTest {
 
   private final CompilerMode compilerMode;
 
-  public MapBindingExpressionTest(CompilerMode compilerMode) {
+  public MapRequestRepresentationTest(CompilerMode compilerMode) {
     this.compilerMode = compilerMode;
   }
 

@@ -46,29 +46,29 @@ import java.util.Collections;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
-/** A {@link BindingExpression} for multibound maps. */
-final class MapBindingExpression extends SimpleInvocationBindingExpression {
+/** A {@link RequestRepresentation} for multibound maps. */
+final class MapRequestRepresentation extends SimpleInvocationRequestRepresentation {
   /** Maximum number of key-value pairs that can be passed to ImmutableMap.of(K, V, K, V, ...). */
   private static final int MAX_IMMUTABLE_MAP_OF_KEY_VALUE_PAIRS = 5;
 
   private final ProvisionBinding binding;
   private final ImmutableMap<DependencyRequest, ContributionBinding> dependencies;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  private final ComponentRequestRepresentations componentRequestRepresentations;
   private final DaggerTypes types;
   private final DaggerElements elements;
 
   @AssistedInject
-  MapBindingExpression(
+  MapRequestRepresentation(
       @Assisted ProvisionBinding binding,
       BindingGraph graph,
-      ComponentBindingExpressions componentBindingExpressions,
+      ComponentRequestRepresentations componentRequestRepresentations,
       DaggerTypes types,
       DaggerElements elements) {
     super(binding);
     this.binding = binding;
     BindingKind bindingKind = this.binding.kind();
     checkArgument(bindingKind.equals(MULTIBOUND_MAP), bindingKind);
-    this.componentBindingExpressions = componentBindingExpressions;
+    this.componentRequestRepresentations = componentRequestRepresentations;
     this.types = types;
     this.elements = elements;
     this.dependencies =
@@ -135,7 +135,7 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
     return CodeBlock.of(
         "$L, $L",
         getMapKeyExpression(dependencies.get(dependency), requestingClass, elements),
-        componentBindingExpressions
+        componentRequestRepresentations
             .getDependencyExpression(bindingRequest(dependency), requestingClass)
             .codeBlock());
   }
@@ -174,6 +174,6 @@ final class MapBindingExpression extends SimpleInvocationBindingExpression {
 
   @AssistedFactory
   static interface Factory {
-    MapBindingExpression create(ProvisionBinding binding);
+    MapRequestRepresentation create(ProvisionBinding binding);
   }
 }

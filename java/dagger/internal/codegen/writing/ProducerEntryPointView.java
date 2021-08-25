@@ -53,12 +53,12 @@ final class ProducerEntryPointView {
    * Producer} or {@link com.google.common.util.concurrent.ListenableFuture}.
    *
    * <p>This is intended to be a replacement implementation for {@link
-   * dagger.internal.codegen.writing.BindingExpression#getDependencyExpressionForComponentMethod(ComponentMethodDescriptor,
+   * dagger.internal.codegen.writing.RequestRepresentation#getDependencyExpressionForComponentMethod(ComponentMethodDescriptor,
    * ComponentImplementation)}, and in cases where {@link Optional#empty()} is returned, callers
    * should call {@code super.getDependencyExpressionForComponentMethod()}.
    */
   Optional<Expression> getProducerEntryPointField(
-      BindingExpression producerExpression,
+      RequestRepresentation producerExpression,
       ComponentMethodDescriptor componentMethod,
       ClassName requestingClass) {
     if (shardImplementation.componentDescriptor().isProduction()
@@ -78,7 +78,7 @@ final class ProducerEntryPointView {
   }
 
   private MemberSelect createField(
-      BindingExpression producerExpression, ComponentMethodDescriptor componentMethod) {
+      RequestRepresentation producerExpression, ComponentMethodDescriptor componentMethod) {
     // TODO(cgdecker): Use a FrameworkFieldInitializer for this?
     // Though I don't think we need the once-only behavior of that, since I think
     // getComponentMethodImplementation will only be called once anyway

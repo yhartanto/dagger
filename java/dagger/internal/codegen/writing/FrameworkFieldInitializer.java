@@ -103,7 +103,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
   private void initializeField() {
     switch (fieldInitializationState) {
       case UNINITIALIZED:
-        // Change our state in case we are recursively invoked via initializeBindingExpression
+        // Change our state in case we are recursively invoked via initializeRequestRepresentation
         fieldInitializationState = InitializationState.INITIALIZING;
         CodeBlock.Builder codeBuilder = CodeBlock.builder();
         CodeBlock fieldInitialization = frameworkInstanceCreationExpression.creationExpression();

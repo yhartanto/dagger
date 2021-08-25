@@ -30,22 +30,22 @@ import dagger.spi.model.DependencyRequest;
 abstract class MultibindingFactoryCreationExpression
     implements FrameworkInstanceCreationExpression {
   private final ShardImplementation shardImplementation;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  private final ComponentRequestRepresentations componentRequestRepresentations;
   private final ContributionBinding binding;
 
   MultibindingFactoryCreationExpression(
       ContributionBinding binding,
       ComponentImplementation componentImplementation,
-      ComponentBindingExpressions componentBindingExpressions) {
+      ComponentRequestRepresentations componentRequestRepresentations) {
     this.binding = checkNotNull(binding);
     this.shardImplementation = checkNotNull(componentImplementation).shardImplementation(binding);
-    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
+    this.componentRequestRepresentations = checkNotNull(componentRequestRepresentations);
   }
 
   /** Returns the expression for a dependency of this multibinding. */
   protected final CodeBlock multibindingDependencyExpression(DependencyRequest dependency) {
     CodeBlock expression =
-        componentBindingExpressions
+        componentRequestRepresentations
             .getDependencyExpression(
                 BindingRequest.bindingRequest(dependency.key(), binding.frameworkType()),
                 shardImplementation.name())

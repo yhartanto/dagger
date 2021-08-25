@@ -53,7 +53,7 @@ import javax.lang.model.type.TypeMirror;
 final class MembersInjectionMethods {
   private final Map<Key, Expression> injectMethodExpressions = new LinkedHashMap<>();
   private final ComponentImplementation componentImplementation;
-  private final ComponentBindingExpressions bindingExpressions;
+  private final ComponentRequestRepresentations bindingExpressions;
   private final BindingGraph graph;
   private final DaggerElements elements;
   private final DaggerTypes types;
@@ -62,7 +62,7 @@ final class MembersInjectionMethods {
   @Inject
   MembersInjectionMethods(
       ComponentImplementation componentImplementation,
-      ComponentBindingExpressions bindingExpressions,
+      ComponentRequestRepresentations bindingExpressions,
       BindingGraph graph,
       DaggerElements elements,
       DaggerTypes types,

@@ -21,9 +21,9 @@ import dagger.Module;
 import dagger.Provides;
 import dagger.Subcomponent;
 import dagger.internal.codegen.binding.BindingGraph;
-import dagger.internal.codegen.writing.ComponentBindingExpressions;
 import dagger.internal.codegen.writing.ComponentImplementation;
 import dagger.internal.codegen.writing.ComponentImplementation.ChildComponentImplementationFactory;
+import dagger.internal.codegen.writing.ComponentRequestRepresentations;
 import dagger.internal.codegen.writing.ComponentRequirementExpressions;
 import dagger.internal.codegen.writing.ParentComponent;
 import dagger.internal.codegen.writing.PerComponentImplementation;
@@ -49,13 +49,13 @@ public interface CurrentImplementationSubcomponent {
     static ChildComponentImplementationFactory provideChildComponentImplementationFactory(
         CurrentImplementationSubcomponent.Builder currentImplementationSubcomponentBuilder,
         Provider<ComponentImplementation> componentImplementatation,
-        Provider<ComponentBindingExpressions> componentBindingExpressions,
+        Provider<ComponentRequestRepresentations> componentRequestRepresentations,
         Provider<ComponentRequirementExpressions> componentRequirementExpressions) {
       return childGraph ->
           currentImplementationSubcomponentBuilder
               .bindingGraph(childGraph)
               .parentImplementation(Optional.of(componentImplementatation.get()))
-              .parentBindingExpressions(Optional.of(componentBindingExpressions.get()))
+              .parentRequestRepresentations(Optional.of(componentRequestRepresentations.get()))
               .parentRequirementExpressions(Optional.of(componentRequirementExpressions.get()))
               .build()
               .componentImplementation();
@@ -73,8 +73,8 @@ public interface CurrentImplementationSubcomponent {
         @ParentComponent Optional<ComponentImplementation> parentImplementation);
 
     @BindsInstance
-    Builder parentBindingExpressions(
-        @ParentComponent Optional<ComponentBindingExpressions> parentBindingExpressions);
+    Builder parentRequestRepresentations(
+        @ParentComponent Optional<ComponentRequestRepresentations> parentRequestRepresentations);
 
     @BindsInstance
     Builder parentRequirementExpressions(

@@ -49,25 +49,25 @@ import javax.lang.model.type.TypeMirror;
 
 /** A central repository of code expressions used to access any binding available to a component. */
 @PerComponentImplementation
-public final class ComponentBindingExpressions {
+public final class ComponentRequestRepresentations {
   // TODO(dpb,ronshapiro): refactor this and ComponentRequirementExpressions into a
   // HierarchicalComponentMap<K, V>, or perhaps this use a flattened ImmutableMap, built from its
-  // parents? If so, maybe make BindingExpression.Factory create it.
+  // parents? If so, maybe make RequestRepresentation.Factory create it.
 
-  private final Optional<ComponentBindingExpressions> parent;
+  private final Optional<ComponentRequestRepresentations> parent;
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
   private final ComponentRequirementExpressions componentRequirementExpressions;
   private final LegacyBindingRepresentation.Factory legacyBindingRepresentationFactory;
   private final DaggerTypes types;
   private final CompilerOptions compilerOptions;
-  private final Map<BindingRequest, BindingExpression> expressions = new HashMap<>();
+  private final Map<BindingRequest, RequestRepresentation> expressions = new HashMap<>();
   private final Map<Binding, BindingRepresentation> representations = new HashMap<>();
   private final SwitchingProviders switchingProviders;
 
   @Inject
-  ComponentBindingExpressions(
-      @ParentComponent Optional<ComponentBindingExpressions> parent,
+  ComponentRequestRepresentations(
+      @ParentComponent Optional<ComponentRequestRepresentations> parent,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
       ComponentRequirementExpressions componentRequirementExpressions,
@@ -92,7 +92,7 @@ public final class ComponentBindingExpressions {
    * @throws IllegalStateException if there is no binding expression that satisfies the request
    */
   public Expression getDependencyExpression(BindingRequest request, ClassName requestingClass) {
-    return getBindingExpression(request).getDependencyExpression(requestingClass);
+    return getRequestRepresentation(request).getDependencyExpression(requestingClass);
   }
 
   /**
@@ -105,7 +105,7 @@ public final class ComponentBindingExpressions {
       BindingRequest request,
       ComponentMethodDescriptor componentMethod,
       ComponentImplementation componentImplementation) {
-    return getBindingExpression(request)
+    return getRequestRepresentation(request)
         .getDependencyExpressionForComponentMethod(componentMethod, componentImplementation);
   }
 
@@ -182,13 +182,13 @@ public final class ComponentBindingExpressions {
             MoreTypes.asDeclared(graph.componentTypeElement().asType()),
             types)
         .addCode(
-            getBindingExpression(request)
+            getRequestRepresentation(request)
                 .getComponentMethodImplementation(componentMethod, componentImplementation))
         .build();
   }
 
-  /** Returns the {@link BindingExpression} for the given {@link BindingRequest}. */
-  BindingExpression getBindingExpression(BindingRequest request) {
+  /** Returns the {@link RequestRepresentation} for the given {@link BindingRequest}. */
+  RequestRepresentation getRequestRepresentation(BindingRequest request) {
     if (expressions.containsKey(request)) {
       return expressions.get(request);
     }
@@ -199,14 +199,14 @@ public final class ComponentBindingExpressions {
             : graph.localContributionBinding(request.key());
 
     if (localBinding.isPresent()) {
-      BindingExpression expression =
-          getBindingRepresentation(localBinding.get()).getBindingExpression(request);
+      RequestRepresentation expression =
+          getBindingRepresentation(localBinding.get()).getRequestRepresentation(request);
       expressions.put(request, expression);
       return expression;
     }
 
     checkArgument(parent.isPresent(), "no expression found for %s", request);
-    return parent.get().getBindingExpression(request);
+    return parent.get().getRequestRepresentation(request);
   }
 
   BindingRepresentation getBindingRepresentation(Binding binding) {

@@ -44,24 +44,24 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /** A binding expression for multibound sets. */
-final class SetBindingExpression extends SimpleInvocationBindingExpression {
+final class SetRequestRepresentation extends SimpleInvocationRequestRepresentation {
   private final ProvisionBinding binding;
   private final BindingGraph graph;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  private final ComponentRequestRepresentations componentRequestRepresentations;
   private final DaggerTypes types;
   private final DaggerElements elements;
 
   @AssistedInject
-  SetBindingExpression(
+  SetRequestRepresentation(
       @Assisted ProvisionBinding binding,
       BindingGraph graph,
-      ComponentBindingExpressions componentBindingExpressions,
+      ComponentRequestRepresentations componentRequestRepresentations,
       DaggerTypes types,
       DaggerElements elements) {
     super(binding);
     this.binding = binding;
     this.graph = graph;
-    this.componentBindingExpressions = componentBindingExpressions;
+    this.componentRequestRepresentations = componentRequestRepresentations;
     this.types = types;
     this.elements = elements;
   }
@@ -138,14 +138,14 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
 
   private CodeBlock getContributionExpression(
       DependencyRequest dependency, ClassName requestingClass) {
-    BindingExpression bindingExpression =
-        componentBindingExpressions.getBindingExpression(bindingRequest(dependency));
+    RequestRepresentation bindingExpression =
+        componentRequestRepresentations.getRequestRepresentation(bindingRequest(dependency));
     CodeBlock expression = bindingExpression.getDependencyExpression(requestingClass).codeBlock();
 
     // Add a cast to "(Set)" when the contribution is a raw "Provider" type because the "addAll()"
     // method expects a collection. For example, ".addAll((Set) provideInaccessibleSetOfFoo.get())"
     return !isSingleValue(dependency)
-            && bindingExpression instanceof DerivedFromFrameworkInstanceBindingExpression
+            && bindingExpression instanceof DerivedFromFrameworkInstanceRequestRepresentation
             && !isTypeAccessibleFrom(binding.key().type().java(), requestingClass.packageName())
         ? CodeBlocks.cast(expression, TypeNames.SET)
         : expression;
@@ -190,6 +190,6 @@ final class SetBindingExpression extends SimpleInvocationBindingExpression {
 
   @AssistedFactory
   static interface Factory {
-    SetBindingExpression create(ProvisionBinding binding);
+    SetRequestRepresentation create(ProvisionBinding binding);
   }
 }

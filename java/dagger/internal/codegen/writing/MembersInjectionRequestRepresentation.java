@@ -34,12 +34,12 @@ import javax.lang.model.element.ExecutableElement;
  * A binding expression for members injection component methods. See {@link
  * MembersInjectionMethods}.
  */
-final class MembersInjectionBindingExpression extends BindingExpression {
+final class MembersInjectionRequestRepresentation extends RequestRepresentation {
   private final MembersInjectionBinding binding;
   private final MembersInjectionMethods membersInjectionMethods;
 
   @AssistedInject
-  MembersInjectionBindingExpression(
+  MembersInjectionRequestRepresentation(
       @Assisted MembersInjectionBinding binding, MembersInjectionMethods membersInjectionMethods) {
     this.binding = binding;
     this.membersInjectionMethods = membersInjectionMethods;
@@ -50,7 +50,7 @@ final class MembersInjectionBindingExpression extends BindingExpression {
     throw new UnsupportedOperationException(binding.toString());
   }
 
-  // TODO(ronshapiro): This class doesn't need to be a BindingExpression, as
+  // TODO(ronshapiro): This class doesn't need to be a RequestRepresentation, as
   // getDependencyExpression() should never be called for members injection methods. It's probably
   // better suited as a method on MembersInjectionMethods
   @Override
@@ -79,6 +79,6 @@ final class MembersInjectionBindingExpression extends BindingExpression {
 
   @AssistedFactory
   static interface Factory {
-    MembersInjectionBindingExpression create(MembersInjectionBinding binding);
+    MembersInjectionRequestRepresentation create(MembersInjectionBinding binding);
   }
 }

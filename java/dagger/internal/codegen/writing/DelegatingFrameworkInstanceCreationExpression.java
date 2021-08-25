@@ -36,24 +36,24 @@ final class DelegatingFrameworkInstanceCreationExpression
 
   private final ContributionBinding binding;
   private final ComponentImplementation componentImplementation;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  private final ComponentRequestRepresentations componentRequestRepresentations;
 
   @AssistedInject
   DelegatingFrameworkInstanceCreationExpression(
       @Assisted ContributionBinding binding,
       ComponentImplementation componentImplementation,
-      ComponentBindingExpressions componentBindingExpressions,
+      ComponentRequestRepresentations componentRequestRepresentations,
       CompilerOptions compilerOptions) {
     this.binding = checkNotNull(binding);
     this.componentImplementation = componentImplementation;
-    this.componentBindingExpressions = componentBindingExpressions;
+    this.componentRequestRepresentations = componentRequestRepresentations;
   }
 
   @Override
   public CodeBlock creationExpression() {
     DependencyRequest dependency = getOnlyElement(binding.dependencies());
     return CodeBlocks.cast(
-        componentBindingExpressions
+        componentRequestRepresentations
             .getDependencyExpression(
                 bindingRequest(dependency.key(), binding.frameworkType()),
                 componentImplementation.shardImplementation(binding).name())

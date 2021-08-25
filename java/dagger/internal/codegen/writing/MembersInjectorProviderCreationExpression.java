@@ -38,17 +38,17 @@ final class MembersInjectorProviderCreationExpression
     implements FrameworkInstanceCreationExpression {
 
   private final ShardImplementation shardImplementation;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  private final ComponentRequestRepresentations componentRequestRepresentations;
   private final ProvisionBinding binding;
 
   @AssistedInject
   MembersInjectorProviderCreationExpression(
       @Assisted ProvisionBinding binding,
       ComponentImplementation componentImplementation,
-      ComponentBindingExpressions componentBindingExpressions) {
+      ComponentRequestRepresentations componentRequestRepresentations) {
     this.binding = checkNotNull(binding);
     this.shardImplementation = componentImplementation.shardImplementation(binding);
-    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
+    this.componentRequestRepresentations = checkNotNull(componentRequestRepresentations);
   }
 
   @Override
@@ -73,11 +73,12 @@ final class MembersInjectorProviderCreationExpression
           CodeBlock.of(
               "$T.create($L)",
               membersInjectorNameForType(injectedTypeElement),
-              componentBindingExpressions.getCreateMethodArgumentsCodeBlock(
+              componentRequestRepresentations.getCreateMethodArgumentsCodeBlock(
                   binding, shardImplementation.name()));
     }
 
-    // TODO(ronshapiro): consider adding a MembersInjectorBindingExpression to return this directly
+    // TODO(ronshapiro): consider adding a MembersInjectorRequestRepresentation to return this
+    // directly
     // (as it's rarely requested as a Provider).
     CodeBlock providerExpression = CodeBlock.of("$T.create($L)", INSTANCE_FACTORY, membersInjector);
     // If needed we cast through raw type around the InstanceFactory type as opposed to the

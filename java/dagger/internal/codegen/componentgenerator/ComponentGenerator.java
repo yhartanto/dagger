@@ -59,7 +59,7 @@ final class ComponentGenerator extends SourceFileGenerator<BindingGraph> {
             .currentImplementationSubcomponentBuilder()
             .bindingGraph(bindingGraph)
             .parentImplementation(Optional.empty())
-            .parentBindingExpressions(Optional.empty())
+            .parentRequestRepresentations(Optional.empty())
             .parentRequirementExpressions(Optional.empty())
             .build()
             .componentImplementation();

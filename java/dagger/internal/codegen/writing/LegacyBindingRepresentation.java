@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECK;
-import static dagger.internal.codegen.writing.DelegateBindingExpression.isBindsScopeStrongerThanDependencyScope;
+import static dagger.internal.codegen.writing.DelegateRequestRepresentation.isBindsScopeStrongerThanDependencyScope;
 import static dagger.internal.codegen.writing.MemberSelect.staticFactoryCreation;
 import static dagger.spi.model.BindingKind.DELEGATE;
 import static dagger.spi.model.BindingKind.MULTIBOUND_MAP;
@@ -55,20 +55,25 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
   private final boolean isFastInit;
   private final Binding binding;
   private final ComponentImplementation componentImplementation;
-  private final ComponentMethodBindingExpression.Factory componentMethodBindingExpressionFactory;
-  private final DelegateBindingExpression.Factory delegateBindingExpressionFactory;
-  private final DerivedFromFrameworkInstanceBindingExpression.Factory
-      derivedFromFrameworkInstanceBindingExpressionFactory;
-  private final ImmediateFutureBindingExpression.Factory immediateFutureBindingExpressionFactory;
-  private final MembersInjectionBindingExpression.Factory membersInjectionBindingExpressionFactory;
-  private final PrivateMethodBindingExpression.Factory privateMethodBindingExpressionFactory;
-  private final AssistedPrivateMethodBindingExpression.Factory
-      assistedPrivateMethodBindingExpressionFactory;
-  private final ProducerNodeInstanceBindingExpression.Factory
-      producerNodeInstanceBindingExpressionFactory;
-  private final ProviderInstanceBindingExpression.Factory providerInstanceBindingExpressionFactory;
-  private final UnscopedDirectInstanceBindingExpressionFactory
-      unscopedDirectInstanceBindingExpressionFactory;
+  private final ComponentMethodRequestRepresentation.Factory
+      componentMethodRequestRepresentationFactory;
+  private final DelegateRequestRepresentation.Factory delegateRequestRepresentationFactory;
+  private final DerivedFromFrameworkInstanceRequestRepresentation.Factory
+      derivedFromFrameworkInstanceRequestRepresentationFactory;
+  private final ImmediateFutureRequestRepresentation.Factory
+      immediateFutureRequestRepresentationFactory;
+  private final MembersInjectionRequestRepresentation.Factory
+      membersInjectionRequestRepresentationFactory;
+  private final PrivateMethodRequestRepresentation.Factory
+      privateMethodRequestRepresentationFactory;
+  private final AssistedPrivateMethodRequestRepresentation.Factory
+      assistedPrivateMethodRequestRepresentationFactory;
+  private final ProducerNodeInstanceRequestRepresentation.Factory
+      producerNodeInstanceRequestRepresentationFactory;
+  private final ProviderInstanceRequestRepresentation.Factory
+      providerInstanceRequestRepresentationFactory;
+  private final UnscopedDirectInstanceRequestRepresentationFactory
+      unscopedDirectInstanceRequestRepresentationFactory;
   private final ProducerFromProviderCreationExpression.Factory
       producerFromProviderCreationExpressionFactory;
   private final UnscopedFrameworkInstanceCreationExpressionFactory
@@ -82,17 +87,20 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
       @Assisted SwitchingProviders switchingProviders,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
-      ComponentMethodBindingExpression.Factory componentMethodBindingExpressionFactory,
-      DelegateBindingExpression.Factory delegateBindingExpressionFactory,
-      DerivedFromFrameworkInstanceBindingExpression.Factory
-          derivedFromFrameworkInstanceBindingExpressionFactory,
-      ImmediateFutureBindingExpression.Factory immediateFutureBindingExpressionFactory,
-      MembersInjectionBindingExpression.Factory membersInjectionBindingExpressionFactory,
-      PrivateMethodBindingExpression.Factory privateMethodBindingExpressionFactory,
-      AssistedPrivateMethodBindingExpression.Factory assistedPrivateMethodBindingExpressionFactory,
-      ProducerNodeInstanceBindingExpression.Factory producerNodeInstanceBindingExpressionFactory,
-      ProviderInstanceBindingExpression.Factory providerInstanceBindingExpressionFactory,
-      UnscopedDirectInstanceBindingExpressionFactory unscopedDirectInstanceBindingExpressionFactory,
+      ComponentMethodRequestRepresentation.Factory componentMethodRequestRepresentationFactory,
+      DelegateRequestRepresentation.Factory delegateRequestRepresentationFactory,
+      DerivedFromFrameworkInstanceRequestRepresentation.Factory
+          derivedFromFrameworkInstanceRequestRepresentationFactory,
+      ImmediateFutureRequestRepresentation.Factory immediateFutureRequestRepresentationFactory,
+      MembersInjectionRequestRepresentation.Factory membersInjectionRequestRepresentationFactory,
+      PrivateMethodRequestRepresentation.Factory privateMethodRequestRepresentationFactory,
+      AssistedPrivateMethodRequestRepresentation.Factory
+          assistedPrivateMethodRequestRepresentationFactory,
+      ProducerNodeInstanceRequestRepresentation.Factory
+          producerNodeInstanceRequestRepresentationFactory,
+      ProviderInstanceRequestRepresentation.Factory providerInstanceRequestRepresentationFactory,
+      UnscopedDirectInstanceRequestRepresentationFactory
+          unscopedDirectInstanceRequestRepresentationFactory,
       ProducerFromProviderCreationExpression.Factory producerFromProviderCreationExpressionFactory,
       UnscopedFrameworkInstanceCreationExpressionFactory
           unscopedFrameworkInstanceCreationExpressionFactory,
@@ -102,38 +110,41 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
     this.switchingProviders = switchingProviders;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
-    this.componentMethodBindingExpressionFactory = componentMethodBindingExpressionFactory;
-    this.delegateBindingExpressionFactory = delegateBindingExpressionFactory;
-    this.derivedFromFrameworkInstanceBindingExpressionFactory =
-        derivedFromFrameworkInstanceBindingExpressionFactory;
-    this.immediateFutureBindingExpressionFactory = immediateFutureBindingExpressionFactory;
-    this.membersInjectionBindingExpressionFactory = membersInjectionBindingExpressionFactory;
-    this.privateMethodBindingExpressionFactory = privateMethodBindingExpressionFactory;
-    this.producerNodeInstanceBindingExpressionFactory =
-        producerNodeInstanceBindingExpressionFactory;
-    this.providerInstanceBindingExpressionFactory = providerInstanceBindingExpressionFactory;
-    this.unscopedDirectInstanceBindingExpressionFactory =
-        unscopedDirectInstanceBindingExpressionFactory;
+    this.componentMethodRequestRepresentationFactory = componentMethodRequestRepresentationFactory;
+    this.delegateRequestRepresentationFactory = delegateRequestRepresentationFactory;
+    this.derivedFromFrameworkInstanceRequestRepresentationFactory =
+        derivedFromFrameworkInstanceRequestRepresentationFactory;
+    this.immediateFutureRequestRepresentationFactory = immediateFutureRequestRepresentationFactory;
+    this.membersInjectionRequestRepresentationFactory =
+        membersInjectionRequestRepresentationFactory;
+    this.privateMethodRequestRepresentationFactory = privateMethodRequestRepresentationFactory;
+    this.producerNodeInstanceRequestRepresentationFactory =
+        producerNodeInstanceRequestRepresentationFactory;
+    this.providerInstanceRequestRepresentationFactory =
+        providerInstanceRequestRepresentationFactory;
+    this.unscopedDirectInstanceRequestRepresentationFactory =
+        unscopedDirectInstanceRequestRepresentationFactory;
     this.producerFromProviderCreationExpressionFactory =
         producerFromProviderCreationExpressionFactory;
     this.unscopedFrameworkInstanceCreationExpressionFactory =
         unscopedFrameworkInstanceCreationExpressionFactory;
-    this.assistedPrivateMethodBindingExpressionFactory =
-        assistedPrivateMethodBindingExpressionFactory;
+    this.assistedPrivateMethodRequestRepresentationFactory =
+        assistedPrivateMethodRequestRepresentationFactory;
   }
 
   @Override
-  public BindingExpression getBindingExpression(BindingRequest request) {
+  public RequestRepresentation getRequestRepresentation(BindingRequest request) {
     switch (binding.bindingType()) {
       case MEMBERS_INJECTION:
         checkArgument(request.isRequestKind(RequestKind.MEMBERS_INJECTION));
-        return membersInjectionBindingExpressionFactory.create((MembersInjectionBinding) binding);
+        return membersInjectionRequestRepresentationFactory.create(
+            (MembersInjectionBinding) binding);
 
       case PROVISION:
-        return provisionBindingExpression((ContributionBinding) binding, request);
+        return provisionRequestRepresentation((ContributionBinding) binding, request);
 
       case PRODUCTION:
-        return productionBindingExpression((ContributionBinding) binding, request);
+        return productionRequestRepresentation((ContributionBinding) binding, request);
     }
     throw new AssertionError(binding);
   }
@@ -142,7 +153,8 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
    * Returns a binding expression that uses a {@link javax.inject.Provider} for provision bindings
    * or a {@link dagger.producers.Producer} for production bindings.
    */
-  private BindingExpression frameworkInstanceBindingExpression(ContributionBinding binding) {
+  private RequestRepresentation frameworkInstanceRequestRepresentation(
+      ContributionBinding binding) {
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
         unscopedFrameworkInstanceCreationExpressionFactory.create(binding);
 
@@ -151,25 +163,25 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
         && frameworkInstanceCreationExpression.useSwitchingProvider()
         // Production types are not yet supported with switching providers.
         && binding.bindingType() != BindingType.PRODUCTION) {
-      // First try to get the instance expression via getBindingExpression(). However, if that
-      // expression is a DerivedFromFrameworkInstanceBindingExpression (e.g. fooProvider.get()),
+      // First try to get the instance expression via getRequestRepresentation(). However, if that
+      // expression is a DerivedFromFrameworkInstanceRequestRepresentation (e.g. fooProvider.get()),
       // then we can't use it to create an instance within the SwitchingProvider since that would
-      // cause a cycle. In such cases, we try to use the unscopedDirectInstanceBindingExpression
+      // cause a cycle. In such cases, we try to use the unscopedDirectInstanceRequestRepresentation
       // directly, or else fall back to default mode.
       BindingRequest instanceRequest = bindingRequest(binding.key(), RequestKind.INSTANCE);
-      BindingExpression instanceExpression = getBindingExpression(instanceRequest);
-      if (!(instanceExpression instanceof DerivedFromFrameworkInstanceBindingExpression)) {
+      RequestRepresentation instanceExpression = getRequestRepresentation(instanceRequest);
+      if (!(instanceExpression instanceof DerivedFromFrameworkInstanceRequestRepresentation)) {
         frameworkInstanceCreationExpression =
             switchingProviders.newFrameworkInstanceCreationExpression(binding, instanceExpression);
       } else {
-        Optional<BindingExpression> unscopedInstanceExpression =
-            unscopedDirectInstanceBindingExpressionFactory.create(binding);
+        Optional<RequestRepresentation> unscopedInstanceExpression =
+            unscopedDirectInstanceRequestRepresentationFactory.create(binding);
         if (unscopedInstanceExpression.isPresent()) {
           frameworkInstanceCreationExpression =
               switchingProviders.newFrameworkInstanceCreationExpression(
                   binding,
                   unscopedInstanceExpression.get().requiresMethodEncapsulation()
-                      ? privateMethodBindingExpressionFactory.create(
+                      ? privateMethodRequestRepresentationFactory.create(
                           instanceRequest, binding, unscopedInstanceExpression.get())
                       : unscopedInstanceExpression.get());
         }
@@ -191,9 +203,10 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
 
     switch (binding.bindingType()) {
       case PROVISION:
-        return providerInstanceBindingExpressionFactory.create(binding, frameworkInstanceSupplier);
+        return providerInstanceRequestRepresentationFactory.create(
+            binding, frameworkInstanceSupplier);
       case PRODUCTION:
-        return producerNodeInstanceBindingExpressionFactory.create(
+        return producerNodeInstanceRequestRepresentationFactory.create(
             binding, frameworkInstanceSupplier);
       default:
         throw new AssertionError("invalid binding type: " + binding.bindingType());
@@ -209,27 +222,27 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
   }
 
   /** Returns a binding expression for a provision binding. */
-  private BindingExpression provisionBindingExpression(
+  private RequestRepresentation provisionRequestRepresentation(
       ContributionBinding binding, BindingRequest request) {
     Key key = request.key();
     switch (request.requestKind()) {
       case INSTANCE:
-        return instanceBindingExpression(binding);
+        return instanceRequestRepresentation(binding);
 
       case PROVIDER:
-        return providerBindingExpression(binding);
+        return providerRequestRepresentation(binding);
 
       case LAZY:
       case PRODUCED:
       case PROVIDER_OF_LAZY:
-        return derivedFromFrameworkInstanceBindingExpressionFactory.create(
+        return derivedFromFrameworkInstanceRequestRepresentationFactory.create(
             request, FrameworkType.PROVIDER);
 
       case PRODUCER:
-        return producerFromProviderBindingExpression(binding);
+        return producerFromProviderRequestRepresentation(binding);
 
       case FUTURE:
-        return immediateFutureBindingExpressionFactory.create(key);
+        return immediateFutureRequestRepresentationFactory.create(key);
 
       case MEMBERS_INJECTION:
         throw new IllegalArgumentException();
@@ -239,11 +252,11 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
   }
 
   /** Returns a binding expression for a production binding. */
-  private BindingExpression productionBindingExpression(
+  private RequestRepresentation productionRequestRepresentation(
       ContributionBinding binding, BindingRequest request) {
     return request.frameworkType().isPresent()
-        ? frameworkInstanceBindingExpression(binding)
-        : derivedFromFrameworkInstanceBindingExpressionFactory.create(
+        ? frameworkInstanceRequestRepresentation(binding)
+        : derivedFromFrameworkInstanceRequestRepresentationFactory.create(
             request, FrameworkType.PRODUCER_NODE);
   }
 
@@ -251,25 +264,25 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
    * Returns a binding expression for {@link RequestKind#PROVIDER} requests.
    *
    * <p>{@code @Binds} bindings that don't {@linkplain #needsCaching(ContributionBinding) need to be
-   * cached} can use a {@link DelegateBindingExpression}.
+   * cached} can use a {@link DelegateRequestRepresentation}.
    *
-   * <p>Otherwise, return a {@link FrameworkInstanceBindingExpression}.
+   * <p>Otherwise, return a {@link FrameworkInstanceRequestRepresentation}.
    */
-  private BindingExpression providerBindingExpression(ContributionBinding binding) {
+  private RequestRepresentation providerRequestRepresentation(ContributionBinding binding) {
     if (binding.kind().equals(DELEGATE) && !needsCaching(binding)) {
-      return delegateBindingExpressionFactory.create(binding, RequestKind.PROVIDER);
+      return delegateRequestRepresentationFactory.create(binding, RequestKind.PROVIDER);
     }
-    return frameworkInstanceBindingExpression(binding);
+    return frameworkInstanceRequestRepresentation(binding);
   }
 
   /**
    * Returns a binding expression that uses a {@link dagger.producers.Producer} field for a
    * provision binding.
    */
-  private FrameworkInstanceBindingExpression producerFromProviderBindingExpression(
+  private FrameworkInstanceRequestRepresentation producerFromProviderRequestRepresentation(
       ContributionBinding binding) {
     checkArgument(binding.bindingType().equals(BindingType.PROVISION));
-    return producerNodeInstanceBindingExpressionFactory.create(
+    return producerNodeInstanceRequestRepresentationFactory.create(
         binding,
         new FrameworkFieldInitializer(
             componentImplementation,
@@ -278,14 +291,14 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
   }
 
   /** Returns a binding expression for {@link RequestKind#INSTANCE} requests. */
-  private BindingExpression instanceBindingExpression(ContributionBinding binding) {
-    Optional<BindingExpression> maybeDirectInstanceExpression =
-        unscopedDirectInstanceBindingExpressionFactory.create(binding);
+  private RequestRepresentation instanceRequestRepresentation(ContributionBinding binding) {
+    Optional<RequestRepresentation> maybeDirectInstanceExpression =
+        unscopedDirectInstanceRequestRepresentationFactory.create(binding);
     if (maybeDirectInstanceExpression.isPresent()) {
-      BindingExpression directInstanceExpression = maybeDirectInstanceExpression.get();
+      RequestRepresentation directInstanceExpression = maybeDirectInstanceExpression.get();
       if (binding.kind() == BindingKind.ASSISTED_INJECTION) {
         BindingRequest request = bindingRequest(binding.key(), RequestKind.INSTANCE);
-        return assistedPrivateMethodBindingExpressionFactory.create(
+        return assistedPrivateMethodRequestRepresentationFactory.create(
             request, binding, directInstanceExpression);
       }
 
@@ -305,7 +318,7 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
             : directInstanceExpression;
       }
     }
-    return derivedFromFrameworkInstanceBindingExpressionFactory.create(
+    return derivedFromFrameworkInstanceRequestRepresentationFactory.create(
         bindingRequest(binding.key(), RequestKind.INSTANCE), FrameworkType.PROVIDER);
   }
 
@@ -330,10 +343,12 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
    * binding method will be written. If the binding doesn't match a component method and is not
    * modifiable, then a new private method will be written.
    */
-  BindingExpression wrapInMethod(
-      ContributionBinding binding, RequestKind requestKind, BindingExpression bindingExpression) {
+  RequestRepresentation wrapInMethod(
+      ContributionBinding binding,
+      RequestKind requestKind,
+      RequestRepresentation bindingExpression) {
     // If we've already wrapped the expression, then use the delegate.
-    if (bindingExpression instanceof MethodBindingExpression) {
+    if (bindingExpression instanceof MethodRequestRepresentation) {
       return bindingExpression;
     }
 
@@ -352,17 +367,18 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
     //     }
     //   }
     //
-    // Normally, in this case we would return a ComponentMethodBindingExpression rather than a
-    // PrivateMethodBindingExpression so that #getFoo() can inline the implementation rather than
+    // Normally, in this case we would return a ComponentMethodRequestRepresentation rather than a
+    // PrivateMethodRequestRepresentation so that #getFoo() can inline the implementation rather
+    // than
     // create an unnecessary private method and return that. However, with sharding we don't want to
     // inline the implementation because that would defeat some of the class pool savings if those
     // fields had to communicate across shards. Thus, when a key belongs to a separate shard use a
-    // PrivateMethodBindingExpression and put the private method in the shard.
+    // PrivateMethodRequestRepresentation and put the private method in the shard.
     if (matchingComponentMethod.isPresent() && shardImplementation.isComponentShard()) {
       ComponentMethodDescriptor componentMethod = matchingComponentMethod.get();
-      return componentMethodBindingExpressionFactory.create(bindingExpression, componentMethod);
+      return componentMethodRequestRepresentationFactory.create(bindingExpression, componentMethod);
     } else {
-      return privateMethodBindingExpressionFactory.create(request, binding, bindingExpression);
+      return privateMethodRequestRepresentationFactory.create(request, binding, bindingExpression);
     }
   }
 

@@ -25,11 +25,12 @@ import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementati
 import javax.lang.model.type.TypeMirror;
 
 /** A binding expression that wraps another in a nullary method on the component. */
-abstract class MethodBindingExpression extends BindingExpression {
+abstract class MethodRequestRepresentation extends RequestRepresentation {
   private final ShardImplementation shardImplementation;
   private final ProducerEntryPointView producerEntryPointView;
 
-  protected MethodBindingExpression(ShardImplementation shardImplementation, DaggerTypes types) {
+  protected MethodRequestRepresentation(
+      ShardImplementation shardImplementation, DaggerTypes types) {
     this.shardImplementation = shardImplementation;
     this.producerEntryPointView = new ProducerEntryPointView(shardImplementation, types);
   }

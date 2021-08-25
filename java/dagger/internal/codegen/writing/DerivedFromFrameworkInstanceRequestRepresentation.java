@@ -30,23 +30,23 @@ import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 
 /** A binding expression that depends on a framework instance. */
-final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpression {
+final class DerivedFromFrameworkInstanceRequestRepresentation extends RequestRepresentation {
   private final BindingRequest bindingRequest;
   private final BindingRequest frameworkRequest;
   private final FrameworkType frameworkType;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  private final ComponentRequestRepresentations componentRequestRepresentations;
   private final DaggerTypes types;
 
   @AssistedInject
-  DerivedFromFrameworkInstanceBindingExpression(
+  DerivedFromFrameworkInstanceRequestRepresentation(
       @Assisted BindingRequest bindingRequest,
       @Assisted FrameworkType frameworkType,
-      ComponentBindingExpressions componentBindingExpressions,
+      ComponentRequestRepresentations componentRequestRepresentations,
       DaggerTypes types) {
     this.bindingRequest = checkNotNull(bindingRequest);
     this.frameworkType = checkNotNull(frameworkType);
     this.frameworkRequest = bindingRequest(bindingRequest.key(), frameworkType);
-    this.componentBindingExpressions = componentBindingExpressions;
+    this.componentRequestRepresentations = componentRequestRepresentations;
     this.types = types;
   }
 
@@ -54,7 +54,7 @@ final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpress
   Expression getDependencyExpression(ClassName requestingClass) {
     return frameworkType.to(
         bindingRequest.requestKind(),
-        componentBindingExpressions.getDependencyExpression(frameworkRequest, requestingClass),
+        componentRequestRepresentations.getDependencyExpression(frameworkRequest, requestingClass),
         types);
   }
 
@@ -62,14 +62,14 @@ final class DerivedFromFrameworkInstanceBindingExpression extends BindingExpress
   Expression getDependencyExpressionForComponentMethod(
       ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
     Expression frameworkInstance =
-        componentBindingExpressions.getDependencyExpressionForComponentMethod(
+        componentRequestRepresentations.getDependencyExpressionForComponentMethod(
             frameworkRequest, componentMethod, component);
     return frameworkType.to(bindingRequest.requestKind(), frameworkInstance, types);
   }
 
   @AssistedFactory
   static interface Factory {
-    DerivedFromFrameworkInstanceBindingExpression create(
+    DerivedFromFrameworkInstanceRequestRepresentation create(
         BindingRequest request, FrameworkType frameworkType);
   }
 }

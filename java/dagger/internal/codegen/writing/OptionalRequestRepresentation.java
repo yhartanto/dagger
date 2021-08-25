@@ -34,21 +34,21 @@ import dagger.spi.model.DependencyRequest;
 import javax.lang.model.SourceVersion;
 
 /** A binding expression for optional bindings. */
-final class OptionalBindingExpression extends SimpleInvocationBindingExpression {
+final class OptionalRequestRepresentation extends SimpleInvocationRequestRepresentation {
   private final ProvisionBinding binding;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  private final ComponentRequestRepresentations componentRequestRepresentations;
   private final DaggerTypes types;
   private final SourceVersion sourceVersion;
 
   @AssistedInject
-  OptionalBindingExpression(
+  OptionalRequestRepresentation(
       @Assisted ProvisionBinding binding,
-      ComponentBindingExpressions componentBindingExpressions,
+      ComponentRequestRepresentations componentRequestRepresentations,
       DaggerTypes types,
       SourceVersion sourceVersion) {
     super(binding);
     this.binding = binding;
-    this.componentBindingExpressions = componentBindingExpressions;
+    this.componentRequestRepresentations = componentRequestRepresentations;
     this.types = types;
     this.sourceVersion = sourceVersion;
   }
@@ -75,7 +75,7 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
     DependencyRequest dependency = getOnlyElement(binding.dependencies());
 
     CodeBlock dependencyExpression =
-        componentBindingExpressions
+        componentRequestRepresentations
             .getDependencyExpression(bindingRequest(dependency), requestingClass)
             .codeBlock();
 
@@ -97,6 +97,6 @@ final class OptionalBindingExpression extends SimpleInvocationBindingExpression 
 
   @AssistedFactory
   static interface Factory {
-    OptionalBindingExpression create(ProvisionBinding binding);
+    OptionalRequestRepresentation create(ProvisionBinding binding);
   }
 }

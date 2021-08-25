@@ -27,12 +27,12 @@ import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 
 /** A binding expression for a subcomponent creator that just invokes the constructor. */
-final class SubcomponentCreatorBindingExpression extends SimpleInvocationBindingExpression {
+final class SubcomponentCreatorRequestRepresentation extends SimpleInvocationRequestRepresentation {
   private final ShardImplementation shardImplementation;
   private final ContributionBinding binding;
 
   @AssistedInject
-  SubcomponentCreatorBindingExpression(
+  SubcomponentCreatorRequestRepresentation(
       @Assisted ContributionBinding binding, ComponentImplementation componentImplementation) {
     super(binding);
     this.binding = binding;
@@ -52,6 +52,6 @@ final class SubcomponentCreatorBindingExpression extends SimpleInvocationBinding
 
   @AssistedFactory
   static interface Factory {
-    SubcomponentCreatorBindingExpression create(ContributionBinding binding);
+    SubcomponentCreatorRequestRepresentation create(ContributionBinding binding);
   }
 }

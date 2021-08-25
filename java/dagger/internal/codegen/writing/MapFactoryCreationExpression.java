@@ -47,10 +47,10 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
   MapFactoryCreationExpression(
       @Assisted ContributionBinding binding,
       ComponentImplementation componentImplementation,
-      ComponentBindingExpressions componentBindingExpressions,
+      ComponentRequestRepresentations componentRequestRepresentations,
       BindingGraph graph,
       DaggerElements elements) {
-    super(binding, componentImplementation, componentBindingExpressions);
+    super(binding, componentImplementation, componentRequestRepresentations);
     this.binding = checkNotNull(binding);
     this.componentImplementation = componentImplementation;
     this.graph = graph;

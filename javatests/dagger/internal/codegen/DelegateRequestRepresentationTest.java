@@ -32,7 +32,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class DelegateBindingExpressionTest {
+public class DelegateRequestRepresentationTest {
   @Parameters(name = "{0}")
   public static Collection<Object[]> parameters() {
     return CompilerMode.TEST_PARAMETERS;
@@ -40,7 +40,7 @@ public class DelegateBindingExpressionTest {
 
   private final CompilerMode compilerMode;
 
-  public DelegateBindingExpressionTest(CompilerMode compilerMode) {
+  public DelegateRequestRepresentationTest(CompilerMode compilerMode) {
     this.compilerMode = compilerMode;
   }
 

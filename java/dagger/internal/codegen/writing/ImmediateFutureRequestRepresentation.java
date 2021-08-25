@@ -32,20 +32,20 @@ import dagger.spi.model.Key;
 import dagger.spi.model.RequestKind;
 import javax.lang.model.SourceVersion;
 
-final class ImmediateFutureBindingExpression extends BindingExpression {
+final class ImmediateFutureRequestRepresentation extends RequestRepresentation {
   private final Key key;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  private final ComponentRequestRepresentations componentRequestRepresentations;
   private final DaggerTypes types;
   private final SourceVersion sourceVersion;
 
   @AssistedInject
-  ImmediateFutureBindingExpression(
+  ImmediateFutureRequestRepresentation(
       @Assisted Key key,
-      ComponentBindingExpressions componentBindingExpressions,
+      ComponentRequestRepresentations componentRequestRepresentations,
       DaggerTypes types,
       SourceVersion sourceVersion) {
     this.key = key;
-    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
+    this.componentRequestRepresentations = checkNotNull(componentRequestRepresentations);
     this.types = checkNotNull(types);
     this.sourceVersion = checkNotNull(sourceVersion);
   }
@@ -59,7 +59,7 @@ final class ImmediateFutureBindingExpression extends BindingExpression {
 
   private CodeBlock instanceExpression(ClassName requestingClass) {
     Expression expression =
-        componentBindingExpressions.getDependencyExpression(
+        componentRequestRepresentations.getDependencyExpression(
             bindingRequest(key, RequestKind.INSTANCE), requestingClass);
     if (sourceVersion.compareTo(SourceVersion.RELEASE_7) <= 0) {
       // Java 7 type inference is not as strong as in Java 8, and therefore some generated code must
@@ -79,6 +79,6 @@ final class ImmediateFutureBindingExpression extends BindingExpression {
 
   @AssistedFactory
   static interface Factory {
-    ImmediateFutureBindingExpression create(Key key);
+    ImmediateFutureRequestRepresentation create(Key key);
   }
 }

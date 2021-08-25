@@ -32,13 +32,14 @@ import dagger.producers.internal.Producers;
 import dagger.spi.model.Key;
 
 /** Binding expression for producer node instances. */
-final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindingExpression {
+final class ProducerNodeInstanceRequestRepresentation
+    extends FrameworkInstanceRequestRepresentation {
   private final ShardImplementation shardImplementation;
   private final Key key;
   private final ProducerEntryPointView producerEntryPointView;
 
   @AssistedInject
-  ProducerNodeInstanceBindingExpression(
+  ProducerNodeInstanceRequestRepresentation(
       @Assisted ContributionBinding binding,
       @Assisted FrameworkInstanceSupplier frameworkInstanceSupplier,
       DaggerTypes types,
@@ -79,7 +80,7 @@ final class ProducerNodeInstanceBindingExpression extends FrameworkInstanceBindi
 
   @AssistedFactory
   static interface Factory {
-    ProducerNodeInstanceBindingExpression create(
+    ProducerNodeInstanceRequestRepresentation create(
         ContributionBinding binding, FrameworkInstanceSupplier frameworkInstanceSupplier);
   }
 }

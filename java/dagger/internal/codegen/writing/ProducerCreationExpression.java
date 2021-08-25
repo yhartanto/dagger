@@ -35,17 +35,17 @@ import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstan
 final class ProducerCreationExpression implements FrameworkInstanceCreationExpression {
 
   private final ShardImplementation shardImplementation;
-  private final ComponentBindingExpressions componentBindingExpressions;
+  private final ComponentRequestRepresentations componentRequestRepresentations;
   private final ContributionBinding binding;
 
   @AssistedInject
   ProducerCreationExpression(
       @Assisted ContributionBinding binding,
       ComponentImplementation componentImplementation,
-      ComponentBindingExpressions componentBindingExpressions) {
+      ComponentRequestRepresentations componentRequestRepresentations) {
     this.binding = checkNotNull(binding);
     this.shardImplementation = componentImplementation.shardImplementation(binding);
-    this.componentBindingExpressions = checkNotNull(componentBindingExpressions);
+    this.componentRequestRepresentations = checkNotNull(componentRequestRepresentations);
   }
 
   @Override
@@ -53,7 +53,7 @@ final class ProducerCreationExpression implements FrameworkInstanceCreationExpre
     return CodeBlock.of(
         "$T.create($L)",
         generatedClassNameForBinding(binding),
-        componentBindingExpressions.getCreateMethodArgumentsCodeBlock(
+        componentRequestRepresentations.getCreateMethodArgumentsCodeBlock(
             binding, shardImplementation.name()));
   }
 
