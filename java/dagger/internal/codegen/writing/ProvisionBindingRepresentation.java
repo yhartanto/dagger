@@ -37,7 +37,6 @@ import dagger.internal.codegen.binding.BindingType;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
-import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
@@ -50,7 +49,7 @@ import java.util.Optional;
  * A binding representation that wraps code generation methods that satisfy all kinds of request for
  * that binding.
  */
-final class LegacyBindingRepresentation implements BindingRepresentation {
+final class ProvisionBindingRepresentation implements BindingRepresentation {
   private final BindingGraph graph;
   private final boolean isFastInit;
   private final Binding binding;
@@ -62,8 +61,6 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
       derivedFromFrameworkInstanceRequestRepresentationFactory;
   private final ImmediateFutureRequestRepresentation.Factory
       immediateFutureRequestRepresentationFactory;
-  private final MembersInjectionRequestRepresentation.Factory
-      membersInjectionRequestRepresentationFactory;
   private final PrivateMethodRequestRepresentation.Factory
       privateMethodRequestRepresentationFactory;
   private final AssistedPrivateMethodRequestRepresentation.Factory
@@ -81,7 +78,7 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
   private final SwitchingProviders switchingProviders;
 
   @AssistedInject
-  LegacyBindingRepresentation(
+  ProvisionBindingRepresentation(
       @Assisted boolean isFastInit,
       @Assisted Binding binding,
       @Assisted SwitchingProviders switchingProviders,
@@ -92,7 +89,6 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
       DerivedFromFrameworkInstanceRequestRepresentation.Factory
           derivedFromFrameworkInstanceRequestRepresentationFactory,
       ImmediateFutureRequestRepresentation.Factory immediateFutureRequestRepresentationFactory,
-      MembersInjectionRequestRepresentation.Factory membersInjectionRequestRepresentationFactory,
       PrivateMethodRequestRepresentation.Factory privateMethodRequestRepresentationFactory,
       AssistedPrivateMethodRequestRepresentation.Factory
           assistedPrivateMethodRequestRepresentationFactory,
@@ -115,8 +111,6 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
     this.derivedFromFrameworkInstanceRequestRepresentationFactory =
         derivedFromFrameworkInstanceRequestRepresentationFactory;
     this.immediateFutureRequestRepresentationFactory = immediateFutureRequestRepresentationFactory;
-    this.membersInjectionRequestRepresentationFactory =
-        membersInjectionRequestRepresentationFactory;
     this.privateMethodRequestRepresentationFactory = privateMethodRequestRepresentationFactory;
     this.producerNodeInstanceRequestRepresentationFactory =
         producerNodeInstanceRequestRepresentationFactory;
@@ -134,24 +128,16 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
 
   @Override
   public RequestRepresentation getRequestRepresentation(BindingRequest request) {
-    switch (binding.bindingType()) {
-      case MEMBERS_INJECTION:
-        checkArgument(request.isRequestKind(RequestKind.MEMBERS_INJECTION));
-        return membersInjectionRequestRepresentationFactory.create(
-            (MembersInjectionBinding) binding);
-
-      case PROVISION:
-        return provisionRequestRepresentation((ContributionBinding) binding, request);
-
-      case PRODUCTION:
-        return productionRequestRepresentation((ContributionBinding) binding, request);
-    }
-    throw new AssertionError(binding);
+    checkArgument(
+        binding.bindingType().equals(BindingType.PROVISION),
+        "Expected %s to be a PROVISION binding, but got % instead",
+        binding,
+        binding.bindingType());
+    return provisionRequestRepresentation((ContributionBinding) binding, request);
   }
 
   /**
-   * Returns a binding expression that uses a {@link javax.inject.Provider} for provision bindings
-   * or a {@link dagger.producers.Producer} for production bindings.
+   * Returns a binding expression that uses a {@link javax.inject.Provider} for provision bindings.
    */
   private RequestRepresentation frameworkInstanceRequestRepresentation(
       ContributionBinding binding) {
@@ -160,9 +146,7 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
 
     if (isFastInit
         // Some creation expressions can opt out of using switching providers.
-        && frameworkInstanceCreationExpression.useSwitchingProvider()
-        // Production types are not yet supported with switching providers.
-        && binding.bindingType() != BindingType.PRODUCTION) {
+        && frameworkInstanceCreationExpression.useSwitchingProvider()) {
       // First try to get the instance expression via getRequestRepresentation(). However, if that
       // expression is a DerivedFromFrameworkInstanceRequestRepresentation (e.g. fooProvider.get()),
       // then we can't use it to create an instance within the SwitchingProvider since that would
@@ -188,6 +172,10 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
       }
     }
 
+    // In default mode, we always use the static factory creation strategy. In fastInit mode, we
+    // prefer to use a SwitchingProvider instead of static factories in order to reduce class
+    // loading; however, we allow static factories that can reused across multiple bindings, e.g.
+    // {@code MapFactory} or {@code SetFactory}.
     // TODO(bcorso): Consider merging the static factory creation logic into CreationExpressions?
     Optional<MemberSelect> staticMethod =
         useStaticFactoryCreation() ? staticFactoryCreation(binding) : Optional.empty();
@@ -201,16 +189,12 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
                     ? scope(frameworkInstanceCreationExpression)
                     : frameworkInstanceCreationExpression);
 
-    switch (binding.bindingType()) {
-      case PROVISION:
-        return providerInstanceRequestRepresentationFactory.create(
-            binding, frameworkInstanceSupplier);
-      case PRODUCTION:
-        return producerNodeInstanceRequestRepresentationFactory.create(
-            binding, frameworkInstanceSupplier);
-      default:
-        throw new AssertionError("invalid binding type: " + binding.bindingType());
-    }
+    checkArgument(
+        binding.bindingType().equals(BindingType.PROVISION),
+        "Expected %s to be a PROVISION binding, but got % instead",
+        binding,
+        binding.bindingType());
+    return providerInstanceRequestRepresentationFactory.create(binding, frameworkInstanceSupplier);
   }
 
   private FrameworkInstanceCreationExpression scope(FrameworkInstanceCreationExpression unscoped) {
@@ -249,15 +233,6 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
     }
 
     throw new AssertionError();
-  }
-
-  /** Returns a binding expression for a production binding. */
-  private RequestRepresentation productionRequestRepresentation(
-      ContributionBinding binding, BindingRequest request) {
-    return request.frameworkType().isPresent()
-        ? frameworkInstanceRequestRepresentation(binding)
-        : derivedFromFrameworkInstanceRequestRepresentationFactory.create(
-            request, FrameworkType.PRODUCER_NODE);
   }
 
   /**
@@ -400,7 +375,7 @@ final class LegacyBindingRepresentation implements BindingRepresentation {
 
   @AssistedFactory
   static interface Factory {
-    LegacyBindingRepresentation create(
+    ProvisionBindingRepresentation create(
         boolean isFastInit, Binding binding, SwitchingProviders switchingProviders);
   }
 }

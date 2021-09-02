@@ -58,7 +58,10 @@ public final class ComponentRequestRepresentations {
   private final BindingGraph graph;
   private final ComponentImplementation componentImplementation;
   private final ComponentRequirementExpressions componentRequirementExpressions;
-  private final LegacyBindingRepresentation.Factory legacyBindingRepresentationFactory;
+  private final MembersInjectionBindingRepresentation.Factory
+      membersInjectionBindingRepresentationFactory;
+  private final ProvisionBindingRepresentation.Factory provisionBindingRepresentationFactory;
+  private final ProductionBindingRepresentation.Factory productionBindingRepresentationFactory;
   private final DaggerTypes types;
   private final CompilerOptions compilerOptions;
   private final Map<BindingRequest, RequestRepresentation> expressions = new HashMap<>();
@@ -71,13 +74,18 @@ public final class ComponentRequestRepresentations {
       BindingGraph graph,
       ComponentImplementation componentImplementation,
       ComponentRequirementExpressions componentRequirementExpressions,
-      LegacyBindingRepresentation.Factory legacyBindingRepresentationFactory,
+      MembersInjectionBindingRepresentation.Factory membersInjectionBindingRepresentationFactory,
+      ProvisionBindingRepresentation.Factory provisionBindingRepresentationFactory,
+      ProductionBindingRepresentation.Factory productionBindingRepresentationFactory,
       DaggerTypes types,
       CompilerOptions compilerOptions) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
-    this.legacyBindingRepresentationFactory = legacyBindingRepresentationFactory;
+    this.membersInjectionBindingRepresentationFactory =
+        membersInjectionBindingRepresentationFactory;
+    this.provisionBindingRepresentationFactory = provisionBindingRepresentationFactory;
+    this.productionBindingRepresentationFactory = productionBindingRepresentationFactory;
     this.componentRequirementExpressions = checkNotNull(componentRequirementExpressions);
     this.types = types;
     this.compilerOptions = compilerOptions;
@@ -213,8 +221,19 @@ public final class ComponentRequestRepresentations {
     if (representations.containsKey(binding)) {
       return representations.get(binding);
     }
-    BindingRepresentation representation =
-        legacyBindingRepresentationFactory.create(isFastInit(), binding, switchingProviders);
+    BindingRepresentation representation = null;
+    switch (binding.bindingType()) {
+      case MEMBERS_INJECTION:
+        representation = membersInjectionBindingRepresentationFactory.create(binding);
+        break;
+      case PROVISION:
+        representation =
+            provisionBindingRepresentationFactory.create(isFastInit(), binding, switchingProviders);
+        break;
+      case PRODUCTION:
+        representation = productionBindingRepresentationFactory.create(binding);
+    }
+    checkNotNull(representation, "Invalid binding type: ", binding.bindingType());
     representations.put(binding, representation);
     return representation;
   }
