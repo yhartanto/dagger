@@ -29,6 +29,8 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.TYPEVAR;
 import static javax.lang.model.type.TypeKind.VOID;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.FormatMethod;
@@ -54,7 +56,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /** A validator for elements that represent binding declarations. */
-public abstract class BindingElementValidator<E extends Element> {
+public abstract class BindingElementValidator<E extends XElement> {
   private final ClassName bindingAnnotation;
   private final AllowsMultibindings allowsMultibindings;
   private final AllowsScoping allowsScoping;
@@ -135,12 +137,14 @@ public abstract class BindingElementValidator<E extends Element> {
 
   /** Validator for a single binding element. */
   protected abstract class ElementValidator {
-    protected final E element;
+    protected final E xElement;
+    protected final Element element;
     protected final ValidationReport.Builder report;
     private final ImmutableCollection<? extends AnnotationMirror> qualifiers;
 
-    protected ElementValidator(E element) {
-      this.element = element;
+    protected ElementValidator(E xElement) {
+      this.xElement = xElement;
+      this.element = XConverters.toJavac(xElement);
       this.report = ValidationReport.about(element);
       qualifiers = injectionAnnotations.getQualifiers(element);
     }

@@ -24,6 +24,7 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsS
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 
+import androidx.room.compiler.processing.XExecutableElement;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
@@ -31,7 +32,6 @@ import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
 
 /** A validator for {@link dagger.BindsOptionalOf} methods. */
@@ -63,15 +63,14 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
     this.injectionAnnotations = injectionAnnotations;
   }
 
-
   @Override
-  protected ElementValidator elementValidator(ExecutableElement element) {
-    return new Validator(element);
+  protected ElementValidator elementValidator(XExecutableElement xElement) {
+    return new Validator(xElement);
   }
 
   private class Validator extends MethodValidator {
-    Validator(ExecutableElement element) {
-      super(element);
+    Validator(XExecutableElement xElement) {
+      super(xElement);
     }
 
     @Override
@@ -88,7 +87,7 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
 
     @Override
     protected void checkParameters() {
-      if (!element.getParameters().isEmpty()) {
+      if (!xElement.getParameters().isEmpty()) {
         report.addError("@BindsOptionalOf methods cannot have parameters");
       }
     }

@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen.validation;
 
+import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ValidationType;
 import dagger.spi.model.BindingGraph;
@@ -41,9 +43,9 @@ public final class BindingGraphValidator {
   }
 
   /** Returns {@code true} if validation or analysis is required on the full binding graph. */
-  public boolean shouldDoFullBindingGraphValidation(TypeElement component) {
+  public boolean shouldDoFullBindingGraphValidation(XTypeElement component) {
     return requiresFullBindingGraphValidation()
-        || compilerOptions.pluginsVisitFullBindingGraphs(component);
+        || compilerOptions.pluginsVisitFullBindingGraphs(XConverters.toJavac(component));
   }
 
   private boolean requiresFullBindingGraphValidation() {

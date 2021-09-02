@@ -22,6 +22,8 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsS
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 
+import androidx.room.compiler.processing.XExecutableElement;
+import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.MapType;
@@ -32,7 +34,6 @@ import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
 
 /** A validator for {@link dagger.multibindings.Multibinds} methods. */
@@ -61,18 +62,18 @@ class MultibindsMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected ElementValidator elementValidator(ExecutableElement element) {
-    return new Validator(element);
+  protected ElementValidator elementValidator(XExecutableElement xElement) {
+    return new Validator(xElement);
   }
 
   private class Validator extends MethodValidator {
-    Validator(ExecutableElement element) {
-      super(element);
+    Validator(XExecutableElement xElement) {
+      super(xElement);
     }
 
     @Override
     protected void checkParameters() {
-      if (!element.getParameters().isEmpty()) {
+      if (!xElement.getParameters().isEmpty()) {
         report.addError(bindingMethods("cannot have parameters"));
       }
     }
@@ -80,8 +81,8 @@ class MultibindsMethodValidator extends BindingMethodValidator {
     /** Adds an error unless the method returns a {@code Map<K, V>} or {@code Set<T>}. */
     @Override
     protected void checkType() {
-      if (!isPlainMap(element.getReturnType())
-          && !isPlainSet(element.getReturnType())) {
+      if (!isPlainMap(MoreElements.asExecutable(element).getReturnType())
+          && !isPlainSet(MoreElements.asExecutable(element).getReturnType())) {
         report.addError(bindingMethods("must return Map<K, V> or Set<T>"));
       }
     }

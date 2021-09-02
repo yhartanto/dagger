@@ -24,6 +24,7 @@ import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPr
 import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -40,10 +41,13 @@ import javax.lang.model.element.ExecutableElement;
 public final class AnyBindingMethodValidator implements ClearableCache {
   private final ImmutableMap<ClassName, BindingMethodValidator> validators;
   private final Map<ExecutableElement, ValidationReport> reports = new HashMap<>();
+  private final XProcessingEnv processingEnv;
 
   @Inject
-  AnyBindingMethodValidator(ImmutableMap<ClassName, BindingMethodValidator> validators) {
+  AnyBindingMethodValidator(
+      ImmutableMap<ClassName, BindingMethodValidator> validators, XProcessingEnv processingEnv) {
     this.validators = validators;
+    this.processingEnv = processingEnv;
   }
 
   @Override
@@ -102,7 +106,9 @@ public final class AnyBindingMethodValidator implements ClearableCache {
 
       case 1:
         report.addSubreport(
-            validators.get(getOnlyElement(bindingMethodAnnotations)).validate(method));
+            validators
+                .get(getOnlyElement(bindingMethodAnnotations))
+                .validate(XConverters.toXProcessing(method, processingEnv)));
         break;
 
       default:

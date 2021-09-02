@@ -22,6 +22,9 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsS
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.EXCEPTION;
 
+import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreTypes;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.internal.codegen.binding.ConfigurationAnnotations;
@@ -33,7 +36,6 @@ import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
@@ -73,13 +75,13 @@ final class ProducesMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected ElementValidator elementValidator(ExecutableElement element) {
-    return new Validator(element);
+  protected ElementValidator elementValidator(XExecutableElement xElement) {
+    return new Validator(xElement);
   }
 
   private class Validator extends MethodValidator {
-    Validator(ExecutableElement element) {
-      super(element);
+    Validator(XExecutableElement xElement) {
+      super(xElement);
     }
 
     @Override
@@ -118,7 +120,8 @@ final class ProducesMethodValidator extends BindingMethodValidator {
      */
     @Override
     protected void checkSetValuesType() {
-      Optional<TypeMirror> typeToCheck = unwrapListenableFuture(element.getReturnType());
+      Optional<TypeMirror> typeToCheck =
+          unwrapListenableFuture(XConverters.toJavac(((XMethodElement) xElement).getReturnType()));
       if (typeToCheck.isPresent()) {
         checkSetValuesType(typeToCheck.get());
       }

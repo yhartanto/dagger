@@ -249,7 +249,8 @@ public final class ModuleValidator {
     }
 
     if (builder.build().isClean()
-        && bindingGraphValidator.shouldDoFullBindingGraphValidation(module)) {
+        && bindingGraphValidator.shouldDoFullBindingGraphValidation(
+            XConverters.toXProcessing(module, processingEnv))) {
       validateModuleBindings(module, builder);
     }
 

@@ -17,9 +17,10 @@
 package dagger.internal.codegen.validation;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.XVariableElement;
 import androidx.room.compiler.processing.compat.XConverters;
-import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
@@ -55,13 +56,13 @@ public final class BindsInstanceProcessingStep extends TypeCheckingProcessingSte
     Element element = XConverters.toJavac(xElement);
     switch (element.getKind()) {
       case PARAMETER:
-        parameterValidator.validate(MoreElements.asVariable(element)).printMessagesTo(messager);
+        parameterValidator.validate((XVariableElement) xElement).printMessagesTo(messager);
         break;
       case METHOD:
-        methodValidator.validate(MoreElements.asExecutable(element)).printMessagesTo(messager);
+        methodValidator.validate((XExecutableElement) xElement).printMessagesTo(messager);
         break;
       default:
-        throw new AssertionError(element);
+        throw new AssertionError(xElement);
     }
   }
 }

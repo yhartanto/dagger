@@ -16,11 +16,12 @@
 
 package dagger.internal.codegen.validation;
 
+import androidx.room.compiler.processing.XElement;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import javax.lang.model.element.Element;
 
-abstract class BindsInstanceElementValidator<E extends Element> extends BindingElementValidator<E> {
+abstract class BindsInstanceElementValidator<E extends XElement>
+    extends BindingElementValidator<E> {
   BindsInstanceElementValidator(InjectionAnnotations injectionAnnotations) {
     super(
         TypeNames.BINDS_INSTANCE,
