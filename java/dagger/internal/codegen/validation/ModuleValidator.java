@@ -42,6 +42,8 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.common.Visibility;
@@ -129,6 +131,7 @@ public final class ModuleValidator {
   private final KotlinMetadataUtil metadataUtil;
   private final Map<TypeElement, ValidationReport> cache = new HashMap<>();
   private final Set<TypeElement> knownModules = new HashSet<>();
+  private final XProcessingEnv processingEnv;
 
   @Inject
   ModuleValidator(
@@ -139,7 +142,8 @@ public final class ModuleValidator {
       ComponentDescriptorFactory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       BindingGraphValidator bindingGraphValidator,
-      KotlinMetadataUtil metadataUtil) {
+      KotlinMetadataUtil metadataUtil,
+      XProcessingEnv processingEnv) {
     this.types = types;
     this.elements = elements;
     this.anyBindingMethodValidator = anyBindingMethodValidator;
@@ -148,6 +152,7 @@ public final class ModuleValidator {
     this.bindingGraphFactory = bindingGraphFactory;
     this.bindingGraphValidator = bindingGraphValidator;
     this.metadataUtil = metadataUtil;
+    this.processingEnv = processingEnv;
   }
 
   /**
@@ -188,7 +193,8 @@ public final class ModuleValidator {
     List<ExecutableElement> moduleMethods = methodsIn(module.getEnclosedElements());
     List<ExecutableElement> bindingMethods = new ArrayList<>();
     for (ExecutableElement moduleMethod : moduleMethods) {
-      if (anyBindingMethodValidator.isBindingMethod(moduleMethod)) {
+      if (anyBindingMethodValidator.isBindingMethod(
+          XConverters.toXProcessing(moduleMethod, processingEnv))) {
         builder.addSubreport(anyBindingMethodValidator.validate(moduleMethod));
         bindingMethods.add(moduleMethod);
       }
@@ -515,7 +521,8 @@ public final class ModuleValidator {
           }
         }
         // For each binding method in superclass, confirm our methods don't override it.
-        if (anyBindingMethodValidator.isBindingMethod(superclassMethod)) {
+        if (anyBindingMethodValidator.isBindingMethod(
+            XConverters.toXProcessing(superclassMethod, processingEnv))) {
           for (ExecutableElement method : allMethodsByName.get(name)) {
             if (failedMethods.add(method)
                 && elements.overrides(method, superclassMethod, subject)) {
@@ -597,7 +604,10 @@ public final class ModuleValidator {
       return false;
     }
     return methodsIn(elements.getAllMembers(module)).stream()
-        .filter(anyBindingMethodValidator::isBindingMethod)
+        .filter(
+            method ->
+                anyBindingMethodValidator.isBindingMethod(
+                    XConverters.toXProcessing(method, processingEnv)))
         .map(ExecutableElement::getModifiers)
         .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));
   }
@@ -645,7 +655,8 @@ public final class ModuleValidator {
         methodsIn(companionModule.getEnclosedElements());
     List<ExecutableElement> companionBindingMethods = new ArrayList<>();
     for (ExecutableElement companionModuleMethod : companionModuleMethods) {
-      if (anyBindingMethodValidator.isBindingMethod(companionModuleMethod)) {
+      if (anyBindingMethodValidator.isBindingMethod(
+          XConverters.toXProcessing(companionModuleMethod, processingEnv))) {
         builder.addSubreport(anyBindingMethodValidator.validate(companionModuleMethod));
         companionBindingMethods.add(companionModuleMethod);
       }

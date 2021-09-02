@@ -23,6 +23,8 @@ import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPrese
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 import static java.util.stream.Collectors.joining;
 
+import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -58,8 +60,8 @@ public final class AnyBindingMethodValidator implements ClearableCache {
    * Returns {@code true} if {@code method} is annotated with at least one of {@link
    * #methodAnnotations()}.
    */
-  boolean isBindingMethod(ExecutableElement method) {
-    return isAnyAnnotationPresent(method, methodAnnotations());
+  boolean isBindingMethod(XExecutableElement method) {
+    return isAnyAnnotationPresent(XConverters.toJavac(method), methodAnnotations());
   }
 
   /**
@@ -83,8 +85,8 @@ public final class AnyBindingMethodValidator implements ClearableCache {
    * Returns {@code true} if {@code method} was already {@linkplain #validate(ExecutableElement)
    * validated}.
    */
-  boolean wasAlreadyValidated(ExecutableElement method) {
-    return reports.containsKey(method);
+  boolean wasAlreadyValidated(XExecutableElement method) {
+    return reports.containsKey(XConverters.toJavac(method));
   }
 
   private ValidationReport validateUncached(ExecutableElement method) {

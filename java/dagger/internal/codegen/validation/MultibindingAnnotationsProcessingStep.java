@@ -20,7 +20,6 @@ import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XMessager;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
@@ -50,7 +49,7 @@ public final class MultibindingAnnotationsProcessingStep
 
   @Override
   protected void process(XExecutableElement method, ImmutableSet<ClassName> annotations) {
-    if (!anyBindingMethodValidator.isBindingMethod(XConverters.toJavac(method))) {
+    if (!anyBindingMethodValidator.isBindingMethod(method)) {
       annotations.forEach(
           annotation ->
               messager.printMessage(
