@@ -20,11 +20,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XMessager;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
 
 /** A step that validates all binding methods that were not validated while processing modules. */
 public final class BindingMethodProcessingStep
@@ -47,14 +45,13 @@ public final class BindingMethodProcessingStep
 
   @Override
   protected void process(XExecutableElement xElement, ImmutableSet<ClassName> annotations) {
-    ExecutableElement method = XConverters.toJavac(xElement);
     checkArgument(
         anyBindingMethodValidator.isBindingMethod(xElement),
         "%s is not annotated with any of %s",
-        method,
+        xElement,
         annotations());
     if (!anyBindingMethodValidator.wasAlreadyValidated(xElement)) {
-      anyBindingMethodValidator.validate(method).printMessagesTo(messager);
+      anyBindingMethodValidator.validate(xElement).printMessagesTo(messager);
     }
   }
 }

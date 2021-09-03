@@ -42,6 +42,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
@@ -193,9 +194,9 @@ public final class ModuleValidator {
     List<ExecutableElement> moduleMethods = methodsIn(module.getEnclosedElements());
     List<ExecutableElement> bindingMethods = new ArrayList<>();
     for (ExecutableElement moduleMethod : moduleMethods) {
-      if (anyBindingMethodValidator.isBindingMethod(
-          XConverters.toXProcessing(moduleMethod, processingEnv))) {
-        builder.addSubreport(anyBindingMethodValidator.validate(moduleMethod));
+      XExecutableElement method = XConverters.toXProcessing(moduleMethod, processingEnv);
+      if (anyBindingMethodValidator.isBindingMethod(method)) {
+        builder.addSubreport(anyBindingMethodValidator.validate(method));
         bindingMethods.add(moduleMethod);
       }
 
@@ -656,9 +657,9 @@ public final class ModuleValidator {
         methodsIn(companionModule.getEnclosedElements());
     List<ExecutableElement> companionBindingMethods = new ArrayList<>();
     for (ExecutableElement companionModuleMethod : companionModuleMethods) {
-      if (anyBindingMethodValidator.isBindingMethod(
-          XConverters.toXProcessing(companionModuleMethod, processingEnv))) {
-        builder.addSubreport(anyBindingMethodValidator.validate(companionModuleMethod));
+      XExecutableElement method = XConverters.toXProcessing(companionModuleMethod, processingEnv);
+      if (anyBindingMethodValidator.isBindingMethod(method)) {
+        builder.addSubreport(anyBindingMethodValidator.validate(method));
         companionBindingMethods.add(companionModuleMethod);
       }
 
