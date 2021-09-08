@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import javax.inject.Inject;
 
 /**
  * Keeps track of all provider expression requests for a component.
@@ -56,6 +57,7 @@ import java.util.TreeMap;
  * <p>The provider expression request will be satisfied by a single generated {@code Provider} class
  * that can provide instances for all types by switching on an id.
  */
+@PerComponentImplementation
 final class SwitchingProviders {
   /**
    * Each switch size is fixed at 100 cases each and put in its own method. This is to limit the
@@ -81,6 +83,7 @@ final class SwitchingProviders {
   private final DaggerTypes types;
   private final UniqueNameSet switchingProviderNames = new UniqueNameSet();
 
+  @Inject
   SwitchingProviders(ComponentImplementation componentImplementation, DaggerTypes types) {
     // Currently, the SwitchingProviders types are only added to the componentShard.
     this.shardImplementation = checkNotNull(componentImplementation).getComponentShard();

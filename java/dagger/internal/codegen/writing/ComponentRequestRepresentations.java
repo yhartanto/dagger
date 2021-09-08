@@ -36,7 +36,6 @@ import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.binding.FrameworkTypeMapper;
-import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.DependencyRequest;
@@ -63,10 +62,8 @@ public final class ComponentRequestRepresentations {
   private final ProvisionBindingRepresentation.Factory provisionBindingRepresentationFactory;
   private final ProductionBindingRepresentation.Factory productionBindingRepresentationFactory;
   private final DaggerTypes types;
-  private final CompilerOptions compilerOptions;
   private final Map<BindingRequest, RequestRepresentation> expressions = new HashMap<>();
   private final Map<Binding, BindingRepresentation> representations = new HashMap<>();
-  private final SwitchingProviders switchingProviders;
 
   @Inject
   ComponentRequestRepresentations(
@@ -77,8 +74,7 @@ public final class ComponentRequestRepresentations {
       MembersInjectionBindingRepresentation.Factory membersInjectionBindingRepresentationFactory,
       ProvisionBindingRepresentation.Factory provisionBindingRepresentationFactory,
       ProductionBindingRepresentation.Factory productionBindingRepresentationFactory,
-      DaggerTypes types,
-      CompilerOptions compilerOptions) {
+      DaggerTypes types) {
     this.parent = parent;
     this.graph = graph;
     this.componentImplementation = componentImplementation;
@@ -88,8 +84,6 @@ public final class ComponentRequestRepresentations {
     this.productionBindingRepresentationFactory = productionBindingRepresentationFactory;
     this.componentRequirementExpressions = checkNotNull(componentRequirementExpressions);
     this.types = types;
-    this.compilerOptions = compilerOptions;
-    this.switchingProviders = new SwitchingProviders(componentImplementation, types);
   }
 
   /**
@@ -227,8 +221,7 @@ public final class ComponentRequestRepresentations {
         representation = membersInjectionBindingRepresentationFactory.create(binding);
         break;
       case PROVISION:
-        representation =
-            provisionBindingRepresentationFactory.create(isFastInit(), binding, switchingProviders);
+        representation = provisionBindingRepresentationFactory.create(binding);
         break;
       case PRODUCTION:
         representation = productionBindingRepresentationFactory.create(binding);
@@ -236,10 +229,5 @@ public final class ComponentRequestRepresentations {
     checkNotNull(representation, "Invalid binding type: ", binding.bindingType());
     representations.put(binding, representation);
     return representation;
-  }
-
-  private boolean isFastInit() {
-    return compilerOptions.fastInit(
-        parent.map(p -> p.graph).orElse(graph).componentDescriptor().typeElement());
   }
 }
