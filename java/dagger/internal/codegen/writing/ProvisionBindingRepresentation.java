@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECK;
@@ -30,13 +29,12 @@ import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
-import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.BindingRequest;
-import dagger.internal.codegen.binding.BindingType;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
+import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
@@ -54,7 +52,7 @@ import javax.lang.model.element.TypeElement;
 final class ProvisionBindingRepresentation implements BindingRepresentation {
   private final BindingGraph graph;
   private final boolean isFastInit;
-  private final Binding binding;
+  private final ProvisionBinding binding;
   private final ComponentImplementation componentImplementation;
   private final ComponentMethodRequestRepresentation.Factory
       componentMethodRequestRepresentationFactory;
@@ -81,7 +79,7 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
 
   @AssistedInject
   ProvisionBindingRepresentation(
-      @Assisted Binding binding,
+      @Assisted ProvisionBinding binding,
       SwitchingProviders switchingProviders,
       BindingGraph graph,
       ComponentImplementation componentImplementation,
@@ -132,19 +130,37 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
 
   @Override
   public RequestRepresentation getRequestRepresentation(BindingRequest request) {
-    checkArgument(
-        binding.bindingType().equals(BindingType.PROVISION),
-        "Expected %s to be a PROVISION binding, but got % instead",
-        binding,
-        binding.bindingType());
-    return provisionRequestRepresentation((ContributionBinding) binding, request);
+    Key key = request.key();
+    switch (request.requestKind()) {
+      case INSTANCE:
+        return instanceRequestRepresentation();
+
+      case PROVIDER:
+        return providerRequestRepresentation();
+
+      case LAZY:
+      case PRODUCED:
+      case PROVIDER_OF_LAZY:
+        return derivedFromFrameworkInstanceRequestRepresentationFactory.create(
+            request, FrameworkType.PROVIDER);
+
+      case PRODUCER:
+        return producerFromProviderRequestRepresentation();
+
+      case FUTURE:
+        return immediateFutureRequestRepresentationFactory.create(key);
+
+      case MEMBERS_INJECTION:
+        throw new IllegalArgumentException();
+    }
+
+    throw new AssertionError();
   }
 
   /**
    * Returns a binding expression that uses a {@link javax.inject.Provider} for provision bindings.
    */
-  private RequestRepresentation frameworkInstanceRequestRepresentation(
-      ContributionBinding binding) {
+  private RequestRepresentation frameworkInstanceRequestRepresentation() {
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
         unscopedFrameworkInstanceCreationExpressionFactory.create(binding);
 
@@ -193,11 +209,6 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
                     ? scope(frameworkInstanceCreationExpression)
                     : frameworkInstanceCreationExpression);
 
-    checkArgument(
-        binding.bindingType().equals(BindingType.PROVISION),
-        "Expected %s to be a PROVISION binding, but got % instead",
-        binding,
-        binding.bindingType());
     return providerInstanceRequestRepresentationFactory.create(binding, frameworkInstanceSupplier);
   }
 
@@ -209,36 +220,6 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
             unscoped.creationExpression());
   }
 
-  /** Returns a binding expression for a provision binding. */
-  private RequestRepresentation provisionRequestRepresentation(
-      ContributionBinding binding, BindingRequest request) {
-    Key key = request.key();
-    switch (request.requestKind()) {
-      case INSTANCE:
-        return instanceRequestRepresentation(binding);
-
-      case PROVIDER:
-        return providerRequestRepresentation(binding);
-
-      case LAZY:
-      case PRODUCED:
-      case PROVIDER_OF_LAZY:
-        return derivedFromFrameworkInstanceRequestRepresentationFactory.create(
-            request, FrameworkType.PROVIDER);
-
-      case PRODUCER:
-        return producerFromProviderRequestRepresentation(binding);
-
-      case FUTURE:
-        return immediateFutureRequestRepresentationFactory.create(key);
-
-      case MEMBERS_INJECTION:
-        throw new IllegalArgumentException();
-    }
-
-    throw new AssertionError();
-  }
-
   /**
    * Returns a binding expression for {@link RequestKind#PROVIDER} requests.
    *
@@ -247,20 +228,18 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
    *
    * <p>Otherwise, return a {@link FrameworkInstanceRequestRepresentation}.
    */
-  private RequestRepresentation providerRequestRepresentation(ContributionBinding binding) {
-    if (binding.kind().equals(DELEGATE) && !needsCaching(binding)) {
+  private RequestRepresentation providerRequestRepresentation() {
+    if (binding.kind().equals(DELEGATE) && !needsCaching()) {
       return delegateRequestRepresentationFactory.create(binding, RequestKind.PROVIDER);
     }
-    return frameworkInstanceRequestRepresentation(binding);
+    return frameworkInstanceRequestRepresentation();
   }
 
   /**
    * Returns a binding expression that uses a {@link dagger.producers.Producer} field for a
    * provision binding.
    */
-  private FrameworkInstanceRequestRepresentation producerFromProviderRequestRepresentation(
-      ContributionBinding binding) {
-    checkArgument(binding.bindingType().equals(BindingType.PROVISION));
+  private FrameworkInstanceRequestRepresentation producerFromProviderRequestRepresentation() {
     return producerNodeInstanceRequestRepresentationFactory.create(
         binding,
         new FrameworkFieldInitializer(
@@ -270,7 +249,7 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
   }
 
   /** Returns a binding expression for {@link RequestKind#INSTANCE} requests. */
-  private RequestRepresentation instanceRequestRepresentation(ContributionBinding binding) {
+  private RequestRepresentation instanceRequestRepresentation() {
     Optional<RequestRepresentation> maybeDirectInstanceExpression =
         unscopedDirectInstanceRequestRepresentationFactory.create(binding);
     if (maybeDirectInstanceExpression.isPresent()) {
@@ -291,9 +270,9 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
       // because they technically act more similar to a Provider than an instance, so we cache them
       // using a field in the component similar to Provider requests. This should also be the case
       // in FastInit, but it hasn't been implemented yet.
-      if (!needsCaching(binding) && !isDefaultModeAssistedFactory) {
+      if (!needsCaching() && !isDefaultModeAssistedFactory) {
         return directInstanceExpression.requiresMethodEncapsulation()
-            ? wrapInMethod(binding, RequestKind.INSTANCE, directInstanceExpression)
+            ? wrapInMethod(RequestKind.INSTANCE, directInstanceExpression)
             : directInstanceExpression;
       }
     }
@@ -323,9 +302,7 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
    * modifiable, then a new private method will be written.
    */
   RequestRepresentation wrapInMethod(
-      ContributionBinding binding,
-      RequestKind requestKind,
-      RequestRepresentation bindingExpression) {
+      RequestKind requestKind, RequestRepresentation bindingExpression) {
     // If we've already wrapped the expression, then use the delegate.
     if (bindingExpression instanceof MethodRequestRepresentation) {
       return bindingExpression;
@@ -367,7 +344,7 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
    * <p>The component needs to cache the value for scoped bindings except for {@code @Binds}
    * bindings whose scope is no stronger than their delegate's.
    */
-  private boolean needsCaching(ContributionBinding binding) {
+  private boolean needsCaching() {
     if (!binding.scope().isPresent()) {
       return false;
     }
@@ -379,6 +356,6 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
 
   @AssistedFactory
   static interface Factory {
-    ProvisionBindingRepresentation create(Binding binding);
+    ProvisionBindingRepresentation create(ProvisionBinding binding);
   }
 }

@@ -21,9 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
-import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingRequest;
-import dagger.internal.codegen.binding.BindingType;
 import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.spi.model.RequestKind;
 
@@ -32,13 +30,13 @@ import dagger.spi.model.RequestKind;
  * that binding.
  */
 final class MembersInjectionBindingRepresentation implements BindingRepresentation {
-  private final Binding binding;
+  private final MembersInjectionBinding binding;
   private final MembersInjectionRequestRepresentation.Factory
       membersInjectionRequestRepresentationFactory;
 
   @AssistedInject
   MembersInjectionBindingRepresentation(
-      @Assisted Binding binding,
+      @Assisted MembersInjectionBinding binding,
       MembersInjectionRequestRepresentation.Factory membersInjectionRequestRepresentationFactory) {
     this.binding = binding;
     this.membersInjectionRequestRepresentationFactory =
@@ -47,15 +45,12 @@ final class MembersInjectionBindingRepresentation implements BindingRepresentati
 
   @Override
   public RequestRepresentation getRequestRepresentation(BindingRequest request) {
-    checkArgument(
-        binding.bindingType().equals(BindingType.MEMBERS_INJECTION)
-            && request.isRequestKind(RequestKind.MEMBERS_INJECTION),
-        binding);
-    return membersInjectionRequestRepresentationFactory.create((MembersInjectionBinding) binding);
+    checkArgument(request.isRequestKind(RequestKind.MEMBERS_INJECTION), binding);
+    return membersInjectionRequestRepresentationFactory.create(binding);
   }
 
   @AssistedFactory
   static interface Factory {
-    MembersInjectionBindingRepresentation create(Binding binding);
+    MembersInjectionBindingRepresentation create(MembersInjectionBinding binding);
   }
 }

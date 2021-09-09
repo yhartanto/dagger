@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.writing.MemberSelect.staticFactoryCreation;
@@ -27,11 +26,9 @@ import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
-import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingRequest;
-import dagger.internal.codegen.binding.BindingType;
-import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
+import dagger.internal.codegen.binding.ProductionBinding;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import java.util.Optional;
@@ -41,7 +38,7 @@ import java.util.Optional;
  * that binding.
  */
 final class ProductionBindingRepresentation implements BindingRepresentation {
-  private final Binding binding;
+  private final ProductionBinding binding;
   private final ComponentImplementation componentImplementation;
   private final DerivedFromFrameworkInstanceRequestRepresentation.Factory
       derivedFromFrameworkInstanceRequestRepresentationFactory;
@@ -52,7 +49,7 @@ final class ProductionBindingRepresentation implements BindingRepresentation {
 
   @AssistedInject
   ProductionBindingRepresentation(
-      @Assisted Binding binding,
+      @Assisted ProductionBinding binding,
       ComponentImplementation componentImplementation,
       DerivedFromFrameworkInstanceRequestRepresentation.Factory
           derivedFromFrameworkInstanceRequestRepresentationFactory,
@@ -73,12 +70,8 @@ final class ProductionBindingRepresentation implements BindingRepresentation {
 
   @Override
   public RequestRepresentation getRequestRepresentation(BindingRequest request) {
-    checkArgument(
-        binding.bindingType().equals(BindingType.PRODUCTION),
-        "Invalid binding type: %s, should be production binding.",
-        binding.bindingType());
     return request.frameworkType().isPresent()
-        ? frameworkInstanceRequestRepresentation((ContributionBinding) binding)
+        ? frameworkInstanceRequestRepresentation()
         : derivedFromFrameworkInstanceRequestRepresentationFactory.create(
             request, FrameworkType.PRODUCER_NODE);
   }
@@ -87,8 +80,7 @@ final class ProductionBindingRepresentation implements BindingRepresentation {
    * Returns a binding expression that uses a {@link dagger.producers.Producer} for production
    * bindings.
    */
-  private RequestRepresentation frameworkInstanceRequestRepresentation(
-      ContributionBinding binding) {
+  private RequestRepresentation frameworkInstanceRequestRepresentation() {
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
         unscopedFrameworkInstanceCreationExpressionFactory.create(binding);
 
@@ -105,10 +97,6 @@ final class ProductionBindingRepresentation implements BindingRepresentation {
                     ? scope(frameworkInstanceCreationExpression)
                     : frameworkInstanceCreationExpression);
 
-    checkArgument(
-        binding.bindingType().equals(BindingType.PRODUCTION),
-        "Invalid binding type: %s, should be production binding.",
-        binding.bindingType());
     return producerNodeInstanceRequestRepresentationFactory.create(
         binding, frameworkInstanceSupplier);
   }
@@ -133,6 +121,6 @@ final class ProductionBindingRepresentation implements BindingRepresentation {
 
   @AssistedFactory
   static interface Factory {
-    ProductionBindingRepresentation create(Binding binding);
+    ProductionBindingRepresentation create(ProductionBinding binding);
   }
 }

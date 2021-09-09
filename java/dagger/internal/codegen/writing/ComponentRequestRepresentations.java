@@ -36,6 +36,9 @@ import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.binding.FrameworkTypeMapper;
+import dagger.internal.codegen.binding.MembersInjectionBinding;
+import dagger.internal.codegen.binding.ProductionBinding;
+import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.DependencyRequest;
@@ -215,19 +218,22 @@ public final class ComponentRequestRepresentations {
     if (representations.containsKey(binding)) {
       return representations.get(binding);
     }
-    BindingRepresentation representation = null;
-    switch (binding.bindingType()) {
-      case MEMBERS_INJECTION:
-        representation = membersInjectionBindingRepresentationFactory.create(binding);
-        break;
-      case PROVISION:
-        representation = provisionBindingRepresentationFactory.create(binding);
-        break;
-      case PRODUCTION:
-        representation = productionBindingRepresentationFactory.create(binding);
-    }
+    BindingRepresentation representation = getBindingRepresentationUncached(binding);
     checkNotNull(representation, "Invalid binding type: ", binding.bindingType());
     representations.put(binding, representation);
     return representation;
+  }
+
+  private BindingRepresentation getBindingRepresentationUncached(Binding binding) {
+    switch (binding.bindingType()) {
+      case MEMBERS_INJECTION:
+        return membersInjectionBindingRepresentationFactory.create(
+            (MembersInjectionBinding) binding);
+      case PROVISION:
+        return provisionBindingRepresentationFactory.create((ProvisionBinding) binding);
+      case PRODUCTION:
+        return productionBindingRepresentationFactory.create((ProductionBinding) binding);
+    }
+    throw new AssertionError();
   }
 }
