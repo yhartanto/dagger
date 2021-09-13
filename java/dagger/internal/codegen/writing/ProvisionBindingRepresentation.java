@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECK;
@@ -40,8 +41,9 @@ import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.spi.model.BindingKind;
-import dagger.spi.model.Key;
 import dagger.spi.model.RequestKind;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import javax.lang.model.element.TypeElement;
 
@@ -76,6 +78,7 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
   private final UnscopedFrameworkInstanceCreationExpressionFactory
       unscopedFrameworkInstanceCreationExpressionFactory;
   private final SwitchingProviders switchingProviders;
+  private final Map<BindingRequest, RequestRepresentation> requestRepresentations = new HashMap<>();
 
   @AssistedInject
   ProvisionBindingRepresentation(
@@ -130,7 +133,11 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
 
   @Override
   public RequestRepresentation getRequestRepresentation(BindingRequest request) {
-    Key key = request.key();
+    return reentrantComputeIfAbsent(
+        requestRepresentations, request, this::getRequestRepresentationUncached);
+  }
+
+  private RequestRepresentation getRequestRepresentationUncached(BindingRequest request) {
     switch (request.requestKind()) {
       case INSTANCE:
         return instanceRequestRepresentation();
@@ -148,7 +155,7 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
         return producerFromProviderRequestRepresentation();
 
       case FUTURE:
-        return immediateFutureRequestRepresentationFactory.create(key);
+        return immediateFutureRequestRepresentationFactory.create(binding.key());
 
       case MEMBERS_INJECTION:
         throw new IllegalArgumentException();

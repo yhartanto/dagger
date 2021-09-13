@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
 import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECK;
 import static dagger.internal.codegen.writing.MemberSelect.staticFactoryCreation;
@@ -31,6 +32,8 @@ import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.binding.ProductionBinding;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -46,6 +49,7 @@ final class ProductionBindingRepresentation implements BindingRepresentation {
       producerNodeInstanceRequestRepresentationFactory;
   private final UnscopedFrameworkInstanceCreationExpressionFactory
       unscopedFrameworkInstanceCreationExpressionFactory;
+  private final Map<BindingRequest, RequestRepresentation> requestRepresentations = new HashMap<>();
 
   @AssistedInject
   ProductionBindingRepresentation(
@@ -70,6 +74,11 @@ final class ProductionBindingRepresentation implements BindingRepresentation {
 
   @Override
   public RequestRepresentation getRequestRepresentation(BindingRequest request) {
+    return reentrantComputeIfAbsent(
+        requestRepresentations, request, this::getRequestRepresentationUncached);
+  }
+
+  private RequestRepresentation getRequestRepresentationUncached(BindingRequest request) {
     return request.frameworkType().isPresent()
         ? frameworkInstanceRequestRepresentation()
         : derivedFromFrameworkInstanceRequestRepresentationFactory.create(

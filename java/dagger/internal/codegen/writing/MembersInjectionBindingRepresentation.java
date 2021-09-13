@@ -31,22 +31,21 @@ import dagger.spi.model.RequestKind;
  */
 final class MembersInjectionBindingRepresentation implements BindingRepresentation {
   private final MembersInjectionBinding binding;
-  private final MembersInjectionRequestRepresentation.Factory
-      membersInjectionRequestRepresentationFactory;
+  private final MembersInjectionRequestRepresentation membersInjectionRequestRepresentation;
 
   @AssistedInject
   MembersInjectionBindingRepresentation(
       @Assisted MembersInjectionBinding binding,
       MembersInjectionRequestRepresentation.Factory membersInjectionRequestRepresentationFactory) {
     this.binding = binding;
-    this.membersInjectionRequestRepresentationFactory =
-        membersInjectionRequestRepresentationFactory;
+    this.membersInjectionRequestRepresentation =
+        membersInjectionRequestRepresentationFactory.create(binding);
   }
 
   @Override
   public RequestRepresentation getRequestRepresentation(BindingRequest request) {
     checkArgument(request.isRequestKind(RequestKind.MEMBERS_INJECTION), binding);
-    return membersInjectionRequestRepresentationFactory.create(binding);
+    return membersInjectionRequestRepresentation;
   }
 
   @AssistedFactory

@@ -18,6 +18,7 @@ package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
@@ -65,7 +66,6 @@ public final class ComponentRequestRepresentations {
   private final ProvisionBindingRepresentation.Factory provisionBindingRepresentationFactory;
   private final ProductionBindingRepresentation.Factory productionBindingRepresentationFactory;
   private final DaggerTypes types;
-  private final Map<BindingRequest, RequestRepresentation> expressions = new HashMap<>();
   private final Map<Binding, BindingRepresentation> representations = new HashMap<>();
 
   @Inject
@@ -194,34 +194,22 @@ public final class ComponentRequestRepresentations {
 
   /** Returns the {@link RequestRepresentation} for the given {@link BindingRequest}. */
   RequestRepresentation getRequestRepresentation(BindingRequest request) {
-    if (expressions.containsKey(request)) {
-      return expressions.get(request);
-    }
-
     Optional<Binding> localBinding =
         request.isRequestKind(RequestKind.MEMBERS_INJECTION)
             ? graph.localMembersInjectionBinding(request.key())
             : graph.localContributionBinding(request.key());
 
     if (localBinding.isPresent()) {
-      RequestRepresentation expression =
-          getBindingRepresentation(localBinding.get()).getRequestRepresentation(request);
-      expressions.put(request, expression);
-      return expression;
+      return getBindingRepresentation(localBinding.get()).getRequestRepresentation(request);
     }
 
     checkArgument(parent.isPresent(), "no expression found for %s", request);
     return parent.get().getRequestRepresentation(request);
   }
 
-  BindingRepresentation getBindingRepresentation(Binding binding) {
-    if (representations.containsKey(binding)) {
-      return representations.get(binding);
-    }
-    BindingRepresentation representation = getBindingRepresentationUncached(binding);
-    checkNotNull(representation, "Invalid binding type: ", binding.bindingType());
-    representations.put(binding, representation);
-    return representation;
+  private BindingRepresentation getBindingRepresentation(Binding binding) {
+    return reentrantComputeIfAbsent(
+        representations, binding, this::getBindingRepresentationUncached);
   }
 
   private BindingRepresentation getBindingRepresentationUncached(Binding binding) {
