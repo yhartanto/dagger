@@ -2602,6 +2602,114 @@ public class ComponentProcessorTest {
                 "}"));
   }
 
+  @Test
+  public void providerComponentType() {
+    JavaFileObject entryPoint =
+        JavaFileObjects.forSourceLines(
+            "test.SomeEntryPoint",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "import javax.inject.Provider;",
+            "",
+            "public class SomeEntryPoint {",
+            "  @Inject SomeEntryPoint(Foo foo, Provider<Foo> fooProvider) {}",
+            "}");
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class Foo {",
+            "  @Inject Foo(Bar bar) {}",
+            "}");
+    JavaFileObject bar =
+        JavaFileObjects.forSourceLines(
+            "test.Bar",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public class Bar {",
+            "  @Inject Bar() {}",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import javax.inject.Provider;",
+            "",
+            "@Component",
+            "public interface TestComponent {",
+            "  SomeEntryPoint someEntryPoint();",
+            "}");
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts()).compile(component, foo, bar, entryPoint);
+
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerTestComponent")
+        .containsElementsIn(
+            compilerMode
+                .javaFileBuilder("test.DaggerSimpleComponent")
+                .addLines(
+                    "package test;",
+                    "",
+                    GeneratedLines.generatedAnnotations(),
+                    "public final class DaggerTestComponent implements TestComponent {",
+                    "  private Provider<Foo> fooProvider;")
+                .addLinesIn(
+                    DEFAULT_MODE,
+                    "  private Foo foo() {",
+                    "    return new Foo(new Bar());",
+                    "  }",
+                    "",
+                    "  @SuppressWarnings(\"unchecked\")",
+                    "  private void initialize() {",
+                    "    this.fooProvider = Foo_Factory.create(Bar_Factory.create());",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public SomeEntryPoint someEntryPoint() {",
+                    "    return new SomeEntryPoint(foo(), fooProvider);",
+                    "  }")
+                .addLinesIn(
+                    FAST_INIT_MODE,
+                    "  private Foo foo() {",
+                    "    return new Foo(new Bar());",
+                    "  }",
+                    "",
+                    // TODO(b/199667704): Remove this redundant private method.
+                    "  private Foo foo2() {",
+                    "    return new Foo(new Bar());",
+                    "  }",
+                    "",
+                    "  @SuppressWarnings(\"unchecked\")",
+                    "  private void initialize() {",
+                    "    this.fooProvider = new SwitchingProvider<>(testComponent, 0);",
+                    "  }",
+                    "",
+                    "  @Override",
+                    "  public SomeEntryPoint someEntryPoint() {",
+                    "    return new SomeEntryPoint(foo(), fooProvider);",
+                    "  }",
+                    "",
+                    "  private static final class SwitchingProvider<T> implements Provider<T> {",
+                    "    @SuppressWarnings(\"unchecked\")",
+                    "    @Override",
+                    "    public T get() {",
+                    "      switch (id) {",
+                    "        case 0: return (T) testComponent.foo2();",
+                    "        default: throw new AssertionError(id);",
+                    "      }",
+                    "    }",
+                    "  }")
+                .build());
+  }
+
   /**
    * A {@link ComponentProcessor} that excludes elements using a {@link Predicate}.
    */
