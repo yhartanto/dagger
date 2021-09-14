@@ -20,7 +20,6 @@ import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.spi.model.RequestKind;
-import java.util.Optional;
 import javax.inject.Inject;
 
 /**
@@ -82,54 +81,46 @@ final class UnscopedDirectInstanceRequestRepresentationFactory {
   }
 
   /** Returns a direct, unscoped binding expression for a {@link RequestKind#INSTANCE} request. */
-  Optional<RequestRepresentation> create(ContributionBinding binding) {
+  RequestRepresentation create(ContributionBinding binding) {
     switch (binding.kind()) {
       case DELEGATE:
-        return Optional.of(
-            delegateRequestRepresentationFactory.create(binding, RequestKind.INSTANCE));
+        return delegateRequestRepresentationFactory.create(binding, RequestKind.INSTANCE);
 
       case COMPONENT:
-        return Optional.of(componentInstanceRequestRepresentationFactory.create(binding));
+        return componentInstanceRequestRepresentationFactory.create(binding);
 
       case COMPONENT_DEPENDENCY:
-        return Optional.of(
-            componentRequirementRequestRepresentationFactory.create(
-                binding, ComponentRequirement.forDependency(binding.key().type().java())));
+        return componentRequirementRequestRepresentationFactory.create(
+            binding, ComponentRequirement.forDependency(binding.key().type().java()));
 
       case COMPONENT_PROVISION:
-        return Optional.of(
-            componentProvisionRequestRepresentationFactory.create((ProvisionBinding) binding));
+        return componentProvisionRequestRepresentationFactory.create((ProvisionBinding) binding);
 
       case SUBCOMPONENT_CREATOR:
-        return Optional.of(subcomponentCreatorRequestRepresentationFactory.create(binding));
+        return subcomponentCreatorRequestRepresentationFactory.create(binding);
 
       case MULTIBOUND_SET:
-        return Optional.of(setRequestRepresentationFactory.create((ProvisionBinding) binding));
+        return setRequestRepresentationFactory.create((ProvisionBinding) binding);
 
       case MULTIBOUND_MAP:
-        return Optional.of(mapRequestRepresentationFactory.create((ProvisionBinding) binding));
+        return mapRequestRepresentationFactory.create((ProvisionBinding) binding);
 
       case OPTIONAL:
-        return Optional.of(optionalRequestRepresentationFactory.create((ProvisionBinding) binding));
+        return optionalRequestRepresentationFactory.create((ProvisionBinding) binding);
 
       case BOUND_INSTANCE:
-        return Optional.of(
-            componentRequirementRequestRepresentationFactory.create(
-                binding, ComponentRequirement.forBoundInstance(binding)));
+        return componentRequirementRequestRepresentationFactory.create(
+            binding, ComponentRequirement.forBoundInstance(binding));
 
       case ASSISTED_FACTORY:
-        return Optional.of(
-            assistedFactoryRequestRepresentationFactory.create((ProvisionBinding) binding));
+        return assistedFactoryRequestRepresentationFactory.create((ProvisionBinding) binding);
 
       case ASSISTED_INJECTION:
       case INJECTION:
       case PROVISION:
-        return Optional.of(
-            simpleMethodRequestRepresentationFactory.create((ProvisionBinding) binding));
+        return simpleMethodRequestRepresentationFactory.create((ProvisionBinding) binding);
 
       case MEMBERS_INJECTOR:
-        return Optional.empty();
-
       case MEMBERS_INJECTION:
       case COMPONENT_PRODUCTION:
       case PRODUCTION:

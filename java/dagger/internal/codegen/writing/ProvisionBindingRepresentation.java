@@ -180,22 +180,20 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
       // cause a cycle. In such cases, we try to use the unscopedDirectInstanceRequestRepresentation
       // directly, or else fall back to default mode.
       BindingRequest instanceRequest = bindingRequest(binding.key(), RequestKind.INSTANCE);
-      RequestRepresentation instanceExpression = getRequestRepresentation(instanceRequest);
-      if (!(instanceExpression instanceof DerivedFromFrameworkInstanceRequestRepresentation)) {
+      if (usesDirectInstanceExpression()) {
         frameworkInstanceCreationExpression =
-            switchingProviders.newFrameworkInstanceCreationExpression(binding, instanceExpression);
+            switchingProviders.newFrameworkInstanceCreationExpression(
+                binding, getRequestRepresentation(instanceRequest));
       } else {
-        Optional<RequestRepresentation> unscopedInstanceExpression =
+        RequestRepresentation unscopedInstanceExpression =
             unscopedDirectInstanceRequestRepresentationFactory.create(binding);
-        if (unscopedInstanceExpression.isPresent()) {
-          frameworkInstanceCreationExpression =
-              switchingProviders.newFrameworkInstanceCreationExpression(
-                  binding,
-                  unscopedInstanceExpression.get().requiresMethodEncapsulation()
-                      ? privateMethodRequestRepresentationFactory.create(
-                          instanceRequest, binding, unscopedInstanceExpression.get())
-                      : unscopedInstanceExpression.get());
-        }
+        frameworkInstanceCreationExpression =
+            switchingProviders.newFrameworkInstanceCreationExpression(
+                binding,
+                unscopedInstanceExpression.requiresMethodEncapsulation()
+                    ? privateMethodRequestRepresentationFactory.create(
+                        instanceRequest, binding, unscopedInstanceExpression)
+                    : unscopedInstanceExpression);
       }
     }
 
@@ -257,34 +255,46 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
 
   /** Returns a binding expression for {@link RequestKind#INSTANCE} requests. */
   private RequestRepresentation instanceRequestRepresentation() {
-    Optional<RequestRepresentation> maybeDirectInstanceExpression =
-        unscopedDirectInstanceRequestRepresentationFactory.create(binding);
-    if (maybeDirectInstanceExpression.isPresent()) {
-      RequestRepresentation directInstanceExpression = maybeDirectInstanceExpression.get();
-      if (binding.kind() == BindingKind.ASSISTED_INJECTION) {
-        BindingRequest request = bindingRequest(binding.key(), RequestKind.INSTANCE);
-        return assistedPrivateMethodRequestRepresentationFactory.create(
-            request, binding, directInstanceExpression);
-      }
+    return usesDirectInstanceExpression()
+        ? directInstanceExpression()
+        : derivedFromFrameworkInstanceRequestRepresentationFactory.create(
+            bindingRequest(binding.key(), RequestKind.INSTANCE), FrameworkType.PROVIDER);
+  }
 
-      boolean isDefaultModeAssistedFactory =
-          binding.kind() == BindingKind.ASSISTED_FACTORY && !isFastInit;
-
-      // If this is the case where we don't need to use Provider#get() because there's no caching
-      // and it isn't a default mode assisted factory, we can try to use the direct expression,
-      // possibly wrapped in a method if necessary (e.g. if it has dependencies).
-      // Note: We choose not to use a direct expression for assisted factories in default mode
-      // because they technically act more similar to a Provider than an instance, so we cache them
-      // using a field in the component similar to Provider requests. This should also be the case
-      // in FastInit, but it hasn't been implemented yet.
-      if (!needsCaching() && !isDefaultModeAssistedFactory) {
-        return directInstanceExpression.requiresMethodEncapsulation()
-            ? wrapInMethod(RequestKind.INSTANCE, directInstanceExpression)
-            : directInstanceExpression;
-      }
+  private boolean usesDirectInstanceExpression() {
+    switch (binding.kind()) {
+      case MEMBERS_INJECTOR:
+        // Currently, we always use a framework instance for MembersInjectors, e.g.
+        // InstanceFactory.create(Foo_MembersInjector.create(...)).
+        // TODO(b/199889259): Consider optimizing this for fastInit mode.
+        return false;
+      case ASSISTED_INJECTION:
+      case ASSISTED_FACTORY:
+        // We choose not to use a direct expression for assisted injection/factory in default mode
+        // because they technically act more similar to a Provider than an instance, so we cache
+        // them using a field in the component similar to Provider requests. This should also be the
+        // case in FastInit, but it hasn't been implemented yet. We also don't need to check for
+        // caching since assisted bindings can't be scoped.
+        return isFastInit;
+      default:
+        // We don't need to use Provider#get() if there's no caching, so use a direct instance.
+        // TODO(bcorso): This can be optimized in cases where we know a Provider field already
+        // exists, in which case even if it's not scoped we might as well call Provider#get().
+        return !needsCaching();
     }
-    return derivedFromFrameworkInstanceRequestRepresentationFactory.create(
-        bindingRequest(binding.key(), RequestKind.INSTANCE), FrameworkType.PROVIDER);
+  }
+
+  private RequestRepresentation directInstanceExpression() {
+    RequestRepresentation directInstanceExpression =
+        unscopedDirectInstanceRequestRepresentationFactory.create(binding);
+    if (binding.kind() == BindingKind.ASSISTED_INJECTION) {
+      BindingRequest request = bindingRequest(binding.key(), RequestKind.INSTANCE);
+      return assistedPrivateMethodRequestRepresentationFactory.create(
+          request, binding, directInstanceExpression);
+    }
+    return directInstanceExpression.requiresMethodEncapsulation()
+        ? wrapInMethod(RequestKind.INSTANCE, directInstanceExpression)
+        : directInstanceExpression;
   }
 
   /**
