@@ -33,7 +33,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleTypeVisitor6;
+import javax.lang.model.util.SimpleTypeVisitor8;
 
 /** Utility methods related to {@link Key}s. */
 public final class Keys {
@@ -65,7 +65,7 @@ public final class Keys {
     }
 
     return type.accept(
-        new SimpleTypeVisitor6<Boolean, Void>(false) {
+        new SimpleTypeVisitor8<Boolean, Void>(false) {
           @Override
           public Boolean visitDeclared(DeclaredType type, Void ignored) {
             // Non-classes or abstract classes aren't allowed.

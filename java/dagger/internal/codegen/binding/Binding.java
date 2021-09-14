@@ -38,7 +38,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleTypeVisitor6;
+import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * An abstract type for classes representing a Dagger binding. Particularly, contains the {@link
@@ -137,7 +137,7 @@ public abstract class Binding extends BindingDeclaration {
 
     List<TypeMirror> actualTypes =
         type.accept(
-            new SimpleTypeVisitor6<List<TypeMirror>, Void>() {
+            new SimpleTypeVisitor8<List<TypeMirror>, Void>() {
               @Override
               protected List<TypeMirror> defaultAction(TypeMirror e, Void p) {
                 return ImmutableList.of();
