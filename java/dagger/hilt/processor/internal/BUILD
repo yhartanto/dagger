@@ -156,6 +156,7 @@ java_library(
     srcs = ["HiltCompilerOptions.java"],
     deps = [
         ":processor_errors",
+        "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/javapoet",
     ],
