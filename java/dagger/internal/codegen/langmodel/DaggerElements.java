@@ -59,14 +59,12 @@ import javax.lang.model.type.ErrorType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.IntersectionType;
 import javax.lang.model.type.NoType;
-import javax.lang.model.type.NullType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.TypeVariable;
-import javax.lang.model.type.UnionType;
 import javax.lang.model.type.WildcardType;
-import javax.lang.model.util.AbstractTypeVisitor8;
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.SimpleTypeVisitor8;
 import javax.lang.model.util.Types;
 
 /** Extension of {@link Elements} that adds Dagger-specific methods. */
@@ -290,8 +288,8 @@ public final class DaggerElements implements Elements, ClearableCache {
     return t.accept(JVM_DESCRIPTOR_TYPE_VISITOR, null);
   }
 
-  private static final AbstractTypeVisitor8<String, Void> JVM_DESCRIPTOR_TYPE_VISITOR =
-      new AbstractTypeVisitor8<String, Void>() {
+  private static final SimpleTypeVisitor8<String, Void> JVM_DESCRIPTOR_TYPE_VISITOR =
+      new SimpleTypeVisitor8<String, Void>() {
 
         @Override
         public String visitArray(ArrayType arrayType, Void v) {
@@ -333,11 +331,6 @@ public final class DaggerElements implements Elements, ClearableCache {
         }
 
         @Override
-        public String visitNull(NullType nullType, Void v) {
-          return visitUnknown(nullType, null);
-        }
-
-        @Override
         public String visitPrimitive(PrimitiveType primitiveType, Void v) {
           switch (primitiveType.getKind()) {
             case BOOLEAN:
@@ -368,12 +361,7 @@ public final class DaggerElements implements Elements, ClearableCache {
         }
 
         @Override
-        public String visitUnion(UnionType unionType, Void v) {
-          return visitUnknown(unionType, null);
-        }
-
-        @Override
-        public String visitUnknown(TypeMirror typeMirror, Void v) {
+        public String defaultAction(TypeMirror typeMirror, Void v) {
           throw new IllegalArgumentException("Unsupported type: " + typeMirror);
         }
 
