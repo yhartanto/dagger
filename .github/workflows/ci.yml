@@ -72,6 +72,9 @@ jobs:
       - name: 'Run Bazel tests'
         run: bazel test --test_output=errors //... --keep_going
         shell: bash
+      - name: 'Run Bazel examples'
+        run: cd examples/bazel; bazel test --test_output=errors //...
+        shell: bash
       - name: 'Install local snapshot'
         run: ./util/install-local-snapshot.sh
         shell: bash
