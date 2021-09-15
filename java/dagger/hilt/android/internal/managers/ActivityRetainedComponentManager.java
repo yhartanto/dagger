@@ -16,13 +16,13 @@
 
 package dagger.hilt.android.internal.managers;
 
-import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelStoreOwner;
 import android.content.Context;
 import androidx.annotation.Nullable;
 import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStoreOwner;
 import dagger.Binds;
 import dagger.Module;
 import dagger.hilt.EntryPoint;
