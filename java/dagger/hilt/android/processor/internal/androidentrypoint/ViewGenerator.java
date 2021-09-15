@@ -69,6 +69,7 @@ public final class ViewGenerator {
     Generators.addGeneratedBaseClassJavadoc(builder, AndroidClassNames.ANDROID_ENTRY_POINT);
     Processors.addGeneratedAnnotation(builder, env, getClass());
     Generators.copyLintAnnotations(metadata.element(), builder);
+    Generators.copySuppressAnnotations(metadata.element(), builder);
 
     metadata.baseElement().getTypeParameters().stream()
         .map(TypeVariableName::get)

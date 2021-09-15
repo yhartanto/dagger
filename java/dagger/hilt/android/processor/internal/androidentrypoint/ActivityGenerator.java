@@ -67,6 +67,7 @@ public final class ActivityGenerator {
 
     Generators.addComponentOverride(metadata, builder);
     Generators.copyLintAnnotations(metadata.element(), builder);
+    Generators.copySuppressAnnotations(metadata.element(), builder);
 
     Generators.addInjectionMethods(metadata, builder);
 

@@ -209,6 +209,9 @@ public final class ClassNames {
 
   public static final ClassName OBJECT = get("java.lang", "Object");
 
+  public static final ClassName SUPPRESS_WARNINGS = get("java.lang", "SuppressWarnings");
+  public static final ClassName KOTLIN_SUPPRESS = get("kotlin", "Suppress");
+
   // Kotlin-specific class names
   public static final ClassName KOTLIN_METADATA = get("kotlin", "Metadata");
 

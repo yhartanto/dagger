@@ -16,11 +16,15 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
+import static java.util.stream.Collectors.joining;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
+import com.google.auto.common.AnnotationMirrors;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -35,6 +39,7 @@ import dagger.hilt.processor.internal.Processors;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -123,15 +128,14 @@ final class Generators {
   private static MethodSpec copyConstructor(ExecutableElement constructor, CodeBlock body) {
     List<ParameterSpec> params =
         constructor.getParameters().stream()
-            .map(parameter -> getParameterSpecWithNullable(parameter))
+            .map(Generators::getParameterSpecWithNullable)
             .collect(Collectors.toList());
 
     final MethodSpec.Builder builder =
         MethodSpec.constructorBuilder()
             .addParameters(params)
             .addStatement(
-                "super($L)",
-                params.stream().map(param -> param.name).collect(Collectors.joining(", ")))
+                "super($L)", params.stream().map(param -> param.name).collect(joining(", ")))
             .addCode(body);
 
     constructor.getAnnotationMirrors().stream()
@@ -141,6 +145,26 @@ final class Generators {
         .ifPresent(builder::addAnnotation);
 
     return builder.build();
+  }
+
+  /** Copies SuppressWarnings annotations from the annotated element to the generated element. */
+  static void copySuppressAnnotations(Element element, TypeSpec.Builder builder) {
+    ImmutableSet<String> suppressValues =
+        Stream.of(ClassNames.SUPPRESS_WARNINGS, ClassNames.KOTLIN_SUPPRESS)
+            .filter(annotation -> Processors.hasAnnotation(element, annotation))
+            .map(
+                annotation ->
+                    AnnotationMirrors.getAnnotationValue(
+                        Processors.getAnnotationMirror(element, annotation), "value"))
+            .flatMap(value -> Processors.getStringArrayAnnotationValue(value).stream())
+            .collect(toImmutableSet());
+
+    if (!suppressValues.isEmpty()) {
+      // Replace kotlin Suppress with java SuppressWarnings, as the generated file is java.
+      AnnotationSpec.Builder annotation = AnnotationSpec.builder(ClassNames.SUPPRESS_WARNINGS);
+      suppressValues.forEach(value -> annotation.addMember("value", "$S", value));
+      builder.addAnnotation(annotation.build());
+    }
   }
 
   /**
@@ -476,19 +500,6 @@ final class Generators {
         .addModifiers(Modifier.PRIVATE, Modifier.FINAL)
         .initializer("new $T()", TypeName.OBJECT)
         .build();
-  }
-
-  /**
-   * Adds the SupressWarnings to supress a warning in the generated code.
-   *
-   * @param keys the string keys of the warnings to suppress, e.g. 'deprecation', 'unchecked', etc.
-   */
-  public static void addSuppressAnnotation(TypeSpec.Builder builder, String... keys) {
-    AnnotationSpec.Builder annotationBuilder = AnnotationSpec.builder(SuppressWarnings.class);
-    for (String key : keys) {
-      annotationBuilder.addMember("value", "$S", key);
-    }
-    builder.addAnnotation(annotationBuilder.build());
   }
 
   private Generators() {}

@@ -68,6 +68,7 @@ public final class ApplicationGenerator {
         .forEachOrdered(typeSpecBuilder::addTypeVariable);
 
     Generators.copyLintAnnotations(metadata.element(), typeSpecBuilder);
+    Generators.copySuppressAnnotations(metadata.element(), typeSpecBuilder);
     Generators.addComponentOverride(metadata, typeSpecBuilder);
 
       typeSpecBuilder.addMethod(onCreateMethod());

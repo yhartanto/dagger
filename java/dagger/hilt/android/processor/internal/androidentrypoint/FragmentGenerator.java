@@ -18,6 +18,7 @@ package dagger.hilt.android.processor.internal.androidentrypoint;
 
 import static dagger.hilt.processor.internal.HiltCompilerOptions.useFragmentGetContextFix;
 
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -76,7 +77,7 @@ public final class FragmentGenerator {
     Generators.addGeneratedBaseClassJavadoc(builder, AndroidClassNames.ANDROID_ENTRY_POINT);
     Processors.addGeneratedAnnotation(builder, env, getClass());
     Generators.copyLintAnnotations(metadata.element(), builder);
-    Generators.addSuppressAnnotation(builder, "deprecation");
+    Generators.copySuppressAnnotations(metadata.element(), builder);
     Generators.copyConstructors(metadata.baseElement(), builder);
 
     metadata.baseElement().getTypeParameters().stream()
@@ -116,6 +117,7 @@ public final class FragmentGenerator {
 
   // @CallSuper
   // @Override
+  // @SuppressWarnings("deprecation")
   // public void onAttach(Activity activity) {
   //   super.onAttach(activity);
   //   Preconditions.checkState(
@@ -127,6 +129,10 @@ public final class FragmentGenerator {
   private static MethodSpec onAttachActivityMethod() {
     return MethodSpec.methodBuilder("onAttach")
         .addAnnotation(Override.class)
+        .addAnnotation(
+            AnnotationSpec.builder(ClassNames.SUPPRESS_WARNINGS)
+                .addMember("value", "\"deprecation\"")
+                .build())
         .addAnnotation(AndroidClassNames.CALL_SUPER)
         .addAnnotation(AndroidClassNames.MAIN_THREAD)
         .addModifiers(Modifier.PUBLIC)
