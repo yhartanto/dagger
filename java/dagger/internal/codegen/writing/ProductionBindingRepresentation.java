@@ -17,13 +17,10 @@
 package dagger.internal.codegen.writing;
 
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
-import static dagger.internal.codegen.javapoet.TypeNames.DOUBLE_CHECK;
-import static dagger.internal.codegen.javapoet.TypeNames.SINGLE_CHECK;
-import static dagger.internal.codegen.writing.MemberSelect.staticFactoryCreation;
+import static dagger.internal.codegen.writing.BindingRepresentations.scope;
 import static dagger.spi.model.BindingKind.MULTIBOUND_MAP;
 import static dagger.spi.model.BindingKind.MULTIBOUND_SET;
 
-import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
@@ -90,42 +87,37 @@ final class ProductionBindingRepresentation implements BindingRepresentation {
    * bindings.
    */
   private RequestRepresentation frameworkInstanceRequestRepresentation() {
+    Optional<MemberSelect> staticMethod = staticFactoryCreation();
+    if (staticMethod.isPresent()) {
+      return producerNodeInstanceRequestRepresentationFactory.create(binding, staticMethod::get);
+    }
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
         unscopedFrameworkInstanceCreationExpressionFactory.create(binding);
-
-    // TODO(bcorso): Consider merging the static factory creation logic into CreationExpressions?
-    Optional<MemberSelect> staticMethod =
-        useStaticFactoryCreation() ? staticFactoryCreation(binding) : Optional.empty();
-    FrameworkInstanceSupplier frameworkInstanceSupplier =
-        staticMethod.isPresent()
-            ? staticMethod::get
-            : new FrameworkFieldInitializer(
-                componentImplementation,
-                binding,
-                binding.scope().isPresent()
-                    ? scope(frameworkInstanceCreationExpression)
-                    : frameworkInstanceCreationExpression);
-
     return producerNodeInstanceRequestRepresentationFactory.create(
-        binding, frameworkInstanceSupplier);
-  }
-
-  private FrameworkInstanceCreationExpression scope(FrameworkInstanceCreationExpression unscoped) {
-    return () ->
-        CodeBlock.of(
-            "$T.provider($L)",
-            binding.scope().get().isReusable() ? SINGLE_CHECK : DOUBLE_CHECK,
-            unscoped.creationExpression());
+        binding,
+        new FrameworkFieldInitializer(
+            componentImplementation,
+            binding,
+            binding.scope().isPresent()
+                ? scope(binding, frameworkInstanceCreationExpression)
+                : frameworkInstanceCreationExpression));
   }
 
   /**
-   * Returns {@code true} if the binding should use the static factory creation strategy.
-   *
-   * <p>We allow static factories that can reused across multiple bindings, e.g. {@code MapFactory}
-   * or {@code SetFactory}.
+   * If {@code resolvedBindings} is an unscoped provision binding with no factory arguments, then we
+   * don't need a field to hold its factory. In that case, this method returns the static member
+   * select that returns the factory.
    */
-  private boolean useStaticFactoryCreation() {
-    return binding.kind().equals(MULTIBOUND_MAP) || binding.kind().equals(MULTIBOUND_SET);
+  private Optional<MemberSelect> staticFactoryCreation() {
+    if (binding.dependencies().isEmpty()) {
+      if (binding.kind().equals(MULTIBOUND_MAP)) {
+        return Optional.of(StaticMemberSelects.emptyMapFactory(binding));
+      }
+      if (binding.kind().equals(MULTIBOUND_SET)) {
+        return Optional.of(StaticMemberSelects.emptySetFactory(binding));
+      }
+    }
+    return Optional.empty();
   }
 
   @AssistedFactory
