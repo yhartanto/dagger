@@ -16,29 +16,28 @@
 
 package dagger.internal.codegen.binding;
 
+import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Suppliers.memoize;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Scope;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * An abstract type for classes representing a Dagger binding. Particularly, contains the {@link
@@ -130,25 +129,15 @@ public abstract class Binding extends BindingDeclaration {
       return false;
     }
 
-    List<TypeMirror> defaultTypes = Lists.newArrayList();
-    for (TypeParameterElement parameter : element.getTypeParameters()) {
-      defaultTypes.add(parameter.asType());
-    }
+    ImmutableList<TypeMirror> defaultTypes =
+        element.getTypeParameters().stream()
+            .map(TypeParameterElement::asType)
+            .collect(toImmutableList());
 
-    List<TypeMirror> actualTypes =
-        type.accept(
-            new SimpleTypeVisitor8<List<TypeMirror>, Void>() {
-              @Override
-              protected List<TypeMirror> defaultAction(TypeMirror e, Void p) {
-                return ImmutableList.of();
-              }
-
-              @Override
-              public List<TypeMirror> visitDeclared(DeclaredType t, Void p) {
-                return ImmutableList.<TypeMirror>copyOf(t.getTypeArguments());
-              }
-            },
-            null);
+    ImmutableList<TypeMirror> actualTypes =
+        type.getKind() == TypeKind.DECLARED
+            ? ImmutableList.copyOf(asDeclared(type).getTypeArguments())
+            : ImmutableList.of();
 
     // The actual type parameter size can be different if the user is using a raw type.
     if (defaultTypes.size() != actualTypes.size()) {
