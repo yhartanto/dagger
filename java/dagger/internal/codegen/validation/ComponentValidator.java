@@ -18,6 +18,7 @@ package dagger.internal.codegen.validation;
 
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreTypes.asDeclared;
+import static com.google.auto.common.MoreTypes.asElement;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Verify.verify;
@@ -47,7 +48,6 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.VOID;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
-import com.google.auto.common.MoreTypes;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -88,9 +88,8 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVisitor;
-import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * Performs superficial validation of the contract of the {@link Component} and {@link
@@ -330,10 +329,14 @@ public final class ComponentValidator implements ClearableCache {
       }
 
       private void validateSubcomponentFactoryMethod(AnnotationMirror subcomponentAnnotation) {
-        referencedSubcomponents.put(MoreTypes.asElement(returnType), method);
+        referencedSubcomponents.put(asElement(returnType), method);
 
-        ComponentKind subcomponentKind =
-            ComponentKind.forAnnotatedElement(MoreTypes.asTypeElement(returnType)).get();
+        ImmutableSet<ClassName> legalModuleAnnotations =
+            ComponentKind.forAnnotatedElement(asTypeElement(returnType)).get()
+                .legalModuleKinds()
+                .stream()
+                .map(ModuleKind::annotation)
+                .collect(toImmutableSet());
         ImmutableSet<TypeElement> moduleTypes =
             ComponentAnnotation.componentAnnotation(subcomponentAnnotation).modules();
 
@@ -344,49 +347,30 @@ public final class ComponentValidator implements ClearableCache {
         ImmutableSet<TypeElement> transitiveModules =
             getTransitiveModules(types, elements, moduleTypes);
 
-        Set<TypeElement> variableTypes = Sets.newHashSet();
-
+        Set<TypeElement> referencedModules = Sets.newHashSet();
         for (int i = 0; i < parameterTypes.size(); i++) {
           VariableElement parameter = parameters.get(i);
           TypeMirror parameterType = parameterTypes.get(i);
-          Optional<TypeElement> moduleType =
-              parameterType.accept(
-                  new SimpleTypeVisitor8<Optional<TypeElement>, Void>() {
-                    @Override
-                    protected Optional<TypeElement> defaultAction(TypeMirror e, Void p) {
-                      return Optional.empty();
-                    }
-
-                    @Override
-                    public Optional<TypeElement> visitDeclared(DeclaredType t, Void p) {
-                      for (ModuleKind moduleKind : subcomponentKind.legalModuleKinds()) {
-                        if (isAnnotationPresent(t.asElement(), moduleKind.annotation())) {
-                          return Optional.of(MoreTypes.asTypeElement(t));
-                        }
-                      }
-                      return Optional.empty();
-                    }
-                  },
-                  null);
-          if (moduleType.isPresent()) {
-            if (variableTypes.contains(moduleType.get())) {
+          if (checkForAnnotations(parameterType, legalModuleAnnotations).isPresent()) {
+            TypeElement module = asTypeElement(parameterType);
+            if (referencedModules.contains(module)) {
               report.addError(
                   String.format(
                       "A module may only occur once an an argument in a Subcomponent factory "
                           + "method, but %s was already passed.",
-                      moduleType.get().getQualifiedName()),
+                      module.getQualifiedName()),
                   parameter);
             }
-            if (!transitiveModules.contains(moduleType.get())) {
+            if (!transitiveModules.contains(module)) {
               report.addError(
                   String.format(
                       "%s is present as an argument to the %s factory method, but is not one of the"
                           + " modules used to implement the subcomponent.",
-                      moduleType.get().getQualifiedName(),
-                      MoreTypes.asTypeElement(returnType).getQualifiedName()),
+                      module.getQualifiedName(),
+                      asTypeElement(returnType).getQualifiedName()),
                   method);
             }
-            variableTypes.add(moduleType.get());
+            referencedModules.add(module);
           } else {
             report.addError(
                 String.format(
@@ -398,13 +382,13 @@ public final class ComponentValidator implements ClearableCache {
       }
 
       private void validateSubcomponentCreatorMethod() {
-        referencedSubcomponents.put(MoreTypes.asElement(returnType).getEnclosingElement(), method);
+        referencedSubcomponents.put(asElement(returnType).getEnclosingElement(), method);
 
         if (!parameters.isEmpty()) {
           report.addError(builderMethodRequiresNoArgs(), method);
         }
 
-        TypeElement creatorElement = MoreTypes.asTypeElement(returnType);
+        TypeElement creatorElement = asTypeElement(returnType);
         // TODO(sameb): The creator validator right now assumes the element is being compiled
         // in this pass, which isn't true here.  We should change error messages to spit out
         // this method as the subject and add the original subject to the message output.
@@ -484,7 +468,11 @@ public final class ComponentValidator implements ClearableCache {
 
     private void validateComponentDependencies() {
       for (TypeMirror type : componentAnnotation().dependencyTypes()) {
-        type.accept(CHECK_DEPENDENCY_TYPES, report);
+        if (type.getKind() != TypeKind.DECLARED) {
+          report.addError(type + " is not a valid component dependency type");
+        } else if (moduleAnnotation(asElement(type)).isPresent()) {
+          report.addError(type + " is a module, which cannot be a component dependency");
+        }
       }
     }
 
@@ -543,32 +531,10 @@ public final class ComponentValidator implements ClearableCache {
     return elements.overrides(overrider, overridden, asType(overrider.getEnclosingElement()));
   }
 
-  private static final TypeVisitor<Void, ValidationReport.Builder> CHECK_DEPENDENCY_TYPES =
-      new SimpleTypeVisitor8<Void, ValidationReport.Builder>() {
-        @Override
-        protected Void defaultAction(TypeMirror type, ValidationReport.Builder report) {
-          report.addError(type + " is not a valid component dependency type");
-          return null;
-        }
-
-        @Override
-        public Void visitDeclared(DeclaredType type, ValidationReport.Builder report) {
-          if (moduleAnnotation(MoreTypes.asTypeElement(type)).isPresent()) {
-            report.addError(type + " is a module, which cannot be a component dependency");
-          }
-          return null;
-        }
-      };
-
   private static Optional<AnnotationMirror> checkForAnnotations(
       TypeMirror type, final Set<ClassName> annotations) {
-    return type.accept(
-        new SimpleTypeVisitor8<Optional<AnnotationMirror>, Void>(Optional.empty()) {
-          @Override
-          public Optional<AnnotationMirror> visitDeclared(DeclaredType t, Void p) {
-            return getAnyAnnotation(t.asElement(), annotations);
-          }
-        },
-        null);
+    return type.getKind() == TypeKind.DECLARED
+        ? getAnyAnnotation(asElement(type), annotations)
+        : Optional.empty();
   }
 }

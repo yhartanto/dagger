@@ -33,6 +33,7 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
 /** A {@code @Module} or {@code @ProducerModule} annotation. */
@@ -119,8 +120,8 @@ public abstract class ModuleAnnotation {
    * Returns an object representing the {@code @Module} or {@code @ProducerModule} annotation if one
    * annotates {@code typeElement}.
    */
-  public static Optional<ModuleAnnotation> moduleAnnotation(TypeElement typeElement) {
-    return getAnyAnnotation(typeElement, TypeNames.MODULE, TypeNames.PRODUCER_MODULE)
+  public static Optional<ModuleAnnotation> moduleAnnotation(Element element) {
+    return getAnyAnnotation(element, TypeNames.MODULE, TypeNames.PRODUCER_MODULE)
         .map(ModuleAnnotation::moduleAnnotation);
   }
 }
