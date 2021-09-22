@@ -83,6 +83,7 @@ public final class RootFileFormatterTest {
   public void testTestComponents() {
     Compilation compilation =
         compiler()
+            .withOptions("-Adagger.hilt.shareTestComponents=false")
             .compile(
                 JavaFileObjects.forSourceLines(
                     "test.MyTest",

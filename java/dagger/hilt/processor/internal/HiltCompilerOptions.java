@@ -108,7 +108,8 @@ public final class HiltCompilerOptions {
 
     DISABLE_MODULES_HAVE_INSTALL_IN_CHECK("disableModulesHaveInstallInCheck", false),
 
-    SHARE_TEST_COMPONENTS("shareTestComponents", false),
+    SHARE_TEST_COMPONENTS(
+        "shareTestComponents", true),
 
     USE_FRAGMENT_GET_CONTEXT_FIX("android.useFragmentGetContextFix", false);
 
