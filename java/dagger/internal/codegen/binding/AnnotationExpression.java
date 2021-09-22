@@ -17,6 +17,10 @@
 package dagger.internal.codegen.binding;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
+import static com.google.auto.common.MoreElements.isType;
+import static com.google.auto.common.MoreTypes.asArray;
+import static com.google.auto.common.MoreTypes.asElement;
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static dagger.internal.codegen.binding.SourceFiles.classFileName;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static java.util.stream.Collectors.toList;
@@ -32,11 +36,9 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
-import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * Returns an expression creating an instance of the visited annotation type. Its parameter must be
@@ -104,7 +106,10 @@ public class AnnotationExpression
    * annotation}.
    */
   CodeBlock getValueExpression(TypeMirror valueType, AnnotationValue value) {
-    return ARRAY_LITERAL_PREFIX.visit(valueType, this.visit(value, value));
+    CodeBlock codeBlock = visit(value, value);
+    return valueType.getKind() == TypeKind.ARRAY
+        ? CodeBlock.of("new $T[] $L", rawTypeName(asArray(valueType).getComponentType()), codeBlock)
+        : codeBlock;
   }
 
   @Override
@@ -171,38 +176,13 @@ public class AnnotationExpression
     return CodeBlock.of("{$L}", makeParametersCodeBlock(codeBlocks.build()));
   }
 
-  /**
-   * If the visited type is an array, prefixes the parameter code block with {@code new T[]}, where
-   * {@code T} is the raw array component type.
-   */
-  private static final SimpleTypeVisitor8<CodeBlock, CodeBlock> ARRAY_LITERAL_PREFIX =
-      new SimpleTypeVisitor8<CodeBlock, CodeBlock>() {
-
-        @Override
-        public CodeBlock visitArray(ArrayType t, CodeBlock p) {
-          return CodeBlock.of("new $T[] $L", RAW_TYPE_NAME.visit(t.getComponentType()), p);
-        }
-
-        @Override
-        protected CodeBlock defaultAction(TypeMirror e, CodeBlock p) {
-          return p;
-        }
-      };
-
-  /**
+    /**
    * If the visited type is an array, returns the name of its raw component type; otherwise returns
    * the name of the type itself.
    */
-  private static final SimpleTypeVisitor8<TypeName, Void> RAW_TYPE_NAME =
-      new SimpleTypeVisitor8<TypeName, Void>() {
-        @Override
-        public TypeName visitDeclared(DeclaredType t, Void p) {
-          return ClassName.get(MoreTypes.asTypeElement(t));
-        }
-
-        @Override
-        protected TypeName defaultAction(TypeMirror e, Void p) {
-          return TypeName.get(e);
-        }
-      };
+  private TypeName rawTypeName(TypeMirror type) {
+    return type.getKind() == TypeKind.DECLARED && isType(asElement(type))
+        ? ClassName.get(asTypeElement(type))
+        : TypeName.get(type);
+  }
 }
