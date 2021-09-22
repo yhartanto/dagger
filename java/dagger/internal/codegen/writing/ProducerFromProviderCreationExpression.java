@@ -16,15 +16,12 @@
 
 package dagger.internal.codegen.writing;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
-import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
@@ -34,29 +31,22 @@ import java.util.Optional;
 
 /** An {@link Producer} creation expression for provision bindings. */
 final class ProducerFromProviderCreationExpression implements FrameworkInstanceCreationExpression {
-  private final ContributionBinding binding;
-  private final ComponentImplementation componentImplementation;
-  private final ComponentRequestRepresentations componentRequestRepresentations;
+  private final RequestRepresentation providerRequestRepresentation;
+  private final ClassName requestingClass;
 
   @AssistedInject
   ProducerFromProviderCreationExpression(
-      @Assisted ContributionBinding binding,
-      ComponentImplementation componentImplementation,
-      ComponentRequestRepresentations componentRequestRepresentations) {
-    this.binding = checkNotNull(binding);
-    this.componentImplementation = componentImplementation;
-    this.componentRequestRepresentations = componentRequestRepresentations;
+      @Assisted RequestRepresentation providerRequestRepresentation,
+      @Assisted ClassName requestingClass) {
+    this.providerRequestRepresentation = providerRequestRepresentation;
+    this.requestingClass = requestingClass;
   }
 
   @Override
   public CodeBlock creationExpression() {
     return FrameworkType.PROVIDER.to(
         RequestKind.PRODUCER,
-        componentRequestRepresentations
-            .getDependencyExpression(
-                bindingRequest(binding.key(), FrameworkType.PROVIDER),
-                componentImplementation.shardImplementation(binding).name())
-            .codeBlock());
+        providerRequestRepresentation.getDependencyExpression(requestingClass).codeBlock());
   }
 
   @Override
@@ -66,8 +56,7 @@ final class ProducerFromProviderCreationExpression implements FrameworkInstanceC
 
   @AssistedFactory
   static interface Factory {
-    ProducerFromProviderCreationExpression create(ContributionBinding binding);
+    ProducerFromProviderCreationExpression create(
+        RequestRepresentation providerRequestRepresentation, ClassName requestingClass);
   }
-
-  // TODO(ronshapiro): should this have a simple factory if the delegate expression is simple?
 }
