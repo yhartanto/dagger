@@ -98,8 +98,7 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
             ProvisionMethod.invokeArguments(
                 provisionBinding,
                 request -> dependencyArgument(request, requestingClass).codeBlock(),
-                shardImplementation::getUniqueFieldNameForAssistedParam,
-                requestingClass));
+                shardImplementation::getUniqueFieldNameForAssistedParam));
     ExecutableElement method = asExecutable(provisionBinding.bindingElement().get());
     CodeBlock invocation;
     switch (method.getKind()) {

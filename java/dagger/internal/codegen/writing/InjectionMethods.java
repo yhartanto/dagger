@@ -23,7 +23,6 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
-import static dagger.internal.codegen.base.RequestKinds.requestTypeName;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.binding.SourceFiles.memberInjectedFieldSignatureForVariable;
@@ -67,7 +66,6 @@ import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.DependencyRequest;
-import dagger.spi.model.RequestKind;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -77,7 +75,6 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Parameterizable;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /** Convenience methods for creating and invoking {@link InjectionMethod}s. */
@@ -150,7 +147,7 @@ final class InjectionMethods {
         KotlinMetadataUtil metadataUtil) {
       ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
       moduleReference.ifPresent(arguments::add);
-      invokeArguments(binding, dependencyUsage, uniqueAssistedParameterName, requestingClass)
+      invokeArguments(binding, dependencyUsage, uniqueAssistedParameterName)
           .forEach(arguments::add);
 
       ClassName enclosingClass = generatedClassNameForBinding(binding);
@@ -161,8 +158,7 @@ final class InjectionMethods {
     static ImmutableList<CodeBlock> invokeArguments(
         ProvisionBinding binding,
         Function<DependencyRequest, CodeBlock> dependencyUsage,
-        Function<VariableElement, String> uniqueAssistedParameterName,
-        ClassName requestingClass) {
+        Function<VariableElement, String> uniqueAssistedParameterName) {
       ImmutableMap<VariableElement, DependencyRequest> dependencyRequestMap =
           binding.provisionDependencies().stream()
               .collect(
@@ -177,8 +173,7 @@ final class InjectionMethods {
           arguments.add(CodeBlock.of("$L", uniqueAssistedParameterName.apply(parameter)));
         } else if (dependencyRequestMap.containsKey(parameter)) {
           DependencyRequest request = dependencyRequestMap.get(parameter);
-          arguments.add(
-              injectionMethodArgument(request, dependencyUsage.apply(request), requestingClass));
+          arguments.add(dependencyUsage.apply(request));
         } else {
           throw new AssertionError("Unexpected parameter: " + parameter);
         }
@@ -374,46 +369,6 @@ final class InjectionMethods {
           + LOWER_CAMEL.to(UPPER_CAMEL, injectionSite.element().getSimpleName().toString())
           + indexString;
     }
-  }
-
-  private static CodeBlock injectionMethodArgument(
-      DependencyRequest dependency, CodeBlock argument, ClassName generatedTypeName) {
-    TypeMirror keyType = dependency.key().type().java();
-    CodeBlock.Builder codeBlock = CodeBlock.builder();
-    if (!isRawTypeAccessible(keyType, generatedTypeName.packageName())
-        && isTypeAccessibleFrom(keyType, generatedTypeName.packageName())) {
-      if (!dependency.kind().equals(RequestKind.INSTANCE)) {
-        TypeName usageTypeName = accessibleType(dependency);
-        codeBlock.add("($T) ($T)", usageTypeName, rawTypeName(usageTypeName));
-      } else if (dependency.requestElement().get().java().asType().getKind().equals(
-          TypeKind.TYPEVAR)) {
-        codeBlock.add("($T)", keyType);
-      }
-    }
-    return codeBlock.add(argument).build();
-  }
-
-  /**
-   * Returns the parameter type for {@code dependency}. If the raw type is not accessible, returns
-   * {@link Object}.
-   */
-  private static TypeName accessibleType(DependencyRequest dependency) {
-    TypeName typeName =
-        requestTypeName(dependency.kind(), accessibleType(dependency.key().type().java()));
-    return dependency
-            .requestElement()
-            .map(element -> element.java().asType().getKind().isPrimitive())
-            .orElse(false)
-        ? typeName.unbox()
-        : typeName;
-  }
-
-  /**
-   * Returns the accessible type for {@code type}. If the raw type is not accessible, returns {@link
-   * Object}.
-   */
-  private static TypeName accessibleType(TypeMirror type) {
-    return isRawTypePubliclyAccessible(type) ? TypeName.get(type) : TypeName.OBJECT;
   }
 
   private enum InstanceCastPolicy {
