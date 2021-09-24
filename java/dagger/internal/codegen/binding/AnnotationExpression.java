@@ -17,12 +17,10 @@
 package dagger.internal.codegen.binding;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
-import static com.google.auto.common.MoreElements.isType;
 import static com.google.auto.common.MoreTypes.asArray;
-import static com.google.auto.common.MoreTypes.asElement;
-import static com.google.auto.common.MoreTypes.asTypeElement;
 import static dagger.internal.codegen.binding.SourceFiles.classFileName;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
 import static java.util.stream.Collectors.toList;
 
 import com.google.auto.common.MoreElements;
@@ -30,7 +28,6 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.TypeName;
 import java.util.List;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -174,15 +171,5 @@ public class AnnotationExpression
       codeBlocks.add(this.visit(value, p));
     }
     return CodeBlock.of("{$L}", makeParametersCodeBlock(codeBlocks.build()));
-  }
-
-    /**
-   * If the visited type is an array, returns the name of its raw component type; otherwise returns
-   * the name of the type itself.
-   */
-  private TypeName rawTypeName(TypeMirror type) {
-    return type.getKind() == TypeKind.DECLARED && isType(asElement(type))
-        ? ClassName.get(asTypeElement(type))
-        : TypeName.get(type);
   }
 }
