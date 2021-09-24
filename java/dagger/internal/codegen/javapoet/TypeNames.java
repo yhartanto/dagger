@@ -126,6 +126,9 @@ public final class TypeNames {
       ClassName.get("com.google.common.util.concurrent", "Futures");
   public static final ClassName LISTENABLE_FUTURE =
       ClassName.get("com.google.common.util.concurrent", "ListenableFuture");
+  public static final ClassName GUAVA_OPTIONAL =
+      ClassName.get("com.google.common.base", "Optional");
+  public static final ClassName JDK_OPTIONAL = ClassName.get("java.util", "Optional");
 
   /**
    * {@link TypeName#VOID} is lowercase-v {@code void} whereas this represents the class, {@link

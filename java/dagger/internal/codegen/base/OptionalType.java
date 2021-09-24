@@ -26,6 +26,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.Name;
@@ -45,40 +46,39 @@ public abstract class OptionalType {
   /** A variant of {@code Optional}. */
   public enum OptionalKind {
     /** {@link com.google.common.base.Optional}. */
-    GUAVA_OPTIONAL(com.google.common.base.Optional.class, "absent"),
+    GUAVA_OPTIONAL(TypeNames.GUAVA_OPTIONAL, "absent"),
 
     /** {@link java.util.Optional}. */
-    JDK_OPTIONAL(java.util.Optional.class, "empty"),
-    ;
+    JDK_OPTIONAL(TypeNames.JDK_OPTIONAL, "empty");
 
-    private final Class<?> clazz;
-    private final String absentFactoryMethodName;
+    private final ClassName className;
+    private final String absentMethodName;
 
-    OptionalKind(Class<?> clazz, String absentFactoryMethodName) {
-      this.clazz = clazz;
-      this.absentFactoryMethodName = absentFactoryMethodName;
+    OptionalKind(ClassName className, String absentMethodName) {
+      this.className = className;
+      this.absentMethodName = absentMethodName;
     }
 
     /** Returns {@code valueType} wrapped in the correct class. */
     public ParameterizedTypeName of(TypeName valueType) {
-      return ParameterizedTypeName.get(ClassName.get(clazz), valueType);
+      return ParameterizedTypeName.get(className, valueType);
     }
 
     /** Returns an expression for the absent/empty value. */
     public CodeBlock absentValueExpression() {
-      return CodeBlock.of("$T.$L()", clazz, absentFactoryMethodName);
+      return CodeBlock.of("$T.$L()", className, absentMethodName);
     }
 
     /**
      * Returns an expression for the absent/empty value, parameterized with {@link #valueType()}.
      */
     public CodeBlock parameterizedAbsentValueExpression(OptionalType optionalType) {
-      return CodeBlock.of("$T.<$T>$L()", clazz, optionalType.valueType(), absentFactoryMethodName);
+      return CodeBlock.of("$T.<$T>$L()", className, optionalType.valueType(), absentMethodName);
     }
 
     /** Returns an expression for the present {@code value}. */
     public CodeBlock presentExpression(CodeBlock value) {
-      return CodeBlock.of("$T.of($L)", clazz, value);
+      return CodeBlock.of("$T.of($L)", className, value);
     }
 
     /**
@@ -86,7 +86,7 @@ public abstract class OptionalType {
      * matter what type the value is.
      */
     public CodeBlock presentObjectExpression(CodeBlock value) {
-      return CodeBlock.of("$T.<$T>of($L)", clazz, Object.class, value);
+      return CodeBlock.of("$T.<$T>of($L)", className, TypeName.OBJECT, value);
     }
   }
 
@@ -96,7 +96,7 @@ public abstract class OptionalType {
         public Optional<OptionalKind> visitDeclared(DeclaredType t, Void p) {
           for (OptionalKind optionalKind : OptionalKind.values()) {
             Name qualifiedName = MoreElements.asType(t.asElement()).getQualifiedName();
-            if (qualifiedName.contentEquals(optionalKind.clazz.getCanonicalName())) {
+            if (qualifiedName.contentEquals(optionalKind.className.canonicalName())) {
               return Optional.of(optionalKind);
             }
           }
