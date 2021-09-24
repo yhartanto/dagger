@@ -28,7 +28,6 @@ import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.FrameworkType;
 import dagger.internal.codegen.binding.ProductionBinding;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -39,13 +38,9 @@ import java.util.Optional;
  */
 final class ProductionBindingRepresentation implements BindingRepresentation {
   private final ProductionBinding binding;
-  private final ComponentImplementation componentImplementation;
   private final DerivedFromFrameworkInstanceRequestRepresentation.Factory
       derivedFromFrameworkInstanceRequestRepresentationFactory;
-  private final ProducerNodeInstanceRequestRepresentation.Factory
-      producerNodeInstanceRequestRepresentationFactory;
-  private final UnscopedFrameworkInstanceCreationExpressionFactory
-      unscopedFrameworkInstanceCreationExpressionFactory;
+  private final RequestRepresentation frameworkInstanceRequestRepresentation;
   private final Map<BindingRequest, RequestRepresentation> requestRepresentations = new HashMap<>();
 
   @AssistedInject
@@ -60,13 +55,21 @@ final class ProductionBindingRepresentation implements BindingRepresentation {
           unscopedFrameworkInstanceCreationExpressionFactory,
       DaggerTypes types) {
     this.binding = binding;
-    this.componentImplementation = componentImplementation;
     this.derivedFromFrameworkInstanceRequestRepresentationFactory =
         derivedFromFrameworkInstanceRequestRepresentationFactory;
-    this.producerNodeInstanceRequestRepresentationFactory =
-        producerNodeInstanceRequestRepresentationFactory;
-    this.unscopedFrameworkInstanceCreationExpressionFactory =
-        unscopedFrameworkInstanceCreationExpressionFactory;
+    Optional<MemberSelect> staticMethod = staticFactoryCreation();
+    FrameworkInstanceSupplier frameworkInstanceSupplier =
+        staticMethod.isPresent()
+            ? staticMethod::get
+            : new FrameworkFieldInitializer(
+                componentImplementation,
+                binding,
+                binding.scope().isPresent()
+                    ? scope(
+                        binding, unscopedFrameworkInstanceCreationExpressionFactory.create(binding))
+                    : unscopedFrameworkInstanceCreationExpressionFactory.create(binding));
+    this.frameworkInstanceRequestRepresentation =
+        producerNodeInstanceRequestRepresentationFactory.create(binding, frameworkInstanceSupplier);
   }
 
   @Override
@@ -77,32 +80,12 @@ final class ProductionBindingRepresentation implements BindingRepresentation {
 
   private RequestRepresentation getRequestRepresentationUncached(BindingRequest request) {
     return request.frameworkType().isPresent()
-        ? frameworkInstanceRequestRepresentation()
+        ? frameworkInstanceRequestRepresentation
         : derivedFromFrameworkInstanceRequestRepresentationFactory.create(
-            request, FrameworkType.PRODUCER_NODE);
+            frameworkInstanceRequestRepresentation,
+            request.requestKind(),
+            FrameworkType.PRODUCER_NODE);
   }
-
-  /**
-   * Returns a binding expression that uses a {@link dagger.producers.Producer} for production
-   * bindings.
-   */
-  private RequestRepresentation frameworkInstanceRequestRepresentation() {
-    Optional<MemberSelect> staticMethod = staticFactoryCreation();
-    if (staticMethod.isPresent()) {
-      return producerNodeInstanceRequestRepresentationFactory.create(binding, staticMethod::get);
-    }
-    FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
-        unscopedFrameworkInstanceCreationExpressionFactory.create(binding);
-    return producerNodeInstanceRequestRepresentationFactory.create(
-        binding,
-        new FrameworkFieldInitializer(
-            componentImplementation,
-            binding,
-            binding.scope().isPresent()
-                ? scope(binding, frameworkInstanceCreationExpression)
-                : frameworkInstanceCreationExpression));
-  }
-
   /**
    * If {@code resolvedBindings} is an unscoped provision binding with no factory arguments, then we
    * don't need a field to hold its factory. In that case, this method returns the static member

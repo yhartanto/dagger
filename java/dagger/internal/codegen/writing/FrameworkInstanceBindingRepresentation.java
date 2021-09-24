@@ -85,18 +85,13 @@ final class FrameworkInstanceBindingRepresentation {
   private RequestRepresentation getRequestRepresentationUncached(BindingRequest request) {
     switch (request.requestKind()) {
       case INSTANCE:
-        return derivedFromFrameworkInstanceRequestRepresentationFactory.create(
-            bindingRequest(binding.key(), RequestKind.INSTANCE), FrameworkType.PROVIDER);
-
-      case PROVIDER:
-        return providerRequestRepresentation;
-
       case LAZY:
       case PRODUCED:
       case PROVIDER_OF_LAZY:
         return derivedFromFrameworkInstanceRequestRepresentationFactory.create(
-            request, FrameworkType.PROVIDER);
-
+            providerRequestRepresentation, request.requestKind(), FrameworkType.PROVIDER);
+      case PROVIDER:
+        return providerRequestRepresentation;
       case PRODUCER:
         return producerFromProviderRepresentation;
 
