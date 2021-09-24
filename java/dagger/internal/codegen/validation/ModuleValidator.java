@@ -18,6 +18,7 @@ package dagger.internal.codegen.validation;
 
 import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.auto.common.Visibility.PRIVATE;
 import static com.google.auto.common.Visibility.PUBLIC;
@@ -56,7 +57,6 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
-import com.google.errorprone.annotations.FormatMethod;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.ModuleAnnotation;
 import dagger.internal.codegen.binding.BindingGraphFactory;
@@ -88,10 +88,9 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleAnnotationValueVisitor8;
-import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * A {@linkplain ValidationReport validator} for {@link dagger.Module}s or {@link
@@ -264,39 +263,28 @@ public final class ModuleValidator {
     ModuleAnnotation moduleAnnotation = moduleAnnotation(moduleKind.getModuleAnnotation(subject));
     for (AnnotationValue subcomponentAttribute :
         moduleAnnotation.subcomponentsAsAnnotationValues()) {
-      asType(subcomponentAttribute)
-          .accept(
-              new SimpleTypeVisitor8<Void, Void>() {
-                @Override
-                protected Void defaultAction(TypeMirror e, Void aVoid) {
-                  builder.addError(
-                      e + " is not a valid subcomponent type",
-                      subject,
-                      moduleAnnotation.annotation(),
-                      subcomponentAttribute);
-                  return null;
-                }
+      TypeMirror type = asType(subcomponentAttribute);
+      if (type.getKind() != TypeKind.DECLARED) {
+        builder.addError(
+            type + " is not a valid subcomponent type",
+            subject,
+            moduleAnnotation.annotation(),
+            subcomponentAttribute);
+        continue;
+      }
 
-                @Override
-                public Void visitDeclared(DeclaredType declaredType, Void aVoid) {
-                  TypeElement attributeType = asTypeElement(declaredType);
-                  if (isAnyAnnotationPresent(attributeType, SUBCOMPONENT_TYPES)) {
-                    validateSubcomponentHasBuilder(
-                        attributeType, moduleAnnotation.annotation(), builder);
-                  } else {
-                    builder.addError(
-                        isAnyAnnotationPresent(attributeType, SUBCOMPONENT_CREATOR_TYPES)
-                            ? moduleSubcomponentsIncludesCreator(attributeType)
-                            : moduleSubcomponentsIncludesNonSubcomponent(attributeType),
-                        subject,
-                        moduleAnnotation.annotation(),
-                        subcomponentAttribute);
-                  }
-
-                  return null;
-                }
-              },
-              null);
+      TypeElement attributeType = asTypeElement(type);
+      if (isAnyAnnotationPresent(attributeType, SUBCOMPONENT_TYPES)) {
+        validateSubcomponentHasBuilder(attributeType, moduleAnnotation.annotation(), builder);
+      } else {
+        builder.addError(
+            isAnyAnnotationPresent(attributeType, SUBCOMPONENT_CREATOR_TYPES)
+                ? moduleSubcomponentsIncludesCreator(attributeType)
+                : moduleSubcomponentsIncludesNonSubcomponent(attributeType),
+            subject,
+            moduleAnnotation.annotation(),
+            subcomponentAttribute);
+      }
     }
   }
 
@@ -418,53 +406,57 @@ public final class ModuleValidator {
     ValidationReport.Builder subreport = ValidationReport.about(annotatedType);
     ImmutableSet<ClassName> validModuleAnnotations =
         validModuleKinds.stream().map(ModuleKind::annotation).collect(toImmutableSet());
-
+    // TODO(bcorso): Consider creating a DiagnosticLocation object to encapsulate the location in a
+    // single object to avoid duplication across all reported errors
     for (AnnotationValue includedModule : getModules(annotation)) {
-      asType(includedModule)
-          .accept(
-              new SimpleTypeVisitor8<Void, Void>() {
-                @Override
-                protected Void defaultAction(TypeMirror mirror, Void p) {
-                  reportError("%s is not a valid module type.", mirror);
-                  return null;
-                }
+      TypeMirror type = asType(includedModule);
+      if (type.getKind() != TypeKind.DECLARED) {
+        subreport.addError(
+            String.format("%s is not a valid module type.", type),
+            annotatedType,
+            annotation,
+            includedModule);
+        continue;
+      }
 
-                @Override
-                public Void visitDeclared(DeclaredType t, Void p) {
-                  TypeElement module = MoreElements.asType(t.asElement());
-                  if (!t.getTypeArguments().isEmpty()) {
-                    reportError(
-                        "%s is listed as a module, but has type parameters",
-                        module.getQualifiedName());
-                  }
-                  if (!isAnyAnnotationPresent(module, validModuleAnnotations)) {
-                    reportError(
-                        "%s is listed as a module, but is not annotated with %s",
-                        module.getQualifiedName(),
-                        (validModuleAnnotations.size() > 1 ? "one of " : "")
-                            + validModuleAnnotations.stream()
-                                .map(otherClass -> "@" + otherClass.simpleName())
-                                .collect(joining(", ")));
-                  } else if (knownModules.contains(module)
-                      && !validate(module, visitedModules).isClean()) {
-                    reportError("%s has errors", module.getQualifiedName());
-                  }
-                  if (metadataUtil.isCompanionObjectClass(module)) {
-                    reportError(
-                        "%s is listed as a module, but it is a companion object class. "
-                            + "Add @Module to the enclosing class and reference that instead.",
-                        module.getQualifiedName());
-                  }
-                  return null;
-                }
-
-                @FormatMethod
-                private void reportError(String format, Object... args) {
-                  subreport.addError(
-                      String.format(format, args), annotatedType, annotation, includedModule);
-                }
-              },
-              null);
+      TypeElement module = asTypeElement(type);
+      if (!asDeclared(type).getTypeArguments().isEmpty()) {
+        subreport.addError(
+            String.format(
+                "%s is listed as a module, but has type parameters", module.getQualifiedName()),
+            annotatedType,
+            annotation,
+            includedModule);
+      }
+      if (!isAnyAnnotationPresent(module, validModuleAnnotations)) {
+        subreport.addError(
+            String.format(
+                "%s is listed as a module, but is not annotated with %s",
+                module.getQualifiedName(),
+                (validModuleAnnotations.size() > 1 ? "one of " : "")
+                    + validModuleAnnotations.stream()
+                        .map(otherClass -> "@" + otherClass.simpleName())
+                        .collect(joining(", "))),
+            annotatedType,
+            annotation,
+            includedModule);
+      } else if (knownModules.contains(module) && !validate(module, visitedModules).isClean()) {
+        subreport.addError(
+            String.format("%s has errors", module.getQualifiedName()),
+            annotatedType,
+            annotation,
+            includedModule);
+      }
+      if (metadataUtil.isCompanionObjectClass(module)) {
+        subreport.addError(
+            String.format(
+                "%s is listed as a module, but it is a companion object class. "
+                    + "Add @Module to the enclosing class and reference that instead.",
+                module.getQualifiedName()),
+            annotatedType,
+            annotation,
+            includedModule);
+      }
     }
     return subreport.build();
   }
