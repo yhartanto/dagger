@@ -16,20 +16,19 @@
 
 package dagger.internal.codegen.validation;
 
+import static com.google.auto.common.MoreTypes.asArray;
+import static com.google.auto.common.MoreTypes.asDeclared;
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.google.auto.common.MoreElements;
+import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import javax.inject.Inject;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.PrimitiveType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.type.TypeVisitor;
-import javax.lang.model.util.SimpleTypeVisitor8;
 
 /**
  * Validates members injection requests (members injection methods on components and requests for
@@ -48,7 +47,7 @@ final class MembersInjectionValidator {
       Element requestElement, TypeMirror membersInjectedType) {
     ValidationReport.Builder report = ValidationReport.about(requestElement);
     checkQualifiers(report, requestElement);
-    membersInjectedType.accept(VALIDATE_MEMBERS_INJECTED_TYPE, report);
+    checkMembersInjectedType(report, membersInjectedType);
     return report.build();
   }
 
@@ -65,7 +64,7 @@ final class MembersInjectionValidator {
     ValidationReport.Builder report = ValidationReport.about(method);
     checkQualifiers(report, method);
     checkQualifiers(report, method.getParameters().get(0));
-    membersInjectedType.accept(VALIDATE_MEMBERS_INJECTED_TYPE, report);
+    checkMembersInjectedType(report, membersInjectedType);
     return report.build();
   }
 
@@ -76,76 +75,55 @@ final class MembersInjectionValidator {
     }
   }
 
-  private static final TypeVisitor<Void, ValidationReport.Builder> VALIDATE_MEMBERS_INJECTED_TYPE =
-      new SimpleTypeVisitor8<Void, ValidationReport.Builder>() {
-        // Only declared types can be members-injected.
-        @Override
-        protected Void defaultAction(TypeMirror type, ValidationReport.Builder report) {
-          report.addError("Cannot inject members into " + type);
-          return null;
-        }
+  private void checkMembersInjectedType(ValidationReport.Builder report, TypeMirror type) {
+    // Only declared types can be members-injected.
+    if (type.getKind() != TypeKind.DECLARED) {
+      report.addError("Cannot inject members into " + type);
+      return;
+    }
 
-        @Override
-        public Void visitDeclared(DeclaredType type, ValidationReport.Builder report) {
-          if (type.getTypeArguments().isEmpty()) {
-            // If the type is the erasure of a generic type, that means the user referred to
-            // Foo<T> as just 'Foo', which we don't allow.  (This is a judgement call; we
-            // *could* allow it and instantiate the type bounds, but we don't.)
-            if (!MoreElements.asType(type.asElement()).getTypeParameters().isEmpty()) {
-              report.addError("Cannot inject members into raw type " + type);
-            }
-          } else {
-            // If the type has arguments, validate that each type argument is declared.
-            // Otherwise the type argument may be a wildcard (or other type), and we can't
-            // resolve that to actual types.  For array type arguments, validate the type of the
-            // array.
-            for (TypeMirror arg : type.getTypeArguments()) {
-              if (!arg.accept(DECLARED_OR_ARRAY, null)) {
-                report.addError(
-                    "Cannot inject members into types with unbounded type arguments: " + type);
-              }
-            }
-          }
-          return null;
-        }
-      };
+    // If the type is the erasure of a generic type, that means the user referred to
+    // Foo<T> as just 'Foo', which we don't allow.  (This is a judgement call; we
+    // *could* allow it and instantiate the type bounds, but we don't.)
+    ImmutableList<TypeMirror> typeArguments =
+        ImmutableList.copyOf(asDeclared(type).getTypeArguments());
+    ImmutableList<Element> typeParameters =
+        ImmutableList.copyOf(asTypeElement(type).getTypeParameters());
+    if (typeArguments.isEmpty() && !typeParameters.isEmpty()) {
+      report.addError("Cannot inject members into raw type " + type);
+      return;
+    }
+
+    // If the type has arguments, validate that each type argument is declared.
+    // Otherwise the type argument may be a wildcard (or other type), and we can't
+    // resolve that to actual types.  For array type arguments, validate the type of the array.
+    if (!typeArguments.stream().allMatch(this::isResolvableTypeArgument)) {
+      report.addError("Cannot inject members into types with unbounded type arguments: " + type);
+    }
+  }
 
   // TODO(dpb): Can this be inverted so it explicitly rejects wildcards or type variables?
   // This logic is hard to describe.
-  private static final TypeVisitor<Boolean, Void> DECLARED_OR_ARRAY =
-      new SimpleTypeVisitor8<Boolean, Void>(false) {
-        @Override
-        public Boolean visitArray(ArrayType arrayType, Void p) {
-          return arrayType
-              .getComponentType()
-              .accept(
-                  new SimpleTypeVisitor8<Boolean, Void>(false) {
-                    @Override
-                    public Boolean visitDeclared(DeclaredType declaredType, Void p) {
-                      for (TypeMirror arg : declaredType.getTypeArguments()) {
-                        if (!arg.accept(this, null)) {
-                          return false;
-                        }
-                      }
-                      return true;
-                    }
+  private boolean isResolvableTypeArgument(TypeMirror typeArgument) {
+    switch (typeArgument.getKind()) {
+      case DECLARED:
+        return true;
+      case ARRAY:
+        return isResolvableArrayComponentType(asArray(typeArgument).getComponentType());
+      default:
+        return false;
+    }
+  }
 
-                    @Override
-                    public Boolean visitArray(ArrayType arrayType, Void p) {
-                      return arrayType.getComponentType().accept(this, null);
-                    }
-
-                    @Override
-                    public Boolean visitPrimitive(PrimitiveType primitiveType, Void p) {
-                      return true;
-                    }
-                  },
-                  null);
-        }
-
-        @Override
-        public Boolean visitDeclared(DeclaredType t, Void p) {
-          return true;
-        }
-      };
+  private boolean isResolvableArrayComponentType(TypeMirror componentType) {
+    switch (componentType.getKind()) {
+      case DECLARED:
+        return asDeclared(componentType).getTypeArguments().stream()
+            .allMatch(this::isResolvableTypeArgument);
+      case ARRAY:
+        return isResolvableArrayComponentType(asArray(componentType).getComponentType());
+      default:
+        return componentType.getKind().isPrimitive();
+    }
+  }
 }
