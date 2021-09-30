@@ -24,6 +24,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.auto.common.AnnotationMirrors;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -39,7 +40,6 @@ import dagger.hilt.processor.internal.Processors;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -50,6 +50,11 @@ import javax.lang.model.util.ElementFilter;
 
 /** Helper class for writing Hilt generators. */
 final class Generators {
+  private static final ImmutableMap<ClassName, String> SUPPRESS_ANNOTATION_PROPERTY_NAME =
+      ImmutableMap.<ClassName, String>builder()
+          .put(ClassNames.SUPPRESS_WARNINGS, "value")
+          .put(ClassNames.KOTLIN_SUPPRESS, "names")
+          .build();
 
   static void addGeneratedBaseClassJavadoc(TypeSpec.Builder builder, ClassName annotation) {
     builder.addJavadoc("A generated base class to be extended by the @$T annotated class. If using"
@@ -150,12 +155,13 @@ final class Generators {
   /** Copies SuppressWarnings annotations from the annotated element to the generated element. */
   static void copySuppressAnnotations(Element element, TypeSpec.Builder builder) {
     ImmutableSet<String> suppressValues =
-        Stream.of(ClassNames.SUPPRESS_WARNINGS, ClassNames.KOTLIN_SUPPRESS)
+        SUPPRESS_ANNOTATION_PROPERTY_NAME.keySet().stream()
             .filter(annotation -> Processors.hasAnnotation(element, annotation))
             .map(
                 annotation ->
                     AnnotationMirrors.getAnnotationValue(
-                        Processors.getAnnotationMirror(element, annotation), "value"))
+                        Processors.getAnnotationMirror(element, annotation),
+                        SUPPRESS_ANNOTATION_PROPERTY_NAME.get(annotation)))
             .flatMap(value -> Processors.getStringArrayAnnotationValue(value).stream())
             .collect(toImmutableSet());
 
