@@ -20,6 +20,17 @@ if [[ "$VERSION_NAME" =~ " " ]]; then
   exit 3
 fi
 
+BAZEL_VERSION=$(bazel --version)
+if [[ $BAZEL_VERSION != *"3.7.1"* ]]; then
+  echo "Must use Bazel version 3.7.1"
+  exit 4
+fi
+
+if [[ -z "${ANDROID_HOME}" ]]; then
+  echo "ANDROID_HOME environment variable must be set"
+  exit 5
+fi
+
 bash $(dirname $0)/run-local-tests.sh
 
 bash $(dirname $0)/deploy-all.sh \
