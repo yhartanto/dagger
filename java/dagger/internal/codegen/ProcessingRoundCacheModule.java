@@ -25,6 +25,7 @@ import dagger.internal.codegen.kotlin.KotlinMetadataFactory;
 import dagger.internal.codegen.validation.AnyBindingMethodValidator;
 import dagger.internal.codegen.validation.ComponentCreatorValidator;
 import dagger.internal.codegen.validation.ComponentValidator;
+import dagger.internal.codegen.validation.EnclosingTypeElementValidator;
 import dagger.internal.codegen.validation.InjectValidator;
 import dagger.multibindings.IntoSet;
 
@@ -61,4 +62,8 @@ interface ProcessingRoundCacheModule {
   @Binds
   @IntoSet
   ClearableCache kotlinMetadata(KotlinMetadataFactory cache);
+
+  @Binds
+  @IntoSet
+  ClearableCache enclosingTypeElementValidator(EnclosingTypeElementValidator cache);
 }

@@ -2705,6 +2705,53 @@ public class ComponentProcessorTest {
                 .build());
   }
 
+  @Test
+  public void injectedTypeHasGeneratedParam() {
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "public final class Foo {",
+            "",
+            "  @Inject",
+            "  public Foo(GeneratedParam param) {}",
+            "",
+            "  @Inject",
+            "  public void init() {}",
+            "}");
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.TestComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "import java.util.Set;",
+            "",
+            "@Component",
+            "interface TestComponent {",
+            "  Foo foo();",
+            "}");
+
+    Compilation compilation =
+        daggerCompiler(
+                new GeneratingProcessor(
+                    "test.GeneratedParam",
+                    "package test;",
+                    "",
+                    "import javax.inject.Inject;",
+                    "",
+                    "public final class GeneratedParam {",
+                    "",
+                    "  @Inject",
+                    "  public GeneratedParam() {}",
+                    "}"))
+            .compile(foo, component);
+    assertThat(compilation).succeededWithoutWarnings();
+  }
+
   /**
    * A {@link ComponentProcessor} that excludes elements using a {@link Predicate}.
    */

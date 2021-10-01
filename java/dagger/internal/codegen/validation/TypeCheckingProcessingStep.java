@@ -31,12 +31,15 @@ import com.google.common.collect.Maps;
 import com.squareup.javapoet.ClassName;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
 
 /**
  * A {@link XProcessingStep} that processes one element at a time and defers any for which {@link
  * TypeNotPresentException} is thrown.
  */
 public abstract class TypeCheckingProcessingStep<E extends XElement> implements XProcessingStep {
+
+  @Inject EnclosingTypeElementValidator elementValidator;
 
   @Override
   public final ImmutableSet<String> annotations() {
@@ -52,7 +55,17 @@ public abstract class TypeCheckingProcessingStep<E extends XElement> implements 
         .forEach(
             (element, annotations) -> {
               try {
-                process((E) element, annotations);
+                // The XBasicAnnotationProcessor only validates the element itself. However, we
+                // validate the enclosing type here to keep the previous behavior of
+                // BasicAnnotationProcessor, since Dagger still relies on this behavior.
+                // TODO(b/201479062): It's inefficient to require validation of the entire enclosing
+                //  type, we should try to remove this and handle any additional validation into the
+                //  steps that need it.
+                if (elementValidator.validateEnclosingType(element)) {
+                  process((E) element, annotations);
+                } else {
+                  deferredElements.add(element);
+                }
               } catch (TypeNotPresentException e) {
                 deferredElements.add(element);
               }
