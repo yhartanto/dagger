@@ -69,11 +69,9 @@ public abstract class FrameworkField {
    *     one for the binding's type.
    */
   public static FrameworkField forBinding(
-      ContributionBinding binding, Optional<ClassName> frameworkClass) {
+      ContributionBinding binding, Optional<ClassName> frameworkClassName) {
     return create(
-        frameworkClass.orElse(
-            ClassName.get(
-                FrameworkType.forBindingType(binding.bindingType()).frameworkClass())),
+        frameworkClassName.orElse(binding.frameworkType().frameworkClassName()),
         TypeName.get(fieldValueType(binding)),
         frameworkFieldName(binding));
   }

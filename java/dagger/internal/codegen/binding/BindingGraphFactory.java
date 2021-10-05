@@ -51,9 +51,8 @@ import dagger.internal.codegen.base.Keys;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.producers.Produced;
-import dagger.producers.Producer;
 import dagger.producers.internal.ProductionExecutorModule;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
@@ -70,7 +69,6 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -292,7 +290,8 @@ public final class BindingGraphFactory implements ClearableCache {
 
   /** Returns a descriptor {@link ProductionExecutorModule}. */
   private ModuleDescriptor descriptorForProductionExecutorModule() {
-    return moduleDescriptorFactory.create(elements.getTypeElement(ProductionExecutorModule.class));
+    return moduleDescriptorFactory.create(
+        elements.getTypeElement(TypeNames.PRODUCTION_EXECTUTOR_MODULE));
   }
 
   /** Indexes {@code bindingDeclarations} by {@link BindingDeclaration#key()}. */
@@ -517,9 +516,13 @@ public final class BindingGraphFactory implements ClearableCache {
     private ImmutableSet<Key> keysMatchingRequestUncached(Key requestKey) {
       ImmutableSet.Builder<Key> keys = ImmutableSet.builder();
       keys.add(requestKey);
-      keyFactory.unwrapSetKey(requestKey, Produced.class).ifPresent(keys::add);
-      keyFactory.rewrapMapKey(requestKey, Producer.class, Provider.class).ifPresent(keys::add);
-      keyFactory.rewrapMapKey(requestKey, Provider.class, Producer.class).ifPresent(keys::add);
+      keyFactory.unwrapSetKey(requestKey, TypeNames.PRODUCED).ifPresent(keys::add);
+      keyFactory
+          .rewrapMapKey(requestKey, TypeNames.PRODUCER, TypeNames.PROVIDER)
+          .ifPresent(keys::add);
+      keyFactory
+          .rewrapMapKey(requestKey, TypeNames.PROVIDER, TypeNames.PRODUCER)
+          .ifPresent(keys::add);
       keys.addAll(keyFactory.implicitFrameworkMapKeys(requestKey));
       return keys.build();
     }

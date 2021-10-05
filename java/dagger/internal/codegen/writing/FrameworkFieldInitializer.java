@@ -35,7 +35,6 @@ import dagger.internal.codegen.binding.FrameworkField;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
-import dagger.producers.internal.DelegateProducer;
 import dagger.spi.model.BindingKind;
 import java.util.Optional;
 
@@ -164,8 +163,8 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     return fieldSpec;
   }
 
-  private Class<?> delegateType() {
-    return isProvider() ? DelegateFactory.class : DelegateProducer.class;
+  private ClassName delegateType() {
+    return isProvider() ? TypeNames.DELEGATE_FACTORY : TypeNames.DELEGATE_PRODUCER;
   }
 
   private boolean isProvider() {

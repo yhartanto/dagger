@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
+import com.squareup.javapoet.TypeName;
 import dagger.Component;
 import dagger.Module;
 import dagger.Subcomponent;
@@ -364,7 +365,7 @@ public abstract class ComponentDescriptor {
   static boolean isComponentContributionMethod(DaggerElements elements, ExecutableElement method) {
     return method.getParameters().isEmpty()
         && !method.getReturnType().getKind().equals(VOID)
-        && !elements.getTypeElement(Object.class).equals(method.getEnclosingElement())
+        && !elements.getTypeElement(TypeName.OBJECT).equals(method.getEnclosingElement())
         && !NON_CONTRIBUTING_OBJECT_METHOD_NAMES.contains(method.getSimpleName().toString());
   }
 

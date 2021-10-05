@@ -41,6 +41,7 @@ import com.google.common.graph.NetworkBuilder;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraph.ComponentNode;
@@ -56,7 +57,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
 /** Reports errors for dependency cycles. */
@@ -229,7 +229,7 @@ final class DependencyCycleValidator implements BindingGraphPlugin {
       case INSTANCE:
         if (MapType.isMap(requestedType)) {
           MapType mapType = MapType.from(requestedType);
-          return !mapType.isRawType() && mapType.valuesAreTypeOf(Provider.class);
+          return !mapType.isRawType() && mapType.valuesAreTypeOf(TypeNames.PROVIDER);
         }
         // fall through
 

@@ -22,6 +22,7 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.testing.compile.CompilationRule;
+import com.squareup.javapoet.ClassName;
 import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
@@ -71,7 +72,7 @@ public class MethodSignatureFormatterTest {
   }
 
   @Test public void methodSignatureTest() {
-    TypeElement inner = elements.getTypeElement(InnerClass.class);
+    TypeElement inner = elements.getTypeElement(ClassName.get(InnerClass.class));
     ExecutableElement method = Iterables.getOnlyElement(methodsIn(inner.getEnclosedElements()));
     String formatted = new MethodSignatureFormatter(types, injectionAnnotations).format(method);
     // This is gross, but it turns out that annotation order is not guaranteed when getting

@@ -272,7 +272,7 @@ final class OptionalFactories {
       return new StringBuilder("Present")
           .append(UPPER_UNDERSCORE.to(UPPER_CAMEL, optionalKind().name()))
           .append(UPPER_UNDERSCORE.to(UPPER_CAMEL, valueKind().toString()))
-          .append(frameworkType().frameworkClass().getSimpleName())
+          .append(frameworkType().frameworkClassName().simpleName())
           .toString();
     }
 

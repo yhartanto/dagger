@@ -36,6 +36,7 @@ import static javax.lang.model.element.ElementKind.METHOD;
 
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
 import dagger.Binds;
 import dagger.BindsOptionalOf;
 import dagger.internal.codegen.base.ContributionType;
@@ -45,25 +46,18 @@ import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.base.SimpleAnnotationMirror;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.multibindings.Multibinds;
-import dagger.producers.Produced;
-import dagger.producers.Producer;
-import dagger.producers.Production;
-import dagger.producers.internal.ProductionImplementation;
-import dagger.producers.monitoring.ProductionComponentMonitor;
 import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.Key;
 import dagger.spi.model.Key.MultibindingContributionIdentifier;
 import dagger.spi.model.RequestKind;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.Executor;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -91,12 +85,13 @@ public final class KeyFactory {
   }
 
   private DeclaredType setOf(TypeMirror elementType) {
-    return types.getDeclaredType(elements.getTypeElement(Set.class), boxPrimitives(elementType));
+    return types.getDeclaredType(
+        elements.getTypeElement(TypeNames.SET), boxPrimitives(elementType));
   }
 
   private DeclaredType mapOf(TypeMirror keyType, TypeMirror valueType) {
     return types.getDeclaredType(
-        elements.getTypeElement(Map.class), boxPrimitives(keyType), boxPrimitives(valueType));
+        elements.getTypeElement(TypeNames.MAP), boxPrimitives(keyType), boxPrimitives(valueType));
   }
 
   /** Returns {@code Map<KeyType, FrameworkType<ValueType>>}. */
@@ -134,12 +129,12 @@ public final class KeyFactory {
 
   public Key forProvidesMethod(ExecutableElement method, TypeElement contributingModule) {
     return forBindingMethod(
-        method, contributingModule, Optional.of(elements.getTypeElement(Provider.class)));
+        method, contributingModule, Optional.of(elements.getTypeElement(TypeNames.PROVIDER)));
   }
 
   public Key forProducesMethod(ExecutableElement method, TypeElement contributingModule) {
     return forBindingMethod(
-        method, contributingModule, Optional.of(elements.getTypeElement(Producer.class)));
+        method, contributingModule, Optional.of(elements.getTypeElement(TypeNames.PRODUCER)));
   }
 
   /** Returns the key bound by a {@link Binds} method. */
@@ -165,7 +160,7 @@ public final class KeyFactory {
     ContributionType contributionType = ContributionType.fromBindingElement(method);
     TypeMirror returnType = methodType.getReturnType();
     if (frameworkType.isPresent()
-        && frameworkType.get().equals(elements.getTypeElement(Producer.class))
+        && frameworkType.get().equals(elements.getTypeElement(TypeNames.PRODUCER))
         && isType(returnType)) {
       if (isFutureType(methodType.getReturnType())) {
         returnType = getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments());
@@ -175,7 +170,7 @@ public final class KeyFactory {
         if (isFutureType(setType.elementType())) {
           returnType =
               types.getDeclaredType(
-                  elements.getTypeElement(Set.class), unwrapType(setType.elementType()));
+                  elements.getTypeElement(TypeNames.SET), unwrapType(setType.elementType()));
         }
       }
     }
@@ -202,7 +197,7 @@ public final class KeyFactory {
         MapType.isMap(returnType)
             ? mapOfFrameworkType(
                 MapType.from(returnType).keyType(),
-                elements.getTypeElement(Provider.class),
+                elements.getTypeElement(TypeNames.PROVIDER),
                 MapType.from(returnType).valueType())
             : returnType;
     return forMethod(method, keyType);
@@ -238,7 +233,7 @@ public final class KeyFactory {
    * from {@link DelegateDeclaration#key()} to {@code Map<K, FrameworkType<V>>}. If {@code
    * delegateDeclaration} is not a map contribution, its key is returned.
    */
-  Key forDelegateBinding(DelegateDeclaration delegateDeclaration, Class<?> frameworkType) {
+  Key forDelegateBinding(DelegateDeclaration delegateDeclaration, ClassName frameworkType) {
     return delegateDeclaration.contributionType().equals(ContributionType.MAP)
         ? wrapMapValue(delegateDeclaration.key(), frameworkType)
         : delegateDeclaration.key();
@@ -268,21 +263,24 @@ public final class KeyFactory {
   }
 
   public Key forProductionExecutor() {
-    return Key.builder(fromJava(elements.getTypeElement(Executor.class).asType()))
-        .qualifier(fromJava(SimpleAnnotationMirror.of(elements.getTypeElement(Production.class))))
+    return Key.builder(fromJava(elements.getTypeElement(TypeNames.EXECUTOR).asType()))
+        .qualifier(
+            fromJava(SimpleAnnotationMirror.of(elements.getTypeElement(TypeNames.PRODUCTION))))
         .build();
   }
 
   public Key forProductionImplementationExecutor() {
-    return Key.builder(fromJava(elements.getTypeElement(Executor.class).asType()))
+    return Key.builder(fromJava(elements.getTypeElement(TypeNames.EXECUTOR).asType()))
         .qualifier(
             fromJava(
-                SimpleAnnotationMirror.of(elements.getTypeElement(ProductionImplementation.class))))
+                SimpleAnnotationMirror.of(
+                    elements.getTypeElement(TypeNames.PRODUCTION_IMPLEMENTATION))))
         .build();
   }
 
   public Key forProductionComponentMonitor() {
-    return Key.builder(fromJava(elements.getTypeElement(ProductionComponentMonitor.class).asType()))
+    return Key.builder(
+            fromJava(elements.getTypeElement(TypeNames.PRODUCTION_COMPONENT_MONITOR).asType()))
         .build();
   }
 
@@ -306,8 +304,8 @@ public final class KeyFactory {
    */
   Optional<Key> implicitMapProviderKeyFrom(Key possibleMapKey) {
     return firstPresent(
-        rewrapMapKey(possibleMapKey, Produced.class, Provider.class),
-        wrapMapKey(possibleMapKey, Provider.class));
+        rewrapMapKey(possibleMapKey, TypeNames.PRODUCED, TypeNames.PROVIDER),
+        wrapMapKey(possibleMapKey, TypeNames.PROVIDER));
   }
 
   /**
@@ -318,8 +316,8 @@ public final class KeyFactory {
    */
   Optional<Key> implicitMapProducerKeyFrom(Key possibleMapKey) {
     return firstPresent(
-        rewrapMapKey(possibleMapKey, Produced.class, Producer.class),
-        wrapMapKey(possibleMapKey, Producer.class));
+        rewrapMapKey(possibleMapKey, TypeNames.PRODUCED, TypeNames.PRODUCER),
+        wrapMapKey(possibleMapKey, TypeNames.PRODUCER));
   }
 
   /**
@@ -333,7 +331,8 @@ public final class KeyFactory {
     if (MapType.isMap(key)) {
       MapType mapType = MapType.from(key);
       if (!mapType.isRawType()) {
-        for (Class<?> frameworkClass : asList(Provider.class, Producer.class, Produced.class)) {
+        for (ClassName frameworkClass :
+            asList(TypeNames.PROVIDER, TypeNames.PRODUCER, TypeNames.PRODUCED)) {
           if (mapType.valuesAreTypeOf(frameworkClass)) {
             return key.toBuilder()
                 .type(
@@ -346,13 +345,11 @@ public final class KeyFactory {
     return key;
   }
 
-  /**
-   * Converts a {@link Key} of type {@code Map<K, V>} to {@code Map<K, Provider<V>>}.
-   */
-  private Key wrapMapValue(Key key, Class<?> newWrappingClass) {
+  /** Converts a {@link Key} of type {@code Map<K, V>} to {@code Map<K, Provider<V>>}. */
+  private Key wrapMapValue(Key key, ClassName newWrappingClassName) {
     checkArgument(
-        FrameworkTypes.isFrameworkType(elements.getTypeElement(newWrappingClass).asType()));
-    return wrapMapKey(key, newWrappingClass).get();
+        FrameworkTypes.isFrameworkType(elements.getTypeElement(newWrappingClassName).asType()));
+    return wrapMapKey(key, newWrappingClassName).get();
   }
 
   /**
@@ -366,12 +363,12 @@ public final class KeyFactory {
    *     currentWrappingClass}
    */
   public Optional<Key> rewrapMapKey(
-      Key possibleMapKey, Class<?> currentWrappingClass, Class<?> newWrappingClass) {
-    checkArgument(!currentWrappingClass.equals(newWrappingClass));
+      Key possibleMapKey, ClassName currentWrappingClassName, ClassName newWrappingClassName) {
+    checkArgument(!currentWrappingClassName.equals(newWrappingClassName));
     if (MapType.isMap(possibleMapKey)) {
       MapType mapType = MapType.from(possibleMapKey);
-      if (!mapType.isRawType() && mapType.valuesAreTypeOf(currentWrappingClass)) {
-        TypeElement wrappingElement = elements.getTypeElement(newWrappingClass);
+      if (!mapType.isRawType() && mapType.valuesAreTypeOf(currentWrappingClassName)) {
+        TypeElement wrappingElement = elements.getTypeElement(newWrappingClassName);
         if (wrappingElement == null) {
           // This target might not be compiled with Producers, so wrappingClass might not have an
           // associated element.
@@ -379,7 +376,7 @@ public final class KeyFactory {
         }
         DeclaredType wrappedValueType =
             types.getDeclaredType(
-                wrappingElement, mapType.unwrappedValueType(currentWrappingClass));
+                wrappingElement, mapType.unwrappedValueType(currentWrappingClassName));
         return Optional.of(
             possibleMapKey.toBuilder()
                 .type(fromJava(mapOf(mapType.keyType(), wrappedValueType)))
@@ -396,11 +393,11 @@ public final class KeyFactory {
    *
    * <p>Returns {@link Optional#empty()} if {@code WrappingClass} is not in the classpath.
    */
-  private Optional<Key> wrapMapKey(Key possibleMapKey, Class<?> wrappingClass) {
+  private Optional<Key> wrapMapKey(Key possibleMapKey, ClassName wrappingClassName) {
     if (MapType.isMap(possibleMapKey)) {
       MapType mapType = MapType.from(possibleMapKey);
-      if (!mapType.isRawType() && !mapType.valuesAreTypeOf(wrappingClass)) {
-        TypeElement wrappingElement = elements.getTypeElement(wrappingClass);
+      if (!mapType.isRawType() && !mapType.valuesAreTypeOf(wrappingClassName)) {
+        TypeElement wrappingElement = elements.getTypeElement(wrappingClassName);
         if (wrappingElement == null) {
           // This target might not be compiled with Producers, so wrappingClass might not have an
           // associated element.
@@ -420,13 +417,13 @@ public final class KeyFactory {
    * If {@code key}'s type is {@code Set<WrappingClass<Bar>>}, returns a key with type {@code Set
    * <Bar>} with the same qualifier. Otherwise returns {@link Optional#empty()}.
    */
-  Optional<Key> unwrapSetKey(Key key, Class<?> wrappingClass) {
+  Optional<Key> unwrapSetKey(Key key, ClassName wrappingClassName) {
     if (SetType.isSet(key)) {
       SetType setType = SetType.from(key);
-      if (!setType.isRawType() && setType.elementsAreTypeOf(wrappingClass)) {
+      if (!setType.isRawType() && setType.elementsAreTypeOf(wrappingClassName)) {
         return Optional.of(
             key.toBuilder()
-                .type(fromJava(setOf(setType.unwrappedElementType(wrappingClass))))
+                .type(fromJava(setOf(setType.unwrappedElementType(wrappingClassName))))
                 .build());
       }
     }

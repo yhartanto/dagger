@@ -68,7 +68,6 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.producers.ProductionComponent;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import java.util.Collection;
@@ -93,7 +92,7 @@ import javax.lang.model.type.TypeMirror;
 
 /**
  * Performs superficial validation of the contract of the {@link Component} and {@link
- * ProductionComponent} annotations.
+ * dagger.producers.ProductionComponent} annotations.
  */
 @Singleton
 public final class ComponentValidator implements ClearableCache {

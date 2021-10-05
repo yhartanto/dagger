@@ -52,7 +52,7 @@ abstract class MultibindingFactoryCreationExpression
             .codeBlock();
 
     return useRawType()
-        ? CodeBlocks.cast(expression, binding.frameworkType().frameworkClass())
+        ? CodeBlocks.cast(expression, binding.frameworkType().frameworkClassName())
         : expression;
   }
 

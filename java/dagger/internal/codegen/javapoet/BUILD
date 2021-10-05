@@ -26,8 +26,8 @@ java_library(
     tags = ["maven:merged"],
     deps = [
         "//java/dagger/internal/codegen/langmodel",
+        "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "//java/dagger/producers",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/error_prone:annotations",
         "@google_bazel_common//third_party/java/javapoet",

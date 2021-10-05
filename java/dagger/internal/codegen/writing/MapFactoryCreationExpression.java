@@ -19,8 +19,8 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.binding.SourceFiles.mapFactoryClassName;
+import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 
-import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
@@ -28,11 +28,10 @@ import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ContributionBinding;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.producers.Produced;
-import dagger.producers.Producer;
 import dagger.spi.model.DependencyRequest;
-import javax.inject.Provider;
+import java.util.stream.Stream;
 import javax.lang.model.type.TypeMirror;
 
 /** A factory creation expression for a multibound map. */
@@ -64,14 +63,12 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
       MapType mapType = MapType.from(binding.key().type().java());
       // TODO(ronshapiro): either inline this into mapFactoryClassName, or add a
       // mapType.unwrappedValueType() method that doesn't require a framework type
-      TypeMirror valueType = mapType.valueType();
-      for (Class<?> frameworkClass :
-          ImmutableSet.of(Provider.class, Producer.class, Produced.class)) {
-        if (mapType.valuesAreTypeOf(frameworkClass)) {
-          valueType = mapType.unwrappedValueType(frameworkClass);
-          break;
-        }
-      }
+      TypeMirror valueType =
+          Stream.of(TypeNames.PROVIDER, TypeNames.PRODUCER, TypeNames.PRODUCED)
+              .filter(mapType::valuesAreTypeOf)
+              .map(mapType::unwrappedValueType)
+              .collect(toOptional())
+              .orElseGet(mapType::valueType);
       builder.add("<$T, $T>", mapType.keyType(), valueType);
     }
 

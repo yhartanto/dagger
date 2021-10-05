@@ -58,6 +58,7 @@ import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.base.ModuleAnnotation;
 import dagger.internal.codegen.binding.BindingGraphFactory;
 import dagger.internal.codegen.binding.ComponentCreatorAnnotation;
@@ -492,7 +493,7 @@ public final class ModuleValidator {
     // a binding method in Parent, and "c" because Child is defining a binding method that overrides
     // Parent.
     TypeElement currentClass = subject;
-    TypeMirror objectType = elements.getTypeElement(Object.class).asType();
+    TypeMirror objectType = elements.getTypeElement(TypeName.OBJECT).asType();
     // We keep track of methods that failed so we don't spam with multiple failures.
     Set<ExecutableElement> failedMethods = Sets.newHashSet();
     ListMultimap<Name, ExecutableElement> allMethodsByName =

@@ -25,6 +25,7 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.producers.Producer;
@@ -114,6 +115,6 @@ final class ProducerEntryPointView {
   // needing to (re)compute this?
   private TypeMirror fieldType(ComponentMethodDescriptor componentMethod) {
     return types.wrapType(
-        componentMethod.dependencyRequest().get().key().type().java(), Producer.class);
+        componentMethod.dependencyRequest().get().key().type().java(), TypeNames.PRODUCER);
   }
 }

@@ -19,13 +19,13 @@ package dagger.internal.codegen.writing;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.type.TypeMirror;
@@ -51,7 +51,7 @@ final class ImmediateFutureRequestRepresentation extends RequestRepresentation {
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
     return Expression.create(
-        types.wrapType(type, ListenableFuture.class),
+        types.wrapType(type, TypeNames.LISTENABLE_FUTURE),
         CodeBlock.of("$T.immediateFuture($L)", Futures.class, instanceExpression(requestingClass)));
   }
 

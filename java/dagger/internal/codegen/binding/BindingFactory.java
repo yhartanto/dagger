@@ -54,6 +54,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
+import com.squareup.javapoet.ClassName;
 import dagger.Module;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.base.ContributionType;
@@ -61,18 +62,16 @@ import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.ProductionBinding.ProductionKind;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.producers.Produced;
-import dagger.producers.Producer;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import dagger.spi.model.RequestKind;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -308,10 +307,11 @@ public final class BindingFactory {
       Key key, Iterable<ContributionBinding> multibindingContributions) {
     if (MapType.isMap(key)) {
       MapType mapType = MapType.from(key);
-      if (mapType.valuesAreTypeOf(Producer.class) || mapType.valuesAreTypeOf(Produced.class)) {
+      if (mapType.valuesAreTypeOf(TypeNames.PRODUCER)
+          || mapType.valuesAreTypeOf(TypeNames.PRODUCED)) {
         return true;
       }
-    } else if (SetType.isSet(key) && SetType.from(key).elementsAreTypeOf(Produced.class)) {
+    } else if (SetType.isSet(key) && SetType.from(key).elementsAreTypeOf(TypeNames.PRODUCED)) {
       return true;
     }
     return Iterables.any(
@@ -446,7 +446,7 @@ public final class BindingFactory {
         return buildDelegateBinding(
             ProductionBinding.builder().nullableType(actualBinding.nullableType()),
             delegateDeclaration,
-            Producer.class);
+            TypeNames.PRODUCER);
 
       case PROVISION:
         return buildDelegateBinding(
@@ -454,7 +454,7 @@ public final class BindingFactory {
                 .scope(uniqueScopeOf(delegateDeclaration.bindingElement().get()))
                 .nullableType(actualBinding.nullableType()),
             delegateDeclaration,
-            Provider.class);
+            TypeNames.PROVIDER);
 
       case MEMBERS_INJECTION: // fall-through to throw
     }
@@ -469,13 +469,13 @@ public final class BindingFactory {
     return buildDelegateBinding(
         ProvisionBinding.builder().scope(uniqueScopeOf(delegateDeclaration.bindingElement().get())),
         delegateDeclaration,
-        Provider.class);
+        TypeNames.PROVIDER);
   }
 
   private ContributionBinding buildDelegateBinding(
       ContributionBinding.Builder<?, ?> builder,
       DelegateDeclaration delegateDeclaration,
-      Class<?> frameworkType) {
+      ClassName frameworkType) {
     boolean isKotlinObject =
         metadataUtil.isObjectClass(delegateDeclaration.contributingModule().get())
             || metadataUtil.isCompanionObjectClass(delegateDeclaration.contributingModule().get());

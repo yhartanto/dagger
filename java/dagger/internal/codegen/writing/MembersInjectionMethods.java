@@ -86,7 +86,7 @@ final class MembersInjectionMethods {
             : graph.contributionBinding(key);
     Expression expression =
         reentrantComputeIfAbsent(
-            injectMethodExpressions, key, k -> injectMethodExpression(binding, requestingClass));
+            injectMethodExpressions, key, k -> injectMethodExpression(binding));
     ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
     return Expression.create(
         expression.type(),
@@ -99,13 +99,13 @@ final class MembersInjectionMethods {
                 instance));
   }
 
-  private Expression injectMethodExpression(Binding binding, ClassName requestingClass) {
+  private Expression injectMethodExpression(Binding binding) {
     ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
     TypeMirror keyType = binding.key().type().java();
     TypeMirror membersInjectedType =
         isTypeAccessibleFrom(keyType, shardImplementation.name().packageName())
             ? keyType
-            : elements.getTypeElement(Object.class).asType();
+            : elements.getTypeElement(TypeName.OBJECT).asType();
     TypeName membersInjectedTypeName = TypeName.get(membersInjectedType);
     Name bindingTypeName = binding.bindingTypeElement().get().getSimpleName();
     // TODO(ronshapiro): include type parameters in this name e.g. injectFooOfT, and outer class

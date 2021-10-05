@@ -17,15 +17,12 @@
 package dagger.internal.codegen.base;
 
 import static com.google.auto.common.MoreTypes.isType;
+import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
 
-import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
-import dagger.Lazy;
-import dagger.MembersInjector;
-import dagger.producers.Produced;
-import dagger.producers.Producer;
+import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.javapoet.TypeNames;
 import java.util.Set;
-import javax.inject.Provider;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -33,13 +30,13 @@ import javax.lang.model.type.TypeMirror;
  * type that the framework itself defines.
  */
 public final class FrameworkTypes {
-  private static final ImmutableSet<Class<?>> PROVISION_TYPES =
-      ImmutableSet.of(Provider.class, Lazy.class, MembersInjector.class);
+  private static final ImmutableSet<ClassName> PROVISION_TYPES =
+      ImmutableSet.of(TypeNames.PROVIDER, TypeNames.LAZY, TypeNames.MEMBERS_INJECTOR);
 
   // NOTE(beder): ListenableFuture is not considered a producer framework type because it is not
   // defined by the framework, so we can't treat it specially in ordinary Dagger.
-  private static final ImmutableSet<Class<?>> PRODUCTION_TYPES =
-      ImmutableSet.of(Produced.class, Producer.class);
+  private static final ImmutableSet<ClassName> PRODUCTION_TYPES =
+      ImmutableSet.of(TypeNames.PRODUCED, TypeNames.PRODUCER);
 
   /** Returns true if the type represents a producer-related framework type. */
   public static boolean isProducerType(TypeMirror type) {
@@ -53,13 +50,8 @@ public final class FrameworkTypes {
             || typeIsOneOf(PRODUCTION_TYPES, type));
   }
 
-  private static boolean typeIsOneOf(Set<Class<?>> classes, TypeMirror type) {
-    for (Class<?> clazz : classes) {
-      if (MoreTypes.isTypeOf(clazz, type)) {
-        return true;
-      }
-    }
-    return false;
+  private static boolean typeIsOneOf(Set<ClassName> classNames, TypeMirror type) {
+    return classNames.stream().anyMatch(className -> isTypeOf(className, type));
   }
 
   private FrameworkTypes() {}

@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
-import static dagger.internal.codegen.base.RequestKinds.frameworkClass;
+import static dagger.internal.codegen.base.RequestKinds.frameworkClassName;
 import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
@@ -115,7 +115,7 @@ public final class DependencyRequestFactory {
       case MAP:
         MapType mapType = MapType.from(multibindingKey);
         for (RequestKind kind : WRAPPING_MAP_VALUE_FRAMEWORK_TYPES) {
-          if (mapType.valuesAreTypeOf(frameworkClass(kind))) {
+          if (mapType.valuesAreTypeOf(frameworkClassName(kind))) {
             return kind;
           }
         }

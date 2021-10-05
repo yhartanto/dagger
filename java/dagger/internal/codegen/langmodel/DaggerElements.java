@@ -105,11 +105,6 @@ public final class DaggerElements implements Elements, ClearableCache {
         .toSet();
   }
 
-  /** Returns the type element for a class. */
-  public TypeElement getTypeElement(Class<?> clazz) {
-    return getTypeElement(clazz.getCanonicalName());
-  }
-
   @Override
   public TypeElement getTypeElement(CharSequence name) {
     return elements.getTypeElement(name);

@@ -28,7 +28,7 @@ import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.BindingType;
 import dagger.internal.codegen.binding.ContributionBinding;
-import dagger.producers.Produced;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.DependencyRequest;
 
 /** A factory creation expression for a multibound set. */
@@ -54,8 +54,8 @@ final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpr
       SetType setType = SetType.from(binding.key());
       builder.add(
           "<$T>",
-          setType.elementsAreTypeOf(Produced.class)
-              ? setType.unwrappedElementType(Produced.class)
+          setType.elementsAreTypeOf(TypeNames.PRODUCED)
+              ? setType.unwrappedElementType(TypeNames.PRODUCED)
               : setType.elementType());
     }
 

@@ -28,6 +28,8 @@ import static dagger.internal.codegen.javapoet.TypeNames.MAP_OF_PRODUCED_PRODUCE
 import static dagger.internal.codegen.javapoet.TypeNames.MAP_OF_PRODUCER_PRODUCER;
 import static dagger.internal.codegen.javapoet.TypeNames.MAP_PRODUCER;
 import static dagger.internal.codegen.javapoet.TypeNames.MAP_PROVIDER_FACTORY;
+import static dagger.internal.codegen.javapoet.TypeNames.PRODUCER;
+import static dagger.internal.codegen.javapoet.TypeNames.PROVIDER;
 import static dagger.internal.codegen.javapoet.TypeNames.PROVIDER_OF_LAZY;
 import static dagger.internal.codegen.javapoet.TypeNames.SET_FACTORY;
 import static dagger.internal.codegen.javapoet.TypeNames.SET_OF_PRODUCED_PRODUCER;
@@ -53,17 +55,12 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
-import dagger.internal.SetFactory;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
-import dagger.producers.Produced;
-import dagger.producers.Producer;
-import dagger.producers.internal.SetOfProducedProducer;
-import dagger.producers.internal.SetProducer;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.RequestKind;
 import java.util.List;
-import javax.inject.Provider;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -99,8 +96,7 @@ public class SourceFiles {
         binding.dependencies(),
         dependency ->
             FrameworkField.create(
-                ClassName.get(
-                    frameworkTypeMapper.getFrameworkType(dependency.kind()).frameworkClass()),
+                frameworkTypeMapper.getFrameworkType(dependency.kind()).frameworkClassName(),
                 TypeName.get(dependency.key().type().java()),
                 DependencyVariableNamer.name(dependency)));
   }
@@ -223,9 +219,10 @@ public class SourceFiles {
    * The {@link java.util.Set} factory class name appropriate for set bindings.
    *
    * <ul>
-   *   <li>{@link SetFactory} for provision bindings.
-   *   <li>{@link SetProducer} for production bindings for {@code Set<T>}.
-   *   <li>{@link SetOfProducedProducer} for production bindings for {@code Set<Produced<T>>}.
+   *   <li>{@link dagger.producers.internal.SetFactory} for provision bindings.
+   *   <li>{@link dagger.producers.internal.SetProducer} for production bindings for {@code Set<T>}.
+   *   <li>{@link dagger.producers.internal.SetOfProducedProducer} for production bindings for
+   *       {@code Set<Produced<T>>}.
    * </ul>
    */
   public static ClassName setFactoryClassName(ContributionBinding binding) {
@@ -234,7 +231,9 @@ public class SourceFiles {
       return SET_FACTORY;
     } else {
       SetType setType = SetType.from(binding.key());
-      return setType.elementsAreTypeOf(Produced.class) ? SET_OF_PRODUCED_PRODUCER : SET_PRODUCER;
+      return setType.elementsAreTypeOf(TypeNames.PRODUCED)
+          ? SET_OF_PRODUCED_PRODUCER
+          : SET_PRODUCER;
     }
   }
 
@@ -244,10 +243,10 @@ public class SourceFiles {
     MapType mapType = MapType.from(binding.key());
     switch (binding.bindingType()) {
       case PROVISION:
-        return mapType.valuesAreTypeOf(Provider.class) ? MAP_PROVIDER_FACTORY : MAP_FACTORY;
+        return mapType.valuesAreTypeOf(PROVIDER) ? MAP_PROVIDER_FACTORY : MAP_FACTORY;
       case PRODUCTION:
         return mapType.valuesAreFrameworkType()
-            ? mapType.valuesAreTypeOf(Producer.class)
+            ? mapType.valuesAreTypeOf(PRODUCER)
                 ? MAP_OF_PRODUCER_PRODUCER
                 : MAP_OF_PRODUCED_PRODUCER
             : MAP_PRODUCER;

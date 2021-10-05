@@ -18,18 +18,18 @@ package dagger.internal.codegen.base;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
+import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.Key;
-import java.util.Map;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
-/**
- * Information about a {@link Map} {@link TypeMirror}.
- */
+/** Information about a {@link java.util.Map} {@link TypeMirror}. */
 @AutoValue
 public abstract class MapType {
   /**
@@ -45,9 +45,7 @@ public abstract class MapType {
     return wrappedDeclaredMapType().get();
   }
 
-  /**
-   * {@code true} if the map type is the raw {@link Map} type.
-   */
+  /** {@code true} if the map type is the raw {@link java.util.Map} type. */
   public boolean isRawType() {
     return declaredMapType().getTypeArguments().isEmpty();
   }
@@ -73,17 +71,17 @@ public abstract class MapType {
   }
 
   /**
-   * {@code true} if {@link #valueType()} is a {@code clazz}.
+   * Returns {@code true} if the raw type of {@link #valueType()} is {@code className}.
    *
    * @throws IllegalStateException if {@link #isRawType()} is true.
    */
-  public boolean valuesAreTypeOf(Class<?> clazz) {
-    return MoreTypes.isType(valueType()) && MoreTypes.isTypeOf(clazz, valueType());
+  public boolean valuesAreTypeOf(ClassName className) {
+    return MoreTypes.isType(valueType()) && isTypeOf(className, valueType());
   }
 
   /**
-   * Returns {@code true} if the {@linkplain #valueType() value type} of the {@link Map} is a
-   * {@linkplain FrameworkTypes#isFrameworkType(TypeMirror) framework type}.
+   * Returns {@code true} if the {@linkplain #valueType() value type} of the {@link java.util.Map}
+   * is a {@linkplain FrameworkTypes#isFrameworkType(TypeMirror) framework type}.
    */
   public boolean valuesAreFrameworkType() {
     return FrameworkTypes.isFrameworkType(valueType());
@@ -107,14 +105,9 @@ public abstract class MapType {
    *
    * @throws IllegalStateException if {@link #isRawType()} is true or {@link #valueType()} is not a
    *     {@code WrappingClass<V>}
-   * @throws IllegalArgumentException if {@code wrappingClass} does not have exactly one type
-   *     parameter
    */
-  public TypeMirror unwrappedValueType(Class<?> wrappingClass) {
-    checkArgument(
-        wrappingClass.getTypeParameters().length == 1,
-        "%s must have exactly one type parameter",
-        wrappingClass);
+  // TODO(b/202033221): Consider using stricter input type, e.g. FrameworkType.
+  public TypeMirror unwrappedValueType(ClassName wrappingClass) {
     checkState(valuesAreTypeOf(wrappingClass), "expected values to be %s: %s", wrappingClass, this);
     return uncheckedUnwrappedValueType();
   }
@@ -123,16 +116,12 @@ public abstract class MapType {
     return MoreTypes.asDeclared(valueType()).getTypeArguments().get(0);
   }
 
-  /**
-   * {@code true} if {@code type} is a {@link Map} type.
-   */
+  /** {@code true} if {@code type} is a {@link java.util.Map} type. */
   public static boolean isMap(TypeMirror type) {
-    return MoreTypes.isType(type) && MoreTypes.isTypeOf(Map.class, type);
+    return MoreTypes.isType(type) && isTypeOf(TypeNames.MAP, type);
   }
 
-  /**
-   * {@code true} if {@code key.type()} is a {@link Map} type.
-   */
+  /** {@code true} if {@code key.type()} is a {@link java.util.Map} type. */
   public static boolean isMap(Key key) {
     return isMap(key.type().java());
   }
@@ -140,7 +129,7 @@ public abstract class MapType {
   /**
    * Returns a {@link MapType} for {@code type}.
    *
-   * @throws IllegalArgumentException if {@code type} is not a {@link Map} type
+   * @throws IllegalArgumentException if {@code type} is not a {@link java.util.Map} type
    */
   public static MapType from(TypeMirror type) {
     checkArgument(isMap(type), "%s is not a Map", type);
@@ -150,7 +139,7 @@ public abstract class MapType {
   /**
    * Returns a {@link MapType} for {@code key}'s {@link Key#type() type}.
    *
-   * @throws IllegalArgumentException if {@code key.type()} is not a {@link Map} type
+   * @throws IllegalArgumentException if {@code key.type()} is not a {@link java.util.Map} type
    */
   public static MapType from(Key key) {
     return from(key.type().java());

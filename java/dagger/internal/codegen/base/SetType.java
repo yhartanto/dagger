@@ -17,18 +17,19 @@
 package dagger.internal.codegen.base;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
+import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
 
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
+import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.Key;
-import java.util.Set;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
-/**
- * Information about a {@link Set} {@link TypeMirror}.
- */
+/** Information about a {@link java.util.Set} {@link TypeMirror}. */
 @AutoValue
 public abstract class SetType {
   /**
@@ -44,9 +45,7 @@ public abstract class SetType {
     return wrappedDeclaredSetType().get();
   }
 
-  /**
-   * {@code true} if the set type is the raw {@link Set} type.
-   */
+  /** {@code true} if the set type is the raw {@link java.util.Set} type. */
   public boolean isRawType() {
     return declaredSetType().getTypeArguments().isEmpty();
   }
@@ -55,46 +54,35 @@ public abstract class SetType {
    * The element type.
    */
   public TypeMirror elementType() {
-    return declaredSetType().getTypeArguments().get(0);
+    return unwrapType(declaredSetType());
   }
 
-  /**
-   * {@code true} if {@link #elementType()} is a {@code clazz}.
-   */
-  public boolean elementsAreTypeOf(Class<?> clazz) {
-    return MoreTypes.isType(elementType()) && MoreTypes.isTypeOf(clazz, elementType());
+  /** Returns {@code true} if {@link #elementType()} is of type {@code className}. */
+  public boolean elementsAreTypeOf(ClassName className) {
+    return MoreTypes.isType(elementType()) && isTypeOf(className, elementType());
   }
 
   /**
    * {@code T} if {@link #elementType()} is a {@code WrappingClass<T>}.
    *
    * @throws IllegalStateException if {@link #elementType()} is not a {@code WrappingClass<T>}
-   * @throws IllegalArgumentException if {@code wrappingClass} does not have exactly one type
-   *     parameter
    */
-  public TypeMirror unwrappedElementType(Class<?> wrappingClass) {
-    checkArgument(
-        wrappingClass.getTypeParameters().length == 1,
-        "%s must have exactly one type parameter",
-        wrappingClass);
+  // TODO(b/202033221): Consider using stricter input type, e.g. FrameworkType.
+  public TypeMirror unwrappedElementType(ClassName wrappingClass) {
     checkArgument(
         elementsAreTypeOf(wrappingClass),
         "expected elements to be %s, but this type is %s",
         wrappingClass,
         declaredSetType());
-    return MoreTypes.asDeclared(elementType()).getTypeArguments().get(0);
+    return unwrapType(elementType());
   }
 
-  /**
-   * {@code true} if {@code type} is a {@link Set} type.
-   */
+  /** {@code true} if {@code type} is a {@link java.util.Set} type. */
   public static boolean isSet(TypeMirror type) {
-    return MoreTypes.isType(type) && MoreTypes.isTypeOf(Set.class, type);
+    return MoreTypes.isType(type) && isTypeOf(TypeNames.SET, type);
   }
 
-  /**
-   * {@code true} if {@code key.type()} is a {@link Set} type.
-   */
+  /** {@code true} if {@code key.type()} is a {@link java.util.Set} type. */
   public static boolean isSet(Key key) {
     return isSet(key.type().java());
   }
@@ -102,7 +90,7 @@ public abstract class SetType {
   /**
    * Returns a {@link SetType} for {@code type}.
    *
-   * @throws IllegalArgumentException if {@code type} is not a {@link Set} type
+   * @throws IllegalArgumentException if {@code type} is not a {@link java.util.Set} type
    */
   public static SetType from(TypeMirror type) {
     checkArgument(isSet(type), "%s must be a Set", type);
@@ -112,7 +100,7 @@ public abstract class SetType {
   /**
    * Returns a {@link SetType} for {@code key}'s {@link Key#type() type}.
    *
-   * @throws IllegalArgumentException if {@code key.type()} is not a {@link Set} type
+   * @throws IllegalArgumentException if {@code key.type()} is not a {@link java.util.Set} type
    */
   public static SetType from(Key key) {
     return from(key.type().java());

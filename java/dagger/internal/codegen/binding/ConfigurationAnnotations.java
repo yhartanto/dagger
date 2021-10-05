@@ -34,6 +34,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeName;
 import dagger.Component;
 import dagger.Module;
 import dagger.internal.codegen.langmodel.DaggerElements;
@@ -97,7 +98,7 @@ public final class ConfigurationAnnotations {
   @Deprecated
   public static ImmutableSet<TypeElement> getTransitiveModules(
       DaggerTypes types, DaggerElements elements, Iterable<TypeElement> seedModules) {
-    TypeMirror objectType = elements.getTypeElement(Object.class).asType();
+    TypeMirror objectType = elements.getTypeElement(TypeName.OBJECT).asType();
     Queue<TypeElement> moduleQueue = new ArrayDeque<>();
     Iterables.addAll(moduleQueue, seedModules);
     Set<TypeElement> moduleElements = Sets.newLinkedHashSet();

@@ -132,7 +132,8 @@ final class SetRequestRepresentation extends RequestRepresentation {
 
   private DeclaredType immutableSetType() {
     return types.getDeclaredType(
-        elements.getTypeElement(ImmutableSet.class), SetType.from(binding.key()).elementType());
+        elements.getTypeElement(TypeNames.IMMUTABLE_SET),
+        SetType.from(binding.key()).elementType());
   }
 
   private CodeBlock getContributionExpression(
@@ -176,7 +177,7 @@ final class SetRequestRepresentation extends RequestRepresentation {
 
   private boolean isImmutableSetBuilderWithExpectedSizeAvailable() {
     if (isImmutableSetAvailable()) {
-      return methodsIn(elements.getTypeElement(ImmutableSet.class).getEnclosedElements())
+      return methodsIn(elements.getTypeElement(TypeNames.IMMUTABLE_SET).getEnclosedElements())
           .stream()
           .anyMatch(method -> method.getSimpleName().contentEquals("builderWithExpectedSize"));
     }
@@ -184,7 +185,7 @@ final class SetRequestRepresentation extends RequestRepresentation {
   }
 
   private boolean isImmutableSetAvailable() {
-    return elements.getTypeElement(ImmutableSet.class) != null;
+    return elements.getTypeElement(TypeNames.IMMUTABLE_SET) != null;
   }
 
   @AssistedFactory

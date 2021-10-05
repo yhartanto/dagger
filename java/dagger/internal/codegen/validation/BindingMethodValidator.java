@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.FormatMethod;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.binding.InjectionAnnotations;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
@@ -271,7 +272,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<XExecutabl
     },
 
     /** Methods may throw checked or unchecked exceptions or errors. */
-    EXCEPTION(Exception.class) {
+    EXCEPTION(TypeNames.EXCEPTION) {
       @Override
       protected String errorMessage(BindingMethodValidator validator) {
         return validator.bindingMethods(
@@ -280,7 +281,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<XExecutabl
     },
 
     /** Methods may throw unchecked exceptions or errors. */
-    RUNTIME_EXCEPTION(RuntimeException.class) {
+    RUNTIME_EXCEPTION(TypeNames.RUNTIME_EXCEPTION) {
       @Override
       protected String errorMessage(BindingMethodValidator validator) {
         return validator.bindingMethods("may only throw unchecked exceptions");
@@ -288,13 +289,14 @@ abstract class BindingMethodValidator extends BindingElementValidator<XExecutabl
     },
     ;
 
-    private final Class<? extends Exception> superclass;
+    @SuppressWarnings("Immutable")
+    private final ClassName superclass;
 
     ExceptionSuperclass() {
       this(null);
     }
 
-    ExceptionSuperclass(Class<? extends Exception> superclass) {
+    ExceptionSuperclass(ClassName superclass) {
       this.superclass = superclass;
     }
 
@@ -309,7 +311,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<XExecutabl
         XExecutableElement element,
         ValidationReport.Builder report) {
       TypeMirror exceptionSupertype = validator.elements.getTypeElement(superclass).asType();
-      TypeMirror errorType = validator.elements.getTypeElement(Error.class).asType();
+      TypeMirror errorType = validator.elements.getTypeElement(TypeNames.ERROR).asType();
       for (XType type : element.getThrownTypes()) {
         TypeMirror thrownType = XConverters.toJavac(type);
         if (!validator.types.isSubtype(thrownType, exceptionSupertype)

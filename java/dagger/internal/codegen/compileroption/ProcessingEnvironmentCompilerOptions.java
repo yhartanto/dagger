@@ -55,8 +55,8 @@ import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.producers.Produces;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -91,7 +91,7 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
 
   @Override
   public boolean usesProducers() {
-    return elements.getTypeElement(Produces.class.getCanonicalName()) != null;
+    return elements.getTypeElement(TypeNames.PRODUCES) != null;
   }
 
   @Override

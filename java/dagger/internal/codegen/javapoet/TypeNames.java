@@ -53,6 +53,8 @@ public final class TypeNames {
   public static final ClassName SUBCOMPONENT_FACTORY = SUBCOMPONENT.nestedClass("Factory");
 
   // Dagger Internal classnames
+  public static final ClassName DELEGATE_FACTORY =
+      ClassName.get("dagger.internal", "DelegateFactory");
   public static final ClassName DOUBLE_CHECK = ClassName.get("dagger.internal", "DoubleCheck");
   public static final ClassName FACTORY = ClassName.get("dagger.internal", "Factory");
   public static final ClassName INJECTED_FIELD_SIGNATURE =
@@ -79,6 +81,8 @@ public final class TypeNames {
       ClassName.get("dagger.producers.internal", "CancellationListener");
   public static final ClassName CANCELLATION_POLICY =
       ClassName.get("dagger.producers", "CancellationPolicy");
+  public static final ClassName DELEGATE_PRODUCER =
+      ClassName.get("dagger.producers.internal", "DelegateProducer");
   public static final ClassName DEPENDENCY_METHOD_PRODUCER =
       ClassName.get("dagger.producers.internal", "DependencyMethodProducer");
   public static final ClassName MAP_OF_PRODUCED_PRODUCER =
@@ -87,18 +91,25 @@ public final class TypeNames {
       ClassName.get("dagger.producers.internal", "MapOfProducerProducer");
   public static final ClassName MAP_PRODUCER =
       ClassName.get("dagger.producers.internal", "MapProducer");
+  public static final ClassName MONITORS =
+      ClassName.get("dagger.producers.monitoring.internal", "Monitors");
   public static final ClassName PRODUCED = ClassName.get("dagger.producers", "Produced");
   public static final ClassName PRODUCER = ClassName.get("dagger.producers", "Producer");
   public static final ClassName PRODUCERS = ClassName.get("dagger.producers.internal", "Producers");
   public static final ClassName PRODUCER_MODULE =
       ClassName.get("dagger.producers", "ProducerModule");
   public static final ClassName PRODUCES = ClassName.get("dagger.producers", "Produces");
+  public static final ClassName PRODUCTION = ClassName.get("dagger.producers", "Production");
   public static final ClassName PRODUCTION_COMPONENT =
       ClassName.get("dagger.producers", "ProductionComponent");
   public static final ClassName PRODUCTION_COMPONENT_BUILDER =
       PRODUCTION_COMPONENT.nestedClass("Builder");
   public static final ClassName PRODUCTION_COMPONENT_FACTORY =
       PRODUCTION_COMPONENT.nestedClass("Factory");
+  public static final ClassName PRODUCTION_EXECTUTOR_MODULE =
+      ClassName.get("dagger.producers.internal", "ProductionExecutorModule");
+  public static final ClassName PRODUCTION_IMPLEMENTATION =
+      ClassName.get("dagger.producers.internal", "ProductionImplementation");
   public static final ClassName PRODUCTION_SUBCOMPONENT =
       ClassName.get("dagger.producers", "ProductionSubcomponent");
   public static final ClassName PRODUCTION_SUBCOMPONENT_BUILDER =
@@ -107,6 +118,8 @@ public final class TypeNames {
       PRODUCTION_SUBCOMPONENT.nestedClass("Factory");
   public static final ClassName PRODUCER_TOKEN =
       ClassName.get("dagger.producers.monitoring", "ProducerToken");
+  public static final ClassName PRODUCTION_COMPONENT_MONITOR =
+      ClassName.get("dagger.producers.monitoring", "ProductionComponentMonitor");
   public static final ClassName PRODUCTION_COMPONENT_MONITOR_FACTORY =
       ClassName.get("dagger.producers.monitoring", "ProductionComponentMonitor", "Factory");
   public static final ClassName SET_OF_PRODUCED_PRODUCER =
@@ -117,11 +130,20 @@ public final class TypeNames {
       ClassName.get("dagger.producers", "ProductionScope");
 
   // Other classnames
+  public static final ClassName EXECUTOR = ClassName.get("java.util.concurrent", "Executor");
+  public static final ClassName ERROR = ClassName.get("java.lang", "Error");
+  public static final ClassName EXCEPTION = ClassName.get("java.lang", "Exception");
+  public static final ClassName RUNTIME_EXCEPTION = ClassName.get("java.lang", "RuntimeException");
+  public static final ClassName MAP = ClassName.get("java.util", "Map");
+  public static final ClassName IMMUTABLE_MAP =
+      ClassName.get("com.google.common.collect", "ImmutableMap");
   public static final ClassName SINGLETON = ClassName.get("javax.inject", "Singleton");
   public static final ClassName SCOPE = ClassName.get("javax.inject", "Scope");
   public static final ClassName INJECT = ClassName.get("javax.inject", "Inject");
   public static final ClassName LIST = ClassName.get("java.util", "List");
   public static final ClassName SET = ClassName.get("java.util", "Set");
+  public static final ClassName IMMUTABLE_SET =
+      ClassName.get("com.google.common.collect", "ImmutableSet");
   public static final ClassName FUTURES =
       ClassName.get("com.google.common.util.concurrent", "Futures");
   public static final ClassName LISTENABLE_FUTURE =

@@ -33,14 +33,11 @@ import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import dagger.Module;
-import dagger.Provides;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.SourceFiles;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.multibindings.Multibinds;
-import dagger.producers.ProductionScope;
-import dagger.producers.monitoring.ProductionComponentMonitor;
-import dagger.producers.monitoring.internal.Monitors;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -83,13 +80,14 @@ final class MonitoringModuleGenerator extends SourceFileGenerator<XTypeElement> 
 
   private MethodSpec monitor(XTypeElement componentElement) {
     return methodBuilder("monitor")
-        .returns(ProductionComponentMonitor.class)
+        .returns(TypeNames.PRODUCTION_COMPONENT_MONITOR)
         .addModifiers(STATIC)
-        .addAnnotation(Provides.class)
-        .addAnnotation(ProductionScope.class)
+        .addAnnotation(TypeNames.PROVIDES)
+        .addAnnotation(TypeNames.PRODUCTION_SCOPE)
         .addParameter(providerOf(componentElement.getType().getTypeName()), "component")
         .addParameter(providerOf(setOf(PRODUCTION_COMPONENT_MONITOR_FACTORY)), "factories")
-        .addStatement("return $T.createMonitorForComponent(component, factories)", Monitors.class)
+        .addStatement(
+            "return $T.createMonitorForComponent(component, factories)", TypeNames.MONITORS)
         .build();
   }
 }

@@ -47,10 +47,10 @@ import dagger.internal.codegen.binding.ComponentCreatorKind;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.MethodSignature;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
-import dagger.producers.internal.CancellationListener;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -165,7 +165,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
 
     if (componentDescriptor.isProduction()) {
       generatedComponent
-          .addSuperinterface(ClassName.get(CancellationListener.class))
+          .addSuperinterface(TypeNames.CANCELLATION_LISTENER)
           .addMethod(onProducerFutureCancelledMethod());
     }
 

@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.producers.ProductionScope;
 import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.Scope;
 import java.util.Optional;
@@ -35,7 +34,9 @@ import javax.lang.model.element.Element;
 /** Common names and convenience methods for {@link Scope}s. */
 public final class Scopes {
 
-  /** Returns a representation for {@link ProductionScope @ProductionScope} scope. */
+  /**
+   * Returns a representation for {@link dagger.producers.ProductionScope @ProductionScope} scope.
+   */
   public static Scope productionScope(DaggerElements elements) {
     return scope(elements, TypeNames.PRODUCTION_SCOPE);
   }
@@ -51,8 +52,7 @@ public final class Scopes {
   private static Scope scope(DaggerElements elements, ClassName scopeAnnotationClassName) {
     return Scope.scope(
         DaggerAnnotation.fromJava(
-            SimpleAnnotationMirror.of(
-                elements.getTypeElement(scopeAnnotationClassName.canonicalName()))));
+            SimpleAnnotationMirror.of(elements.getTypeElement(scopeAnnotationClassName))));
   }
 
   /**

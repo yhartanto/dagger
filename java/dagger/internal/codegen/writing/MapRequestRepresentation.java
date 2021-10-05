@@ -38,6 +38,7 @@ import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.BindingKind;
@@ -127,7 +128,7 @@ final class MapRequestRepresentation extends RequestRepresentation {
   private DeclaredType immutableMapType() {
     MapType mapType = MapType.from(binding.key());
     return types.getDeclaredType(
-        elements.getTypeElement(ImmutableMap.class), mapType.keyType(), mapType.valueType());
+        elements.getTypeElement(TypeNames.IMMUTABLE_MAP), mapType.keyType(), mapType.valueType());
   }
 
   private CodeBlock keyAndValueExpression(DependencyRequest dependency, ClassName requestingClass) {
@@ -160,7 +161,7 @@ final class MapRequestRepresentation extends RequestRepresentation {
 
   private boolean isImmutableMapBuilderWithExpectedSizeAvailable() {
     if (isImmutableMapAvailable()) {
-      return methodsIn(elements.getTypeElement(ImmutableMap.class).getEnclosedElements())
+      return methodsIn(elements.getTypeElement(TypeNames.IMMUTABLE_MAP).getEnclosedElements())
           .stream()
           .anyMatch(method -> method.getSimpleName().contentEquals("builderWithExpectedSize"));
     }
@@ -168,7 +169,7 @@ final class MapRequestRepresentation extends RequestRepresentation {
   }
 
   private boolean isImmutableMapAvailable() {
-    return elements.getTypeElement(ImmutableMap.class) != null;
+    return elements.getTypeElement(TypeNames.IMMUTABLE_MAP) != null;
   }
 
   @AssistedFactory

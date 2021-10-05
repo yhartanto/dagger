@@ -37,7 +37,7 @@ import dagger.internal.codegen.binding.BindingDeclarationFormatter;
 import dagger.internal.codegen.binding.BindingNode;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.KeyFactory;
-import dagger.producers.Producer;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraphPlugin;
@@ -45,7 +45,6 @@ import dagger.spi.model.DiagnosticReporter;
 import dagger.spi.model.Key;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.lang.model.type.DeclaredType;
 
 /**
@@ -107,7 +106,7 @@ final class MapMultibindingValidator implements BindingGraphPlugin {
         filterKeys(
             mapMultibindings,
             key ->
-                MapType.from(key).valuesAreTypeOf(Provider.class)
+                MapType.from(key).valuesAreTypeOf(TypeNames.PROVIDER)
                     && !plainValueMapMultibindings.containsKey(keyFactory.unwrapMapValueType(key)));
 
     // Multibindings for Map<K, Producer<V>> where Map<K, V> isn't in plainValueMapMultibindings and
@@ -116,10 +115,12 @@ final class MapMultibindingValidator implements BindingGraphPlugin {
         filterKeys(
             mapMultibindings,
             key ->
-                MapType.from(key).valuesAreTypeOf(Producer.class)
+                MapType.from(key).valuesAreTypeOf(TypeNames.PRODUCER)
                     && !plainValueMapMultibindings.containsKey(keyFactory.unwrapMapValueType(key))
                     && !providerValueMapMultibindings.containsKey(
-                        keyFactory.rewrapMapKey(key, Producer.class, Provider.class).get()));
+                        keyFactory
+                            .rewrapMapKey(key, TypeNames.PRODUCER, TypeNames.PROVIDER)
+                            .get()));
 
     return new ImmutableSet.Builder<Binding>()
         .addAll(plainValueMapMultibindings.values())

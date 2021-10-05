@@ -32,7 +32,6 @@ java_library(
         "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
-        "//java/dagger/producers",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/jsr330_inject",
     ],
