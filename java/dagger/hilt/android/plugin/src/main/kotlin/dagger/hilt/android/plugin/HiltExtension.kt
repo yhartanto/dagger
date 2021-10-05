@@ -62,6 +62,6 @@ interface HiltExtension {
 internal open class HiltExtensionImpl : HiltExtension {
   override var enableExperimentalClasspathAggregation: Boolean = false
   override var enableTransformForLocalTests: Boolean = false
-  override var enableAggregatingTask: Boolean = false
+  override var enableAggregatingTask: Boolean = true
   override var disableCrossCompilationRootValidation: Boolean = false
 }

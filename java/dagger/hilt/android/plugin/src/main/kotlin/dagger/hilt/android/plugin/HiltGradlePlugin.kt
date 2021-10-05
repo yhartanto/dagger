@@ -405,7 +405,6 @@ class HiltGradlePlugin @Inject constructor(
           compilerArgs.add("-parameters")
         }
         compilerArgs.add("-Adagger.fastInit=enabled")
-        compilerArgs.add("-Adagger.hilt.shareTestComponents=true")
         compilerArgs.add("-Adagger.hilt.internal.useAggregatingRootProcessor=false")
         compilerArgs.add("-Adagger.hilt.android.internal.disableAndroidSuperclassValidation=true")
         encoding = androidExtension.compileOptions.encoding
