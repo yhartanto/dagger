@@ -45,6 +45,7 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -166,13 +167,13 @@ public final class ModuleValidator {
    * validating} any module or {@linkplain #validateReferencedModules(TypeElement, AnnotationMirror,
    * ImmutableSet, Set) component}.
    */
-  public void addKnownModules(Collection<TypeElement> modules) {
-    knownModules.addAll(modules);
+  public void addKnownModules(Collection<XTypeElement> modules) {
+    modules.stream().map(XConverters::toJavac).forEach(knownModules::add);
   }
 
   /** Returns a validation report for a module type. */
-  public ValidationReport validate(TypeElement module) {
-    return validate(module, new HashSet<>());
+  public ValidationReport validate(XTypeElement module) {
+    return validate(XConverters.toJavac(module), new HashSet<>());
   }
 
   private ValidationReport validate(TypeElement module, Set<TypeElement> visitedModules) {

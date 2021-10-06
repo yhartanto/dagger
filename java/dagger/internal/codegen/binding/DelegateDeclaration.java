@@ -16,10 +16,13 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
 
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -68,6 +71,10 @@ public abstract class DelegateDeclaration extends BindingDeclaration
       this.types = types;
       this.keyFactory = keyFactory;
       this.dependencyRequestFactory = dependencyRequestFactory;
+    }
+
+    public DelegateDeclaration create(XMethodElement bindsMethod, XTypeElement contributingModule) {
+      return create(toJavac(bindsMethod), toJavac(contributingModule));
     }
 
     public DelegateDeclaration create(

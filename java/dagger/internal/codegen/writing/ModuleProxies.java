@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
@@ -28,6 +29,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -61,7 +63,7 @@ public final class ModuleProxies {
   // TODO(dpb): See if this can become a SourceFileGenerator<ModuleDescriptor> instead. Doing so may
   // cause ModuleProcessingStep to defer elements multiple times.
   public static final class ModuleConstructorProxyGenerator
-      extends SourceFileGenerator<TypeElement> {
+      extends SourceFileGenerator<XTypeElement> {
 
     private final ModuleProxies moduleProxies;
     private final KotlinMetadataUtil metadataUtil;
@@ -79,12 +81,13 @@ public final class ModuleProxies {
     }
 
     @Override
-    public Element originatingElement(TypeElement moduleElement) {
-      return moduleElement;
+    public Element originatingElement(XTypeElement moduleElement) {
+      return toJavac(moduleElement);
     }
 
     @Override
-    public ImmutableList<TypeSpec.Builder> topLevelTypes(TypeElement moduleElement) {
+    public ImmutableList<TypeSpec.Builder> topLevelTypes(XTypeElement xModuleElement) {
+      TypeElement moduleElement = toJavac(xModuleElement);
       ModuleKind.checkIsModule(moduleElement, metadataUtil);
       return moduleProxies.nonPublicNullaryConstructor(moduleElement).isPresent()
           ? ImmutableList.of(buildProxy(moduleElement))

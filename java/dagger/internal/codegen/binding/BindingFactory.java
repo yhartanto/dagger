@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -48,6 +49,8 @@ import static dagger.spi.model.DaggerType.fromJava;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.METHOD;
 
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableCollection;
@@ -215,6 +218,17 @@ public final class BindingFactory {
    * @param contributedBy the installed module that declares or inherits the method
    */
   public ProvisionBinding providesMethodBinding(
+      XMethodElement providesMethod, XTypeElement contributedBy) {
+    return providesMethodBinding(toJavac(providesMethod), toJavac(contributedBy));
+  }
+
+  /**
+   * Returns a {@link dagger.spi.model.BindingKind#PROVISION} binding for a
+   * {@code @Provides}-annotated method.
+   *
+   * @param contributedBy the installed module that declares or inherits the method
+   */
+  public ProvisionBinding providesMethodBinding(
       ExecutableElement providesMethod, TypeElement contributedBy) {
     return setMethodBindingProperties(
             ProvisionBinding.builder(),
@@ -226,6 +240,17 @@ public final class BindingFactory {
         .scope(uniqueScopeOf(providesMethod))
         .nullableType(getNullableType(providesMethod))
         .build();
+  }
+
+  /**
+   * Returns a {@link dagger.spi.model.BindingKind#PRODUCTION} binding for a
+   * {@code @Produces}-annotated method.
+   *
+   * @param contributedBy the installed module that declares or inherits the method
+   */
+  public ProductionBinding producesMethodBinding(
+      XMethodElement producesMethod, XTypeElement contributedBy) {
+    return producesMethodBinding(toJavac(producesMethod), toJavac(contributedBy));
   }
 
   /**
