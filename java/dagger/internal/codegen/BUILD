@@ -89,6 +89,7 @@ gen_maven_artifact(
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/internal/codegen/writing",
+        "//java/dagger/internal/codegen/xprocessing",
     ],
     artifact_target_maven_deps = [
         "com.google.auto:auto-common",
@@ -104,6 +105,7 @@ gen_maven_artifact(
         "net.ltgt.gradle.incap:incap",
         "org.checkerframework:checker-compat-qual",
         "org.jetbrains.kotlin:kotlin-stdlib",
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk8",
         "org.jetbrains.kotlinx:kotlinx-metadata-jvm",
     ],
     javadoc_root_packages = ["dagger.internal.codegen"],
@@ -115,7 +117,7 @@ gen_maven_artifact(
     # util/deploy-dagger.sh
     shaded_deps = [
         "@com_google_auto_auto_common//jar",
-        "//java/dagger/internal/codegen/xprocessing",
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-jar",
     ],
 )
 

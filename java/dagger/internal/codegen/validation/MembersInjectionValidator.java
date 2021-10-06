@@ -16,11 +16,14 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreTypes.asArray;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import javax.inject.Inject;
@@ -57,6 +60,16 @@ final class MembersInjectionValidator {
    * @throws IllegalArgumentException if the method doesn't have exactly one parameter
    */
   ValidationReport validateMembersInjectionMethod(
+      XMethodElement method, XType membersInjectedType) {
+    return validateMembersInjectionMethod(toJavac(method), toJavac(membersInjectedType));
+  }
+
+  /**
+   * Reports errors if a members injection method on a component is invalid.
+   *
+   * @throws IllegalArgumentException if the method doesn't have exactly one parameter
+   */
+  private ValidationReport validateMembersInjectionMethod(
       ExecutableElement method, TypeMirror membersInjectedType) {
     checkArgument(
         method.getParameters().size() == 1, "expected a method with one parameter: %s", method);

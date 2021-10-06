@@ -16,12 +16,14 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Ascii.toUpperCase;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.DaggerStreams.valuesOf;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 import static java.util.stream.Collectors.mapping;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.ComponentAnnotation;
@@ -128,6 +130,11 @@ public enum ComponentCreatorAnnotation {
                     .simpleName()
                     .equals(componentAnnotation.simpleName()))
         .collect(toAnnotationClasses());
+  }
+
+  /** Returns all creator annotations present on the given {@code type}. */
+  public static ImmutableSet<ComponentCreatorAnnotation> getCreatorAnnotations(XTypeElement type) {
+    return getCreatorAnnotations(toJavac(type));
   }
 
   /** Returns all creator annotations present on the given {@code type}. */

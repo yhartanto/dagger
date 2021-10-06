@@ -19,13 +19,36 @@ load("@rules_java//java:defs.bzl", "java_import")
 
 package(default_visibility = ["//:src"])
 
-alias(
+java_library(
     name = "xprocessing",
+    # TODO(b/181056551): Ideally, all of the methods in these utility classes
+    # will move directly into XProcessing, and we can then remove these classes.
+    srcs = [
+        "XElements.java",
+        "XMethodElements.java",
+        "XTypeElements.java",
+        "XTypes.java",
+    ],
+    exports = [
+        ":xprocessing-lib",
+    ],
+    deps = [
+        ":xprocessing-lib",
+        "//java/dagger/internal/guava:collect",
+        "@google_bazel_common//third_party/java/javapoet",
+        "//java/dagger/internal/codegen/extension",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk8",
+    ],
+)
+
+alias(
+    name = "xprocessing-lib",
     actual = ":xprocessing-jar",
+    visibility = ["//visibility:private"],
 )
 
 java_import(
     name = "xprocessing-jar",
     jars = ["xprocessing.jar"],
-    visibility = ["//visibility:private"],
 )

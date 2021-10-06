@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.base;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreTypes.asTypeElements;
@@ -25,6 +26,8 @@ import static dagger.internal.codegen.javapoet.TypeNames.PRODUCER_MODULE;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnyAnnotation;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
@@ -35,6 +38,7 @@ import java.util.Collection;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
@@ -164,19 +168,24 @@ public abstract class ComponentAnnotation {
    * Returns an object representing a root component or subcomponent annotation, if one is present
    * on {@code typeElement}.
    */
-  public static Optional<ComponentAnnotation> anyComponentAnnotation(TypeElement typeElement) {
-    return anyComponentAnnotation(typeElement, ALL_COMPONENT_ANNOTATIONS);
+  public static Optional<ComponentAnnotation> anyComponentAnnotation(XElement element) {
+    return anyComponentAnnotation(toJavac(element), ALL_COMPONENT_ANNOTATIONS);
   }
 
   private static Optional<ComponentAnnotation> anyComponentAnnotation(
-      TypeElement typeElement, Collection<ClassName> annotations) {
-    return getAnyAnnotation(typeElement, annotations).map(ComponentAnnotation::componentAnnotation);
+      Element element, Collection<ClassName> annotations) {
+    return getAnyAnnotation(element, annotations).map(ComponentAnnotation::componentAnnotation);
   }
 
   /** Returns {@code true} if the argument is a component annotation. */
   public static boolean isComponentAnnotation(AnnotationMirror annotation) {
     return ALL_COMPONENT_ANNOTATIONS.stream()
         .anyMatch(annotationClass -> isTypeOf(annotationClass, annotation.getAnnotationType()));
+  }
+
+  /** Creates an object representing a component or subcomponent annotation. */
+  public static ComponentAnnotation componentAnnotation(XAnnotation annotation) {
+    return componentAnnotation(toJavac(annotation));
   }
 
   /** Creates an object representing a component or subcomponent annotation. */

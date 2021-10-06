@@ -16,11 +16,12 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.XTypeKt.isVoid;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asElement;
 import static com.google.auto.common.MoreTypes.asExecutable;
-import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Multimaps.asMap;
@@ -36,18 +37,20 @@ import static dagger.internal.codegen.binding.ConfigurationAnnotations.enclosedA
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getTransitiveModules;
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.builderMethodRequiresNoArgs;
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.moreThanOneRefToSubcomponent;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
-import static dagger.internal.codegen.langmodel.DaggerElements.getAnyAnnotation;
-import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
+import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
+import static dagger.internal.codegen.xprocessing.XTypeElements.getAllUnimplementedMethods;
 import static java.util.Comparator.comparing;
-import static javax.lang.model.element.ElementKind.CLASS;
-import static javax.lang.model.element.ElementKind.INTERFACE;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.VOID;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XExecutableParameterElement;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XMethodType;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -80,11 +83,8 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeKind;
@@ -104,7 +104,7 @@ public final class ComponentValidator implements ClearableCache {
   private final MembersInjectionValidator membersInjectionValidator;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final DependencyRequestFactory dependencyRequestFactory;
-  private final Map<TypeElement, ValidationReport> reports = new HashMap<>();
+  private final Map<XTypeElement, ValidationReport> reports = new HashMap<>();
   private final KotlinMetadataUtil metadataUtil;
 
   @Inject
@@ -135,24 +135,24 @@ public final class ComponentValidator implements ClearableCache {
   }
 
   /** Validates the given component. */
-  public ValidationReport validate(TypeElement component) {
+  public ValidationReport validate(XTypeElement component) {
     return reentrantComputeIfAbsent(reports, component, this::validateUncached);
   }
 
-  private ValidationReport validateUncached(TypeElement component) {
+  private ValidationReport validateUncached(XTypeElement component) {
     return new ElementValidator(component).validateElement();
   }
 
   private class ElementValidator {
-    private final TypeElement component;
+    private final XTypeElement component;
     private final ValidationReport.Builder report;
     private final ImmutableSet<ComponentKind> componentKinds;
 
     // Populated by ComponentMethodValidators
-    private final SetMultimap<Element, ExecutableElement> referencedSubcomponents =
+    private final SetMultimap<XTypeElement, XMethodElement> referencedSubcomponents =
         LinkedHashMultimap.create();
 
-    ElementValidator(TypeElement component) {
+    ElementValidator(XTypeElement component) {
       this.component = component;
       this.report = ValidationReport.about(component);
       this.componentKinds = ComponentKind.getComponentKinds(component);
@@ -167,7 +167,7 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private DeclaredType componentType() {
-      return asDeclared(component.asType());
+      return asDeclared(toJavac(component).asType());
     }
 
     ValidationReport validateElement() {
@@ -198,8 +198,7 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private void validateUseOfCancellationPolicy() {
-      if (isAnnotationPresent(component, TypeNames.CANCELLATION_POLICY)
-          && !componentKind().isProducer()) {
+      if (component.hasAnnotation(TypeNames.CANCELLATION_POLICY) && !componentKind().isProducer()) {
         report.addError(
             "@CancellationPolicy may only be applied to production components and subcomponents",
             component);
@@ -207,8 +206,7 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private void validateIsAbstractType() {
-      if (!component.getKind().equals(INTERFACE)
-          && !(component.getKind().equals(CLASS) && component.getModifiers().contains(ABSTRACT))) {
+      if (!component.isInterface() && !(component.isClass() && component.isAbstract())) {
         report.addError(
             String.format(
                 "@%s may only be applied to an interface or abstract class",
@@ -218,12 +216,9 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private void validateCreators() {
-      ImmutableList<DeclaredType> creators =
-          creatorAnnotationsFor(componentAnnotation()).stream()
-              .flatMap(annotation -> enclosedAnnotatedTypes(component, annotation).stream())
-              .collect(toImmutableList());
-      creators.forEach(
-          creator -> report.addSubreport(creatorValidator.validate(asTypeElement(creator))));
+      ImmutableSet<XTypeElement> creators =
+          enclosedAnnotatedTypes(component, creatorAnnotationsFor(componentAnnotation()));
+      creators.forEach(creator -> report.addSubreport(creatorValidator.validate(creator)));
       if (creators.size() > 1) {
         report.addError(
             String.format(
@@ -233,27 +228,25 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private void validateNoReusableAnnotation() {
-      Optional<AnnotationMirror> reusableAnnotation =
-          getAnnotationMirror(component, TypeNames.REUSABLE);
-      if (reusableAnnotation.isPresent()) {
+      if (component.hasAnnotation(TypeNames.REUSABLE)) {
         report.addError(
             "@Reusable cannot be applied to components or subcomponents",
             component,
-            reusableAnnotation.get());
+            component.getAnnotation(TypeNames.REUSABLE));
       }
     }
 
     private void validateComponentMethods() {
       validateClassMethodName();
-      elements.getUnimplementedMethods(component).stream()
+      getAllUnimplementedMethods(component).stream()
           .map(ComponentMethodValidator::new)
           .forEachOrdered(ComponentMethodValidator::validateMethod);
     }
 
     private void validateClassMethodName() {
-      if (metadataUtil.hasMetadata(component)) {
+      if (metadataUtil.hasMetadata(toJavac(component))) {
         metadataUtil
-            .getAllMethodNamesBySignature(component)
+            .getAllMethodNamesBySignature(toJavac(component))
             .forEach(
                 (signature, name) -> {
                   if (SourceVersion.isKeyword(name)) {
@@ -264,15 +257,15 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private class ComponentMethodValidator {
-      private final ExecutableElement method;
-      private final ExecutableType resolvedMethod;
-      private final List<? extends TypeMirror> parameterTypes;
-      private final List<? extends VariableElement> parameters;
-      private final TypeMirror returnType;
+      private final XMethodElement method;
+      private final XMethodType resolvedMethod;
+      private final List<XType> parameterTypes;
+      private final List<XExecutableParameterElement> parameters;
+      private final XType returnType;
 
-      ComponentMethodValidator(ExecutableElement method) {
+      ComponentMethodValidator(XMethodElement method) {
         this.method = method;
-        this.resolvedMethod = asExecutable(types.asMemberOf(componentType(), method));
+        this.resolvedMethod = method.asMemberOf(component.getType());
         this.parameterTypes = resolvedMethod.getParameterTypes();
         this.parameters = method.getParameters();
         this.returnType = resolvedMethod.getReturnType();
@@ -284,7 +277,7 @@ public final class ComponentValidator implements ClearableCache {
         // abstract methods are ones we have to implement, so they each need to be validated
         // first, check the return type. if it's a subcomponent, validate that method as
         // such.
-        Optional<AnnotationMirror> subcomponentAnnotation = subcomponentAnnotation();
+        Optional<XAnnotation> subcomponentAnnotation = subcomponentAnnotation();
         if (subcomponentAnnotation.isPresent()) {
           validateSubcomponentFactoryMethod(subcomponentAnnotation.get());
         } else if (subcomponentCreatorAnnotation().isPresent()) {
@@ -306,12 +299,12 @@ public final class ComponentValidator implements ClearableCache {
       }
 
       private void validateNoTypeVariables() {
-        if (!resolvedMethod.getTypeVariables().isEmpty()) {
+        if (!resolvedMethod.getTypeVariableNames().isEmpty()) {
           report.addError("Component methods cannot have type variables", method);
         }
       }
 
-      private Optional<AnnotationMirror> subcomponentAnnotation() {
+      private Optional<XAnnotation> subcomponentAnnotation() {
         return checkForAnnotations(
             returnType,
             componentKind().legalSubcomponentKinds().stream()
@@ -319,7 +312,7 @@ public final class ComponentValidator implements ClearableCache {
                 .collect(toImmutableSet()));
       }
 
-      private Optional<AnnotationMirror> subcomponentCreatorAnnotation() {
+      private Optional<XAnnotation> subcomponentCreatorAnnotation() {
         return checkForAnnotations(
             returnType,
             componentAnnotation().isProduction()
@@ -327,11 +320,12 @@ public final class ComponentValidator implements ClearableCache {
                 : subcomponentCreatorAnnotations());
       }
 
-      private void validateSubcomponentFactoryMethod(AnnotationMirror subcomponentAnnotation) {
-        referencedSubcomponents.put(asElement(returnType), method);
+      private void validateSubcomponentFactoryMethod(XAnnotation subcomponentAnnotation) {
+        referencedSubcomponents.put(returnType.getTypeElement(), method);
 
         ImmutableSet<ClassName> legalModuleAnnotations =
-            ComponentKind.forAnnotatedElement(asTypeElement(returnType)).get()
+            ComponentKind.forAnnotatedElement(returnType.getTypeElement())
+                .get()
                 .legalModuleKinds()
                 .stream()
                 .map(ModuleKind::annotation)
@@ -346,12 +340,12 @@ public final class ComponentValidator implements ClearableCache {
         ImmutableSet<TypeElement> transitiveModules =
             getTransitiveModules(types, elements, moduleTypes);
 
-        Set<TypeElement> referencedModules = Sets.newHashSet();
+        Set<XTypeElement> referencedModules = Sets.newHashSet();
         for (int i = 0; i < parameterTypes.size(); i++) {
-          VariableElement parameter = parameters.get(i);
-          TypeMirror parameterType = parameterTypes.get(i);
+          XExecutableParameterElement parameter = parameters.get(i);
+          XType parameterType = parameterTypes.get(i);
           if (checkForAnnotations(parameterType, legalModuleAnnotations).isPresent()) {
-            TypeElement module = asTypeElement(parameterType);
+            XTypeElement module = parameterType.getTypeElement();
             if (referencedModules.contains(module)) {
               report.addError(
                   String.format(
@@ -360,13 +354,12 @@ public final class ComponentValidator implements ClearableCache {
                       module.getQualifiedName()),
                   parameter);
             }
-            if (!transitiveModules.contains(module)) {
+            if (!transitiveModules.contains(toJavac(module))) {
               report.addError(
                   String.format(
                       "%s is present as an argument to the %s factory method, but is not one of the"
                           + " modules used to implement the subcomponent.",
-                      module.getQualifiedName(),
-                      asTypeElement(returnType).getQualifiedName()),
+                      module.getQualifiedName(), returnType.getTypeElement().getQualifiedName()),
                   method);
             }
             referencedModules.add(module);
@@ -381,13 +374,13 @@ public final class ComponentValidator implements ClearableCache {
       }
 
       private void validateSubcomponentCreatorMethod() {
-        referencedSubcomponents.put(asElement(returnType).getEnclosingElement(), method);
+        referencedSubcomponents.put(returnType.getTypeElement().getEnclosingTypeElement(), method);
 
         if (!parameters.isEmpty()) {
           report.addError(builderMethodRequiresNoArgs(), method);
         }
 
-        TypeElement creatorElement = asTypeElement(returnType);
+        XTypeElement creatorElement = returnType.getTypeElement();
         // TODO(sameb): The creator validator right now assumes the element is being compiled
         // in this pass, which isn't true here.  We should change error messages to spit out
         // this method as the subject and add the original subject to the message output.
@@ -399,10 +392,10 @@ public final class ComponentValidator implements ClearableCache {
       }
 
       private void validateMembersInjectionMethod() {
-        TypeMirror parameterType = getOnlyElement(parameterTypes);
+        XType parameterType = getOnlyElement(parameterTypes);
         report.addSubreport(
             membersInjectionValidator.validateMembersInjectionMethod(method, parameterType));
-        if (!(returnType.getKind().equals(VOID) || types.isSameType(returnType, parameterType))) {
+        if (!(isVoid(returnType) || returnType.isSameType(parameterType))) {
           report.addError(
               "Members injection methods may only return the injected type or void.", method);
         }
@@ -421,7 +414,15 @@ public final class ComponentValidator implements ClearableCache {
       // inherited from more than one supertype, each will be in the multimap.
       SetMultimap<String, ExecutableElement> entryPointMethods = HashMultimap.create();
 
-      methodsIn(elements.getAllMembers(component)).stream()
+      // TODO(b/201729320): There's a bug in auto-common's MoreElements#overrides(), b/201729320,
+      // which prevents us from using XTypeElement#getAllMethods() here (since that method relies on
+      // MoreElements#overrides() under the hood).
+      //
+      // There's two options here.
+      //    1. Fix the bug in auto-common and update XProcessing's auto-common dependency
+      //    2. Add a new method in XProcessing which relies on Elements#overrides(), which does not
+      //       have this issue. However, this approach risks causing issues for EJC (Eclipse) users.
+      methodsIn(elements.getAllMembers(toJavac(component))).stream()
           .filter(
               method ->
                   isEntryPoint(method, asExecutable(types.asMemberOf(componentType(), method))))
@@ -478,7 +479,7 @@ public final class ComponentValidator implements ClearableCache {
     private void validateReferencedModules() {
       report.addSubreport(
           moduleValidator.validateReferencedModules(
-              component,
+              toJavac(component),
               componentAnnotation().annotation(),
               componentKind().legalModuleKinds(),
               new HashSet<>()));
@@ -486,10 +487,9 @@ public final class ComponentValidator implements ClearableCache {
 
     private void validateSubcomponents() {
       // Make sure we validate any subcomponents we're referencing.
-      for (Element subcomponent : referencedSubcomponents.keySet()) {
-        ValidationReport subreport = validate(asType(subcomponent));
-        report.addSubreport(subreport);
-      }
+      referencedSubcomponents
+          .keySet()
+          .forEach(subcomponent -> report.addSubreport(validate(subcomponent)));
     }
 
     private ImmutableSet<Key> distinctKeys(Set<ExecutableElement> methods) {
@@ -530,10 +530,8 @@ public final class ComponentValidator implements ClearableCache {
     return elements.overrides(overrider, overridden, asType(overrider.getEnclosingElement()));
   }
 
-  private static Optional<AnnotationMirror> checkForAnnotations(
-      TypeMirror type, final Set<ClassName> annotations) {
-    return type.getKind() == TypeKind.DECLARED
-        ? getAnyAnnotation(asElement(type), annotations)
-        : Optional.empty();
+  private static Optional<XAnnotation> checkForAnnotations(XType type, Set<ClassName> annotations) {
+    return Optional.ofNullable(type.getTypeElement())
+        .flatMap(typeElement -> getAnyAnnotation(typeElement, annotations));
   }
 }

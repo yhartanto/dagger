@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.base;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -23,6 +24,7 @@ import static dagger.internal.codegen.base.MoreAnnotationValues.asAnnotationValu
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnyAnnotation;
 
+import androidx.room.compiler.processing.XElement;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -114,6 +116,14 @@ public abstract class ModuleAnnotation {
         "%s is not a Module or ProducerModule annotation",
         annotation);
     return new AutoValue_ModuleAnnotation(annotation);
+  }
+
+  /**
+   * Returns an object representing the {@code @Module} or {@code @ProducerModule} annotation if one
+   * annotates {@code typeElement}.
+   */
+  public static Optional<ModuleAnnotation> moduleAnnotation(XElement element) {
+    return moduleAnnotation(toJavac(element));
   }
 
   /**

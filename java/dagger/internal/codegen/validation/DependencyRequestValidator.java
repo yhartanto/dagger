@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.asVariable;
 import static com.google.auto.common.MoreTypes.asTypeElement;
@@ -26,6 +27,8 @@ import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameFor
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.WILDCARD;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableCollection;
@@ -65,6 +68,15 @@ final class DependencyRequestValidator {
     this.injectionAnnotations = injectionAnnotations;
     this.metadataUtil = metadataUtil;
     this.elements = elements;
+  }
+
+  /**
+   * Adds an error if the given dependency request has more than one qualifier annotation or is a
+   * non-instance request with a wildcard type.
+   */
+  void validateDependencyRequest(
+      ValidationReport.Builder report, XElement requestElement, XType requestType) {
+    validateDependencyRequest(report, toJavac(requestElement), toJavac(requestType));
   }
 
   /**

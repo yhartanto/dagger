@@ -20,14 +20,13 @@ import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.extension.DaggerStreams.stream;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.DaggerStreams.valuesOf;
-import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 import static java.util.EnumSet.allOf;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
 import java.util.Optional;
-import javax.lang.model.element.TypeElement;
 
 /** Enumeration of the different kinds of components. */
 public enum ComponentKind {
@@ -84,9 +83,9 @@ public enum ComponentKind {
   }
 
   /** Returns the set of component kinds the given {@code element} has annotations for. */
-  public static ImmutableSet<ComponentKind> getComponentKinds(TypeElement element) {
+  public static ImmutableSet<ComponentKind> getComponentKinds(XTypeElement element) {
     return valuesOf(ComponentKind.class)
-        .filter(kind -> isAnnotationPresent(element, kind.annotation()))
+        .filter(kind -> element.hasAnnotation(kind.annotation()))
         .collect(toImmutableSet());
   }
 
@@ -97,7 +96,7 @@ public enum ComponentKind {
    * @throws IllegalArgumentException if the element is annotated with more than one of the
    *     annotations
    */
-  public static Optional<ComponentKind> forAnnotatedElement(TypeElement element) {
+  public static Optional<ComponentKind> forAnnotatedElement(XTypeElement element) {
     ImmutableSet<ComponentKind> kinds = getComponentKinds(element);
     if (kinds.size() > 1) {
       throw new IllegalArgumentException(

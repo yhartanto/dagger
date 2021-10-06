@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.collect.Sets.union;
 import static dagger.internal.codegen.base.ComponentAnnotation.allComponentAnnotations;
 import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnnotations;
@@ -29,7 +28,6 @@ import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
-import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
@@ -46,7 +44,6 @@ import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
 /**
@@ -92,9 +89,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElem
   }
 
   @Override
-  protected void process(XTypeElement xElement, ImmutableSet<ClassName> annotations) {
-    // TODO(bcorso): Remove conversion to javac type and use XProcessing throughout.
-    TypeElement element = XConverters.toJavac(xElement);
+  protected void process(XTypeElement element, ImmutableSet<ClassName> annotations) {
     if (!disjoint(annotations, rootComponentAnnotations())) {
       processRootComponent(element);
     }
@@ -106,7 +101,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElem
     }
   }
 
-  private void processRootComponent(TypeElement component) {
+  private void processRootComponent(XTypeElement component) {
     if (!isComponentValid(component)) {
       return;
     }
@@ -124,7 +119,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElem
     }
   }
 
-  private void processSubcomponent(TypeElement subcomponent) {
+  private void processSubcomponent(XTypeElement subcomponent) {
     if (!isComponentValid(subcomponent)) {
       return;
     }
@@ -138,12 +133,12 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElem
     componentGenerator.generate(bindingGraph, messager);
   }
 
-  private void processCreator(Element creator) {
-    creatorValidator.validate(MoreElements.asType(creator)).printMessagesTo(messager);
+  private void processCreator(XTypeElement creator) {
+    creatorValidator.validate(creator).printMessagesTo(messager);
   }
 
-  private boolean isComponentValid(Element component) {
-    ValidationReport report = componentValidator.validate(asType(component));
+  private boolean isComponentValid(XTypeElement component) {
+    ValidationReport report = componentValidator.validate(component);
     report.printMessagesTo(messager);
     return report.isClean();
   }

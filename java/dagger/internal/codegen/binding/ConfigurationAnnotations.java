@@ -23,12 +23,13 @@ import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnot
 import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.getTypeListValue;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
-import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
+import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 import static javax.lang.model.util.ElementFilter.typesIn;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -127,15 +128,20 @@ public final class ConfigurationAnnotations {
   }
 
   /** Returns the enclosed types annotated with the given annotation. */
-  public static ImmutableList<DeclaredType> enclosedAnnotatedTypes(
-      TypeElement typeElement, ClassName annotation) {
-    final ImmutableList.Builder<DeclaredType> builders = ImmutableList.builder();
-    for (TypeElement element : typesIn(typeElement.getEnclosedElements())) {
-      if (isAnnotationPresent(element, annotation)) {
-        builders.add(MoreTypes.asDeclared(element.asType()));
-      }
-    }
-    return builders.build();
+  public static ImmutableSet<XTypeElement> enclosedAnnotatedTypes(
+      XTypeElement typeElement, ImmutableSet<ClassName> annotations) {
+    return typeElement.getEnclosedTypeElements().stream()
+        .filter(enclosedType -> hasAnyAnnotation(enclosedType, annotations))
+        .collect(toImmutableSet());
+  }
+
+  // TODO(bcorso): Migrate users to the XProcessing version above.
+  /** Returns the enclosed types annotated with the given annotation. */
+  public static ImmutableSet<TypeElement> enclosedAnnotatedTypes(
+      TypeElement typeElement, ImmutableSet<ClassName> annotations) {
+    return typesIn(typeElement.getEnclosedElements()).stream()
+        .filter(enclosedType -> isAnyAnnotationPresent(enclosedType, annotations))
+        .collect(toImmutableSet());
   }
 
   /** Traverses includes from superclasses and adds them into the builder. */

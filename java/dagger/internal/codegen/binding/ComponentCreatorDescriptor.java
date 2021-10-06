@@ -17,6 +17,7 @@
 package dagger.internal.codegen.binding;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -154,16 +155,16 @@ public abstract class ComponentCreatorDescriptor {
 
   /** Creates a new {@link ComponentCreatorDescriptor} for the given creator {@code type}. */
   public static ComponentCreatorDescriptor create(
-      DeclaredType type,
+      TypeElement typeElement,
       DaggerElements elements,
       DaggerTypes types,
       DependencyRequestFactory dependencyRequestFactory) {
-    TypeElement typeElement = asTypeElement(type);
     TypeMirror componentType = typeElement.getEnclosingElement().asType();
 
     ImmutableSetMultimap.Builder<ComponentRequirement, ExecutableElement> setterMethods =
         ImmutableSetMultimap.builder();
 
+    DeclaredType type = asDeclared(typeElement.asType());
     ExecutableElement factoryMethod = null;
     for (ExecutableElement method : elements.getUnimplementedMethods(typeElement)) {
       ExecutableType resolvedMethodType = MoreTypes.asExecutable(types.asMemberOf(type, method));

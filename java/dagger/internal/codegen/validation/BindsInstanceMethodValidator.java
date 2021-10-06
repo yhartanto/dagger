@@ -20,16 +20,15 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.ComponentAnnotation.anyComponentAnnotation;
 import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XVariableElement;
 import androidx.room.compiler.processing.compat.XConverters;
-import com.google.auto.common.MoreElements;
 import dagger.internal.codegen.base.ModuleAnnotation;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 final class BindsInstanceMethodValidator extends BindsInstanceElementValidator<XExecutableElement> {
@@ -57,10 +56,10 @@ final class BindsInstanceMethodValidator extends BindsInstanceElementValidator<X
         report.addError(
             "@BindsInstance methods should have exactly one parameter for the bound type");
       }
-      TypeElement enclosingType = MoreElements.asType(element.getEnclosingElement());
-      moduleAnnotation(enclosingType)
+      XElement enclosingElement = xElement.getEnclosingElement();
+      moduleAnnotation(enclosingElement)
           .ifPresent(moduleAnnotation -> report.addError(didYouMeanBinds(moduleAnnotation)));
-      anyComponentAnnotation(enclosingType)
+      anyComponentAnnotation(enclosingElement)
           .ifPresent(
               componentAnnotation ->
                   report.addError(

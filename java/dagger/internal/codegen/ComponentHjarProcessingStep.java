@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen;
 
-import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.collect.Sets.union;
 import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnnotations;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
@@ -24,7 +23,6 @@ import static java.util.Collections.disjoint;
 
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.SourceFileGenerator;
@@ -37,7 +35,6 @@ import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.lang.model.element.TypeElement;
 
 /**
  * A processing step that emits the API of a generated component, without any actual implementation.
@@ -83,9 +80,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<XType
   // clause for any exception that's not TypeNotPresentException and ignore the component entirely
   // in that case.
   @Override
-  protected void process(XTypeElement xElement, ImmutableSet<ClassName> annotations) {
-    // TODO(bcorso): Remove conversion to javac type and use XProcessing throughout.
-    TypeElement element = XConverters.toJavac(xElement);
+  protected void process(XTypeElement element, ImmutableSet<ClassName> annotations) {
     if (!disjoint(annotations, rootComponentAnnotations())) {
       processRootComponent(element);
     }
@@ -94,7 +89,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<XType
     }
   }
 
-  private void processRootComponent(TypeElement element) {
+  private void processRootComponent(XTypeElement element) {
     ValidationReport validationReport = componentValidator.validate(element);
     validationReport.printMessagesTo(messager);
     if (validationReport.isClean()) {
@@ -103,7 +98,7 @@ final class ComponentHjarProcessingStep extends TypeCheckingProcessingStep<XType
     }
   }
 
-  private void processRootCreator(TypeElement creator) {
-    creatorValidator.validate(asType(creator)).printMessagesTo(messager);
+  private void processRootCreator(XTypeElement creator) {
+    creatorValidator.validate(creator).printMessagesTo(messager);
   }
 }

@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -32,6 +33,7 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
@@ -47,7 +49,6 @@ import java.util.function.Function;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 import javax.lang.model.type.TypeMirror;
 
@@ -74,6 +75,11 @@ public final class ComponentDescriptorFactory {
   }
 
   /** Returns a descriptor for a root component type. */
+  public ComponentDescriptor rootComponentDescriptor(XTypeElement xTypeElement) {
+    return rootComponentDescriptor(toJavac(xTypeElement));
+  }
+
+  /** Returns a descriptor for a root component type. */
   public ComponentDescriptor rootComponentDescriptor(TypeElement typeElement) {
     return create(
         typeElement,
@@ -83,8 +89,12 @@ public final class ComponentDescriptorFactory {
             "must have a component annotation"));
   }
 
+  public ComponentDescriptor subcomponentDescriptor(XTypeElement typeElement) {
+    return subcomponentDescriptor(toJavac(typeElement));
+  }
+
   /** Returns a descriptor for a subcomponent type. */
-  public ComponentDescriptor subcomponentDescriptor(TypeElement typeElement) {
+  private ComponentDescriptor subcomponentDescriptor(TypeElement typeElement) {
     return create(
         typeElement,
         checkAnnotation(
@@ -180,12 +190,8 @@ public final class ComponentDescriptorFactory {
     }
 
     // Validation should have ensured that this set will have at most one element.
-    ImmutableSet<DeclaredType> enclosedCreators =
-        creatorAnnotationsFor(componentAnnotation).stream()
-            .flatMap(
-                creatorAnnotation ->
-                    enclosedAnnotatedTypes(typeElement, creatorAnnotation).stream())
-            .collect(toImmutableSet());
+    ImmutableSet<TypeElement> enclosedCreators =
+        enclosedAnnotatedTypes(typeElement, creatorAnnotationsFor(componentAnnotation));
     Optional<ComponentCreatorDescriptor> creatorDescriptor =
         enclosedCreators.isEmpty()
             ? Optional.empty()
