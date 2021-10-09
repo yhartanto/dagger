@@ -29,6 +29,7 @@ import com.google.common.collect.Multimaps;
 import dagger.internal.codegen.base.Scopes;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.validation.DiagnosticMessageGenerator;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraph.ComponentNode;
@@ -47,12 +48,16 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
 
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final CompilerOptions compilerOptions;
+  private final DiagnosticMessageGenerator.Factory diagnosticMessageGeneratorFactory;
 
   @Inject
   IncompatiblyScopedBindingsValidator(
-      MethodSignatureFormatter methodSignatureFormatter, CompilerOptions compilerOptions) {
+      MethodSignatureFormatter methodSignatureFormatter,
+      CompilerOptions compilerOptions,
+      DiagnosticMessageGenerator.Factory diagnosticMessageGeneratorFactory) {
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.compilerOptions = compilerOptions;
+    this.diagnosticMessageGeneratorFactory = diagnosticMessageGeneratorFactory;
   }
 
   @Override
@@ -62,6 +67,8 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
 
   @Override
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
+    DiagnosticMessageGenerator diagnosticMessageGenerator =
+        diagnosticMessageGeneratorFactory.create(bindingGraph);
     ImmutableSetMultimap.Builder<ComponentNode, dagger.spi.model.Binding> incompatibleBindings =
         ImmutableSetMultimap.builder();
     for (dagger.spi.model.Binding binding : bindingGraph.bindings()) {
@@ -85,13 +92,15 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
               });
     }
     Multimaps.asMap(incompatibleBindings.build())
-        .forEach((componentNode, bindings) -> report(componentNode, bindings, diagnosticReporter));
+        .forEach((componentNode, bindings) ->
+            report(componentNode, bindings, diagnosticReporter, diagnosticMessageGenerator));
   }
 
   private void report(
       ComponentNode componentNode,
       Set<Binding> bindings,
-      DiagnosticReporter diagnosticReporter) {
+      DiagnosticReporter diagnosticReporter,
+      DiagnosticMessageGenerator diagnosticMessageGenerator) {
     Diagnostic.Kind diagnosticKind = ERROR;
     StringBuilder message =
         new StringBuilder(
@@ -135,12 +144,16 @@ final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
               .append(" class ")
               .append(
                   closestEnclosingTypeElement(
-                      binding.bindingElement().get().java()).getQualifiedName());
+                      binding.bindingElement().get().java()).getQualifiedName())
+              .append(diagnosticMessageGenerator.getMessage(binding));
+
           break;
 
         default:
           throw new AssertionError(binding);
       }
+
+      message.append('\n');
     }
     diagnosticReporter.reportComponent(diagnosticKind, componentNode, message.toString());
   }
