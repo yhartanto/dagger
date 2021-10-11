@@ -24,6 +24,7 @@ import static dagger.internal.codegen.base.MoreAnnotationValues.asAnnotationValu
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnyAnnotation;
 
+import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -93,6 +94,11 @@ public abstract class ModuleAnnotation {
   }
 
   /** Returns {@code true} if the argument is a {@code @Module} or {@code @ProducerModule}. */
+  public static boolean isModuleAnnotation(XAnnotation annotation) {
+    return isModuleAnnotation(toJavac(annotation));
+  }
+
+  /** Returns {@code true} if the argument is a {@code @Module} or {@code @ProducerModule}. */
   public static boolean isModuleAnnotation(AnnotationMirror annotation) {
     return MODULE_ANNOTATIONS.stream()
         .map(ClassName::canonicalName)
@@ -102,6 +108,16 @@ public abstract class ModuleAnnotation {
   /** The module annotation types. */
   public static ImmutableSet<ClassName> moduleAnnotations() {
     return MODULE_ANNOTATIONS;
+  }
+
+  /**
+   * Creates an object that represents a {@code @Module} or {@code @ProducerModule}.
+   *
+   * @throws IllegalArgumentException if {@link #isModuleAnnotation(AnnotationMirror)} returns
+   *     {@code false}
+   */
+  public static ModuleAnnotation moduleAnnotation(XAnnotation annotation) {
+    return moduleAnnotation(toJavac(annotation));
   }
 
   /**

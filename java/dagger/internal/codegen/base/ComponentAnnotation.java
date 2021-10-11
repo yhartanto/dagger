@@ -27,6 +27,7 @@ import static dagger.internal.codegen.langmodel.DaggerElements.getAnyAnnotation;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
@@ -191,6 +192,14 @@ public abstract class ComponentAnnotation {
    * Returns an object representing a subcomponent annotation, if one is present on {@code
    * typeElement}.
    */
+  public static Optional<ComponentAnnotation> subcomponentAnnotation(XTypeElement typeElement) {
+    return subcomponentAnnotation(toJavac(typeElement));
+  }
+
+  /**
+   * Returns an object representing a subcomponent annotation, if one is present on {@code
+   * typeElement}.
+   */
   public static Optional<ComponentAnnotation> subcomponentAnnotation(TypeElement typeElement) {
     return anyComponentAnnotation(typeElement, SUBCOMPONENT_ANNOTATIONS);
   }
@@ -206,6 +215,11 @@ public abstract class ComponentAnnotation {
   private static Optional<ComponentAnnotation> anyComponentAnnotation(
       Element element, Collection<ClassName> annotations) {
     return getAnyAnnotation(element, annotations).map(ComponentAnnotation::componentAnnotation);
+  }
+
+  /** Returns {@code true} if the argument is a component annotation. */
+  public static boolean isComponentAnnotation(XAnnotation annotation) {
+    return isComponentAnnotation(toJavac(annotation));
   }
 
   /** Returns {@code true} if the argument is a component annotation. */

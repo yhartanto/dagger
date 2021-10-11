@@ -176,11 +176,6 @@ public final class ValidationReport {
       this.subject = subject;
     }
 
-    @CheckReturnValue
-    Element getSubject() {
-      return subject;
-    }
-
     Builder addItems(Iterable<Item> newItems) {
       items.addAll(newItems);
       return this;
@@ -370,7 +365,7 @@ public final class ValidationReport {
 
     @CheckReturnValue
     public ValidationReport build() {
-      return new ValidationReport(getSubject(), items.build(), subreports.build(), markedDirty);
+      return new ValidationReport(subject, items.build(), subreports.build(), markedDirty);
     }
   }
 }

@@ -24,6 +24,11 @@ import androidx.room.compiler.processing.compat.XConverters;
 public final class XTypes {
 
   /** Returns {@code true} if the given type is a primitive type. */
+  public static boolean isDeclared(XType type) {
+    return type.getTypeElement() != null;
+  }
+
+  /** Returns {@code true} if the given type is a primitive type. */
   public static boolean isPrimitive(XType type) {
     return XConverters.toJavac(type).getKind().isPrimitive();
   }

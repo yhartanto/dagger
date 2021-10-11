@@ -16,11 +16,13 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import androidx.room.compiler.processing.XAnnotated;
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import java.util.Collection;
@@ -29,6 +31,13 @@ import java.util.Optional;
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XElement} helper methods. */
 public final class XElements {
+
+  public static ImmutableList<XAnnotation> getAnnotatedAnnotations(
+      XAnnotated annotated, ClassName annotationName) {
+    return annotated.getAllAnnotations().stream()
+        .filter(annotation -> annotation.getType().getTypeElement().hasAnnotation(annotationName))
+        .collect(toImmutableList());
+  }
 
   /** Returns {@code true} if {@code annotated} is annotated with any of the given annotations. */
   public static boolean hasAnyAnnotation(XAnnotated annotated, Collection<ClassName> annotations) {

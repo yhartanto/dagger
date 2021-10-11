@@ -18,6 +18,7 @@ package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.XTypeKt.isVoid;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asElement;
@@ -49,6 +50,7 @@ import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.HashMultimap;
@@ -106,6 +108,7 @@ public final class ComponentValidator implements ClearableCache {
   private final DependencyRequestFactory dependencyRequestFactory;
   private final Map<XTypeElement, ValidationReport> reports = new HashMap<>();
   private final KotlinMetadataUtil metadataUtil;
+  private final XProcessingEnv processingEnv;
 
   @Inject
   ComponentValidator(
@@ -117,7 +120,8 @@ public final class ComponentValidator implements ClearableCache {
       MembersInjectionValidator membersInjectionValidator,
       MethodSignatureFormatter methodSignatureFormatter,
       DependencyRequestFactory dependencyRequestFactory,
-      KotlinMetadataUtil metadataUtil) {
+      KotlinMetadataUtil metadataUtil,
+      XProcessingEnv processingEnv) {
     this.elements = elements;
     this.types = types;
     this.moduleValidator = moduleValidator;
@@ -127,6 +131,7 @@ public final class ComponentValidator implements ClearableCache {
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.metadataUtil = metadataUtil;
+    this.processingEnv = processingEnv;
   }
 
   @Override
@@ -479,8 +484,8 @@ public final class ComponentValidator implements ClearableCache {
     private void validateReferencedModules() {
       report.addSubreport(
           moduleValidator.validateReferencedModules(
-              toJavac(component),
-              componentAnnotation().annotation(),
+              component,
+              toXProcessing(componentAnnotation().annotation(), processingEnv),
               componentKind().legalModuleKinds(),
               new HashSet<>()));
     }

@@ -151,6 +151,7 @@ public final class TypeNames {
   public static final ClassName GUAVA_OPTIONAL =
       ClassName.get("com.google.common.base", "Optional");
   public static final ClassName JDK_OPTIONAL = ClassName.get("java.util", "Optional");
+  public static final ClassName OVERRIDE = ClassName.get("java.lang", "Override");
 
   /**
    * {@link TypeName#VOID} is lowercase-v {@code void} whereas this represents the class, {@link

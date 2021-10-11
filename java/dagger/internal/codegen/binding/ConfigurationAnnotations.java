@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.consumingIterable;
@@ -28,6 +29,7 @@ import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPr
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 import static javax.lang.model.util.ElementFilter.typesIn;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableList;
@@ -58,14 +60,24 @@ import javax.lang.model.type.TypeMirror;
  */
 public final class ConfigurationAnnotations {
 
+  public static Optional<XTypeElement> getSubcomponentCreator(XTypeElement subcomponent) {
+    checkArgument(subcomponentAnnotation(subcomponent).isPresent());
+    return subcomponent.getEnclosedTypeElements().stream()
+        .filter(ConfigurationAnnotations::isSubcomponentCreator)
+        // TODO(bcorso): Consider doing toOptional() instead since there should be at most 1.
+        .findFirst();
+  }
+
   public static Optional<TypeElement> getSubcomponentCreator(TypeElement subcomponent) {
     checkArgument(subcomponentAnnotation(subcomponent).isPresent());
-    for (TypeElement nestedType : typesIn(subcomponent.getEnclosedElements())) {
-      if (isSubcomponentCreator(nestedType)) {
-        return Optional.of(nestedType);
-      }
-    }
-    return Optional.empty();
+    return typesIn(subcomponent.getEnclosedElements()).stream()
+        .filter(ConfigurationAnnotations::isSubcomponentCreator)
+        // TODO(bcorso): Consider doing toOptional() instead since there should be at most 1.
+        .findFirst();
+  }
+
+  static boolean isSubcomponentCreator(XElement element) {
+    return isSubcomponentCreator(toJavac(element));
   }
 
   static boolean isSubcomponentCreator(Element element) {
