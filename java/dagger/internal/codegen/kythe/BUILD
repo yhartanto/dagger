@@ -31,6 +31,7 @@ java_library(
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/langmodel",
         "//java/dagger/internal/codegen/validation",
+        "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/internal/guava:collect",
         "//java/dagger/spi",
         "@google_bazel_common//third_party/java/auto:service",

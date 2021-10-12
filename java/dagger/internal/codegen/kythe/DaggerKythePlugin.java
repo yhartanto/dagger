@@ -21,6 +21,9 @@ package dagger.internal.codegen.kythe;
 
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 
+
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.Iterables;
 import com.google.devtools.kythe.analyzers.base.EntrySet;
@@ -65,6 +68,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   private FactEmitter emitter;
   @Inject ComponentDescriptorFactory componentDescriptorFactory;
   @Inject BindingGraphFactory bindingGraphFactory;
+  @Inject XProcessingEnv xProcessingEnv;
 
   @Override
   public Void visitClassDef(JCClassDecl tree, Void p) {
@@ -72,7 +76,9 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
         && isAnyAnnotationPresent(tree.sym, TypeNames.COMPONENT, TypeNames.PRODUCTION_COMPONENT)) {
       addNodesForGraph(
           bindingGraphFactory.create(
-              componentDescriptorFactory.rootComponentDescriptor(tree.sym), false));
+              componentDescriptorFactory.rootComponentDescriptor(
+                  XConverters.toXProcessing(tree.sym, xProcessingEnv)),
+              false));
     }
     return super.visitClassDef(tree, p);
   }
