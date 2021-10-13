@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Verify.verifyNotNull;
 import static dagger.internal.codegen.base.Scopes.scopesOf;
@@ -23,40 +24,43 @@ import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedInjectionType;
 import static dagger.internal.codegen.binding.MapKeys.getMapKeys;
-import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static javax.lang.model.type.TypeKind.ARRAY;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.TYPEVAR;
 import static javax.lang.model.type.TypeKind.VOID;
 
+import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.compat.XConverters;
-import com.google.common.collect.ImmutableCollection;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.FormatMethod;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.FrameworkTypes;
-import dagger.internal.codegen.base.MultibindingAnnotations;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.xprocessing.XElements;
 import dagger.spi.model.Key;
 import dagger.spi.model.Scope;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
 import javax.inject.Qualifier;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /** A validator for elements that represent binding declarations. */
 public abstract class BindingElementValidator<E extends XElement> {
+  private static final ImmutableSet<ClassName> MULTIBINDING_ANNOTATIONS =
+      ImmutableSet.of(TypeNames.INTO_SET, TypeNames.ELEMENTS_INTO_SET, TypeNames.INTO_MAP);
+
+  // TODO(bcorso): Inject this directly into InjectionAnnotations instead of using field injection.
+  @Inject XProcessingEnv processingEnv;
+
   private final ClassName bindingAnnotation;
   private final AllowsMultibindings allowsMultibindings;
   private final AllowsScoping allowsScoping;
@@ -68,6 +72,9 @@ public abstract class BindingElementValidator<E extends XElement> {
    *
    * @param bindingAnnotation the annotation on an element that identifies it as a binding element
    */
+  // TODO(bcorso): Consider reworking BindingElementValidator and all subclasses to use composition
+  // rather than inheritance. The web of inheritance makes it difficult to track what implementation
+  // of a method is actually being used.
   protected BindingElementValidator(
       ClassName bindingAnnotation,
       AllowsMultibindings allowsMultibindings,
@@ -137,16 +144,14 @@ public abstract class BindingElementValidator<E extends XElement> {
 
   /** Validator for a single binding element. */
   protected abstract class ElementValidator {
-    protected final E xElement;
-    protected final Element element;
+    private final E element;
     protected final ValidationReport.Builder report;
-    private final ImmutableCollection<? extends AnnotationMirror> qualifiers;
+    private final ImmutableSet<XAnnotation> qualifiers;
 
-    protected ElementValidator(E xElement) {
-      this.xElement = xElement;
-      this.element = XConverters.toJavac(xElement);
+    protected ElementValidator(E element) {
+      this.element = element;
       this.report = ValidationReport.about(element);
-      qualifiers = injectionAnnotations.getQualifiers(element);
+      qualifiers = injectionAnnotations.getQualifiers(element, processingEnv);
     }
 
     /** Checks the element for validity. */
@@ -266,7 +271,7 @@ public abstract class BindingElementValidator<E extends XElement> {
      */
     private void checkQualifiers() {
       if (qualifiers.size() > 1) {
-        for (AnnotationMirror qualifier : qualifiers) {
+        for (XAnnotation qualifier : qualifiers) {
           report.addError(
               bindingElements("may not use more than one @Qualifier"),
               element,
@@ -284,7 +289,7 @@ public abstract class BindingElementValidator<E extends XElement> {
       if (!allowsMultibindings.allowsMultibindings()) {
         return;
       }
-      ImmutableSet<? extends AnnotationMirror> mapKeys = getMapKeys(element);
+      ImmutableSet<XAnnotation> mapKeys = getMapKeys(element);
       if (ContributionType.fromBindingElement(element).equals(ContributionType.MAP)) {
         switch (mapKeys.size()) {
           case 0:
@@ -313,12 +318,12 @@ public abstract class BindingElementValidator<E extends XElement> {
      * </ul>
      */
     private void checkMultibindings() {
-      ImmutableSet<AnnotationMirror> multibindingAnnotations =
-          MultibindingAnnotations.forElement(element);
+      ImmutableSet<XAnnotation> multibindingAnnotations =
+          XElements.getAllAnnotations(element, MULTIBINDING_ANNOTATIONS);
 
       switch (allowsMultibindings) {
         case NO_MULTIBINDINGS:
-          for (AnnotationMirror annotation : multibindingAnnotations) {
+          for (XAnnotation annotation : multibindingAnnotations) {
             report.addError(
                 bindingElements("cannot have multibinding annotations"),
                 element,
@@ -328,7 +333,7 @@ public abstract class BindingElementValidator<E extends XElement> {
 
         case ALLOWS_MULTIBINDINGS:
           if (multibindingAnnotations.size() > 1) {
-            for (AnnotationMirror annotation : multibindingAnnotations) {
+            for (XAnnotation annotation : multibindingAnnotations) {
               report.addError(
                   bindingElements("cannot have more than one multibinding annotation"),
                   element,
@@ -336,20 +341,6 @@ public abstract class BindingElementValidator<E extends XElement> {
             }
           }
           break;
-      }
-
-      // TODO(ronshapiro): move this into ProvidesMethodValidator
-      if (bindingAnnotation.equals(TypeNames.PROVIDES)) {
-        AnnotationMirror bindingAnnotationMirror =
-            getAnnotationMirror(element, bindingAnnotation).get();
-        boolean usesProvidesType = false;
-        for (ExecutableElement member : bindingAnnotationMirror.getElementValues().keySet()) {
-          usesProvidesType |= member.getSimpleName().contentEquals("type");
-        }
-        if (usesProvidesType && !multibindingAnnotations.isEmpty()) {
-          report.addError(
-              "@Provides.type cannot be used with multibinding annotations", element);
-        }
       }
     }
 
@@ -373,7 +364,7 @@ public abstract class BindingElementValidator<E extends XElement> {
       }
       verifyNotNull(error);
       for (Scope scope : scopes) {
-        report.addError(error, element, scope.scopeAnnotation().java());
+        report.addError(error, toJavac(element), scope.scopeAnnotation().java());
       }
     }
 

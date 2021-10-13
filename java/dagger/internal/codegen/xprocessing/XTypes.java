@@ -18,6 +18,7 @@ package dagger.internal.codegen.xprocessing;
 
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.compat.XConverters;
+import javax.lang.model.type.TypeKind;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XType} helper methods. */
@@ -26,6 +27,11 @@ public final class XTypes {
   /** Returns {@code true} if the given type is a primitive type. */
   public static boolean isDeclared(XType type) {
     return type.getTypeElement() != null;
+  }
+
+  /** Returns {@code true} if the given type is a type variable. */
+  public static boolean isTypeVariable(XType type) {
+    return XConverters.toJavac(type).getKind() == TypeKind.TYPEVAR;
   }
 
   /** Returns {@code true} if the given type is a primitive type. */

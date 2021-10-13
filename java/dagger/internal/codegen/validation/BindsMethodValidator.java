@@ -16,16 +16,15 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsScoping.ALLOWS_SCOPING;
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 import static dagger.internal.codegen.validation.TypeHierarchyValidator.validateTypeHierarchy;
 
-import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XVariableElement;
-import androidx.room.compiler.processing.compat.XConverters;
-import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.ContributionType;
@@ -33,7 +32,6 @@ import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.BindsTypeChecker;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.inject.Inject;
@@ -48,14 +46,12 @@ final class BindsMethodValidator extends BindingMethodValidator {
   BindsMethodValidator(
       DaggerElements elements,
       DaggerTypes types,
-      KotlinMetadataUtil kotlinMetadataUtil,
       BindsTypeChecker bindsTypeChecker,
       DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(
         elements,
         types,
-        kotlinMetadataUtil,
         TypeNames.BINDS,
         ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE),
         dependencyRequestValidator,
@@ -69,18 +65,21 @@ final class BindsMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected ElementValidator elementValidator(XExecutableElement xElement) {
-    return new Validator(xElement);
+  protected ElementValidator elementValidator(XMethodElement method) {
+    return new Validator(method);
   }
 
   private class Validator extends MethodValidator {
-    Validator(XExecutableElement xElement) {
-      super(xElement);
+    private final XMethodElement method;
+
+    Validator(XMethodElement method) {
+      super(method);
+      this.method = method;
     }
 
     @Override
     protected void checkParameters() {
-      if (xElement.getParameters().size() != 1) {
+      if (method.getParameters().size() != 1) {
         report.addError(
             bindingMethods(
                 "must have exactly one parameter, whose type is assignable to the return type"));
@@ -92,9 +91,9 @@ final class BindsMethodValidator extends BindingMethodValidator {
     @Override
     protected void checkParameter(XVariableElement parameter) {
       super.checkParameter(parameter);
-      TypeMirror leftHandSide = boxIfNecessary(MoreElements.asExecutable(element).getReturnType());
-      TypeMirror rightHandSide = XConverters.toJavac(parameter.getType());
-      ContributionType contributionType = ContributionType.fromBindingElement(element);
+      TypeMirror leftHandSide = boxIfNecessary(toJavac(method.getReturnType()));
+      TypeMirror rightHandSide = toJavac(parameter.getType());
+      ContributionType contributionType = ContributionType.fromBindingElement(method);
       if (contributionType.equals(ContributionType.SET_VALUES) && !SetType.isSet(leftHandSide)) {
         report.addError(
             "@Binds @ElementsIntoSet methods must return a Set and take a Set parameter");

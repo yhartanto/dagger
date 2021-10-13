@@ -16,16 +16,17 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.XElementKt.isMethod;
+import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
+
 import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMessager;
-import androidx.room.compiler.processing.XVariableElement;
-import androidx.room.compiler.processing.compat.XConverters;
+import androidx.room.compiler.processing.XMethodElement;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
 
 /**
  * Processing step that validates that the {@code BindsInstance} annotation is applied to the
@@ -52,17 +53,13 @@ public final class BindsInstanceProcessingStep extends TypeCheckingProcessingSte
   }
 
   @Override
-  protected void process(XElement xElement, ImmutableSet<ClassName> annotations) {
-    Element element = XConverters.toJavac(xElement);
-    switch (element.getKind()) {
-      case PARAMETER:
-        parameterValidator.validate((XVariableElement) xElement).printMessagesTo(messager);
-        break;
-      case METHOD:
-        methodValidator.validate((XExecutableElement) xElement).printMessagesTo(messager);
-        break;
-      default:
-        throw new AssertionError(xElement);
+  protected void process(XElement element, ImmutableSet<ClassName> annotations) {
+    if (isMethod(element)) {
+      methodValidator.validate((XMethodElement) element).printMessagesTo(messager);
+    } else if (isMethodParameter(element)) {
+      parameterValidator.validate((XExecutableParameterElement) element).printMessagesTo(messager);
+    } else {
+      throw new AssertionError(element);
     }
   }
 }

@@ -16,21 +16,20 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.base.FrameworkTypes.isFrameworkType;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsMultibindings.NO_MULTIBINDINGS;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 
-import androidx.room.compiler.processing.XExecutableElement;
-import com.google.auto.common.MoreElements;
+import androidx.room.compiler.processing.XMethodElement;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.inject.Inject;
@@ -44,13 +43,11 @@ class MultibindsMethodValidator extends BindingMethodValidator {
   MultibindsMethodValidator(
       DaggerElements elements,
       DaggerTypes types,
-      KotlinMetadataUtil kotlinMetadataUtil,
       DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(
         elements,
         types,
-        kotlinMetadataUtil,
         TypeNames.MULTIBINDS,
         ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE),
         dependencyRequestValidator,
@@ -62,18 +59,21 @@ class MultibindsMethodValidator extends BindingMethodValidator {
   }
 
   @Override
-  protected ElementValidator elementValidator(XExecutableElement xElement) {
-    return new Validator(xElement);
+  protected ElementValidator elementValidator(XMethodElement method) {
+    return new Validator(method);
   }
 
   private class Validator extends MethodValidator {
-    Validator(XExecutableElement xElement) {
-      super(xElement);
+    private final XMethodElement method;
+
+    Validator(XMethodElement method) {
+      super(method);
+      this.method = method;
     }
 
     @Override
     protected void checkParameters() {
-      if (!xElement.getParameters().isEmpty()) {
+      if (!method.getParameters().isEmpty()) {
         report.addError(bindingMethods("cannot have parameters"));
       }
     }
@@ -81,8 +81,8 @@ class MultibindsMethodValidator extends BindingMethodValidator {
     /** Adds an error unless the method returns a {@code Map<K, V>} or {@code Set<T>}. */
     @Override
     protected void checkType() {
-      if (!isPlainMap(MoreElements.asExecutable(element).getReturnType())
-          && !isPlainSet(MoreElements.asExecutable(element).getReturnType())) {
+      if (!isPlainMap(toJavac(method.getReturnType()))
+          && !isPlainSet(toJavac(method.getReturnType()))) {
         report.addError(bindingMethods("must return Map<K, V> or Set<T>"));
       }
     }

@@ -16,10 +16,12 @@
 
 package dagger.internal.codegen.base;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XElement;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -71,6 +73,11 @@ public final class Scopes {
    */
   public static String getReadableSource(Scope scope) {
     return stripCommonTypePrefixes(scope.toString());
+  }
+
+  /** Returns all of the associated scopes for a source code element. */
+  public static ImmutableSet<Scope> scopesOf(XElement element) {
+    return scopesOf(toJavac(element));
   }
 
   /** Returns all of the associated scopes for a source code element. */

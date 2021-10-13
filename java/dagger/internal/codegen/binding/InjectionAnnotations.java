@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.asVariable;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
@@ -23,10 +25,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.base.MoreAnnotationValues.getStringValue;
 import static dagger.internal.codegen.binding.SourceFiles.memberInjectedFieldSignatureForVariable;
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.SuperficialValidation;
 import com.google.common.base.Equivalence;
@@ -80,6 +86,12 @@ public final class InjectionAnnotations {
         throw new IllegalArgumentException(
             e + " was annotated with more than one @Qualifier annotation");
     }
+  }
+
+  public ImmutableSet<XAnnotation> getQualifiers(XElement element, XProcessingEnv processingEnv) {
+    return getQualifiers(toJavac(element)).stream()
+        .map(qualifier -> toXProcessing(qualifier, processingEnv))
+        .collect(toImmutableSet());
   }
 
   public ImmutableCollection<? extends AnnotationMirror> getQualifiers(Element element) {

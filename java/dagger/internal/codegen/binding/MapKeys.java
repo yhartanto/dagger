@@ -27,6 +27,8 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
@@ -36,8 +38,10 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.MapKey;
 import dagger.internal.codegen.base.MapKeyAccessibility;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
@@ -71,6 +75,11 @@ public final class MapKeys {
   /** Returns all of the {@link MapKey} annotations that annotate {@code bindingElement}. */
   public static ImmutableSet<? extends AnnotationMirror> getMapKeys(Element bindingElement) {
     return getAnnotatedAnnotations(bindingElement, MapKey.class);
+  }
+
+  /** Returns all of the {@link MapKey} annotations that annotate {@code bindingElement}. */
+  public static ImmutableSet<XAnnotation> getMapKeys(XElement bindingElement) {
+    return XElements.getAnnotatedAnnotations(bindingElement, TypeNames.MAP_KEY);
   }
 
   /**

@@ -29,6 +29,7 @@ import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPr
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 import static javax.lang.model.util.ElementFilter.typesIn;
 
+import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
@@ -88,6 +89,13 @@ public final class ConfigurationAnnotations {
   public static ImmutableList<TypeMirror> getModuleInjects(AnnotationMirror moduleAnnotation) {
     checkNotNull(moduleAnnotation);
     return getTypeListValue(moduleAnnotation, "injects");
+  }
+
+  /** Returns the first type that specifies this' nullability, or empty if none. */
+  public static Optional<XAnnotation> getNullableAnnotation(XElement element) {
+    return element.getAllAnnotations().stream()
+        .filter(annotation -> annotation.getName().contentEquals("Nullable"))
+        .findFirst();
   }
 
   /** Returns the first type that specifies this' nullability, or empty if none. */

@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static kotlin.streams.jdk8.StreamsKt.asStream;
 
@@ -30,7 +31,10 @@ public final class XTypeElements {
 
   /** Returns {@code true} if the given {@code type} has type parameters. */
   public static boolean hasTypeParameters(XTypeElement type) {
-    return XTypes.hasTypeParameters(type.getType());
+    // TODO(bcorso): Add support for XTypeElement#getTypeParameters() or at least
+    // XTypeElement#hasTypeParameters() in XProcessing. XTypes#getTypeArguments() isn't quite the
+    // same -- it tells you if the declared type has parameters rather than the element itself.
+    return !toJavac(type).getTypeParameters().isEmpty();
   }
 
   /** Returns all non-private, non-static, abstract methods in {@code type}. */
