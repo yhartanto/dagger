@@ -60,7 +60,7 @@ class ComponentTreeDepsIrCreator private constructor(
     return mutableSetOf<ComponentTreeDepsIr>().apply {
       aggregatedDepsByRoot.keys.forEach { root ->
         val isDefaultRoot = root == DEFAULT_ROOT_CLASS_NAME
-        val isEarlyEntryPointRoot = isDefaultRoot && rootsUsingSharedComponent.isEmpty()
+        val isEarlyEntryPointRoot = isDefaultRoot && aggregatedEarlyEntryPointDeps.isNotEmpty()
         // We want to base the generated name on the user written root rather than a generated root.
         val rootName = if (isDefaultRoot) {
           DEFAULT_ROOT_CLASS_NAME

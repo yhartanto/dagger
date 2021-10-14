@@ -134,8 +134,9 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
 
       generateComponents(metadata, rootMetadata, componentNames);
 
-        // Generate a creator for the early entry point if there is a default component available.
-        if (isDefaultRoot) {
+        // Generate a creator for the early entry point if there is a default component available
+        // and there are early entry points.
+        if (isDefaultRoot && !metadata.aggregatedEarlyEntryPointDeps().isEmpty()) {
           EarlySingletonComponentCreatorGenerator.generate(getProcessingEnv());
         }
 

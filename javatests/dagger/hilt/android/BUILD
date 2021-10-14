@@ -170,7 +170,6 @@ android_local_test(
     name = "EarlyEntryPointNoEntryPointsDefinedTest",
     size = "small",
     srcs = ["EarlyEntryPointNoEntryPointsDefinedTest.java"],
-    javacopts = ["-Adagger.hilt.shareTestComponents=false"],  # TODO(b/200821875): Remove explicit flag
     manifest_values = {
         "minSdkVersion": "14",
     },
