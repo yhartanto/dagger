@@ -87,6 +87,7 @@ gen_maven_artifact(
         "javax.inject:javax.inject",
         "net.ltgt.gradle.incap:incap",
         "org.jetbrains.kotlin:kotlin-stdlib",
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk8",
         "org.jetbrains.kotlinx:kotlinx-metadata-jvm",
     ],
     javadoc_android_api_level = 30,

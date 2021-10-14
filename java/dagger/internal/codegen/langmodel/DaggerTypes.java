@@ -16,10 +16,12 @@
 
 package dagger.internal.codegen.langmodel;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 
+import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
@@ -343,6 +345,10 @@ public final class DaggerTypes implements Types {
   @Override
   public boolean isSameType(TypeMirror t1, TypeMirror t2) {
     return types.isSameType(t1, t2);
+  }
+
+  public boolean isSubtype(XType t1, XType t2) {
+    return isSubtype(toJavac(t1), toJavac(t2));
   }
 
   @Override

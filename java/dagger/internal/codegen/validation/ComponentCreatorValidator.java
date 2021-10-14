@@ -41,6 +41,7 @@ import dagger.internal.codegen.binding.ErrorMessages;
 import dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
+import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,10 +53,12 @@ import javax.inject.Singleton;
 public final class ComponentCreatorValidator implements ClearableCache {
 
   private final Map<XTypeElement, ValidationReport> reports = new HashMap<>();
+  private final DaggerTypes types;
   private final KotlinMetadataUtil metadataUtil;
 
   @Inject
-  ComponentCreatorValidator(KotlinMetadataUtil metadataUtil) {
+  ComponentCreatorValidator(DaggerTypes types, KotlinMetadataUtil metadataUtil) {
+    this.types = types;
     this.metadataUtil = metadataUtil;
   }
 
@@ -251,7 +254,7 @@ public final class ComponentCreatorValidator implements ClearableCache {
 
     private void validateSetterMethod(XMethodElement method) {
       XType returnType = method.asMemberOf(creator.getType()).getReturnType();
-      if (!isVoid(returnType) && !returnType.isAssignableFrom(creator.getType())) {
+      if (!isVoid(returnType) && !types.isSubtype(creator.getType(), returnType)) {
         error(
             method,
             messages.setterMethodsMustReturnVoidOrBuilder(),
@@ -329,7 +332,7 @@ public final class ComponentCreatorValidator implements ClearableCache {
     private boolean validateFactoryMethodReturnType(XMethodElement method) {
       XTypeElement component = creator.getEnclosingTypeElement();
       XType returnType = method.asMemberOf(creator.getType()).getReturnType();
-      if (!returnType.isAssignableFrom(component.getType())) {
+      if (!types.isSubtype(component.getType(), returnType)) {
         error(
             method,
             messages.factoryMethodMustReturnComponentType(),
