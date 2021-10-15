@@ -27,7 +27,6 @@ import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.BindingRequest;
 import dagger.internal.codegen.binding.ProvisionBinding;
-import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
 import dagger.spi.model.RequestKind;
 
@@ -47,9 +46,7 @@ final class SwitchingProviderInstanceSupplier implements FrameworkInstanceSuppli
       ComponentImplementation componentImplementation,
       PrivateMethodRequestRepresentation.Factory privateMethodRequestRepresentationFactory,
       UnscopedDirectInstanceRequestRepresentationFactory
-          unscopedDirectInstanceRequestRepresentationFactory,
-      FrameworkInstanceBindingRepresentation.Factory frameworkInstanceBindingRepresentationFactory,
-      CompilerOptions compilerOptions) {
+          unscopedDirectInstanceRequestRepresentationFactory) {
     // First try to get the instance expression via getRequestRepresentation(). However, if that
     // expression is a DerivedFromFrameworkInstanceRequestRepresentation (e.g. fooProvider.get()),
     // then we can't use it to create an instance within the SwitchingProvider since that would
