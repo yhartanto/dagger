@@ -16,8 +16,6 @@
 
 package dagger.internal.codegen.validation;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreTypes.asTypeElement;
 import static dagger.internal.codegen.base.Keys.isValidImplicitProvisionKey;
 import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConstructors;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsMultibindings.NO_MULTIBINDINGS;
@@ -26,28 +24,24 @@ import static dagger.internal.codegen.validation.BindingMethodValidator.Abstract
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.inject.Inject;
-import javax.lang.model.type.TypeMirror;
 
 /** A validator for {@link dagger.BindsOptionalOf} methods. */
 final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
-
   private final DaggerTypes types;
   private final InjectionAnnotations injectionAnnotations;
 
   @Inject
   BindsOptionalOfMethodValidator(
-      DaggerElements elements,
       DaggerTypes types,
       DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(
-        elements,
         types,
         TypeNames.BINDS_OPTIONAL_OF,
         ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE),
@@ -75,13 +69,13 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
     }
 
     @Override
-    protected void checkKeyType(TypeMirror keyType) {
+    protected void checkKeyType(XType keyType) {
       super.checkKeyType(keyType);
       if (isValidImplicitProvisionKey(
-              injectionAnnotations.getQualifiers(toJavac(method)).stream().findFirst(),
+              injectionAnnotations.getQualifiers(method, processingEnv).stream().findFirst(),
               keyType,
               types)
-          && !injectedConstructors(asTypeElement(keyType)).isEmpty()) {
+          && !injectedConstructors(keyType.getTypeElement()).isEmpty()) {
         report.addError(
             "@BindsOptionalOf methods cannot return unqualified types that have an @Inject-"
                 + "annotated constructor because those are always present");

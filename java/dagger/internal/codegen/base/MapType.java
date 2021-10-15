@@ -16,10 +16,12 @@
 
 package dagger.internal.codegen.base;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
 
+import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
@@ -117,6 +119,11 @@ public abstract class MapType {
   }
 
   /** {@code true} if {@code type} is a {@link java.util.Map} type. */
+  public static boolean isMap(XType type) {
+    return isMap(toJavac(type));
+  }
+
+  /** {@code true} if {@code type} is a {@link java.util.Map} type. */
   public static boolean isMap(TypeMirror type) {
     return MoreTypes.isType(type) && isTypeOf(TypeNames.MAP, type);
   }
@@ -124,6 +131,15 @@ public abstract class MapType {
   /** {@code true} if {@code key.type()} is a {@link java.util.Map} type. */
   public static boolean isMap(Key key) {
     return isMap(key.type().java());
+  }
+
+  /**
+   * Returns a {@link MapType} for {@code type}.
+   *
+   * @throws IllegalArgumentException if {@code type} is not a {@link java.util.Map} type
+   */
+  public static MapType from(XType type) {
+    return from(toJavac(type));
   }
 
   /**

@@ -16,26 +16,24 @@
 
 package dagger.internal.codegen.validation;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsScoping.ALLOWS_SCOPING;
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 import static dagger.internal.codegen.validation.TypeHierarchyValidator.validateTypeHierarchy;
+import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XVariableElement;
-import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.BindsTypeChecker;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.inject.Inject;
-import javax.lang.model.type.TypeMirror;
 
 /** A validator for {@link dagger.Binds} methods. */
 final class BindsMethodValidator extends BindingMethodValidator {
@@ -44,13 +42,11 @@ final class BindsMethodValidator extends BindingMethodValidator {
 
   @Inject
   BindsMethodValidator(
-      DaggerElements elements,
       DaggerTypes types,
       BindsTypeChecker bindsTypeChecker,
       DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(
-        elements,
         types,
         TypeNames.BINDS,
         ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE),
@@ -91,8 +87,8 @@ final class BindsMethodValidator extends BindingMethodValidator {
     @Override
     protected void checkParameter(XVariableElement parameter) {
       super.checkParameter(parameter);
-      TypeMirror leftHandSide = boxIfNecessary(toJavac(method.getReturnType()));
-      TypeMirror rightHandSide = toJavac(parameter.getType());
+      XType leftHandSide = boxIfNecessary(method.getReturnType());
+      XType rightHandSide = parameter.getType();
       ContributionType contributionType = ContributionType.fromBindingElement(method);
       if (contributionType.equals(ContributionType.SET_VALUES) && !SetType.isSet(leftHandSide)) {
         report.addError(
@@ -114,11 +110,8 @@ final class BindsMethodValidator extends BindingMethodValidator {
       }
     }
 
-    private TypeMirror boxIfNecessary(TypeMirror maybePrimitive) {
-      if (maybePrimitive.getKind().isPrimitive()) {
-        return types.boxedClass(MoreTypes.asPrimitiveType(maybePrimitive)).asType();
-      }
-      return maybePrimitive;
+    private XType boxIfNecessary(XType maybePrimitive) {
+      return isPrimitive(maybePrimitive) ? maybePrimitive.boxed() : maybePrimitive;
     }
   }
 }

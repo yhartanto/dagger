@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.validation;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.base.FrameworkTypes.isFrameworkType;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsMultibindings.NO_MULTIBINDINGS;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsScoping.NO_SCOPING;
@@ -24,16 +23,15 @@ import static dagger.internal.codegen.validation.BindingMethodValidator.Abstract
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
 
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.inject.Inject;
-import javax.lang.model.type.TypeMirror;
 
 /** A validator for {@link dagger.multibindings.Multibinds} methods. */
 class MultibindsMethodValidator extends BindingMethodValidator {
@@ -41,12 +39,10 @@ class MultibindsMethodValidator extends BindingMethodValidator {
   /** Creates a validator for {@link dagger.multibindings.Multibinds @Multibinds} methods. */
   @Inject
   MultibindsMethodValidator(
-      DaggerElements elements,
       DaggerTypes types,
       DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(
-        elements,
         types,
         TypeNames.MULTIBINDS,
         ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE),
@@ -81,13 +77,12 @@ class MultibindsMethodValidator extends BindingMethodValidator {
     /** Adds an error unless the method returns a {@code Map<K, V>} or {@code Set<T>}. */
     @Override
     protected void checkType() {
-      if (!isPlainMap(toJavac(method.getReturnType()))
-          && !isPlainSet(toJavac(method.getReturnType()))) {
+      if (!isPlainMap(method.getReturnType()) && !isPlainSet(method.getReturnType())) {
         report.addError(bindingMethods("must return Map<K, V> or Set<T>"));
       }
     }
 
-    private boolean isPlainMap(TypeMirror returnType) {
+    private boolean isPlainMap(XType returnType) {
       if (!MapType.isMap(returnType)) {
         return false;
       }
@@ -97,7 +92,7 @@ class MultibindsMethodValidator extends BindingMethodValidator {
           && !isFrameworkType(mapType.valueType());
     }
 
-    private boolean isPlainSet(TypeMirror returnType) {
+    private boolean isPlainSet(XType returnType) {
       if (!SetType.isSet(returnType)) {
         return false;
       }

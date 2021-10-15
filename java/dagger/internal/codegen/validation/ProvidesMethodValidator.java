@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.validation;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsScoping.ALLOWS_SCOPING;
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
@@ -27,7 +26,6 @@ import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.inject.Inject;
 
@@ -38,12 +36,10 @@ final class ProvidesMethodValidator extends BindingMethodValidator {
 
   @Inject
   ProvidesMethodValidator(
-      DaggerElements elements,
       DaggerTypes types,
       DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(
-        elements,
         types,
         TypeNames.PROVIDES,
         ImmutableSet.of(TypeNames.MODULE, TypeNames.PRODUCER_MODULE),
@@ -77,7 +73,7 @@ final class ProvidesMethodValidator extends BindingMethodValidator {
     @Override
     protected void checkParameter(XVariableElement parameter) {
       super.checkParameter(parameter);
-      dependencyRequestValidator.checkNotProducer(report, toJavac(parameter));
+      dependencyRequestValidator.checkNotProducer(report, parameter);
     }
   }
 }

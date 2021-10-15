@@ -33,6 +33,7 @@ import static javax.lang.model.util.ElementFilter.constructorsIn;
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.SuperficialValidation;
 import com.google.common.base.Equivalence;
@@ -111,6 +112,11 @@ public final class InjectionAnnotations {
     } else {
       return qualifiers.asList();
     }
+  }
+
+  /** Returns the constructors in {@code type} that are annotated with {@link Inject}. */
+  public static ImmutableSet<ExecutableElement> injectedConstructors(XTypeElement type) {
+    return injectedConstructors(toJavac(type));
   }
 
   /** Returns the constructors in {@code type} that are annotated with {@link Inject}. */

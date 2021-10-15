@@ -16,11 +16,15 @@
 
 package dagger.internal.codegen.base;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static dagger.internal.codegen.base.ComponentAnnotation.allComponentAndCreatorAnnotations;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.compat.XConverters;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.Key;
@@ -47,6 +51,16 @@ public final class Keys {
   public static boolean isValidImplicitProvisionKey(Key key, DaggerTypes types) {
     return isValidImplicitProvisionKey(
         key.qualifier().map(DaggerAnnotation::java), key.type().java(), types);
+  }
+
+  /**
+   * Returns {@code true} if a key with {@code qualifier} and {@code type} is valid as an implicit
+   * key (that is, if it's valid for a just-in-time binding by discovering an {@code @Inject}
+   * constructor).
+   */
+  public static boolean isValidImplicitProvisionKey(
+      Optional<XAnnotation> qualifier, XType type, DaggerTypes types) {
+    return isValidImplicitProvisionKey(qualifier.map(XConverters::toJavac), toJavac(type), types);
   }
 
   /**

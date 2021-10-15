@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.validation;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XMethodElements.getEnclosingTypeElement;
 import static dagger.internal.codegen.xprocessing.XMethodElements.hasTypeParameters;
@@ -27,21 +26,17 @@ import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.FormatMethod;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Optional;
-import javax.lang.model.type.TypeMirror;
 
 /** A validator for methods that represent binding declarations. */
 abstract class BindingMethodValidator extends BindingElementValidator<XMethodElement> {
 
-  private final DaggerElements elements;
   private final DaggerTypes types;
   private final DependencyRequestValidator dependencyRequestValidator;
   private final ClassName methodAnnotation;
@@ -57,7 +52,6 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
    *     with this annotation
    */
   protected BindingMethodValidator(
-      DaggerElements elements,
       DaggerTypes types,
       DependencyRequestValidator dependencyRequestValidator,
       ClassName methodAnnotation,
@@ -68,7 +62,6 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
       AllowsScoping allowsScoping,
       InjectionAnnotations injectionAnnotations) {
     this(
-        elements,
         types,
         methodAnnotation,
         ImmutableSet.of(enclosingElementAnnotation),
@@ -88,7 +81,6 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
    *     annotated with one of these annotations
    */
   protected BindingMethodValidator(
-      DaggerElements elements,
       DaggerTypes types,
       ClassName methodAnnotation,
       Iterable<ClassName> enclosingElementAnnotations,
@@ -99,7 +91,6 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
       AllowsScoping allowsScoping,
       InjectionAnnotations injectionAnnotations) {
     super(methodAnnotation, allowsMultibindings, allowsScoping, injectionAnnotations);
-    this.elements = elements;
     this.types = types;
     this.methodAnnotation = methodAnnotation;
     this.enclosingElementAnnotations = ImmutableSet.copyOf(enclosingElementAnnotations);
@@ -143,8 +134,8 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
     }
 
     @Override
-    protected final Optional<TypeMirror> bindingElementType() {
-      return Optional.of(toJavac(method.getReturnType()));
+    protected final Optional<XType> bindingElementType() {
+      return Optional.of(method.getReturnType());
     }
 
     @Override
@@ -232,8 +223,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
      * more than one qualifier.
      */
     protected void checkParameter(XVariableElement parameter) {
-      dependencyRequestValidator.validateDependencyRequest(
-          report, XConverters.toJavac(parameter), XConverters.toJavac(parameter.getType()));
+      dependencyRequestValidator.validateDependencyRequest(report, parameter, parameter.getType());
     }
   }
 
@@ -306,10 +296,9 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
         BindingMethodValidator validator,
         XExecutableElement element,
         ValidationReport.Builder report) {
-      TypeMirror exceptionSupertype = validator.elements.getTypeElement(superclass).asType();
-      TypeMirror errorType = validator.elements.getTypeElement(TypeNames.ERROR).asType();
-      for (XType type : element.getThrownTypes()) {
-        TypeMirror thrownType = XConverters.toJavac(type);
+      XType exceptionSupertype = validator.processingEnv.findType(superclass);
+      XType errorType = validator.processingEnv.findType(TypeNames.ERROR);
+      for (XType thrownType : element.getThrownTypes()) {
         if (!validator.types.isSubtype(thrownType, exceptionSupertype)
             && !validator.types.isSubtype(thrownType, errorType)) {
           report.addError(errorMessage(validator));

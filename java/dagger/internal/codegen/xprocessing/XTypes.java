@@ -18,13 +18,19 @@ package dagger.internal.codegen.xprocessing;
 
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.compat.XConverters;
+import com.squareup.javapoet.ClassName;
 import javax.lang.model.type.TypeKind;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XType} helper methods. */
 public final class XTypes {
 
-  /** Returns {@code true} if the given type is a primitive type. */
+  /** Returns {@code true} if the raw type of {@code type} is equal to {@code className}. */
+  public static boolean isTypeOf(XType type, ClassName className) {
+    return isDeclared(type) && type.getTypeElement().getClassName().equals(className);
+  }
+
+  /** Returns {@code true} if the given type is a declared type. */
   public static boolean isDeclared(XType type) {
     return type.getTypeElement() != null;
   }

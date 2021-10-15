@@ -16,9 +16,11 @@
 
 package dagger.internal.codegen.base;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreTypes.isType;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
 
+import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
@@ -41,6 +43,11 @@ public final class FrameworkTypes {
   /** Returns true if the type represents a producer-related framework type. */
   public static boolean isProducerType(TypeMirror type) {
     return isType(type) && typeIsOneOf(PRODUCTION_TYPES, type);
+  }
+
+  /** Returns true if the type represents a framework type. */
+  public static boolean isFrameworkType(XType type) {
+    return isFrameworkType(toJavac(type));
   }
 
   /** Returns true if the type represents a framework type. */

@@ -16,16 +16,15 @@
 
 package dagger.internal.codegen.validation;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeVariable;
 
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.type.TypeMirror;
 
 final class BindsInstanceParameterValidator
     extends BindsInstanceElementValidator<XExecutableParameterElement> {
@@ -64,8 +63,8 @@ final class BindsInstanceParameterValidator
     }
 
     @Override
-    protected Optional<TypeMirror> bindingElementType() {
-      return Optional.of(toJavac(parameter.getType()));
+    protected Optional<XType> bindingElementType() {
+      return Optional.of(parameter.getType());
     }
   }
 }

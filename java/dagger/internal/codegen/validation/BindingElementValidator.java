@@ -16,22 +16,25 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.XTypeKt.isArray;
+import static androidx.room.compiler.processing.XTypeKt.isVoid;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Verify.verifyNotNull;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.Scopes.scopesOf;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedInjectionType;
 import static dagger.internal.codegen.binding.MapKeys.getMapKeys;
-import static javax.lang.model.type.TypeKind.ARRAY;
-import static javax.lang.model.type.TypeKind.DECLARED;
-import static javax.lang.model.type.TypeKind.TYPEVAR;
-import static javax.lang.model.type.TypeKind.VOID;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
+import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
+import static dagger.internal.codegen.xprocessing.XTypes.isTypeVariable;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.FormatMethod;
 import com.squareup.javapoet.ClassName;
@@ -49,9 +52,6 @@ import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Qualifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 
 /** A validator for elements that represent binding declarations. */
 public abstract class BindingElementValidator<E extends XElement> {
@@ -174,8 +174,8 @@ public abstract class BindingElementValidator<E extends XElement> {
      * that the contributed type is ambiguous or missing, i.e. a {@code @BindsInstance} method with
      * zero or many parameters.
      */
-    // TODO(dpb): should this be an ImmutableList<TypeMirror>, with this class checking the size?
-    protected abstract Optional<TypeMirror> bindingElementType();
+    // TODO(dpb): should this be an ImmutableList<XType>, with this class checking the size?
+    protected abstract Optional<XType> bindingElementType();
 
     /**
      * Adds an error if the {@link #bindingElementType() binding element type} is not appropriate.
@@ -204,7 +204,7 @@ public abstract class BindingElementValidator<E extends XElement> {
 
         case SET:
         case MAP:
-          bindingElementType().ifPresent(type -> checkKeyType(type));
+          bindingElementType().ifPresent(this::checkKeyType);
           break;
 
         case SET_VALUES:
@@ -215,14 +215,13 @@ public abstract class BindingElementValidator<E extends XElement> {
     /**
      * Adds an error if {@code keyType} is not a primitive, declared type, array, or type variable.
      */
-    protected void checkKeyType(TypeMirror keyType) {
-      TypeKind kind = keyType.getKind();
-      if (kind.equals(VOID)) {
+    protected void checkKeyType(XType keyType) {
+      if (isVoid(keyType)) {
         report.addError(bindingElements("must %s a value (not void)", bindingElementTypeVerb()));
-      } else if (!(kind.isPrimitive()
-          || kind.equals(DECLARED)
-          || kind.equals(ARRAY)
-          || kind.equals(TYPEVAR))) {
+      } else if (!(isPrimitive(keyType)
+          || isDeclared(keyType)
+          || isArray(keyType)
+          || isTypeVariable(keyType))) {
         report.addError(badTypeMessage());
       }
     }
@@ -230,9 +229,9 @@ public abstract class BindingElementValidator<E extends XElement> {
     /** Adds errors for unqualified assisted types. */
     private void checkAssistedType() {
       if (qualifiers.isEmpty()
-              && bindingElementType().isPresent()
-              && bindingElementType().get().getKind() == DECLARED) {
-        TypeElement keyElement = asTypeElement(bindingElementType().get());
+          && bindingElementType().isPresent()
+          && isDeclared(bindingElementType().get())) {
+        XTypeElement keyElement = bindingElementType().get().getTypeElement();
         if (isAssistedInjectionType(keyElement)) {
           report.addError("Dagger does not support providing @AssistedInject types.", keyElement);
         }
@@ -249,11 +248,11 @@ public abstract class BindingElementValidator<E extends XElement> {
      */
     // TODO(gak): should we allow "covariant return" for set values?
     protected void checkSetValuesType() {
-      bindingElementType().ifPresent(keyType -> checkSetValuesType(keyType));
+      bindingElementType().ifPresent(this::checkSetValuesType);
     }
 
     /** Adds an error if {@code type} is not a {@code Set<T>} for a reasonable {@code T}. */
-    protected final void checkSetValuesType(TypeMirror type) {
+    protected final void checkSetValuesType(XType type) {
       if (!SetType.isSet(type)) {
         report.addError(elementsIntoSetNotASetMessage());
       } else {
@@ -261,7 +260,10 @@ public abstract class BindingElementValidator<E extends XElement> {
         if (setType.isRawType()) {
           report.addError(elementsIntoSetRawSetMessage());
         } else {
-          checkKeyType(setType.elementType());
+          // TODO(bcorso): Use setType.elementType() once setType is fully converted to XProcessing.
+          // However, currently SetType returns TypeMirror instead of XType and we have no
+          // conversion from TypeMirror to XType, so we just get the type ourselves.
+          checkKeyType(getOnlyElement(type.getTypeArguments()));
         }
       }
     }

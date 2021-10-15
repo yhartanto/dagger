@@ -29,6 +29,7 @@ import static javax.lang.model.type.TypeKind.WILDCARD;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XVariableElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableCollection;
@@ -189,6 +190,17 @@ final class DependencyRequestValidator {
         }
       }
     }
+  }
+
+  /**
+   * Adds an error if the given dependency request is for a {@link dagger.producers.Producer} or
+   * {@link dagger.producers.Produced}.
+   *
+   * <p>Only call this when processing a provision binding.
+   */
+  // TODO(dpb): Should we disallow Producer entry points in non-production components?
+  void checkNotProducer(ValidationReport.Builder report, XVariableElement requestElement) {
+    checkNotProducer(report, toJavac(requestElement));
   }
 
   /**

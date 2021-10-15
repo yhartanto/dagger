@@ -16,6 +16,9 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+
+import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.common.SuperficialValidation;
 import com.google.common.base.Equivalence;
@@ -29,6 +32,16 @@ import javax.lang.model.type.TypeMirror;
 /** Utility methods for validating the type hierarchy of a given type. */
 final class TypeHierarchyValidator {
   private TypeHierarchyValidator() {}
+
+  /**
+   * Validate the type hierarchy of the given type including all super classes, interfaces, and
+   * type parameters.
+   *
+   * @throws TypeNotPresentException if an type in the hierarchy is not valid.
+   */
+  public static void validateTypeHierarchy(XType type, DaggerTypes types) {
+    validateTypeHierarchy(toJavac(type), types);
+  }
 
   /**
    * Validate the type hierarchy of the given type including all super classes, interfaces, and

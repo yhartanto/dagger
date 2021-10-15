@@ -16,38 +16,33 @@
 
 package dagger.internal.codegen.validation;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableAnnotation;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsMultibindings.ALLOWS_MULTIBINDINGS;
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_CONCRETE;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.EXCEPTION;
+import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 
 import androidx.room.compiler.processing.XMethodElement;
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.XType;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 
 /** A validator for {@link dagger.producers.Produces} methods. */
 final class ProducesMethodValidator extends BindingMethodValidator {
 
   @Inject
   ProducesMethodValidator(
-      DaggerElements elements,
       DaggerTypes types,
       DependencyRequestValidator dependencyRequestValidator,
       InjectionAnnotations injectionAnnotations) {
     super(
-        elements,
         types,
         dependencyRequestValidator,
         TypeNames.PRODUCES,
@@ -104,11 +99,8 @@ final class ProducesMethodValidator extends BindingMethodValidator {
      * <p>Allows {@code keyType} to be a {@link ListenableFuture} of an otherwise-valid key type.
      */
     @Override
-    protected void checkKeyType(TypeMirror keyType) {
-      Optional<TypeMirror> typeToCheck = unwrapListenableFuture(keyType);
-      if (typeToCheck.isPresent()) {
-        super.checkKeyType(typeToCheck.get());
-      }
+    protected void checkKeyType(XType keyType) {
+      unwrapListenableFuture(keyType).ifPresent(super::checkKeyType);
     }
 
     /**
@@ -119,17 +111,16 @@ final class ProducesMethodValidator extends BindingMethodValidator {
      */
     @Override
     protected void checkSetValuesType() {
-      unwrapListenableFuture(toJavac(method.getReturnType())).ifPresent(this::checkSetValuesType);
+      unwrapListenableFuture(method.getReturnType()).ifPresent(this::checkSetValuesType);
     }
 
-    private Optional<TypeMirror> unwrapListenableFuture(TypeMirror type) {
-      if (MoreTypes.isType(type) && MoreTypes.isTypeOf(ListenableFuture.class, type)) {
-        DeclaredType declaredType = MoreTypes.asDeclared(type);
-        if (declaredType.getTypeArguments().isEmpty()) {
+    private Optional<XType> unwrapListenableFuture(XType type) {
+      if (isTypeOf(type, TypeNames.LISTENABLE_FUTURE)) {
+        if (type.getTypeArguments().isEmpty()) {
           report.addError("@Produces methods cannot return a raw ListenableFuture");
           return Optional.empty();
         } else {
-          return Optional.of((TypeMirror) getOnlyElement(declaredType.getTypeArguments()));
+          return Optional.of(getOnlyElement(type.getTypeArguments()));
         }
       }
       return Optional.of(type);

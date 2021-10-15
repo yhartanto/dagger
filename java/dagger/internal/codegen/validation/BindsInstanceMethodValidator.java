@@ -22,15 +22,14 @@ import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.xprocessing.XMethodElements.getEnclosingTypeElement;
 
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
-import androidx.room.compiler.processing.compat.XConverters;
 import dagger.internal.codegen.base.ModuleAnnotation;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.type.TypeMirror;
 
 final class BindsInstanceMethodValidator extends BindsInstanceElementValidator<XMethodElement> {
   @Inject
@@ -74,10 +73,10 @@ final class BindsInstanceMethodValidator extends BindsInstanceElementValidator<X
     }
 
     @Override
-    protected Optional<TypeMirror> bindingElementType() {
+    protected Optional<XType> bindingElementType() {
       List<? extends XVariableElement> parameters = method.getParameters();
       return parameters.size() == 1
-          ? Optional.of(XConverters.toJavac(getOnlyElement(parameters).getType()))
+          ? Optional.of(getOnlyElement(parameters).getType())
           : Optional.empty();
     }
   }

@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asDeclared;
@@ -30,6 +31,8 @@ import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirr
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -74,10 +77,20 @@ public final class AssistedInjectionAnnotations {
   }
 
   /** Returns {@code true} if the element uses assisted injection. */
+  public static boolean isAssistedInjectionType(XTypeElement typeElement) {
+    return isAssistedInjectionType(toJavac(typeElement));
+  }
+
+  /** Returns {@code true} if the element uses assisted injection. */
   public static boolean isAssistedInjectionType(TypeElement typeElement) {
     ImmutableSet<ExecutableElement> injectConstructors = assistedInjectedConstructors(typeElement);
     return !injectConstructors.isEmpty()
         && isAnnotationPresent(getOnlyElement(injectConstructors), AssistedInject.class);
+  }
+
+  /** Returns {@code true} if this binding is an assisted factory. */
+  public static boolean isAssistedFactoryType(XElement element) {
+    return isAssistedFactoryType(toJavac(element));
   }
 
   /** Returns {@code true} if this binding is an assisted factory. */

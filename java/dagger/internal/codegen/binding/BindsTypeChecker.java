@@ -16,8 +16,10 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Iterables.getOnlyElement;
 
+import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.base.ContributionType;
@@ -46,6 +48,15 @@ public final class BindsTypeChecker {
   public BindsTypeChecker(DaggerTypes types, DaggerElements elements) {
     this.types = types;
     this.elements = elements;
+  }
+
+  /**
+   * Checks the assignability of {@code rightHandSide} to {@code leftHandSide} given a {@link
+   * ContributionType} context.
+   */
+  public boolean isAssignable(
+      XType rightHandSide, XType leftHandSide, ContributionType contributionType) {
+    return isAssignable(toJavac(rightHandSide), toJavac(leftHandSide), contributionType);
   }
 
   /**

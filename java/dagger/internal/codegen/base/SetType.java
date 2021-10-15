@@ -16,10 +16,12 @@
 
 package dagger.internal.codegen.base;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
 
+import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
@@ -78,6 +80,11 @@ public abstract class SetType {
   }
 
   /** {@code true} if {@code type} is a {@link java.util.Set} type. */
+  public static boolean isSet(XType type) {
+    return isSet(toJavac(type));
+  }
+
+  /** {@code true} if {@code type} is a {@link java.util.Set} type. */
   public static boolean isSet(TypeMirror type) {
     return MoreTypes.isType(type) && isTypeOf(TypeNames.SET, type);
   }
@@ -85,6 +92,15 @@ public abstract class SetType {
   /** {@code true} if {@code key.type()} is a {@link java.util.Set} type. */
   public static boolean isSet(Key key) {
     return isSet(key.type().java());
+  }
+
+  /**
+   * Returns a {@link SetType} for {@code type}.
+   *
+   * @throws IllegalArgumentException if {@code type} is not a {@link java.util.Set} type
+   */
+  public static SetType from(XType type) {
+    return from(toJavac(type));
   }
 
   /**
