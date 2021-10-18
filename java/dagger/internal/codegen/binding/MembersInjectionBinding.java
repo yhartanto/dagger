@@ -17,6 +17,7 @@
 package dagger.internal.codegen.binding;
 
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static java.util.stream.Collectors.toList;
 
 import com.google.auto.value.AutoValue;
@@ -25,6 +26,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.DependencyRequest;
+import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
@@ -36,12 +38,22 @@ import javax.lang.model.element.VariableElement;
 /** Represents the full members injection of a particular type. */
 @AutoValue
 public abstract class MembersInjectionBinding extends Binding {
+  static MembersInjectionBinding create(
+      Key key,
+      ImmutableSet<DependencyRequest> dependencies,
+      Optional<MembersInjectionBinding> unresolved,
+      ImmutableSortedSet<InjectionSite> injectionSites) {
+    return new AutoValue_MembersInjectionBinding(key, dependencies, unresolved, injectionSites);
+  }
+
   @Override
   public final Optional<Element> bindingElement() {
     return Optional.of(membersInjectedType());
   }
 
-  public abstract TypeElement membersInjectedType();
+  public final TypeElement membersInjectedType() {
+    return asTypeElement(key().type().java());
+  }
 
   @Override
   public abstract Optional<MembersInjectionBinding> unresolved();

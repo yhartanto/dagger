@@ -591,10 +591,9 @@ public final class BindingFactory {
 
     Key key = keyFactory.forMembersInjectedType(declaredType);
     TypeElement typeElement = MoreElements.asType(declaredType.asElement());
-    return new AutoValue_MembersInjectionBinding(
+    return MembersInjectionBinding.create(
         key,
         dependencies,
-        typeElement,
         hasNonDefaultTypeParameters(typeElement, key.type().java(), types)
             ? Optional.of(
                 membersInjectionBinding(asDeclared(typeElement.asType()), Optional.empty()))
