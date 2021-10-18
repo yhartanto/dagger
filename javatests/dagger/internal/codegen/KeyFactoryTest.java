@@ -26,11 +26,11 @@ import com.google.auto.common.MoreTypes;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.testing.compile.CompilationRule;
-import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
 import dagger.internal.codegen.binding.KeyFactory;
+import dagger.internal.codegen.javac.JavacPluginModule;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.multibindings.ElementsIntoSet;
@@ -68,7 +68,11 @@ public class KeyFactoryTest {
   @Inject KeyFactory keyFactory;
 
   @Before public void setUp() {
-    DaggerKeyFactoryTest_TestComponent.factory().create(compilationRule).inject(this);
+    DaggerKeyFactoryTest_TestComponent.builder()
+        .javacPluginModule(
+            new JavacPluginModule(compilationRule.getElements(), compilationRule.getTypes()))
+        .build()
+        .inject(this);
   }
 
   @Test public void forInjectConstructorWithResolvedType() {
@@ -333,26 +337,8 @@ public class KeyFactoryTest {
   }
 
   @Singleton
-  @Component(modules = {TestModule.class})
+  @Component(modules = JavacPluginModule.class)
   interface TestComponent {
     void inject(KeyFactoryTest test);
-
-    @Component.Factory
-    interface Factory {
-      TestComponent create(@BindsInstance CompilationRule compilationRule);
-    }
-  }
-
-  @Module
-  static class TestModule {
-    @Provides
-    static DaggerElements elements(CompilationRule compilationRule) {
-      return new DaggerElements(compilationRule.getElements(), compilationRule.getTypes());
-    }
-
-    @Provides
-    static DaggerTypes types(CompilationRule compilationRule, DaggerElements elements) {
-      return new DaggerTypes(compilationRule.getTypes(), elements);
-    }
   }
 }

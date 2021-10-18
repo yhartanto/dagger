@@ -21,7 +21,6 @@ package dagger.internal.codegen.kythe;
 
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 
-
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.service.AutoService;
@@ -34,8 +33,6 @@ import com.google.devtools.kythe.proto.Storage.VName;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
-import com.sun.tools.javac.util.Context;
-import dagger.BindsInstance;
 import dagger.Component;
 import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingDeclaration;
@@ -180,7 +177,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
     if (bindingGraphFactory == null) {
       emitter = entrySets.getEmitter();
       DaggerDaggerKythePlugin_PluginComponent.builder()
-          .context(kytheGraph.getJavaContext())
+          .javacPluginModule(new JavacPluginModule(kytheGraph.getJavaContext()))
           .build()
           .inject(this);
     }
@@ -191,13 +188,5 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   @Component(modules = {InjectBindingRegistryModule.class, JavacPluginModule.class})
   interface PluginComponent {
     void inject(DaggerKythePlugin plugin);
-
-    @Component.Builder
-    interface Builder {
-      @BindsInstance
-      Builder context(Context context);
-
-      PluginComponent build();
-    }
   }
 }

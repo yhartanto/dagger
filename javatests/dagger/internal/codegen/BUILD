@@ -75,6 +75,7 @@ GenJavaTests(
         "//java/dagger/internal/codegen/binding",
         "//java/dagger/internal/codegen/bindinggraphvalidation",
         "//java/dagger/internal/codegen/compileroption",
+        "//java/dagger/internal/codegen/javac",
         "//java/dagger/internal/codegen/javapoet",
         "//java/dagger/internal/codegen/kotlin",
         "//java/dagger/internal/codegen/langmodel",

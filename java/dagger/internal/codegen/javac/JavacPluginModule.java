@@ -19,6 +19,8 @@ package dagger.internal.codegen.javac;
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.compat.XConverters;
+import com.sun.tools.javac.model.JavacElements;
+import com.sun.tools.javac.model.JavacTypes;
 import com.sun.tools.javac.util.Context;
 import dagger.Binds;
 import dagger.Module;
@@ -26,44 +28,54 @@ import dagger.Provides;
 import dagger.internal.codegen.binding.BindingGraphFactory;
 import dagger.internal.codegen.binding.ComponentDescriptorFactory;
 import dagger.internal.codegen.compileroption.CompilerOptions;
-import dagger.internal.codegen.compileroption.JavacPluginCompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.inject.Singleton;
+import javax.lang.model.util.Elements; // ALLOW_TYPES_ELEMENTS
+import javax.lang.model.util.Types; // ALLOW_TYPES_ELEMENTS
 
 /**
  * A module that provides a {@link BindingGraphFactory} and {@link ComponentDescriptorFactory} for
  * use in {@code javac} plugins. Requires a binding for the {@code javac} {@link Context}.
  */
-@Module
-public abstract class JavacPluginModule {
-  @Binds
-  abstract CompilerOptions compilerOptions(JavacPluginCompilerOptions compilerOptions);
+@Module(includes = JavacPluginModule.BindsModule.class)
+public final class JavacPluginModule {
+  @Module
+  interface BindsModule {
+    @Binds
+    CompilerOptions compilerOptions(JavacPluginCompilerOptions compilerOptions);
+  }
 
-  @Provides
-  static XMessager messager() {
-    return XConverters.toXProcessing(JavacPlugins.getNullMessager());
+  private final XProcessingEnv processingEnv;
+
+  public JavacPluginModule(Context context) {
+    this(JavacElements.instance(context), JavacTypes.instance(context));
+  }
+
+  public JavacPluginModule(Elements elements, Types types) {
+    this.processingEnv =
+        XProcessingEnv.create(new JavacPluginProcessingEnvironment(elements, types));
   }
 
   @Provides
-  static DaggerElements daggerElements(XProcessingEnv xProcessingEnv) {
-    ProcessingEnvironment env = XConverters.toJavac(xProcessingEnv);
-    return new DaggerElements(
-        env.getElementUtils(), env.getTypeUtils());  // ALLOW_TYPES_ELEMENTS
+  XMessager messager() {
+    return processingEnv.getMessager();
   }
 
   @Provides
-  static DaggerTypes daggerTypes(XProcessingEnv xProcessingEnv, DaggerElements elements) {
-    return new DaggerTypes(
-        XConverters.toJavac(xProcessingEnv).getTypeUtils(), elements);  // ALLOW_TYPES_ELEMENTS
+  DaggerElements daggerElements() {
+    ProcessingEnvironment env = XConverters.toJavac(processingEnv);
+    return new DaggerElements(env.getElementUtils(), env.getTypeUtils()); // ALLOW_TYPES_ELEMENTS
   }
 
   @Provides
-  @Singleton
-  static XProcessingEnv xProcessingEnv(Context javaContext) {
-    return JavacPlugins.getXProcessingEnv(javaContext);
+  DaggerTypes daggerTypes(DaggerElements elements) {
+    ProcessingEnvironment env = XConverters.toJavac(processingEnv);
+    return new DaggerTypes(env.getTypeUtils(), elements); // ALLOW_TYPES_ELEMENTS
   }
 
-  private JavacPluginModule() {}
+  @Provides
+  XProcessingEnv xProcessingEnv() {
+    return processingEnv;
+  }
 }
