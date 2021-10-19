@@ -28,7 +28,6 @@ import static dagger.internal.codegen.base.MoreAnnotationMirrors.wrapOptionalInE
 import static dagger.internal.codegen.base.Scopes.uniqueScopeOf;
 import static dagger.internal.codegen.binding.ComponentDescriptor.isComponentProductionMethod;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
-import static dagger.internal.codegen.binding.ContributionBinding.bindingKindForMultibindingKey;
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
@@ -71,6 +70,7 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.spi.model.BindingKind;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import dagger.spi.model.RequestKind;
@@ -329,6 +329,16 @@ public final class BindingFactory {
             dependencyRequestFactory.forMultibindingContributions(key, multibindingContributions))
         .kind(bindingKindForMultibindingKey(key))
         .build();
+  }
+
+  private static BindingKind bindingKindForMultibindingKey(Key key) {
+    if (SetType.isSet(key)) {
+      return BindingKind.MULTIBOUND_SET;
+    } else if (MapType.isMap(key)) {
+      return BindingKind.MULTIBOUND_MAP;
+    } else {
+      throw new IllegalArgumentException(String.format("key is not for a set or map: %s", key));
+    }
   }
 
   private boolean multibindingRequiresProduction(

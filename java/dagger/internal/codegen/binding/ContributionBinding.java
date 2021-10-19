@@ -96,22 +96,6 @@ public abstract class ContributionBinding extends Binding implements HasContribu
     throw new AssertionError();
   }
 
-  /**
-   * Returns {@link BindingKind#MULTIBOUND_SET} or {@link
-   * BindingKind#MULTIBOUND_MAP} if the key is a set or map.
-   *
-   * @throws IllegalArgumentException if {@code key} is neither a set nor a map
-   */
-  static BindingKind bindingKindForMultibindingKey(Key key) {
-    if (SetType.isSet(key)) {
-      return BindingKind.MULTIBOUND_SET;
-    } else if (MapType.isMap(key)) {
-      return BindingKind.MULTIBOUND_MAP;
-    } else {
-      throw new IllegalArgumentException(String.format("key is not for a set or map: %s", key));
-    }
-  }
-
   public abstract Builder<?, ?> toBuilder();
 
   /**
