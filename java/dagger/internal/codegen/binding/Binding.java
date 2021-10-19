@@ -17,6 +17,7 @@
 package dagger.internal.codegen.binding;
 
 import static com.google.auto.common.MoreTypes.asDeclared;
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Suppliers.memoize;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static javax.lang.model.element.Modifier.ABSTRACT;
@@ -121,10 +122,14 @@ public abstract class Binding extends BindingDeclaration {
     return Optional.empty();
   }
 
-  // TODO(sameb): Remove the TypeElement parameter and pull it from the TypeMirror.
-  static boolean hasNonDefaultTypeParameters(
-      TypeElement element, TypeMirror type, DaggerTypes types) {
+  static boolean hasNonDefaultTypeParameters(TypeMirror type, DaggerTypes types) {
+    // If the type is not declared, then it has no type parameters.
+    if (type.getKind() != TypeKind.DECLARED) {
+      return false;
+    }
+
     // If the element has no type parameters, nothing can be wrong.
+    TypeElement element = asTypeElement(type);
     if (element.getTypeParameters().isEmpty()) {
       return false;
     }

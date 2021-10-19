@@ -19,6 +19,7 @@ package dagger.internal.codegen.binding;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asDeclared;
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -169,8 +170,7 @@ public final class BindingFactory {
                     : INJECTION)
             .scope(uniqueScopeOf(constructorElement.getEnclosingElement()));
 
-    TypeElement bindingTypeElement = MoreElements.asType(constructorElement.getEnclosingElement());
-    if (hasNonDefaultTypeParameters(bindingTypeElement, key.type().java(), types)) {
+    if (hasNonDefaultTypeParameters(key.type().java(), types)) {
       builder.unresolved(injectionBinding(constructorElement, Optional.empty()));
     }
     return builder.build();
@@ -556,7 +556,7 @@ public final class BindingFactory {
         .key(key)
         .contributionType(ContributionType.UNIQUE)
         .kind(MEMBERS_INJECTOR)
-        .bindingElement(MoreTypes.asTypeElement(membersInjectionBinding.key().type().java()))
+        .bindingElement(asTypeElement(membersInjectionBinding.key().type().java()))
         .provisionDependencies(membersInjectionBinding.dependencies())
         .injectionSites(membersInjectionBinding.injectionSites())
         .build();
@@ -590,11 +590,11 @@ public final class BindingFactory {
             .collect(toImmutableSet());
 
     Key key = keyFactory.forMembersInjectedType(declaredType);
-    TypeElement typeElement = MoreElements.asType(declaredType.asElement());
+    TypeElement typeElement = asTypeElement(declaredType);
     return MembersInjectionBinding.create(
         key,
         dependencies,
-        hasNonDefaultTypeParameters(typeElement, key.type().java(), types)
+        hasNonDefaultTypeParameters(key.type().java(), types)
             ? Optional.of(
                 membersInjectionBinding(asDeclared(typeElement.asType()), Optional.empty()))
             : Optional.empty(),
