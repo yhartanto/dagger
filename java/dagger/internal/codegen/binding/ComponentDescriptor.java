@@ -67,6 +67,33 @@ import javax.lang.model.type.TypeMirror;
  */
 @AutoValue
 public abstract class ComponentDescriptor {
+  /** Creates a {@link ComponentDescriptor}. */
+  static ComponentDescriptor create(
+      ComponentAnnotation componentAnnotation,
+      TypeElement component,
+      ImmutableSet<ComponentRequirement> componentDependencies,
+      ImmutableSet<ModuleDescriptor> transitiveModules,
+      ImmutableMap<ExecutableElement, ComponentRequirement> dependenciesByDependencyMethod,
+      ImmutableSet<Scope> scopes,
+      ImmutableSet<ComponentDescriptor> subcomponentsFromModules,
+      ImmutableBiMap<ComponentMethodDescriptor, ComponentDescriptor> subcomponentsByFactoryMethod,
+      ImmutableBiMap<ComponentMethodDescriptor, ComponentDescriptor> subcomponentsByBuilderMethod,
+      ImmutableSet<ComponentMethodDescriptor> componentMethods,
+      Optional<ComponentCreatorDescriptor> creator) {
+    return new AutoValue_ComponentDescriptor(
+        componentAnnotation,
+        component,
+        componentDependencies,
+        transitiveModules,
+        dependenciesByDependencyMethod,
+        scopes,
+        subcomponentsFromModules,
+        subcomponentsByFactoryMethod,
+        subcomponentsByBuilderMethod,
+        componentMethods,
+        creator);
+  }
+
   /** The annotation that specifies that {@link #typeElement()} is a component. */
   public abstract ComponentAnnotation annotation();
 
