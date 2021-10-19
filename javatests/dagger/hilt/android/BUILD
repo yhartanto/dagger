@@ -189,9 +189,6 @@ android_local_test(
     name = "FragmentContextOnAttachTest",
     size = "small",
     srcs = ["FragmentContextOnAttachTest.java"],
-    javacopts = [
-        "-Adagger.hilt.android.useFragmentGetContextFix=true",
-    ],
     manifest_values = {
         "minSdkVersion": "14",
     },
