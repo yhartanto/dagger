@@ -30,6 +30,7 @@ java_library(
     deps = [
         ":xprocessing-lib",
         "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/guava:base",
         "//java/dagger/internal/guava:collect",
         "@google_bazel_common//third_party/java/auto:common",
         "@google_bazel_common//third_party/java/javapoet",

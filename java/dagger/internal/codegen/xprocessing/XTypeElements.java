@@ -17,19 +17,36 @@
 package dagger.internal.codegen.xprocessing;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.Visibility.effectiveVisibilityOfElement;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XHasModifiers;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.auto.common.Visibility;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XTypeElement} helper methods. */
 public final class XTypeElements {
+  private enum Visibility {
+    PUBLIC,
+    PRIVATE,
+    OTHER;
+
+    /** Returns the visibility of the given {@link XTypeElement}. */
+    private static Visibility of(XTypeElement element) {
+      checkNotNull(element);
+      if (element.isPrivate()) {
+        return Visibility.PRIVATE;
+      } else if (element.isPublic()) {
+        return Visibility.PUBLIC;
+      } else {
+        return Visibility.OTHER;
+      }
+    }
+  }
 
   /** Returns {@code true} if the given {@code type} has type parameters. */
   public static boolean hasTypeParameters(XTypeElement type) {
@@ -40,15 +57,34 @@ public final class XTypeElements {
   }
 
   /** Returns all non-private, non-static, abstract methods in {@code type}. */
-  public static Visibility effectiveVisibility(XTypeElement type) {
-    return effectiveVisibilityOfElement(toJavac(type));
-  }
-
-  /** Returns all non-private, non-static, abstract methods in {@code type}. */
   public static ImmutableList<XMethodElement> getAllUnimplementedMethods(XTypeElement type) {
     return asStream(type.getAllNonPrivateInstanceMethods())
         .filter(XHasModifiers::isAbstract)
         .collect(toImmutableList());
+  }
+
+  public static boolean isEffectivelyPublic(XTypeElement element) {
+    return allVisibilities(element).stream()
+        .allMatch(visibility -> visibility.equals(Visibility.PUBLIC));
+  }
+
+  public static boolean isEffectivelyPrivate(XTypeElement element) {
+    return allVisibilities(element).contains(Visibility.PRIVATE);
+  }
+
+  /**
+   * Returns a list of visibilities containing visibility of the given element and the visibility of
+   * its enclosing elements.
+   */
+  private static ImmutableSet<Visibility> allVisibilities(XTypeElement element) {
+    checkNotNull(element);
+    ImmutableSet.Builder<Visibility> visibilities = ImmutableSet.builder();
+    XTypeElement currentElement = element;
+    while (currentElement != null) {
+      visibilities.add(Visibility.of(currentElement));
+      currentElement = currentElement.getEnclosingTypeElement();
+    }
+    return visibilities.build();
   }
 
   private XTypeElements() {}
