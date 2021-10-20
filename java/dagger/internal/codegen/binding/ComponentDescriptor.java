@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
+import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.VOID;
 
@@ -40,7 +41,6 @@ import dagger.Component;
 import dagger.Module;
 import dagger.Subcomponent;
 import dagger.internal.codegen.base.ComponentAnnotation;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.producers.CancellationPolicy;
 import dagger.spi.model.DependencyRequest;
@@ -389,15 +389,15 @@ public abstract class ComponentDescriptor {
    * Returns {@code true} if a method could be a component entry point but not a members-injection
    * method.
    */
-  static boolean isComponentContributionMethod(DaggerElements elements, ExecutableElement method) {
+  static boolean isComponentContributionMethod(ExecutableElement method) {
     return method.getParameters().isEmpty()
         && !method.getReturnType().getKind().equals(VOID)
-        && !elements.getTypeElement(TypeName.OBJECT).equals(method.getEnclosingElement())
+        && !isTypeOf(TypeName.OBJECT, method.getEnclosingElement().asType())
         && !NON_CONTRIBUTING_OBJECT_METHOD_NAMES.contains(method.getSimpleName().toString());
   }
 
   /** Returns {@code true} if a method could be a component production entry point. */
-  static boolean isComponentProductionMethod(DaggerElements elements, ExecutableElement method) {
-    return isComponentContributionMethod(elements, method) && isFutureType(method.getReturnType());
+  static boolean isComponentProductionMethod(ExecutableElement method) {
+    return isComponentContributionMethod(method) && isFutureType(method.getReturnType());
   }
 }

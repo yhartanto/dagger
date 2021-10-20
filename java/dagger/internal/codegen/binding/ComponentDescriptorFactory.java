@@ -139,7 +139,7 @@ public final class ComponentDescriptorFactory {
     for (ComponentRequirement componentDependency : componentDependencies) {
       for (ExecutableElement dependencyMethod :
           methodsIn(elements.getAllMembers(componentDependency.typeElement()))) {
-        if (isComponentContributionMethod(elements, dependencyMethod)) {
+        if (isComponentContributionMethod(dependencyMethod)) {
           dependenciesByDependencyMethod.put(dependencyMethod, componentDependency);
         }
       }

@@ -145,7 +145,7 @@ public final class BindingGraphFactory implements ClearableCache {
       HashMultimap<String, ContributionBinding> dedupeBindings = HashMultimap.create();
       for (ExecutableElement method : dependencyMethods) {
         // MembersInjection methods aren't "provided" explicitly, so ignore them.
-        if (isComponentContributionMethod(elements, method)) {
+        if (isComponentContributionMethod(method)) {
           ContributionBinding binding = bindingFactory.componentDependencyMethodBinding(
               componentDescriptor, method);
           if (dedupeBindings.put(
