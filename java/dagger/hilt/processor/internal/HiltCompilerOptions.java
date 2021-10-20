@@ -23,7 +23,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
-import javax.tools.Diagnostic.Kind;
 
 /** Hilt annotation processor options. */
 // TODO(danysantiago): Consider consolidating with Dagger compiler options logic.
@@ -86,6 +85,16 @@ public final class HiltCompilerOptions {
     return BooleanOption.USE_AGGREGATING_ROOT_PROCESSOR.get(env);
   }
 
+  /**
+   * Returns {@code true} if fragment code should use the fixed getContext() behavior where it
+   * correctly returns null after a fragment is removed. This fixed behavior matches the behavior
+   * of a regular fragment and can help catch issues where a removed or leaked fragment is
+   * incorrectly used.
+   */
+  public static boolean useFragmentGetContextFix(ProcessingEnvironment env) {
+    return BooleanOption.USE_FRAGMENT_GET_CONTEXT_FIX.get(env);
+  }
+
   /** Processor options which can have true or false values. */
   private enum BooleanOption {
     /** Do not use! This is for internal use only. */
@@ -100,7 +109,9 @@ public final class HiltCompilerOptions {
     DISABLE_MODULES_HAVE_INSTALL_IN_CHECK("disableModulesHaveInstallInCheck", false),
 
     SHARE_TEST_COMPONENTS(
-        "shareTestComponents", true);
+        "shareTestComponents", true),
+
+    USE_FRAGMENT_GET_CONTEXT_FIX("android.useFragmentGetContextFix", false);
 
     private final String name;
     private final boolean defaultValue;
@@ -135,32 +146,6 @@ public final class HiltCompilerOptions {
 
     String getQualifiedName() {
       return "dagger.hilt." + name;
-    }
-  }
-
-  private static final ImmutableSet<String> DEPRECATED_OPTIONS = ImmutableSet.of(
-      "dagger.hilt.android.useFragmentGetContextFix");
-
-  public static void checkWrongAndDeprecatedOptions(ProcessingEnvironment env) {
-    Set<String> knownOptions = getProcessorOptions();
-    for (String option : env.getOptions().keySet()) {
-      if (knownOptions.contains(option)) {
-        continue;
-      }
-
-      if (DEPRECATED_OPTIONS.contains(option)) {
-        env.getMessager().printMessage(
-            Kind.ERROR,
-            "The compiler option " + option + " is deprecated and no longer does anything. "
-            + "Please do not set this option.");
-        continue;
-      }
-
-      if (option.startsWith("dagger.hilt.")) {
-        env.getMessager().printMessage(
-            Kind.ERROR,
-            "The compiler option " + option + " is not a recognized Hilt option. Is there a typo?");
-      }
     }
   }
 

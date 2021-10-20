@@ -16,6 +16,8 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import static dagger.hilt.processor.internal.HiltCompilerOptions.useFragmentGetContextFix;
+
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -76,8 +78,11 @@ public final class FragmentGenerator {
             .addMethod(onAttachActivityMethod())
             .addMethod(initializeComponentContextMethod())
             .addMethod(getContextMethod())
-            .addMethod(inflatorMethod())
-            .addField(DISABLE_GET_CONTEXT_FIX_FIELD);
+            .addMethod(inflatorMethod());
+
+    if (useFragmentGetContextFix(env)) {
+      builder.addField(DISABLE_GET_CONTEXT_FIX_FIELD);
+    }
 
     Generators.addGeneratedBaseClassJavadoc(builder, AndroidClassNames.ANDROID_ENTRY_POINT);
     Processors.addGeneratedAnnotation(builder, env, getClass());
@@ -179,25 +184,11 @@ public final class FragmentGenerator {
             "$N = $T.createContextWrapper(super.getContext(), this)",
             COMPONENT_CONTEXT_FIELD,
             metadata.componentManager());
-    if (metadata.allowsOptionalInjection()) {
-      // When optionally injected, since the runtime flag is only available in Hilt, we need to
-      // check that the parent uses Hilt first.
-      builder.beginControlFlow("if (optionalInjectParentUsesHilt(optionalInjectGetParent()))");
-    }
 
-    builder
-        .addStatement("$N = $T.isFragmentGetContextFixDisabled(super.getContext())",
-            DISABLE_GET_CONTEXT_FIX_FIELD,
-            AndroidClassNames.FRAGMENT_GET_CONTEXT_FIX);
-
-    if (metadata.allowsOptionalInjection()) {
-      // If not attached to a Hilt parent, just disable the fix for now since this is the current
-      // default. There's not a good way to flip this at runtime without Hilt, so after we flip
-      // the default we may just have to flip this and hope that the Hilt usage is already enough
-      // coverage as this should be a fairly rare case.
-      builder.nextControlFlow("else")
-          .addStatement("$N = true", DISABLE_GET_CONTEXT_FIX_FIELD)
-          .endControlFlow();
+    if (useFragmentGetContextFix(env)) {
+      builder.addStatement("$N = $T.isFragmentGetContextFixDisabled(super.getContext())",
+          DISABLE_GET_CONTEXT_FIX_FIELD,
+          AndroidClassNames.FRAGMENT_GET_CONTEXT_FIX);
     }
 
     return builder
@@ -214,15 +205,26 @@ public final class FragmentGenerator {
   //   return componentContext;
   // }
   private MethodSpec getContextMethod() {
-    return MethodSpec.methodBuilder("getContext")
+    MethodSpec.Builder builder = MethodSpec.methodBuilder("getContext")
         .returns(AndroidClassNames.CONTEXT)
         .addAnnotation(Override.class)
-        .addModifiers(Modifier.PUBLIC)
-        // Note that disableGetContext can only be true if componentContext is set, so if it is
-        // true we don't need to check whether componentContext is set or not.
-        .beginControlFlow(
-            "if (super.getContext() == null && !$N)",
-            DISABLE_GET_CONTEXT_FIX_FIELD)
+        .addModifiers(Modifier.PUBLIC);
+
+    if (useFragmentGetContextFix(env)) {
+      builder
+          // Note that disableGetContext can only be true if componentContext is set, so if it is
+          // true we don't need to check whether componentContext is set or not.
+          .beginControlFlow(
+              "if (super.getContext() == null && !$N)",
+              DISABLE_GET_CONTEXT_FIX_FIELD);
+    } else {
+      builder
+          .beginControlFlow(
+              "if (super.getContext() == null && $N == null)",
+              COMPONENT_CONTEXT_FIELD);
+    }
+
+    return builder
         .addStatement("return null")
         .endControlFlow()
         .addStatement("initializeComponentContext()")

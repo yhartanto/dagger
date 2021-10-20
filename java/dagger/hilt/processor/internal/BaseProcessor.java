@@ -159,7 +159,6 @@ public abstract class BaseProcessor extends AbstractProcessor {
     this.elements = processingEnv.getElementUtils();
     this.types = processingEnv.getTypeUtils();
     this.errorHandler = new ProcessorErrorHandler(processingEnvironment);
-    HiltCompilerOptions.checkWrongAndDeprecatedOptions(processingEnvironment);
   }
 
   @Override

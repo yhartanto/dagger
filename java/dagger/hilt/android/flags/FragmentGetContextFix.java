@@ -36,11 +36,15 @@ import javax.inject.Qualifier;
  * regular, non-Hilt fragment and can help catch issues where a removed or leaked fragment is
  * incorrectly used.
  *
+ * <p>This flag is paired with the compiler option flag
+ * dagger.hilt.android.useFragmentGetContextFix. When that flag is false, this runtime flag has no
+ * effect on behavior (e.g. the compiler flag being off takes precedence). When the compiler flag is
+ * on, then the runtime flag may be used to disable the behavior at runtime.
+ *
  * <p>In order to set the flag, bind a boolean value qualified with
  * {@link DisableFragmentGetContextFix} into a set in the {@code SingletonComponent}. A set is used
  * instead of an optional binding to avoid a dependency on Guava. Only one value may be bound into
- * the set within a given app. If this is not set, the default is to not use the fix. Example for
- * binding the value:
+ * the set within a given app. Example for binding the value:
  *
  * <pre><code>
  * {@literal @}Module
@@ -72,7 +76,7 @@ public final class FragmentGetContextFix {
         "Cannot bind the flag @DisableFragmentGetContextFix more than once.");
 
     if (flagSet.isEmpty()) {
-      return true;
+      return false;
     } else {
       return flagSet.iterator().next();
     }
