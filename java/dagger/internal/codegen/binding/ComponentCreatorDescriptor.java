@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asTypeElement;
@@ -25,6 +26,7 @@ import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.getCreatorAnnotations;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -155,10 +157,11 @@ public abstract class ComponentCreatorDescriptor {
 
   /** Creates a new {@link ComponentCreatorDescriptor} for the given creator {@code type}. */
   public static ComponentCreatorDescriptor create(
-      TypeElement typeElement,
+      XTypeElement xTypeElement,
       DaggerElements elements,
       DaggerTypes types,
       DependencyRequestFactory dependencyRequestFactory) {
+    TypeElement typeElement = toJavac(xTypeElement);
     TypeMirror componentType = typeElement.getEnclosingElement().asType();
 
     ImmutableSetMultimap.Builder<ComponentRequirement, ExecutableElement> setterMethods =

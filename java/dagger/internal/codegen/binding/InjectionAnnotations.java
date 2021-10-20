@@ -72,6 +72,10 @@ public final class InjectionAnnotations {
     this.kotlinMetadataUtil = kotlinMetadataUtil;
   }
 
+  public Optional<AnnotationMirror> getQualifier(XElement element) {
+    return getQualifier(toJavac(element));
+  }
+
   public Optional<AnnotationMirror> getQualifier(Element e) {
     if (!SuperficialValidation.validateElement(e)) {
       throw new TypeNotPresentException(e.toString(), null);

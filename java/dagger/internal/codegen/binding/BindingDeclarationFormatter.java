@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
@@ -102,7 +103,7 @@ public final class BindingDeclarationFormatter extends Formatter<BindingDeclarat
   private String formatSubcomponentDeclaration(SubcomponentDeclaration subcomponentDeclaration) {
     ImmutableList<TypeElement> moduleSubcomponents =
         subcomponentDeclaration.moduleAnnotation().subcomponents();
-    int index = moduleSubcomponents.indexOf(subcomponentDeclaration.subcomponentType());
+    int index = moduleSubcomponents.indexOf(toJavac(subcomponentDeclaration.subcomponentType()));
     StringBuilder annotationValue = new StringBuilder();
     if (moduleSubcomponents.size() != 1) {
       annotationValue.append("{");

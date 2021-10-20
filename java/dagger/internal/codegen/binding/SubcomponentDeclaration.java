@@ -16,9 +16,13 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationElementAndValue;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getSubcomponentCreator;
 
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableSet;
@@ -27,7 +31,6 @@ import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 
 /**
  * A declaration for a subcomponent that is included in a module via {@link
@@ -46,7 +49,7 @@ public abstract class SubcomponentDeclaration extends BindingDeclaration {
    * The type element that defines the {@link dagger.Subcomponent} or {@link
    * dagger.producers.ProductionSubcomponent} for this declaration.
    */
-  abstract TypeElement subcomponentType();
+  abstract XTypeElement subcomponentType();
 
   /** The module annotation. */
   public abstract ModuleAnnotation moduleAnnotation();
@@ -67,18 +70,21 @@ public abstract class SubcomponentDeclaration extends BindingDeclaration {
       this.keyFactory = keyFactory;
     }
 
-    ImmutableSet<SubcomponentDeclaration> forModule(TypeElement module) {
+    ImmutableSet<SubcomponentDeclaration> forModule(XTypeElement module) {
       ImmutableSet.Builder<SubcomponentDeclaration> declarations = ImmutableSet.builder();
       ModuleAnnotation moduleAnnotation = ModuleAnnotation.moduleAnnotation(module).get();
       Element subcomponentAttribute =
           getAnnotationElementAndValue(moduleAnnotation.annotation(), "subcomponents").getKey();
-      for (TypeElement subcomponent : moduleAnnotation.subcomponents()) {
+      XAnnotation moduleXAnnotation = module.getAnnotation(moduleAnnotation.className());
+
+      for (XType subcomponentType : moduleXAnnotation.getAsTypeList("subcomponents")) {
+        XTypeElement subcomponent = subcomponentType.getTypeElement();
         declarations.add(
             new AutoValue_SubcomponentDeclaration(
                 Optional.of(subcomponentAttribute),
-                Optional.of(module),
+                Optional.of(toJavac(module)),
                 keyFactory.forSubcomponentCreator(
-                    getSubcomponentCreator(subcomponent).get().asType()),
+                    toJavac(getSubcomponentCreator(subcomponent).get().getType())),
                 subcomponent,
                 moduleAnnotation));
       }

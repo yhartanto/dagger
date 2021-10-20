@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.auto.common.MoreElements.getPackage;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
@@ -23,7 +25,7 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Verify.verify;
-import static com.google.common.collect.Iterables.transform;
+import static com.google.common.collect.Collections2.transform;
 import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.SourceFiles.classFileName;
@@ -34,6 +36,8 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.NONE;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -52,6 +56,7 @@ import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.multibindings.Multibinds;
 import dagger.producers.Produces;
 import dagger.spi.model.Key;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -107,6 +112,7 @@ public abstract class ModuleDescriptor {
   /** A {@link ModuleDescriptor} factory. */
   @Singleton
   public static final class Factory implements ClearableCache {
+    private final XProcessingEnv processingEnv;
     private final DaggerElements elements;
     private final KotlinMetadataUtil metadataUtil;
     private final BindingFactory bindingFactory;
@@ -118,6 +124,7 @@ public abstract class ModuleDescriptor {
 
     @Inject
     Factory(
+        XProcessingEnv processingEnv,
         DaggerElements elements,
         KotlinMetadataUtil metadataUtil,
         BindingFactory bindingFactory,
@@ -125,6 +132,7 @@ public abstract class ModuleDescriptor {
         DelegateDeclaration.Factory bindingDelegateDeclarationFactory,
         SubcomponentDeclaration.Factory subcomponentDeclarationFactory,
         OptionalBindingDeclaration.Factory optionalBindingDeclarationFactory) {
+      this.processingEnv = processingEnv;
       this.elements = elements;
       this.metadataUtil = metadataUtil;
       this.bindingFactory = bindingFactory;
@@ -132,6 +140,10 @@ public abstract class ModuleDescriptor {
       this.bindingDelegateDeclarationFactory = bindingDelegateDeclarationFactory;
       this.subcomponentDeclarationFactory = subcomponentDeclarationFactory;
       this.optionalBindingDeclarationFactory = optionalBindingDeclarationFactory;
+    }
+
+    public ModuleDescriptor create(XTypeElement moduleElement) {
+      return create(toJavac(moduleElement));
     }
 
     public ModuleDescriptor create(TypeElement moduleElement) {
@@ -175,7 +187,7 @@ public abstract class ModuleDescriptor {
           ImmutableSet.copyOf(collectIncludedModules(new LinkedHashSet<>(), moduleElement)),
           bindings.build(),
           multibindingDeclarations.build(),
-          subcomponentDeclarationFactory.forModule(moduleElement),
+          subcomponentDeclarationFactory.forModule(toXProcessing(moduleElement, processingEnv)),
           delegates.build(),
           optionalDeclarations.build(),
           ModuleKind.forAnnotatedElement(moduleElement).get());
@@ -210,7 +222,8 @@ public abstract class ModuleDescriptor {
     }
 
     /** Returns all the modules transitively included by given modules, including the arguments. */
-    ImmutableSet<ModuleDescriptor> transitiveModules(Iterable<TypeElement> modules) {
+    ImmutableSet<ModuleDescriptor> transitiveModules(Collection<XTypeElement> modules) {
+      // Traverse as a graph to automatically handle modules with cyclic includes.
       return ImmutableSet.copyOf(
           Traverser.forGraph(
                   (ModuleDescriptor module) -> transform(module.includedModules(), this::create))

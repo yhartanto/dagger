@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -26,6 +27,7 @@ import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.VOID;
 
+import androidx.room.compiler.processing.XMethodElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Supplier;
@@ -357,9 +359,9 @@ public abstract class ComponentDescriptor {
     }
 
     /** A {@link ComponentMethodDescriptor}builder for a method. */
-    public static Builder builder(ExecutableElement method) {
+    public static Builder builder(XMethodElement method) {
       return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor.Builder()
-          .methodElement(method);
+          .methodElement(toJavac(method));
     }
 
     /** A builder of {@link ComponentMethodDescriptor}s. */

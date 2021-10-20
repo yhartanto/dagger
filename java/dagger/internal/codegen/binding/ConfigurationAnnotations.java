@@ -155,15 +155,6 @@ public final class ConfigurationAnnotations {
         .collect(toImmutableSet());
   }
 
-  // TODO(bcorso): Migrate users to the XProcessing version above.
-  /** Returns the enclosed types annotated with the given annotation. */
-  public static ImmutableSet<TypeElement> enclosedAnnotatedTypes(
-      TypeElement typeElement, ImmutableSet<ClassName> annotations) {
-    return typesIn(typeElement.getEnclosedElements()).stream()
-        .filter(enclosedType -> isAnyAnnotationPresent(enclosedType, annotations))
-        .collect(toImmutableSet());
-  }
-
   /** Traverses includes from superclasses and adds them into the builder. */
   private static void addIncludesFromSuperclasses(
       DaggerTypes types,

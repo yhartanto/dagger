@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -32,6 +33,7 @@ import static dagger.spi.model.RequestKind.MEMBERS_INJECTION;
 import static dagger.spi.model.RequestKind.PRODUCER;
 import static dagger.spi.model.RequestKind.PROVIDER;
 
+import androidx.room.compiler.processing.XMethodElement;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.Lazy;
@@ -141,6 +143,11 @@ public final class DependencyRequestFactory {
   }
 
   public DependencyRequest forComponentProvisionMethod(
+      XMethodElement provisionMethod, ExecutableType provisionMethodType) {
+    return forComponentProvisionMethod(toJavac(provisionMethod), provisionMethodType);
+  }
+
+  public DependencyRequest forComponentProvisionMethod(
       ExecutableElement provisionMethod, ExecutableType provisionMethodType) {
     checkNotNull(provisionMethod);
     checkNotNull(provisionMethodType);
@@ -150,6 +157,11 @@ public final class DependencyRequestFactory {
         provisionMethod);
     Optional<AnnotationMirror> qualifier = injectionAnnotations.getQualifier(provisionMethod);
     return newDependencyRequest(provisionMethod, provisionMethodType.getReturnType(), qualifier);
+  }
+
+  public DependencyRequest forComponentProductionMethod(
+      XMethodElement productionMethod, ExecutableType productionMethodType) {
+    return forComponentProductionMethod(toJavac(productionMethod), productionMethodType);
   }
 
   public DependencyRequest forComponentProductionMethod(
@@ -173,6 +185,12 @@ public final class DependencyRequestFactory {
     } else {
       return newDependencyRequest(productionMethod, type, qualifier);
     }
+  }
+
+  DependencyRequest forComponentMembersInjectionMethod(
+      XMethodElement membersInjectionMethod, ExecutableType membersInjectionMethodType) {
+    return forComponentMembersInjectionMethod(
+        toJavac(membersInjectionMethod), membersInjectionMethodType);
   }
 
   DependencyRequest forComponentMembersInjectionMethod(

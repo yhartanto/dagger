@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static dagger.internal.codegen.base.Scopes.scopesOf;
@@ -28,6 +29,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.DECLARED;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
@@ -65,6 +67,7 @@ import javax.tools.Diagnostic.Kind;
  */
 @Singleton
 public final class InjectValidator implements ClearableCache {
+  private final XProcessingEnv processingEnv;
   private final DaggerTypes types;
   private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
@@ -76,6 +79,7 @@ public final class InjectValidator implements ClearableCache {
 
   @Inject
   InjectValidator(
+      XProcessingEnv processingEnv,
       DaggerTypes types,
       DaggerElements elements,
       DependencyRequestValidator dependencyRequestValidator,
@@ -83,6 +87,7 @@ public final class InjectValidator implements ClearableCache {
       InjectionAnnotations injectionAnnotations,
       KotlinMetadataUtil metadataUtil) {
     this(
+        processingEnv,
         types,
         elements,
         compilerOptions,
@@ -93,6 +98,7 @@ public final class InjectValidator implements ClearableCache {
   }
 
   private InjectValidator(
+      XProcessingEnv processingEnv,
       DaggerTypes types,
       DaggerElements elements,
       CompilerOptions compilerOptions,
@@ -100,6 +106,7 @@ public final class InjectValidator implements ClearableCache {
       Optional<Kind> privateAndStaticInjectionDiagnosticKind,
       InjectionAnnotations injectionAnnotations,
       KotlinMetadataUtil metadataUtil) {
+    this.processingEnv = processingEnv;
     this.types = types;
     this.elements = elements;
     this.compilerOptions = compilerOptions;
@@ -123,6 +130,7 @@ public final class InjectValidator implements ClearableCache {
     return compilerOptions.ignorePrivateAndStaticInjectionForComponent()
         ? this
         : new InjectValidator(
+            processingEnv,
             types,
             elements,
             compilerOptions,
@@ -171,7 +179,7 @@ public final class InjectValidator implements ClearableCache {
       scopeErrorMsg += "; annotate the class instead";
     }
 
-    for (Scope scope : scopesOf(constructorElement)) {
+    for (Scope scope : scopesOf(toXProcessing(constructorElement, processingEnv))) {
       builder.addError(scopeErrorMsg, constructorElement, scope.scopeAnnotation().java());
     }
 
@@ -223,7 +231,7 @@ public final class InjectValidator implements ClearableCache {
       builder.addError("Types may only contain one injected constructor", constructorElement);
     }
 
-    ImmutableSet<Scope> scopes = scopesOf(enclosingElement);
+    ImmutableSet<Scope> scopes = scopesOf(toXProcessing(enclosingElement, processingEnv));
     if (injectAnnotation == AssistedInject.class) {
       for (Scope scope : scopes) {
         builder.addError(
