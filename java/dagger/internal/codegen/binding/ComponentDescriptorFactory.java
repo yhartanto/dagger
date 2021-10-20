@@ -33,6 +33,7 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.VOID;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableBiMap;
@@ -54,6 +55,7 @@ import javax.lang.model.type.TypeMirror;
 
 /** A factory for {@link ComponentDescriptor}s. */
 public final class ComponentDescriptorFactory {
+  private final XProcessingEnv processingEnv;
   private final DaggerElements elements;
   private final DaggerTypes types;
   private final DependencyRequestFactory dependencyRequestFactory;
@@ -62,11 +64,13 @@ public final class ComponentDescriptorFactory {
 
   @Inject
   ComponentDescriptorFactory(
+      XProcessingEnv processingEnv,
       DaggerElements elements,
       DaggerTypes types,
       DependencyRequestFactory dependencyRequestFactory,
       ModuleDescriptor.Factory moduleDescriptorFactory,
       InjectionAnnotations injectionAnnotations) {
+    this.processingEnv = processingEnv;
     this.elements = elements;
     this.types = types;
     this.dependencyRequestFactory = dependencyRequestFactory;
@@ -203,7 +207,11 @@ public final class ComponentDescriptorFactory {
 
     ImmutableSet<Scope> scopes = scopesOf(typeElement);
     if (componentAnnotation.isProduction()) {
-      scopes = ImmutableSet.<Scope>builder().addAll(scopes).add(productionScope(elements)).build();
+      scopes =
+          ImmutableSet.<Scope>builder()
+              .addAll(scopes)
+              .add(productionScope(processingEnv))
+              .build();
     }
 
     return ComponentDescriptor.create(

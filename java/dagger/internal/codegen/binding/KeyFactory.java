@@ -16,12 +16,14 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.base.ProducerAnnotations.productionImplementationQualifier;
+import static dagger.internal.codegen.base.ProducerAnnotations.productionQualifier;
 import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
 import static dagger.internal.codegen.binding.MapKeys.mapKeyType;
@@ -34,6 +36,7 @@ import static dagger.spi.model.DaggerType.fromJava;
 import static java.util.Arrays.asList;
 import static javax.lang.model.element.ElementKind.METHOD;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -45,7 +48,6 @@ import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.base.RequestKinds;
 import dagger.internal.codegen.base.SetType;
-import dagger.internal.codegen.base.SimpleAnnotationMirror;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
@@ -68,15 +70,20 @@ import javax.lang.model.type.TypeMirror;
 
 /** A factory for {@link Key}s. */
 public final class KeyFactory {
+  private final XProcessingEnv processingEnv;
   private final DaggerTypes types;
   private final DaggerElements elements;
   private final InjectionAnnotations injectionAnnotations;
 
   @Inject
   KeyFactory(
-      DaggerTypes types, DaggerElements elements, InjectionAnnotations injectionAnnotations) {
-    this.types = checkNotNull(types);
-    this.elements = checkNotNull(elements);
+      XProcessingEnv processingEnv,
+      DaggerTypes types,
+      DaggerElements elements,
+      InjectionAnnotations injectionAnnotations) {
+    this.processingEnv = processingEnv;
+    this.types = types;
+    this.elements = elements;
     this.injectionAnnotations = injectionAnnotations;
   }
 
@@ -264,17 +271,13 @@ public final class KeyFactory {
 
   public Key forProductionExecutor() {
     return Key.builder(fromJava(elements.getTypeElement(TypeNames.EXECUTOR).asType()))
-        .qualifier(
-            fromJava(SimpleAnnotationMirror.of(elements.getTypeElement(TypeNames.PRODUCTION))))
+        .qualifier(fromJava(toJavac(productionQualifier(processingEnv))))
         .build();
   }
 
   public Key forProductionImplementationExecutor() {
     return Key.builder(fromJava(elements.getTypeElement(TypeNames.EXECUTOR).asType()))
-        .qualifier(
-            fromJava(
-                SimpleAnnotationMirror.of(
-                    elements.getTypeElement(TypeNames.PRODUCTION_IMPLEMENTATION))))
+        .qualifier(fromJava(toJavac(productionImplementationQualifier(processingEnv))))
         .build();
   }
 

@@ -25,7 +25,6 @@ import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypeP
 import static dagger.internal.codegen.base.Formatter.INDENT;
 import static dagger.internal.codegen.base.Scopes.getReadableSource;
 import static dagger.internal.codegen.base.Scopes.scopesOf;
-import static dagger.internal.codegen.base.Scopes.singletonScope;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSetMultimap;
@@ -40,6 +39,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
+import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.binding.ComponentCreatorDescriptor;
 import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
@@ -51,6 +51,7 @@ import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.binding.ModuleDescriptor;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ValidationType;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
@@ -201,7 +202,8 @@ public final class ComponentDescriptorValidator {
      * singleton components have no scoped dependencies.
      */
     private void validateDependencyScopes(ComponentDescriptor component) {
-      ImmutableSet<Scope> scopes = component.scopes();
+      ImmutableSet<ClassName> scopes =
+          component.scopes().stream().map(Scope::className).collect(toImmutableSet());
       ImmutableSet<TypeElement> scopedDependencies =
           scopedTypesIn(
               component
@@ -210,10 +212,9 @@ public final class ComponentDescriptorValidator {
                   .map(ComponentRequirement::typeElement)
                   .collect(toImmutableSet()));
       if (!scopes.isEmpty()) {
-        Scope singletonScope = singletonScope(elements);
         // Dagger 1.x scope compatibility requires this be suppress-able.
         if (compilerOptions.scopeCycleValidationType().diagnosticKind().isPresent()
-            && scopes.contains(singletonScope)) {
+            && scopes.contains(TypeNames.SINGLETON)) {
           // Singleton is a special-case representing the longest lifetime, and therefore
           // @Singleton components may not depend on scoped components
           if (!scopedDependencies.isEmpty()) {
