@@ -27,6 +27,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -236,6 +237,16 @@ public abstract class ComponentRequirement {
         binding.key(),
         binding.nullableType().isPresent(),
         binding.bindingElement().get().getSimpleName().toString());
+  }
+
+  /**
+   * Returns true if and only if a component can instantiate new instances (typically of a module)
+   * rather than requiring that they be passed.
+   */
+  // TODO(bcorso): Should this method throw if its called knowing that an instance is not needed?
+  public static boolean componentCanMakeNewInstances(
+      XTypeElement typeElement, KotlinMetadataUtil metadataUtil) {
+    return componentCanMakeNewInstances(toJavac(typeElement), metadataUtil);
   }
 
   /**

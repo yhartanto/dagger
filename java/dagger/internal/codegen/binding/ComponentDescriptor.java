@@ -26,7 +26,6 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.VOID;
 
 import androidx.room.compiler.processing.XElement;
@@ -148,8 +147,8 @@ public abstract class ComponentDescriptor {
   public final ImmutableSet<ComponentRequirement> dependenciesAndConcreteModules() {
     return Stream.concat(
             moduleTypes().stream()
-                .filter(dep -> !dep.getModifiers().contains(ABSTRACT))
-                .map(module -> ComponentRequirement.forModule(module.asType())),
+                .filter(dep -> !dep.isAbstract())
+                .map(module -> ComponentRequirement.forModule(module.getType())),
             dependencies().stream())
         .collect(toImmutableSet());
   }
@@ -161,7 +160,7 @@ public abstract class ComponentDescriptor {
   public abstract ImmutableSet<ModuleDescriptor> modules();
 
   /** The types of the {@link #modules()}. */
-  public final ImmutableSet<TypeElement> moduleTypes() {
+  public final ImmutableSet<XTypeElement> moduleTypes() {
     return modules().stream().map(ModuleDescriptor::moduleElement).collect(toImmutableSet());
   }
 
@@ -183,7 +182,7 @@ public abstract class ComponentDescriptor {
         .filter(
             module ->
                 module.bindings().stream().anyMatch(ContributionBinding::requiresModuleInstance))
-        .map(module -> ComponentRequirement.forModule(module.moduleElement().asType()))
+        .map(module -> ComponentRequirement.forModule(module.moduleElement().getType()))
         .forEach(requirements::add);
     requirements.addAll(dependencies());
     requirements.addAll(

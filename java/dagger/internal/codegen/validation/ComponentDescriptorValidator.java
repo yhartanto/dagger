@@ -76,7 +76,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import javax.inject.Inject;
-import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
@@ -258,7 +257,7 @@ public final class ComponentDescriptorValidator {
 
     private void validateModules(ComponentDescriptor component) {
       for (ModuleDescriptor module : component.modules()) {
-        if (module.moduleElement().getModifiers().contains(Modifier.ABSTRACT)) {
+        if (module.moduleElement().isAbstract()) {
           for (ContributionBinding binding : module.bindings()) {
             if (binding.requiresModuleInstance()) {
               report(component).addError(abstractModuleHasInstanceBindingMethodsError(module));

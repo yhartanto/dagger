@@ -27,7 +27,6 @@ import static dagger.internal.codegen.javapoet.TypeSpecs.addSupertype;
 import static dagger.internal.codegen.langmodel.Accessibility.isElementAccessibleFrom;
 import static dagger.internal.codegen.writing.ComponentNames.getRootComponentClassName;
 import static dagger.internal.codegen.xprocessing.XTypeElements.getAllUnimplementedMethods;
-import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -198,11 +197,11 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
         component.modules().stream()
             .filter(
                 module ->
-                    !module.moduleElement().getModifiers().contains(ABSTRACT)
+                    !module.moduleElement().isAbstract()
                         && isElementAccessibleFrom(
                             module.moduleElement(),
                             component.typeElement().getClassName().packageName()))
-            .map(module -> ComponentRequirement.forModule(module.moduleElement().asType())));
+            .map(module -> ComponentRequirement.forModule(module.moduleElement().getType())));
   }
 
   private boolean hasBindsInstanceMethods(ComponentDescriptor componentDescriptor) {

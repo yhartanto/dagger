@@ -24,6 +24,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
@@ -290,7 +291,10 @@ public abstract class BindingGraph {
    * ancestors.
    */
   public final ImmutableSet<TypeElement> ownedModuleTypes() {
-    return ownedModules.stream().map(ModuleDescriptor::moduleElement).collect(toImmutableSet());
+    return ownedModules.stream()
+        .map(ModuleDescriptor::moduleElement)
+        .map(XConverters::toJavac)
+        .collect(toImmutableSet());
   }
 
   /**

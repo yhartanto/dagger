@@ -19,6 +19,7 @@
 // the regular kythe/java tree.
 package dagger.internal.codegen.kythe;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 
 import androidx.room.compiler.processing.XProcessingEnv;
@@ -142,7 +143,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   private void addModuleEdges(dagger.internal.codegen.binding.BindingGraph graph) {
     Optional<VName> componentNode = jvmNode(graph.componentTypeElement(), "component");
     for (ModuleDescriptor module : graph.componentDescriptor().modules()) {
-      Optional<VName> moduleNode = jvmNode(module.moduleElement(), "module");
+      Optional<VName> moduleNode = jvmNode(toJavac(module.moduleElement()), "module");
       emitEdge(componentNode, "/inject/installsmodule", moduleNode);
     }
     graph.subgraphs().forEach(this::addModuleEdges);

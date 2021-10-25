@@ -59,17 +59,12 @@ import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.lang.model.element.TypeElement;
 
 /** Contains metadata that describes a module. */
 @AutoValue
 public abstract class ModuleDescriptor {
 
-  abstract XTypeElement xModuleElement();
-
-  public TypeElement moduleElement() {
-    return toJavac(xModuleElement());
-  }
+  public abstract XTypeElement moduleElement();
 
   public abstract ImmutableSet<ContributionBinding> bindings();
 
@@ -230,7 +225,7 @@ public abstract class ModuleDescriptor {
 
     private ImmutableSet<XTypeElement> includedModules(ModuleDescriptor moduleDescriptor) {
       return ImmutableSet.copyOf(
-          collectIncludedModules(new LinkedHashSet<>(), moduleDescriptor.xModuleElement()));
+          collectIncludedModules(new LinkedHashSet<>(), moduleDescriptor.moduleElement()));
     }
 
     private Set<XTypeElement> collectIncludedModules(

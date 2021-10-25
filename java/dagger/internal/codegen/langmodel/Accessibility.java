@@ -16,12 +16,14 @@
 
 package dagger.internal.codegen.langmodel;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.getPackage;
 import static com.google.auto.common.MoreTypes.asElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
+import androidx.room.compiler.processing.XElement;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -144,6 +146,13 @@ public final class Accessibility {
   /** Returns true if the given element can be referenced from any package. */
   public static boolean isElementPubliclyAccessible(Element element) {
     return element.accept(new ElementAccessibilityVisitor(Optional.empty()), null);
+  }
+
+  /** Returns true if the given element can be referenced from code in the given package. */
+  // TODO(gak): account for protected
+  // TODO(bcorso): account for kotlin srcs (package-private doesn't exist, internal does exist).
+  public static boolean isElementAccessibleFrom(XElement element, String packageName) {
+    return isElementAccessibleFrom(toJavac(element), packageName);
   }
 
   /** Returns true if the given element can be referenced from code in the given package. */
