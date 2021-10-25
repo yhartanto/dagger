@@ -363,12 +363,12 @@ public final class BindingFactory {
   }
 
   /** Returns a {@link dagger.spi.model.BindingKind#COMPONENT} binding for the component. */
-  public ProvisionBinding componentBinding(TypeElement componentDefinitionType) {
+  public ProvisionBinding componentBinding(XTypeElement componentDefinitionType) {
     checkNotNull(componentDefinitionType);
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(componentDefinitionType)
-        .key(keyFactory.forType(componentDefinitionType.asType()))
+        .bindingElement(toJavac(componentDefinitionType))
+        .key(keyFactory.forType(toJavac(componentDefinitionType.getType())))
         .kind(COMPONENT)
         .build();
   }

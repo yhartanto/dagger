@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Verify.verify;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
@@ -23,6 +24,7 @@ import static dagger.internal.codegen.extension.DaggerGraphs.unreachableNodes;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.spi.model.BindingKind.SUBCOMPONENT_CREATOR;
 
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
@@ -166,6 +168,7 @@ final class BindingGraphConverter {
               bindingGraphPath.stream()
                   .map(LegacyBindingGraph::componentDescriptor)
                   .map(ComponentDescriptor::typeElement)
+                  .map(XConverters::toJavac)
                   .map(DaggerTypeElement::fromJava)
                   .collect(toImmutableList()));
       componentPaths.addLast(graphPath);
@@ -274,7 +277,7 @@ final class BindingGraphConverter {
      */
     private LegacyBindingGraph graphForAncestor(TypeElement ancestor) {
       for (LegacyBindingGraph graph : bindingGraphPath) {
-        if (graph.componentDescriptor().typeElement().equals(ancestor)) {
+        if (toJavac(graph.componentDescriptor().typeElement()).equals(ancestor)) {
           return graph;
         }
       }
@@ -380,7 +383,8 @@ final class BindingGraphConverter {
       ComponentDescriptor subcomponent =
           graph.componentDescriptor().getChildComponentWithBuilderType(subcomponentBuilderElement);
       return ComponentNodeImpl.create(
-          componentPath().childPath(DaggerTypeElement.fromJava(subcomponent.typeElement())),
+          componentPath()
+              .childPath(DaggerTypeElement.fromJava(toJavac(subcomponent.typeElement()))),
           subcomponent);
     }
   }

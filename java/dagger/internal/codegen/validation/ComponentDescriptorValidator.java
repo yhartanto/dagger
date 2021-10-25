@@ -18,6 +18,7 @@ package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -147,7 +148,8 @@ public final class ComponentDescriptorValidator {
     private void reportComponentItem(
         Diagnostic.Kind kind, ComponentDescriptor component, String message) {
       report(component)
-          .addItem(message, kind, component.typeElement(), component.annotation().annotation());
+          .addItem(
+              message, kind, toJavac(component.typeElement()), component.annotation().annotation());
     }
 
     private void reportComponentError(ComponentDescriptor component, String error) {
@@ -164,7 +166,8 @@ public final class ComponentDescriptorValidator {
 
     /** Validates that component dependencies do not form a cycle. */
     private void validateComponentDependencyHierarchy(ComponentDescriptor component) {
-      validateComponentDependencyHierarchy(component, component.typeElement(), new ArrayDeque<>());
+      validateComponentDependencyHierarchy(
+          component, toJavac(component.typeElement()), new ArrayDeque<>());
     }
 
     /** Recursive method to validate that component dependencies do not form a cycle. */
@@ -235,7 +238,10 @@ public final class ComponentDescriptorValidator {
           // Dagger 1.x scope compatibility requires this be suppress-able.
           if (!compilerOptions.scopeCycleValidationType().equals(ValidationType.NONE)) {
             validateDependencyScopeHierarchy(
-                component, component.typeElement(), new ArrayDeque<>(), new ArrayDeque<>());
+                component,
+                toJavac(component.typeElement()),
+                new ArrayDeque<>(),
+                new ArrayDeque<>());
           }
         }
       } else {

@@ -38,7 +38,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
@@ -281,7 +280,7 @@ final class ComponentCreatorImplementationFactory {
     MethodSpec factoryMethod() {
       MethodSpec.Builder factoryMethod = factoryMethodBuilder();
       factoryMethod
-          .returns(ClassName.get(componentDescriptor().typeElement()))
+          .returns(componentDescriptor().typeElement().getClassName())
           .addModifiers(PUBLIC);
 
       ImmutableMap<ComponentRequirement, String> factoryMethodParameters =
@@ -473,11 +472,9 @@ final class ComponentCreatorImplementationFactory {
 
     @Override
     protected Optional<Modifier> visibility() {
-      return componentImplementation
-          .componentDescriptor()
-          .typeElement()
-          .getModifiers()
-          .contains(PUBLIC) ? Optional.of(PUBLIC) : Optional.empty();
+      return componentImplementation.componentDescriptor().typeElement().isPublic()
+          ? Optional.of(PUBLIC)
+          : Optional.empty();
     }
 
     @Override

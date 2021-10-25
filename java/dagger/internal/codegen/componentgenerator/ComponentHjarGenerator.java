@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.componentgenerator;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -34,6 +35,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
@@ -94,7 +96,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
 
   @Override
   public Element originatingElement(ComponentDescriptor input) {
-    return input.typeElement();
+    return toJavac(input.typeElement());
   }
 
   @Override
@@ -104,11 +106,11 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
         TypeSpec.classBuilder(generatedTypeName)
             .addModifiers(FINAL)
             .addMethod(privateConstructor());
-    if (componentDescriptor.typeElement().getModifiers().contains(PUBLIC)) {
+    if (componentDescriptor.typeElement().isPublic()) {
       generatedComponent.addModifiers(PUBLIC);
     }
 
-    TypeElement componentElement = componentDescriptor.typeElement();
+    XTypeElement componentElement = componentDescriptor.typeElement();
     addSupertype(generatedComponent, componentElement);
 
     TypeName builderMethodReturnType;
@@ -124,7 +126,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
           TypeSpec.classBuilder("Builder")
               .addModifiers(STATIC, FINAL)
               .addMethod(privateConstructor());
-      if (componentDescriptor.typeElement().getModifiers().contains(PUBLIC)) {
+      if (componentDescriptor.typeElement().isPublic()) {
         builder.addModifiers(PUBLIC);
       }
 
@@ -149,7 +151,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
       generatedComponent.addMethod(createMethod(componentDescriptor));
     }
 
-    DeclaredType componentType = MoreTypes.asDeclared(componentElement.asType());
+    DeclaredType componentType = MoreTypes.asDeclared(toJavac(componentElement).asType());
     // TODO(ronshapiro): unify with ComponentImplementationBuilder
     Set<MethodSignature> methodSignatures =
         Sets.newHashSetWithExpectedSize(componentDescriptor.componentMethods().size());
@@ -162,7 +164,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
         .forEach(
             method ->
                 generatedComponent.addMethod(
-                    emptyComponentMethod(componentElement, method.methodElement())));
+                    emptyComponentMethod(toJavac(componentElement), method.methodElement())));
 
     if (componentDescriptor.isProduction()) {
       generatedComponent
@@ -199,7 +201,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
                     !module.moduleElement().getModifiers().contains(ABSTRACT)
                         && isElementAccessibleFrom(
                             module.moduleElement(),
-                            ClassName.get(component.typeElement()).packageName()))
+                            component.typeElement().getClassName().packageName()))
             .map(module -> ComponentRequirement.forModule(module.moduleElement().asType())));
   }
 
@@ -230,7 +232,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
   private static MethodSpec builderBuildMethod(ComponentDescriptor component) {
     return MethodSpec.methodBuilder("build")
         .addModifiers(PUBLIC)
-        .returns(ClassName.get(component.typeElement()))
+        .returns(component.typeElement().getClassName())
         .build();
   }
 
@@ -245,7 +247,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
   private static MethodSpec createMethod(ComponentDescriptor componentDescriptor) {
     return MethodSpec.methodBuilder("create")
         .addModifiers(PUBLIC, STATIC)
-        .returns(ClassName.get(componentDescriptor.typeElement()))
+        .returns(componentDescriptor.typeElement().getClassName())
         .build();
   }
 

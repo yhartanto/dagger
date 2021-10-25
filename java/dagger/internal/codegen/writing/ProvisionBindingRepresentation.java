@@ -20,6 +20,7 @@ import static dagger.internal.codegen.writing.DelegateRequestRepresentation.isBi
 import static dagger.internal.codegen.writing.StaticFactoryInstanceSupplier.usesStaticFactoryCreation;
 import static dagger.spi.model.BindingKind.DELEGATE;
 
+import androidx.room.compiler.processing.XTypeElement;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
@@ -29,7 +30,6 @@ import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.RequestKind;
-import javax.lang.model.element.TypeElement;
 
 /**
  * A binding representation that wraps code generation methods that satisfy all kinds of request for
@@ -56,7 +56,7 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
       DaggerTypes types) {
     this.binding = binding;
     this.graph = graph;
-    TypeElement rootComponent =
+    XTypeElement rootComponent =
         componentImplementation.rootComponentImplementation().componentDescriptor().typeElement();
     this.isFastInit = compilerOptions.fastInit(rootComponent);
     this.directInstanceBindingRepresentation =

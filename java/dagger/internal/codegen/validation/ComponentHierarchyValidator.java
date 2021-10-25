@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Functions.constant;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.in;
@@ -65,7 +66,9 @@ final class ComponentHierarchyValidator {
     validateSubcomponentMethods(
         report,
         componentDescriptor,
-        Maps.toMap(componentDescriptor.moduleTypes(), constant(componentDescriptor.typeElement())));
+        Maps.toMap(
+            componentDescriptor.moduleTypes(),
+            constant(toJavac(componentDescriptor.typeElement()))));
     validateRepeatedScopedDeclarations(report, componentDescriptor, LinkedHashMultimap.create());
 
     if (compilerOptions.scopeCycleValidationType().diagnosticKind().isPresent()) {
@@ -102,7 +105,7 @@ final class ComponentHierarchyValidator {
                           Maps.toMap(
                               Sets.difference(
                                   childComponent.moduleTypes(), existingModuleToOwners.keySet()),
-                              constant(childComponent.typeElement())))
+                              constant(toJavac(childComponent.typeElement()))))
                       .build());
             });
   }

@@ -24,9 +24,7 @@ import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.allCrea
 import static java.util.Collections.disjoint;
 
 import androidx.room.compiler.processing.XMessager;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -44,7 +42,6 @@ import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
 import java.util.Set;
 import javax.inject.Inject;
-import javax.lang.model.element.TypeElement;
 
 /**
  * A {@link ProcessingStep} that is responsible for dealing with a component or production component
@@ -59,7 +56,6 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElem
   private final BindingGraphFactory bindingGraphFactory;
   private final SourceFileGenerator<BindingGraph> componentGenerator;
   private final BindingGraphValidator bindingGraphValidator;
-  private final XProcessingEnv processingEnv;
 
   @Inject
   ComponentProcessingStep(
@@ -70,8 +66,7 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElem
       ComponentDescriptorFactory componentDescriptorFactory,
       BindingGraphFactory bindingGraphFactory,
       SourceFileGenerator<BindingGraph> componentGenerator,
-      BindingGraphValidator bindingGraphValidator,
-      XProcessingEnv processingEnv) {
+      BindingGraphValidator bindingGraphValidator) {
     this.messager = messager;
     this.componentValidator = componentValidator;
     this.creatorValidator = creatorValidator;
@@ -80,7 +75,6 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElem
     this.bindingGraphFactory = bindingGraphFactory;
     this.componentGenerator = componentGenerator;
     this.bindingGraphValidator = bindingGraphValidator;
-    this.processingEnv = processingEnv;
   }
 
   @Override
@@ -145,9 +139,8 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElem
 
   @CanIgnoreReturnValue
   private boolean validateFullBindingGraph(ComponentDescriptor componentDescriptor) {
-    TypeElement component = componentDescriptor.typeElement();
     if (!bindingGraphValidator.shouldDoFullBindingGraphValidation(
-        XConverters.toXProcessing(component, processingEnv))) {
+        componentDescriptor.typeElement())) {
       return true;
     }
     BindingGraph fullBindingGraph = bindingGraphFactory.create(componentDescriptor, true);

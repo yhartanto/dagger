@@ -16,12 +16,27 @@
 
 package dagger.internal.codegen.compileroption;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+
+import androidx.room.compiler.processing.XTypeElement;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 
 /** A collection of options that dictate how the compiler will run. */
 public abstract class CompilerOptions {
   public abstract boolean usesProducers();
+
+  /**
+   * Returns true if the fast initialization flag, {@code fastInit}, is enabled.
+   *
+   * <p>If enabled, the generated code will attempt to optimize for fast component initialization.
+   * This is done by reducing the number of factory classes loaded during initialization and the
+   * number of eagerly initialized fields at the cost of potential memory leaks and higher
+   * per-provision instantiation time.
+   */
+  public final boolean fastInit(XTypeElement element) {
+    return fastInit(toJavac(element));
+  }
 
   /**
    * Returns true if the fast initialization flag, {@code fastInit}, is enabled.

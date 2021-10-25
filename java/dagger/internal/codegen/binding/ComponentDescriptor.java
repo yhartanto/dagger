@@ -16,7 +16,9 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -27,7 +29,10 @@ import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.VOID;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Supplier;
@@ -71,30 +76,37 @@ import javax.lang.model.type.TypeMirror;
 public abstract class ComponentDescriptor {
   /** Creates a {@link ComponentDescriptor}. */
   static ComponentDescriptor create(
+      XProcessingEnv processingEnv,
       ComponentAnnotation componentAnnotation,
-      TypeElement component,
+      XTypeElement component,
       ImmutableSet<ComponentRequirement> componentDependencies,
       ImmutableSet<ModuleDescriptor> transitiveModules,
-      ImmutableMap<ExecutableElement, ComponentRequirement> dependenciesByDependencyMethod,
+      ImmutableMap<XMethodElement, ComponentRequirement> dependenciesByDependencyMethod,
       ImmutableSet<Scope> scopes,
       ImmutableSet<ComponentDescriptor> subcomponentsFromModules,
       ImmutableBiMap<ComponentMethodDescriptor, ComponentDescriptor> subcomponentsByFactoryMethod,
       ImmutableBiMap<ComponentMethodDescriptor, ComponentDescriptor> subcomponentsByBuilderMethod,
       ImmutableSet<ComponentMethodDescriptor> componentMethods,
       Optional<ComponentCreatorDescriptor> creator) {
-    return new AutoValue_ComponentDescriptor(
-        componentAnnotation,
-        component,
-        componentDependencies,
-        transitiveModules,
-        dependenciesByDependencyMethod,
-        scopes,
-        subcomponentsFromModules,
-        subcomponentsByFactoryMethod,
-        subcomponentsByBuilderMethod,
-        componentMethods,
-        creator);
+    ComponentDescriptor descriptor =
+        new AutoValue_ComponentDescriptor(
+            componentAnnotation,
+            component,
+            componentDependencies,
+            transitiveModules,
+            dependenciesByDependencyMethod,
+            scopes,
+            subcomponentsFromModules,
+            subcomponentsByFactoryMethod,
+            subcomponentsByBuilderMethod,
+            componentMethods,
+            creator);
+    descriptor.processingEnv = processingEnv;
+    return descriptor;
   }
+
+  // This is required temporarily during the XProcessing migration to use toXProcessing().
+  private XProcessingEnv processingEnv;
 
   /** The annotation that specifies that {@link #typeElement()} is a component. */
   public abstract ComponentAnnotation annotation();
@@ -124,7 +136,7 @@ public abstract class ComponentDescriptor {
    * The element that defines the component. This is the element to which the {@link #annotation()}
    * was applied.
    */
-  public abstract TypeElement typeElement();
+  public abstract XTypeElement typeElement();
 
   /**
    * The set of component dependencies listed in {@link Component#dependencies} or {@link
@@ -187,15 +199,18 @@ public abstract class ComponentDescriptor {
    * the enclosing type of the method; a method may be declared by a supertype of the actual
    * dependency.
    */
-  public abstract ImmutableMap<ExecutableElement, ComponentRequirement>
+  public abstract ImmutableMap<XMethodElement, ComponentRequirement>
       dependenciesByDependencyMethod();
 
   /** The {@linkplain #dependencies() component dependency} that defines a method. */
-  public final ComponentRequirement getDependencyThatDefinesMethod(Element method) {
-    checkArgument(
-        method instanceof ExecutableElement, "method must be an executable element: %s", method);
-    return checkNotNull(
-        dependenciesByDependencyMethod().get(method), "no dependency implements %s", method);
+  public final ComponentRequirement getDependencyThatDefinesMethod(Element javaMethod) {
+    XElement method = toXProcessing(javaMethod, processingEnv);
+    checkArgument(isMethod(method), "method must be an executable element: %s", method);
+    checkState(
+        dependenciesByDependencyMethod().containsKey(method),
+        "no dependency implements %s",
+        method);
+    return dependenciesByDependencyMethod().get(method);
   }
 
   /** The scopes of the component. */
@@ -230,7 +245,7 @@ public abstract class ComponentDescriptor {
 
   /** Returns a map of {@link #childComponents()} indexed by {@link #typeElement()}. */
   @Memoized
-  public ImmutableMap<TypeElement, ComponentDescriptor> childComponentsByElement() {
+  public ImmutableMap<XTypeElement, ComponentDescriptor> childComponentsByElement() {
     return Maps.uniqueIndex(childComponents(), ComponentDescriptor::typeElement);
   }
 
@@ -312,7 +327,8 @@ public abstract class ComponentDescriptor {
    */
   public final Optional<CancellationPolicy> cancellationPolicy() {
     return isProduction()
-        ? Optional.ofNullable(typeElement().getAnnotation(CancellationPolicy.class))
+        // TODO(bcorso): Get values from XAnnotation instead of using CancellationPolicy directly.
+        ? Optional.ofNullable(toJavac(typeElement()).getAnnotation(CancellationPolicy.class))
         : Optional.empty();
   }
 
@@ -386,6 +402,14 @@ public abstract class ComponentDescriptor {
   /** No-argument methods defined on {@link Object} that are ignored for contribution. */
   private static final ImmutableSet<String> NON_CONTRIBUTING_OBJECT_METHOD_NAMES =
       ImmutableSet.of("toString", "hashCode", "clone", "getClass");
+
+  /**
+   * Returns {@code true} if a method could be a component entry point but not a members-injection
+   * method.
+   */
+  static boolean isComponentContributionMethod(XMethodElement method) {
+    return isComponentContributionMethod(toJavac(method));
+  }
 
   /**
    * Returns {@code true} if a method could be a component entry point but not a members-injection

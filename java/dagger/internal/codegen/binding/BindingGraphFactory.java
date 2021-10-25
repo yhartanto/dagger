@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.auto.common.MoreTypes.isTypeOf;
@@ -35,6 +36,7 @@ import static dagger.spi.model.RequestKind.MEMBERS_INJECTION;
 import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
@@ -180,7 +182,8 @@ public final class BindingGraphFactory implements ClearableCache {
                   .contains(childComponent)) {
                 explicitBindingsBuilder.add(
                     bindingFactory.subcomponentCreatorBinding(
-                        builderEntryPoint.methodElement(), componentDescriptor.typeElement()));
+                        builderEntryPoint.methodElement(),
+                        toJavac(componentDescriptor.typeElement())));
               }
             });
 
@@ -282,7 +285,7 @@ public final class BindingGraphFactory implements ClearableCache {
    * @throws TypeNotPresentException if the module has not been generated yet. This will cause the
    *     processor to retry in a later processing round.
    */
-  private ModuleDescriptor descriptorForMonitoringModule(TypeElement componentDefinitionType) {
+  private ModuleDescriptor descriptorForMonitoringModule(XTypeElement componentDefinitionType) {
     return moduleDescriptorFactory.create(
         elements.checkTypePresent(
             generatedMonitoringModuleName(componentDefinitionType).toString()));
@@ -590,7 +593,7 @@ public final class BindingGraphFactory implements ClearableCache {
             parentResolver.get().resolvedContributionBindings.get(requestKey);
         return parentResolvedBindings.owningComponent(binding);
       } else {
-        return componentDescriptor.typeElement();
+        return toJavac(componentDescriptor.typeElement());
       }
     }
 

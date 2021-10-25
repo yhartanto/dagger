@@ -111,14 +111,14 @@ public final class ComponentDescriptorFactory {
             .map(ComponentRequirement::forDependency)
             .collect(toImmutableSet());
 
-    ImmutableMap.Builder<ExecutableElement, ComponentRequirement> dependenciesByDependencyMethod =
+    ImmutableMap.Builder<XMethodElement, ComponentRequirement> dependenciesByDependencyMethod =
         ImmutableMap.builder();
-
     for (ComponentRequirement componentDependency : componentDependencies) {
       for (ExecutableElement dependencyMethod :
           methodsIn(elements.getAllMembers(componentDependency.typeElement()))) {
         if (isComponentContributionMethod(dependencyMethod)) {
-          dependenciesByDependencyMethod.put(dependencyMethod, componentDependency);
+          dependenciesByDependencyMethod.put(
+              (XMethodElement) toXProcessing(dependencyMethod, processingEnv), componentDependency);
         }
       }
     }
@@ -185,8 +185,9 @@ public final class ComponentDescriptorFactory {
     }
 
     return ComponentDescriptor.create(
+        processingEnv,
         componentAnnotation,
-        toJavac(typeElement),
+        typeElement,
         componentDependencies,
         transitiveModules,
         dependenciesByDependencyMethod.build(),
