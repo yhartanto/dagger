@@ -17,7 +17,6 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -29,6 +28,7 @@ import static dagger.internal.codegen.binding.MapKeys.getMapKey;
 import static dagger.internal.codegen.binding.MapKeys.mapKeyType;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.Optionals.firstPresent;
+import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
 import static dagger.spi.model.DaggerAnnotation.fromJava;
@@ -36,8 +36,11 @@ import static dagger.spi.model.DaggerType.fromJava;
 import static java.util.Arrays.asList;
 import static javax.lang.model.element.ElementKind.METHOD;
 
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
@@ -104,8 +107,11 @@ public final class KeyFactory {
 
   /** Returns {@code Map<KeyType, FrameworkType<ValueType>>}. */
   private TypeMirror mapOfFrameworkType(
-      TypeMirror keyType, TypeElement frameworkType, TypeMirror valueType) {
-    return mapOf(keyType, types.getDeclaredType(frameworkType, boxPrimitives(valueType)));
+      TypeMirror keyType, ClassName frameworkClassName, TypeMirror valueType) {
+    return mapOf(
+        keyType,
+        types.getDeclaredType(
+            elements.getTypeElement(frameworkClassName), boxPrimitives(valueType)));
   }
 
   Key forComponentMethod(ExecutableElement componentMethod) {
@@ -140,39 +146,44 @@ public final class KeyFactory {
   }
 
   public Key forProvidesMethod(ExecutableElement method, TypeElement contributingModule) {
-    return forBindingMethod(
-        method, contributingModule, Optional.of(elements.getTypeElement(TypeNames.PROVIDER)));
+    return forBindingMethod(method, contributingModule, Optional.of(TypeNames.PROVIDER));
   }
 
   public Key forProducesMethod(ExecutableElement method, TypeElement contributingModule) {
-    return forBindingMethod(
-        method, contributingModule, Optional.of(elements.getTypeElement(TypeNames.PRODUCER)));
+    return forBindingMethod(method, contributingModule, Optional.of(TypeNames.PRODUCER));
   }
 
   /** Returns the key bound by a {@link Binds} method. */
   Key forBindsMethod(ExecutableElement method, TypeElement contributingModule) {
-    checkArgument(isAnnotationPresent(method, Binds.class));
+    checkArgument(isAnnotationPresent(method, TypeNames.BINDS));
     return forBindingMethod(method, contributingModule, Optional.empty());
   }
 
   /** Returns the base key bound by a {@link BindsOptionalOf} method. */
-  Key forBindsOptionalOfMethod(ExecutableElement method, TypeElement contributingModule) {
-    checkArgument(isAnnotationPresent(method, BindsOptionalOf.class));
+  Key forBindsOptionalOfMethod(XMethodElement method, XTypeElement contributingModule) {
+    checkArgument(method.hasAnnotation(TypeNames.BINDS_OPTIONAL_OF));
     return forBindingMethod(method, contributingModule, Optional.empty());
+  }
+
+  private Key forBindingMethod(
+      XMethodElement method,
+      XTypeElement contributingModule,
+      Optional<ClassName> frameworkClassName) {
+    return forBindingMethod(toJavac(method), toJavac(contributingModule), frameworkClassName);
   }
 
   private Key forBindingMethod(
       ExecutableElement method,
       TypeElement contributingModule,
-      Optional<TypeElement> frameworkType) {
+      Optional<ClassName> frameworkClassName) {
     checkArgument(method.getKind().equals(METHOD));
     ExecutableType methodType =
         MoreTypes.asExecutable(
             types.asMemberOf(MoreTypes.asDeclared(contributingModule.asType()), method));
     ContributionType contributionType = ContributionType.fromBindingElement(method);
     TypeMirror returnType = methodType.getReturnType();
-    if (frameworkType.isPresent()
-        && frameworkType.get().equals(elements.getTypeElement(TypeNames.PRODUCER))
+    if (frameworkClassName.isPresent()
+        && frameworkClassName.get().equals(TypeNames.PRODUCER)
         && isType(returnType)) {
       if (isFutureType(methodType.getReturnType())) {
         returnType = getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments());
@@ -186,7 +197,8 @@ public final class KeyFactory {
         }
       }
     }
-    TypeMirror keyType = bindingMethodKeyType(returnType, method, contributionType, frameworkType);
+    TypeMirror keyType =
+        bindingMethodKeyType(returnType, method, contributionType, frameworkClassName);
     Key key = forMethod(method, keyType);
     return contributionType.equals(ContributionType.UNIQUE)
         ? key
@@ -202,24 +214,23 @@ public final class KeyFactory {
    * <p>The key's type is either {@code Set<T>} or {@code Map<K, Provider<V>>}. The latter works
    * even for maps used by {@code Producer}s.
    */
-  Key forMultibindsMethod(ExecutableType executableType, ExecutableElement method) {
-    checkArgument(method.getKind().equals(METHOD), "%s must be a method", method);
-    TypeMirror returnType = executableType.getReturnType();
+  Key forMultibindsMethod(XMethodElement method, XMethodType methodType) {
+    XType returnType = method.getReturnType();
     TypeMirror keyType =
         MapType.isMap(returnType)
             ? mapOfFrameworkType(
                 MapType.from(returnType).keyType(),
-                elements.getTypeElement(TypeNames.PROVIDER),
+                TypeNames.PROVIDER,
                 MapType.from(returnType).valueType())
-            : returnType;
-    return forMethod(method, keyType);
+            : toJavac(returnType);
+    return forMethod(toJavac(method), keyType);
   }
 
   private TypeMirror bindingMethodKeyType(
       TypeMirror returnType,
       ExecutableElement method,
       ContributionType contributionType,
-      Optional<TypeElement> frameworkType) {
+      Optional<ClassName> frameworkClassName) {
     switch (contributionType) {
       case UNIQUE:
         return returnType;
@@ -227,8 +238,8 @@ public final class KeyFactory {
         return setOf(returnType);
       case MAP:
         TypeMirror mapKeyType = mapKeyType(getMapKey(method).get(), types);
-        return frameworkType.isPresent()
-            ? mapOfFrameworkType(mapKeyType, frameworkType.get(), returnType)
+        return frameworkClassName.isPresent()
+            ? mapOfFrameworkType(mapKeyType, frameworkClassName.get(), returnType)
             : mapOf(mapKeyType, returnType);
       case SET_VALUES:
         // TODO(gak): do we want to allow people to use "covariant return" here?

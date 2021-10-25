@@ -41,7 +41,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.ElementFilter;
 import kotlin.Metadata;
-import kotlin.jvm.JvmStatic;
 import kotlinx.metadata.Flag;
 
 /** Utility class for interacting with Kotlin Metadata. */
@@ -175,12 +174,5 @@ public final class KotlinMetadataUtil {
         hasMetadata(element), "Can not call getAllMethodNamesBySignature for non-Kotlin class");
     return metadataFactory.create(element).classMetadata().functionsBySignature().values().stream()
         .collect(toImmutableMap(FunctionMetadata::signature, FunctionMetadata::name));
-  }
-
-  /**
-   * Returns {@code true} if the <code>@JvmStatic</code> annotation is present in the given element.
-   */
-  public static boolean isJvmStaticPresent(ExecutableElement element) {
-    return isAnnotationPresent(element, JvmStatic.class);
   }
 }

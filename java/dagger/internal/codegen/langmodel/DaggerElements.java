@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.langmodel;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.asExecutable;
 import static com.google.auto.common.MoreElements.hasModifiers;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -24,6 +25,9 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.FluentIterable;
@@ -275,6 +279,20 @@ public final class DaggerElements implements Elements, ClearableCache {
    * href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.3.3">JVM
    * specification, section 4.3.3</a>.
    */
+  // TODO(bcorso): Expose getMethodDescriptor() method in XProcessing instead.
+  public static String getMethodDescriptor(XMethodElement element) {
+    return getMethodDescriptor(toJavac(element));
+  }
+
+  /**
+   * Returns the method descriptor of the given {@code element}.
+   *
+   * <p>This is useful for matching Kotlin Metadata JVM Signatures with elements from the AST.
+   *
+   * <p>For reference, see the <a
+   * href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.3.3">JVM
+   * specification, section 4.3.3</a>.
+   */
   public static String getMethodDescriptor(ExecutableElement element) {
     return element.getSimpleName() + getDescriptor(element.asType());
   }
@@ -397,6 +415,15 @@ public final class DaggerElements implements Elements, ClearableCache {
           return element.getSimpleName().toString();
         }
       };
+
+  /** Returns the type element or throws {@link TypeNotPresentException} if it is null. */
+  public static XTypeElement checkTypePresent(XProcessingEnv processingEnv, ClassName className) {
+    XTypeElement type = processingEnv.findTypeElement(className);
+    if (type == null) {
+      throw new TypeNotPresentException(className.canonicalName(), null);
+    }
+    return type;
+  }
 
   /**
    * Invokes {@link Elements#getTypeElement(CharSequence)}, throwing {@link TypeNotPresentException}

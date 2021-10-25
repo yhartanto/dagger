@@ -27,6 +27,7 @@ import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.binding.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.binding.SourceFiles.generatedMonitoringModuleName;
+import static dagger.internal.codegen.langmodel.DaggerElements.checkTypePresent;
 import static dagger.spi.model.BindingKind.ASSISTED_INJECTION;
 import static dagger.spi.model.BindingKind.DELEGATE;
 import static dagger.spi.model.BindingKind.INJECTION;
@@ -36,6 +37,7 @@ import static dagger.spi.model.RequestKind.MEMBERS_INJECTION;
 import static java.util.function.Predicate.isEqual;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.HashMultimap;
@@ -80,6 +82,7 @@ import javax.lang.model.type.TypeKind;
 @Singleton
 public final class BindingGraphFactory implements ClearableCache {
 
+  private final XProcessingEnv processingEnv;
   private final DaggerElements elements;
   private final InjectBindingRegistry injectBindingRegistry;
   private final KeyFactory keyFactory;
@@ -91,6 +94,7 @@ public final class BindingGraphFactory implements ClearableCache {
 
   @Inject
   BindingGraphFactory(
+      XProcessingEnv processingEnv,
       DaggerElements elements,
       InjectBindingRegistry injectBindingRegistry,
       KeyFactory keyFactory,
@@ -98,6 +102,7 @@ public final class BindingGraphFactory implements ClearableCache {
       ModuleDescriptor.Factory moduleDescriptorFactory,
       BindingGraphConverter bindingGraphConverter,
       CompilerOptions compilerOptions) {
+    this.processingEnv = processingEnv;
     this.elements = elements;
     this.injectBindingRegistry = injectBindingRegistry;
     this.keyFactory = keyFactory;
@@ -287,14 +292,13 @@ public final class BindingGraphFactory implements ClearableCache {
    */
   private ModuleDescriptor descriptorForMonitoringModule(XTypeElement componentDefinitionType) {
     return moduleDescriptorFactory.create(
-        elements.checkTypePresent(
-            generatedMonitoringModuleName(componentDefinitionType).toString()));
+        checkTypePresent(processingEnv, generatedMonitoringModuleName(componentDefinitionType)));
   }
 
   /** Returns a descriptor {@link ProductionExecutorModule}. */
   private ModuleDescriptor descriptorForProductionExecutorModule() {
     return moduleDescriptorFactory.create(
-        elements.getTypeElement(TypeNames.PRODUCTION_EXECTUTOR_MODULE));
+        processingEnv.findTypeElement(TypeNames.PRODUCTION_EXECTUTOR_MODULE));
   }
 
   /** Indexes {@code bindingDeclarations} by {@link BindingDeclaration#key()}. */
