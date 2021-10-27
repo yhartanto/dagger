@@ -17,6 +17,7 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -237,7 +238,7 @@ public final class KeyFactory {
       case SET:
         return setOf(returnType);
       case MAP:
-        TypeMirror mapKeyType = mapKeyType(getMapKey(method).get(), types);
+        TypeMirror mapKeyType = mapKeyType(toXProcessing(getMapKey(method).get(), processingEnv));
         return frameworkClassName.isPresent()
             ? mapOfFrameworkType(mapKeyType, frameworkClassName.get(), returnType)
             : mapOf(mapKeyType, returnType);

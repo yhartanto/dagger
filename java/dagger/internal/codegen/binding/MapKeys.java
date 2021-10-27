@@ -16,6 +16,9 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.XTypeKt.isArray;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.AnnotationMirrors.getAnnotatedAnnotations;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -23,12 +26,16 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.base.MapKeyAccessibility.isMapKeyPubliclyAccessible;
 import static dagger.internal.codegen.binding.SourceFiles.elementBasedClassName;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
+import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
-import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
@@ -47,14 +54,8 @@ import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleTypeVisitor8;
 
 /** Methods for extracting {@link MapKey} annotations and key code blocks from binding elements. */
 public final class MapKeys {
@@ -98,10 +99,10 @@ public final class MapKeys {
         : Optional.empty();
   }
 
-  static TypeMirror mapKeyType(AnnotationMirror mapKeyAnnotation, DaggerTypes types) {
-    return unwrapValue(mapKeyAnnotation).isPresent()
-        ? getUnwrappedMapKeyType(mapKeyAnnotation.getAnnotationType(), types)
-        : mapKeyAnnotation.getAnnotationType();
+  static TypeMirror mapKeyType(XAnnotation mapKeyAnnotation) {
+    return unwrapValue(toJavac(mapKeyAnnotation)).isPresent()
+        ? toJavac(getUnwrappedMapKeyType(mapKeyAnnotation.getType()))
+        : toJavac(mapKeyAnnotation.getType());
   }
 
   /**
@@ -112,36 +113,21 @@ public final class MapKeys {
    *     has more than one member, or if its single member is an array
    * @throws NoSuchElementException if the annotation has no members
    */
-  public static DeclaredType getUnwrappedMapKeyType(
-      final DeclaredType mapKeyAnnotationType, final DaggerTypes types) {
+  public static XType getUnwrappedMapKeyType(XType mapKeyAnnotationType) {
     checkArgument(
-        MoreTypes.asTypeElement(mapKeyAnnotationType).getKind() == ElementKind.ANNOTATION_TYPE,
+        isDeclared(mapKeyAnnotationType)
+            && mapKeyAnnotationType.getTypeElement().isAnnotationClass(),
         "%s is not an annotation type",
         mapKeyAnnotationType);
 
-    final ExecutableElement onlyElement =
-        getOnlyElement(methodsIn(mapKeyAnnotationType.asElement().getEnclosedElements()));
-
-    SimpleTypeVisitor8<DeclaredType, Void> keyTypeElementVisitor =
-        new SimpleTypeVisitor8<DeclaredType, Void>() {
-
-          @Override
-          public DeclaredType visitArray(ArrayType t, Void p) {
-            throw new IllegalArgumentException(
-                mapKeyAnnotationType + "." + onlyElement.getSimpleName() + " cannot be an array");
-          }
-
-          @Override
-          public DeclaredType visitPrimitive(PrimitiveType t, Void p) {
-            return MoreTypes.asDeclared(types.boxedClass(t).asType());
-          }
-
-          @Override
-          public DeclaredType visitDeclared(DeclaredType t, Void p) {
-            return t;
-          }
-        };
-    return keyTypeElementVisitor.visit(onlyElement.getReturnType());
+    XMethodElement annotationValueMethod =
+        getOnlyElement(mapKeyAnnotationType.getTypeElement().getDeclaredMethods());
+    XType annotationValueType = annotationValueMethod.getReturnType();
+    if (isArray(annotationValueType)) {
+      throw new IllegalArgumentException(
+          mapKeyAnnotationType + "." + annotationValueMethod.getName() + " cannot be an array");
+    }
+    return isPrimitive(annotationValueType) ? annotationValueType.boxed() : annotationValueType;
   }
 
   /**
@@ -214,7 +200,7 @@ public final class MapKeys {
    * accessible.
    */
   public static Optional<MethodSpec> mapKeyFactoryMethod(
-      ContributionBinding binding, DaggerTypes types, DaggerElements elements) {
+      ContributionBinding binding, XProcessingEnv processingEnv, DaggerElements elements) {
     return binding
         .mapKeyAnnotation()
         .filter(mapKey -> !isMapKeyPubliclyAccessible(mapKey))
@@ -222,7 +208,7 @@ public final class MapKeys {
             mapKey ->
                 methodBuilder("create")
                     .addModifiers(PUBLIC, STATIC)
-                    .returns(TypeName.get(mapKeyType(mapKey, types)))
+                    .returns(TypeName.get(mapKeyType(toXProcessing(mapKey, processingEnv))))
                     .addStatement("return $L", directMapKeyExpression(mapKey, elements))
                     .build());
   }
