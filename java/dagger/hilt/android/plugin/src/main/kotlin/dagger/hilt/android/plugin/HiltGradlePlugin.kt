@@ -33,6 +33,7 @@ import dagger.hilt.android.plugin.util.AndroidComponentsExtensionCompat.Companio
 import dagger.hilt.android.plugin.util.ComponentCompat
 import dagger.hilt.android.plugin.util.CopyTransform
 import dagger.hilt.android.plugin.util.SimpleAGPVersion
+import dagger.hilt.android.plugin.util.capitalize
 import dagger.hilt.android.plugin.util.getSdkPath
 import java.io.File
 import javax.inject.Inject
@@ -44,6 +45,7 @@ import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Usage
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.process.CommandLineArgumentProvider
 
 /**
  * A Gradle plugin that checks if the project is an Android project and if so, registers a
@@ -387,7 +389,7 @@ class HiltGradlePlugin @Inject constructor(
         compileTask.classpath = getInputClasspath(DAGGER_ARTIFACT_TYPE_VALUE)
         compileTask.options.bootstrapClasspath = mainBootstrapClasspath
       }
-      compileTask.destinationDir = componentClasses.singleFile
+      compileTask.destinationDirectory.set(componentClasses.singleFile)
       compileTask.options.apply {
         annotationProcessorPath = project.configurations.create(
           "hiltAnnotationProcessor${variant.name.capitalize()}"
@@ -395,8 +397,10 @@ class HiltGradlePlugin @Inject constructor(
           // TODO: Consider finding the hilt-compiler dep from the user config and using it here.
           project.dependencies.add(config.name, "com.google.dagger:hilt-compiler:$HILT_VERSION")
         }
-        annotationProcessorGeneratedSourcesDirectory = project.file(
-          project.buildDir.resolve("generated/hilt/component_sources/${variant.name}/")
+        generatedSourceOutputDirectory.set(
+          project.file(
+            project.buildDir.resolve("generated/hilt/component_sources/${variant.name}/")
+          )
         )
         if (
           JavaVersion.current().isJava8Compatible &&
@@ -433,20 +437,25 @@ class HiltGradlePlugin @Inject constructor(
       // Pass certain annotation processor flags via a CommandLineArgumentProvider so that plugin
       // options defined in the extension are populated from the user's build file. Checking the
       // option too early would make it seem like it is never set.
-      compilerArgumentProvider {
-        mutableListOf<String>().apply {
-          // Pass annotation processor flag to disable the aggregating processor if aggregating task
-          // is enabled.
-          if (hiltExtension.enableAggregatingTask) {
-            add("-Adagger.hilt.internal.useAggregatingRootProcessor=false")
-          }
-          // Pass annotation processor flag to disable cross compilation root validation. The plugin
-          // option duplicates the processor flag because it is an input of the aggregating task.
-          if (hiltExtension.disableCrossCompilationRootValidation) {
-            add("-Adagger.hilt.disableCrossCompilationRootValidation=true")
+      compilerArgumentProvider(
+        // Suppress due to https://docs.gradle.org/7.2/userguide/validation_problems.html#implementation_unknown
+        @Suppress("ObjectLiteralToLambda")
+        object : CommandLineArgumentProvider {
+          override fun asArguments() = mutableListOf<String>().apply {
+            // Pass annotation processor flag to disable the aggregating processor if aggregating
+            // task is enabled.
+            if (hiltExtension.enableAggregatingTask) {
+              add("-Adagger.hilt.internal.useAggregatingRootProcessor=false")
+            }
+            // Pass annotation processor flag to disable cross compilation root validation.
+            // The plugin option duplicates the processor flag because it is an input of the
+            // aggregating task.
+            if (hiltExtension.disableCrossCompilationRootValidation) {
+              add("-Adagger.hilt.disableCrossCompilationRootValidation=true")
+            }
           }
         }
-      }
+      )
     }
   }
 
