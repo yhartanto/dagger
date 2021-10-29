@@ -17,10 +17,13 @@
 package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
+import static com.google.auto.common.MoreElements.asType;
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.Keys.isValidImplicitProvisionKey;
 import static dagger.internal.codegen.base.Keys.isValidMembersInjectionKey;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedInjectedConstructors;
@@ -28,15 +31,16 @@ import static dagger.internal.codegen.binding.InjectionAnnotations.injectedConst
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
+import static javax.lang.model.type.TypeKind.DECLARED;
 
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XMethodElement;
-import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -63,8 +67,6 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
@@ -77,6 +79,7 @@ import javax.tools.Diagnostic.Kind;
  */
 @Singleton
 final class InjectBindingRegistryImpl implements InjectBindingRegistry {
+  private final XProcessingEnv processingEnv;
   private final DaggerElements elements;
   private final DaggerTypes types;
   private final XMessager messager;
@@ -101,7 +104,11 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
           binding != null;
           binding = bindingsRequiringGeneration.poll()) {
         checkState(!binding.unresolved().isPresent());
-        if (injectValidatorWhenGeneratingCode.isValidType(binding.key().type().java())) {
+        TypeMirror type = binding.key().type().java();
+        if (!type.getKind().equals(DECLARED)
+            || injectValidatorWhenGeneratingCode
+                .validateType(toXProcessing(asTypeElement(type), processingEnv))
+                .isClean()) {
           generator.generate(binding);
         }
         materializedBindingKeys.add(binding.key());
@@ -176,6 +183,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
 
   @Inject
   InjectBindingRegistryImpl(
+      XProcessingEnv processingEnv,
       DaggerElements elements,
       DaggerTypes types,
       XMessager messager,
@@ -183,6 +191,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
       KeyFactory keyFactory,
       BindingFactory bindingFactory,
       CompilerOptions compilerOptions) {
+    this.processingEnv = processingEnv;
     this.elements = elements;
     this.types = types;
     this.messager = messager;
@@ -242,16 +251,16 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   @Override
   public Optional<ProvisionBinding> tryRegisterInjectConstructor(
       XConstructorElement constructorElement) {
-    return tryRegisterConstructor(toJavac(constructorElement), Optional.empty(), false);
+    return tryRegisterConstructor(constructorElement, Optional.empty(), false);
   }
 
   @CanIgnoreReturnValue
   private Optional<ProvisionBinding> tryRegisterConstructor(
-      ExecutableElement constructorElement,
+      XConstructorElement constructorElement,
       Optional<TypeMirror> resolvedType,
       boolean warnIfNotAlreadyGenerated) {
-    TypeElement typeElement = MoreElements.asType(constructorElement.getEnclosingElement());
-    DeclaredType type = MoreTypes.asDeclared(typeElement.asType());
+    XTypeElement typeElement = constructorElement.getEnclosingElement();
+    XType type = typeElement.getType();
     Key key = keyFactory.forInjectConstructorWithResolvedType(type);
     ProvisionBinding cachedBinding = provisionBindings.getBinding(key);
     if (cachedBinding != null) {
@@ -283,7 +292,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
           fieldElement);
     }
     return tryRegisterMembersInjectedType(
-        toJavac(asTypeElement(fieldElement.getEnclosingElement())), Optional.empty(), false);
+        asTypeElement(fieldElement.getEnclosingElement()), Optional.empty(), false);
   }
 
   @Override
@@ -297,15 +306,15 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
           methodElement);
     }
     return tryRegisterMembersInjectedType(
-        toJavac(asTypeElement(methodElement.getEnclosingElement())), Optional.empty(), false);
+        asTypeElement(methodElement.getEnclosingElement()), Optional.empty(), false);
   }
 
   @CanIgnoreReturnValue
   private Optional<MembersInjectionBinding> tryRegisterMembersInjectedType(
-      TypeElement typeElement,
+      XTypeElement typeElement,
       Optional<TypeMirror> resolvedType,
       boolean warnIfNotAlreadyGenerated) {
-    DeclaredType type = MoreTypes.asDeclared(typeElement.asType());
+    XType type = typeElement.getType();
     Key key = keyFactory.forInjectConstructorWithResolvedType(type);
     MembersInjectionBinding cachedBinding = membersInjectionBindings.getBinding(key);
     if (cachedBinding != null) {
@@ -341,9 +350,9 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     }
 
     // ok, let's see if we can find an @Inject constructor
-    TypeElement element = MoreElements.asType(types.asElement(key.type().java()));
-    ImmutableSet<ExecutableElement> injectConstructors =
-        ImmutableSet.<ExecutableElement>builder()
+    XTypeElement element = toXProcessing(asType(types.asElement(key.type().java())), processingEnv);
+    ImmutableSet<XConstructorElement> injectConstructors =
+        ImmutableSet.<XConstructorElement>builder()
             .addAll(injectedConstructors(element))
             .addAll(assistedInjectedConstructors(element))
             .build();
@@ -353,7 +362,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
         return Optional.empty();
       case 1:
         return tryRegisterConstructor(
-            Iterables.getOnlyElement(injectConstructors), Optional.of(key.type().java()), true);
+            getOnlyElement(injectConstructors), Optional.of(key.type().java()), true);
       default:
         throw new IllegalStateException("Found multiple @Inject constructors: "
             + injectConstructors);
@@ -371,7 +380,9 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
       return Optional.of(binding);
     }
     return tryRegisterMembersInjectedType(
-        MoreTypes.asTypeElement(key.type().java()), Optional.of(key.type().java()), true);
+        toXProcessing(asTypeElement(key.type().java()), processingEnv),
+        Optional.of(key.type().java()),
+        true);
   }
 
   @Override

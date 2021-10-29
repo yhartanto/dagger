@@ -53,8 +53,10 @@ import static dagger.spi.model.DaggerType.fromJava;
 import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.METHOD;
 
+import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
 import androidx.room.compiler.processing.compat.XConverters;
@@ -119,6 +121,19 @@ public final class BindingFactory {
     this.injectionSiteFactory = injectionSiteFactory;
     this.injectionAnnotations = injectionAnnotations;
     this.metadataUtil = metadataUtil;
+  }
+
+  /**
+   * Returns an {@link dagger.spi.model.BindingKind#INJECTION} binding.
+   *
+   * @param constructorElement the {@code @Inject}-annotated constructor
+   * @param resolvedType the parameterized type if the constructor is for a generic class and the
+   *     binding should be for the parameterized type
+   */
+  // TODO(dpb): See if we can just pass the parameterized type and not also the constructor.
+  public ProvisionBinding injectionBinding(
+      XConstructorElement constructorElement, Optional<TypeMirror> resolvedType) {
+    return injectionBinding(toJavac(constructorElement), resolvedType);
   }
 
   /**
@@ -579,6 +594,18 @@ public final class BindingFactory {
         .provisionDependencies(membersInjectionBinding.dependencies())
         .injectionSites(membersInjectionBinding.injectionSites())
         .build();
+  }
+
+  /**
+   * Returns a {@link dagger.spi.model.BindingKind#MEMBERS_INJECTION} binding.
+   *
+   * @param resolvedType if {@code declaredType} is a generic class and {@code resolvedType} is a
+   *     parameterization of that type, the returned binding will be for the resolved type
+   */
+  // TODO(dpb): See if we can just pass one nongeneric/parameterized type.
+  public MembersInjectionBinding membersInjectionBinding(
+      XType type, Optional<TypeMirror> resolvedType) {
+    return membersInjectionBinding(asDeclared(toJavac(type)), resolvedType);
   }
 
   /**

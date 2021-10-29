@@ -31,6 +31,7 @@ import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirr
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
+import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
@@ -165,6 +166,13 @@ public final class AssistedInjectionAnnotations {
             .map(metadata.assistedInjectAssistedParametersMap()::get)
             .collect(toImmutableList()),
         factoryMethodType.getParameterTypes());
+  }
+
+  /** Returns the constructors in {@code type} that are annotated with {@link AssistedInject}. */
+  public static ImmutableSet<XConstructorElement> assistedInjectedConstructors(XTypeElement type) {
+    return type.getConstructors().stream()
+        .filter(constructor -> constructor.hasAnnotation(TypeNames.ASSISTED_INJECT))
+        .collect(toImmutableSet());
   }
 
   /** Returns the constructors in {@code type} that are annotated with {@link AssistedInject}. */

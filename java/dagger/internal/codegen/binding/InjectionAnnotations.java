@@ -31,6 +31,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 
 import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
@@ -119,8 +120,10 @@ public final class InjectionAnnotations {
   }
 
   /** Returns the constructors in {@code type} that are annotated with {@link Inject}. */
-  public static ImmutableSet<ExecutableElement> injectedConstructors(XTypeElement type) {
-    return injectedConstructors(toJavac(type));
+  public static ImmutableSet<XConstructorElement> injectedConstructors(XTypeElement type) {
+    return type.getConstructors().stream()
+        .filter(constructor -> constructor.hasAnnotation(TypeNames.INJECT))
+        .collect(toImmutableSet());
   }
 
   /** Returns the constructors in {@code type} that are annotated with {@link Inject}. */

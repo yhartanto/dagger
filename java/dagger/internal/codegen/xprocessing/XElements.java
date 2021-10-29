@@ -81,8 +81,22 @@ public final class XElements {
   }
 
   /** Returns {@code true} if {@code annotated} is annotated with any of the given annotations. */
+  public static boolean hasAnyAnnotation(XAnnotated annotated, ClassName... annotations) {
+    return hasAnyAnnotation(annotated, ImmutableSet.copyOf(annotations));
+  }
+
+  /** Returns {@code true} if {@code annotated} is annotated with any of the given annotations. */
   public static boolean hasAnyAnnotation(XAnnotated annotated, Collection<ClassName> annotations) {
     return annotations.stream().anyMatch(annotated::hasAnnotation);
+  }
+
+  /**
+   * Returns any annotation from {@code annotations} that annotates {@code annotated} or else {@code
+   * Optional.empty()}.
+   */
+  public static Optional<XAnnotation> getAnyAnnotation(
+      XAnnotated annotated, ClassName... annotations) {
+    return getAnyAnnotation(annotated, ImmutableSet.copyOf(annotations));
   }
 
   /**

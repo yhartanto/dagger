@@ -17,9 +17,11 @@
 package dagger.internal.codegen.langmodel;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 
 import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreElements;
@@ -134,6 +136,14 @@ public final class DaggerTypes implements Types {
       return (typeName instanceof ClassName)
           && typeElement.getQualifiedName().contentEquals(((ClassName) typeName).canonicalName());
     }
+  }
+
+  /**
+   * Returns the non-{@link Object} superclass of the type with the proper type parameters. An empty
+   * {@link Optional} is returned if there is no non-{@link Object} superclass.
+   */
+  public Optional<DeclaredType> nonObjectSuperclass(XType type) {
+    return isDeclared(type) ? nonObjectSuperclass(asDeclared(toJavac(type))) : Optional.empty();
   }
 
   /**
