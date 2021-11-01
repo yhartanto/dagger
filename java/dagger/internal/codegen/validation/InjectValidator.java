@@ -158,8 +158,7 @@ public final class InjectValidator implements ClearableCache {
           "Dagger does not support injection into private constructors", constructorElement);
     }
 
-    for (XAnnotation qualifier :
-        injectionAnnotations.getQualifiers(constructorElement, processingEnv)) {
+    for (XAnnotation qualifier : injectionAnnotations.getQualifiers(constructorElement)) {
       builder.addError(
           String.format(
               "@Qualifier annotations are not allowed on @%s constructors",

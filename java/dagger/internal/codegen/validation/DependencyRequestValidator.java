@@ -119,7 +119,7 @@ final class DependencyRequestValidator {
       this.requestElement = requestElement;
       this.requestType = requestType;
       this.keyType = extractKeyType(requestType);
-      this.qualifiers = injectionAnnotations.getQualifiers(requestElement, processingEnv);
+      this.qualifiers = injectionAnnotations.getQualifiers(requestElement);
     }
 
     void validate() {

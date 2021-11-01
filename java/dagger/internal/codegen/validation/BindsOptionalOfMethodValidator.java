@@ -72,9 +72,7 @@ final class BindsOptionalOfMethodValidator extends BindingMethodValidator {
     protected void checkKeyType(XType keyType) {
       super.checkKeyType(keyType);
       if (isValidImplicitProvisionKey(
-              injectionAnnotations.getQualifiers(method, processingEnv).stream().findFirst(),
-              keyType,
-              types)
+              injectionAnnotations.getQualifiers(method).stream().findFirst(), keyType, types)
           && !injectedConstructors(keyType.getTypeElement()).isEmpty()) {
         report.addError(
             "@BindsOptionalOf methods cannot return unqualified types that have an @Inject-"

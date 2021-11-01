@@ -151,7 +151,7 @@ public abstract class BindingElementValidator<E extends XElement> {
     protected ElementValidator(E element) {
       this.element = element;
       this.report = ValidationReport.about(element);
-      qualifiers = injectionAnnotations.getQualifiers(element, processingEnv);
+      qualifiers = injectionAnnotations.getQualifiers(element);
     }
 
     /** Checks the element for validity. */

@@ -64,11 +64,16 @@ public final class InjectionAnnotations {
 
   private static final Equivalence<AnnotationMirror> EQUIVALENCE = AnnotationMirrors.equivalence();
 
+  private final XProcessingEnv processingEnv;
   private final DaggerElements elements;
   private final KotlinMetadataUtil kotlinMetadataUtil;
 
   @Inject
-  InjectionAnnotations(DaggerElements elements, KotlinMetadataUtil kotlinMetadataUtil) {
+  InjectionAnnotations(
+      XProcessingEnv processingEnv,
+      DaggerElements elements,
+      KotlinMetadataUtil kotlinMetadataUtil) {
+    this.processingEnv = processingEnv;
     this.elements = elements;
     this.kotlinMetadataUtil = kotlinMetadataUtil;
   }
@@ -94,7 +99,7 @@ public final class InjectionAnnotations {
     }
   }
 
-  public ImmutableSet<XAnnotation> getQualifiers(XElement element, XProcessingEnv processingEnv) {
+  public ImmutableSet<XAnnotation> getQualifiers(XElement element) {
     return getQualifiers(toJavac(element)).stream()
         .map(qualifier -> toXProcessing(qualifier, processingEnv))
         .collect(toImmutableSet());

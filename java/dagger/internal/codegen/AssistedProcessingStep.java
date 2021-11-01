@@ -89,7 +89,7 @@ final class AssistedProcessingStep extends TypeCheckingProcessingStep<XExecutabl
       }
 
       injectionAnnotations
-          .getQualifiers(assisted, processingEnv)
+          .getQualifiers(assisted)
           .forEach(
               qualifier ->
                   report.addError(
