@@ -16,16 +16,13 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotation;
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.getTypeListValue;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
-import static javax.lang.model.util.ElementFilter.typesIn;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
@@ -40,7 +37,6 @@ import java.util.List;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
@@ -58,20 +54,8 @@ public final class ConfigurationAnnotations {
         .findFirst();
   }
 
-  public static Optional<TypeElement> getSubcomponentCreator(TypeElement subcomponent) {
-    checkArgument(subcomponentAnnotation(subcomponent).isPresent());
-    return typesIn(subcomponent.getEnclosedElements()).stream()
-        .filter(ConfigurationAnnotations::isSubcomponentCreator)
-        // TODO(bcorso): Consider doing toOptional() instead since there should be at most 1.
-        .findFirst();
-  }
-
   static boolean isSubcomponentCreator(XElement element) {
-    return isSubcomponentCreator(toJavac(element));
-  }
-
-  static boolean isSubcomponentCreator(Element element) {
-    return isAnyAnnotationPresent(element, subcomponentCreatorAnnotations());
+    return hasAnyAnnotation(element, subcomponentCreatorAnnotations());
   }
 
   // Dagger 1 support.

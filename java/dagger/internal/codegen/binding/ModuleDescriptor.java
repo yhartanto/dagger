@@ -240,10 +240,7 @@ public abstract class ModuleDescriptor {
       moduleAnnotation(moduleElement)
           .ifPresent(
               moduleAnnotation -> {
-                includedModules.addAll(
-                    moduleAnnotation.includes().stream()
-                        .map(includedModule -> toXProcessing(includedModule, processingEnv))
-                        .collect(toImmutableSet()));
+                includedModules.addAll(moduleAnnotation.includes());
                 includedModules.addAll(implicitlyIncludedModules(moduleElement));
               });
       return includedModules;

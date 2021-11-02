@@ -18,7 +18,6 @@ package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -45,6 +44,7 @@ import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.base.Equivalence.Wrapper;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -76,7 +76,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 import javax.inject.Inject;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 
@@ -147,8 +146,7 @@ public final class ComponentDescriptorValidator {
     private void reportComponentItem(
         Diagnostic.Kind kind, ComponentDescriptor component, String message) {
       report(component)
-          .addItem(
-              message, kind, toJavac(component.typeElement()), component.annotation().annotation());
+          .addItem(message, kind, component.typeElement(), component.annotation().annotation());
     }
 
     private void reportComponentError(ComponentDescriptor component, String error) {
@@ -165,13 +163,14 @@ public final class ComponentDescriptorValidator {
 
     /** Validates that component dependencies do not form a cycle. */
     private void validateComponentDependencyHierarchy(ComponentDescriptor component) {
-      validateComponentDependencyHierarchy(
-          component, toJavac(component.typeElement()), new ArrayDeque<>());
+      validateComponentDependencyHierarchy(component, component.typeElement(), new ArrayDeque<>());
     }
 
     /** Recursive method to validate that component dependencies do not form a cycle. */
     private void validateComponentDependencyHierarchy(
-        ComponentDescriptor component, TypeElement dependency, Deque<TypeElement> dependencyStack) {
+        ComponentDescriptor component,
+        XTypeElement dependency,
+        Deque<XTypeElement> dependencyStack) {
       if (dependencyStack.contains(dependency)) {
         // Current component has already appeared in the component chain.
         StringBuilder message = new StringBuilder();
@@ -188,16 +187,14 @@ public final class ComponentDescriptorValidator {
           // Always validate direct component dependencies referenced by this component regardless
           // of the flag value
           || dependencyStack.isEmpty()) {
-        rootComponentAnnotation(toXProcessing(dependency, processingEnv))
+        rootComponentAnnotation(dependency)
             .ifPresent(
                 componentAnnotation -> {
                   dependencyStack.push(dependency);
-
-                  for (TypeElement nextDependency : componentAnnotation.dependencies()) {
+                  for (XTypeElement nextDependency : componentAnnotation.dependencies()) {
                     validateComponentDependencyHierarchy(
                         component, nextDependency, dependencyStack);
                   }
-
                   dependencyStack.pop();
                 });
       }
@@ -210,12 +207,11 @@ public final class ComponentDescriptorValidator {
     private void validateDependencyScopes(ComponentDescriptor component) {
       ImmutableSet<ClassName> scopes =
           component.scopes().stream().map(Scope::className).collect(toImmutableSet());
-      ImmutableSet<TypeElement> scopedDependencies =
+      ImmutableSet<XTypeElement> scopedDependencies =
           scopedTypesIn(
-              component
-                  .dependencies()
-                  .stream()
+              component.dependencies().stream()
                   .map(ComponentRequirement::typeElement)
+                  .map(typeElement -> toXProcessing(typeElement, processingEnv))
                   .collect(toImmutableSet()));
       if (!scopes.isEmpty()) {
         // Dagger 1.x scope compatibility requires this be suppress-able.
@@ -237,10 +233,7 @@ public final class ComponentDescriptorValidator {
           // Dagger 1.x scope compatibility requires this be suppress-able.
           if (!compilerOptions.scopeCycleValidationType().equals(ValidationType.NONE)) {
             validateDependencyScopeHierarchy(
-                component,
-                toJavac(component.typeElement()),
-                new ArrayDeque<>(),
-                new ArrayDeque<>());
+                component, component.typeElement(), new ArrayDeque<>(), new ArrayDeque<>());
           }
         }
       } else {
@@ -421,9 +414,9 @@ public final class ComponentDescriptorValidator {
      */
     private void validateDependencyScopeHierarchy(
         ComponentDescriptor component,
-        TypeElement dependency,
+        XTypeElement dependency,
         Deque<ImmutableSet<Scope>> scopeStack,
-        Deque<TypeElement> scopedDependencyStack) {
+        Deque<XTypeElement> scopedDependencyStack) {
       ImmutableSet<Scope> scopes = scopesOf(dependency);
       if (stackOverlaps(scopeStack, scopes)) {
         scopedDependencyStack.push(dependency);
@@ -444,17 +437,17 @@ public final class ComponentDescriptorValidator {
           // of the flag value
           || scopedDependencyStack.isEmpty()) {
         // TODO(beder): transitively check scopes of production components too.
-        rootComponentAnnotation(toXProcessing(dependency, processingEnv))
+        rootComponentAnnotation(dependency)
             .filter(componentAnnotation -> !componentAnnotation.isProduction())
             .ifPresent(
                 componentAnnotation -> {
-                  ImmutableSet<TypeElement> scopedDependencies =
+                  ImmutableSet<XTypeElement> scopedDependencies =
                       scopedTypesIn(componentAnnotation.dependencies());
                   if (!scopedDependencies.isEmpty()) {
                     // empty can be ignored (base-case)
                     scopeStack.push(scopes);
                     scopedDependencyStack.push(dependency);
-                    for (TypeElement scopedDependency : scopedDependencies) {
+                    for (XTypeElement scopedDependency : scopedDependencies) {
                       validateDependencyScopeHierarchy(
                           component, scopedDependency, scopeStack, scopedDependencyStack);
                     }
@@ -475,8 +468,8 @@ public final class ComponentDescriptorValidator {
     }
 
     /** Appends and formats a list of indented component types (with their scope annotations). */
-    private void appendIndentedComponentsList(StringBuilder message, Iterable<TypeElement> types) {
-      for (TypeElement scopedComponent : types) {
+    private void appendIndentedComponentsList(StringBuilder message, Iterable<XTypeElement> types) {
+      for (XTypeElement scopedComponent : types) {
         message.append(INDENT);
         for (Scope scope : scopesOf(scopedComponent)) {
           message.append(getReadableSource(scope)).append(' ');
@@ -491,7 +484,7 @@ public final class ComponentDescriptorValidator {
      * Returns a set of type elements containing only those found in the input set that have a
      * scoping annotation.
      */
-    private ImmutableSet<TypeElement> scopedTypesIn(Collection<TypeElement> types) {
+    private ImmutableSet<XTypeElement> scopedTypesIn(Collection<XTypeElement> types) {
       return types.stream().filter(type -> !scopesOf(type).isEmpty()).collect(toImmutableSet());
     }
   }

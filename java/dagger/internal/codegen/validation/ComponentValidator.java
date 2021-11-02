@@ -18,12 +18,9 @@ package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.XTypeKt.isVoid;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreTypes.asDeclared;
-import static com.google.auto.common.MoreTypes.asElement;
 import static com.google.auto.common.MoreTypes.asExecutable;
-import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.consumingIterable;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -42,6 +39,7 @@ import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMess
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XTypeElements.getAllUnimplementedMethods;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static java.util.Comparator.comparing;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.type.TypeKind.VOID;
@@ -51,7 +49,6 @@ import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.HashMultimap;
@@ -90,11 +87,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * Performs superficial validation of the contract of the {@link Component} and {@link
@@ -112,7 +106,6 @@ public final class ComponentValidator implements ClearableCache {
   private final DependencyRequestFactory dependencyRequestFactory;
   private final Map<XTypeElement, ValidationReport> reports = new HashMap<>();
   private final KotlinMetadataUtil metadataUtil;
-  private final XProcessingEnv processingEnv;
 
   @Inject
   ComponentValidator(
@@ -124,8 +117,7 @@ public final class ComponentValidator implements ClearableCache {
       MembersInjectionValidator membersInjectionValidator,
       MethodSignatureFormatter methodSignatureFormatter,
       DependencyRequestFactory dependencyRequestFactory,
-      KotlinMetadataUtil metadataUtil,
-      XProcessingEnv processingEnv) {
+      KotlinMetadataUtil metadataUtil) {
     this.elements = elements;
     this.types = types;
     this.moduleValidator = moduleValidator;
@@ -135,7 +127,6 @@ public final class ComponentValidator implements ClearableCache {
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.metadataUtil = metadataUtil;
-    this.processingEnv = processingEnv;
   }
 
   @Override
@@ -339,13 +330,13 @@ public final class ComponentValidator implements ClearableCache {
                 .stream()
                 .map(ModuleKind::annotation)
                 .collect(toImmutableSet());
-        ImmutableSet<TypeElement> moduleTypes =
+        ImmutableSet<XTypeElement> moduleTypes =
             ComponentAnnotation.componentAnnotation(subcomponentAnnotation).modules();
 
         // TODO(gak): This logic maybe/probably shouldn't live here as it requires us to traverse
         // subcomponents and their modules separately from how it is done in ComponentDescriptor and
         // ModuleDescriptor
-        ImmutableSet<TypeElement> transitiveModules = getTransitiveModules(moduleTypes);
+        ImmutableSet<XTypeElement> transitiveModules = getTransitiveModules(moduleTypes);
 
         Set<XTypeElement> referencedModules = Sets.newHashSet();
         for (int i = 0; i < parameterTypes.size(); i++) {
@@ -361,7 +352,7 @@ public final class ComponentValidator implements ClearableCache {
                       module.getQualifiedName()),
                   parameter);
             }
-            if (!transitiveModules.contains(toJavac(module))) {
+            if (!transitiveModules.contains(module)) {
               report.addError(
                   String.format(
                       "%s is present as an argument to the %s factory method, but is not one of the"
@@ -386,11 +377,12 @@ public final class ComponentValidator implements ClearableCache {
        * module is malformed and a type listed in {@link Module#includes} is not annotated with
        * {@link Module}, it is ignored.
        */
-      private ImmutableSet<TypeElement> getTransitiveModules(Collection<TypeElement> seedModules) {
-        Set<TypeElement> processedElements = Sets.newLinkedHashSet();
-        Queue<TypeElement> moduleQueue = new ArrayDeque<>(seedModules);
-        ImmutableSet.Builder<TypeElement> moduleElements = ImmutableSet.builder();
-        for (TypeElement moduleElement : consumingIterable(moduleQueue)) {
+      private ImmutableSet<XTypeElement> getTransitiveModules(
+          Collection<XTypeElement> seedModules) {
+        Set<XTypeElement> processedElements = Sets.newLinkedHashSet();
+        Queue<XTypeElement> moduleQueue = new ArrayDeque<>(seedModules);
+        ImmutableSet.Builder<XTypeElement> moduleElements = ImmutableSet.builder();
+        for (XTypeElement moduleElement : consumingIterable(moduleQueue)) {
           if (processedElements.add(moduleElement)) {
             moduleAnnotation(moduleElement)
                 .ifPresent(
@@ -405,15 +397,14 @@ public final class ComponentValidator implements ClearableCache {
       }
 
       /** Returns {@link Module#includes()} from all transitive super classes. */
-      private ImmutableSet<TypeElement> includesFromSuperclasses(TypeElement element) {
-        ImmutableSet.Builder<TypeElement> builder = ImmutableSet.builder();
-        TypeMirror superclass = element.getSuperclass();
-        while (superclass.getKind() == TypeKind.DECLARED
-                   && !TypeName.OBJECT.equals(TypeName.get(superclass))) {
-          element = asTypeElement(superclass);
+      private ImmutableSet<XTypeElement> includesFromSuperclasses(XTypeElement element) {
+        ImmutableSet.Builder<XTypeElement> builder = ImmutableSet.builder();
+        XType superclass = element.getSuperType();
+        while (superclass != null && !TypeName.OBJECT.equals(superclass.getTypeName())) {
+          element = superclass.getTypeElement();
           moduleAnnotation(element)
               .ifPresent(moduleAnnotation -> builder.addAll(moduleAnnotation.includes()));
-          superclass = element.getSuperclass();
+          superclass = element.getSuperType();
         }
         return builder.build();
       }
@@ -512,10 +503,10 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private void validateComponentDependencies() {
-      for (TypeMirror type : componentAnnotation().dependencyTypes()) {
-        if (type.getKind() != TypeKind.DECLARED) {
+      for (XType type : componentAnnotation().dependencyTypes()) {
+        if (!isDeclared(type)) {
           report.addError(type + " is not a valid component dependency type");
-        } else if (moduleAnnotation(asElement(type)).isPresent()) {
+        } else if (moduleAnnotation(type.getTypeElement()).isPresent()) {
           report.addError(type + " is a module, which cannot be a component dependency");
         }
       }
@@ -525,7 +516,7 @@ public final class ComponentValidator implements ClearableCache {
       report.addSubreport(
           moduleValidator.validateReferencedModules(
               component,
-              toXProcessing(componentAnnotation().annotation(), processingEnv),
+              componentAnnotation().annotation(),
               componentKind().legalModuleKinds(),
               new HashSet<>()));
     }

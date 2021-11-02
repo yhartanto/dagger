@@ -16,17 +16,14 @@
 
 package dagger.internal.codegen.base;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
-import static com.google.auto.common.MoreTypes.asTypeElement;
-import static com.google.auto.common.MoreTypes.asTypeElements;
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.internal.codegen.base.MoreAnnotationValues.asAnnotationValues;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.langmodel.DaggerElements.getAnyAnnotation;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
+import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -36,11 +33,6 @@ import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
 import java.util.Collection;
 import java.util.Optional;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * A {@code @Component}, {@code @Subcomponent}, {@code @ProductionComponent}, or
@@ -92,12 +84,19 @@ public abstract class ComponentAnnotation {
           TypeNames.PRODUCTION_SUBCOMPONENT,
           TypeNames.PRODUCER_MODULE);
 
+  private XAnnotation annotation;
+
   /** The annotation itself. */
-  public abstract AnnotationMirror annotation();
+  public final XAnnotation annotation() {
+    return annotation;
+  }
+
+  /** Returns the {@link ClassName} name of the annotation. */
+  public abstract ClassName className();
 
   /** The simple name of the annotation type. */
   public final String simpleName() {
-    return annotationClassName().simpleName();
+    return className().simpleName();
   }
 
   /**
@@ -105,7 +104,7 @@ public abstract class ComponentAnnotation {
    * {@code @ProductionSubcomponent}.
    */
   public final boolean isSubcomponent() {
-    return SUBCOMPONENT_ANNOTATIONS.contains(annotationClassName());
+    return SUBCOMPONENT_ANNOTATIONS.contains(className());
   }
 
   /**
@@ -113,7 +112,7 @@ public abstract class ComponentAnnotation {
    * {@code @ProductionSubcomponent}, or {@code @ProducerModule}.
    */
   public final boolean isProduction() {
-    return PRODUCTION_ANNOTATIONS.contains(annotationClassName());
+    return PRODUCTION_ANNOTATIONS.contains(className());
   }
 
   /**
@@ -121,19 +120,15 @@ public abstract class ComponentAnnotation {
    * annotation.
    */
   public final boolean isRealComponent() {
-    return ALL_COMPONENT_ANNOTATIONS.contains(annotationClassName());
-  }
-
-  /** The values listed as {@code dependencies}. */
-  @Memoized
-  public ImmutableList<AnnotationValue> dependencyValues() {
-    return isRootComponent() ? getAnnotationValues("dependencies") : ImmutableList.of();
+    return ALL_COMPONENT_ANNOTATIONS.contains(className());
   }
 
   /** The types listed as {@code dependencies}. */
   @Memoized
-  public ImmutableList<TypeMirror> dependencyTypes() {
-    return dependencyValues().stream().map(MoreAnnotationValues::asType).collect(toImmutableList());
+  public ImmutableList<XType> dependencyTypes() {
+    return isRootComponent()
+        ? ImmutableList.copyOf(annotation.getAsTypeList("dependencies"))
+        : ImmutableList.of();
   }
 
   /**
@@ -142,42 +137,24 @@ public abstract class ComponentAnnotation {
    * @throws IllegalArgumentException if any of {@link #dependencyTypes()} are error types
    */
   @Memoized
-  public ImmutableList<TypeElement> dependencies() {
-    return asTypeElements(dependencyTypes()).asList();
-  }
-
-  /** The values listed as {@code modules}. */
-  @Memoized
-  public ImmutableList<AnnotationValue> moduleValues() {
-    return getAnnotationValues(isRealComponent() ? "modules" : "includes");
-  }
-
-  /** The types listed as {@code modules}. */
-  @Memoized
-  public ImmutableList<TypeMirror> moduleTypes() {
-    return moduleValues().stream().map(MoreAnnotationValues::asType).collect(toImmutableList());
+  public ImmutableSet<XTypeElement> dependencies() {
+    return dependencyTypes().stream().map(XType::getTypeElement).collect(toImmutableSet());
   }
 
   /**
    * The types listed as {@code modules}.
    *
-   * @throws IllegalArgumentException if any of {@link #moduleTypes()} are error types
+   * @throws IllegalArgumentException if any module is an error type.
    */
   @Memoized
-  public ImmutableSet<TypeElement> modules() {
-    return asTypeElements(moduleTypes());
-  }
-
-  private ImmutableList<AnnotationValue> getAnnotationValues(String parameterName) {
-    return asAnnotationValues(getAnnotationValue(annotation(), parameterName));
+  public ImmutableSet<XTypeElement> modules() {
+    return annotation.getAsTypeList(isRealComponent() ? "modules" : "includes").stream()
+        .map(XType::getTypeElement)
+        .collect(toImmutableSet());
   }
 
   private final boolean isRootComponent() {
-    return ROOT_COMPONENT_ANNOTATIONS.contains(annotationClassName());
-  }
-
-  private ClassName annotationClassName() {
-    return ClassName.get(asTypeElement(annotation().getAnnotationType()));
+    return ROOT_COMPONENT_ANNOTATIONS.contains(className());
   }
 
   /**
@@ -193,14 +170,6 @@ public abstract class ComponentAnnotation {
    * typeElement}.
    */
   public static Optional<ComponentAnnotation> subcomponentAnnotation(XTypeElement typeElement) {
-    return subcomponentAnnotation(toJavac(typeElement));
-  }
-
-  /**
-   * Returns an object representing a subcomponent annotation, if one is present on {@code
-   * typeElement}.
-   */
-  public static Optional<ComponentAnnotation> subcomponentAnnotation(TypeElement typeElement) {
     return anyComponentAnnotation(typeElement, SUBCOMPONENT_ANNOTATIONS);
   }
 
@@ -209,48 +178,39 @@ public abstract class ComponentAnnotation {
    * on {@code typeElement}.
    */
   public static Optional<ComponentAnnotation> anyComponentAnnotation(XElement element) {
-    return anyComponentAnnotation(toJavac(element), ALL_COMPONENT_ANNOTATIONS);
+    return anyComponentAnnotation(element, ALL_COMPONENT_ANNOTATIONS);
   }
 
   private static Optional<ComponentAnnotation> anyComponentAnnotation(
       XElement element, Collection<ClassName> annotations) {
-    return anyComponentAnnotation(toJavac(element), annotations);
-  }
-
-  private static Optional<ComponentAnnotation> anyComponentAnnotation(
-      Element element, Collection<ClassName> annotations) {
     return getAnyAnnotation(element, annotations).map(ComponentAnnotation::componentAnnotation);
   }
 
   /** Returns {@code true} if the argument is a component annotation. */
   public static boolean isComponentAnnotation(XAnnotation annotation) {
-    return isComponentAnnotation(toJavac(annotation));
-  }
-
-  /** Returns {@code true} if the argument is a component annotation. */
-  public static boolean isComponentAnnotation(AnnotationMirror annotation) {
-    ClassName className = ClassName.get(asTypeElement(annotation.getAnnotationType()));
-    return ALL_COMPONENT_ANNOTATIONS.contains(className);
+    return ALL_COMPONENT_ANNOTATIONS.contains(getClassName(annotation));
   }
 
   /** Creates an object representing a component or subcomponent annotation. */
   public static ComponentAnnotation componentAnnotation(XAnnotation annotation) {
-    return componentAnnotation(toJavac(annotation));
-  }
-
-  /** Creates an object representing a component or subcomponent annotation. */
-  public static ComponentAnnotation componentAnnotation(AnnotationMirror annotation) {
     checkState(
         isComponentAnnotation(annotation),
         annotation
             + " must be a Component, Subcomponent, ProductionComponent, "
             + "or ProductionSubcomponent annotation");
-    return new AutoValue_ComponentAnnotation(annotation);
+    return create(annotation);
   }
 
   /** Creates a fictional component annotation representing a module. */
   public static ComponentAnnotation fromModuleAnnotation(ModuleAnnotation moduleAnnotation) {
-    return new AutoValue_ComponentAnnotation(moduleAnnotation.annotation());
+    return create(moduleAnnotation.annotation());
+  }
+
+  private static ComponentAnnotation create(XAnnotation annotation) {
+    ComponentAnnotation componentAnnotation =
+        new AutoValue_ComponentAnnotation(getClassName(annotation));
+    componentAnnotation.annotation = annotation;
+    return componentAnnotation;
   }
 
   /** The root component annotation types. */

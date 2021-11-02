@@ -17,11 +17,10 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.AnnotationMirrors.getAnnotationElementAndValue;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getSubcomponentCreator;
+import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 
-import androidx.room.compiler.processing.XAnnotation;
-import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -30,7 +29,6 @@ import dagger.internal.codegen.base.ModuleAnnotation;
 import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.element.Element;
 
 /**
  * A declaration for a subcomponent that is included in a module via {@link
@@ -71,17 +69,18 @@ public abstract class SubcomponentDeclaration extends BindingDeclaration {
     }
 
     ImmutableSet<SubcomponentDeclaration> forModule(XTypeElement module) {
-      ImmutableSet.Builder<SubcomponentDeclaration> declarations = ImmutableSet.builder();
       ModuleAnnotation moduleAnnotation = ModuleAnnotation.moduleAnnotation(module).get();
-      Element subcomponentAttribute =
-          getAnnotationElementAndValue(moduleAnnotation.annotation(), "subcomponents").getKey();
-      XAnnotation moduleXAnnotation = module.getAnnotation(moduleAnnotation.className());
+      XElement subcomponentAttribute =
+          moduleAnnotation.annotation().getType().getTypeElement().getDeclaredMethods().stream()
+              .filter(method -> method.getName().contentEquals("subcomponents"))
+              .collect(toOptional())
+              .get();
 
-      for (XType subcomponentType : moduleXAnnotation.getAsTypeList("subcomponents")) {
-        XTypeElement subcomponent = subcomponentType.getTypeElement();
+      ImmutableSet.Builder<SubcomponentDeclaration> declarations = ImmutableSet.builder();
+      for (XTypeElement subcomponent : moduleAnnotation.subcomponents()) {
         declarations.add(
             new AutoValue_SubcomponentDeclaration(
-                Optional.of(subcomponentAttribute),
+                Optional.of(toJavac(subcomponentAttribute)),
                 Optional.of(toJavac(module)),
                 keyFactory.forSubcomponentCreator(
                     toJavac(getSubcomponentCreator(subcomponent).get().getType())),

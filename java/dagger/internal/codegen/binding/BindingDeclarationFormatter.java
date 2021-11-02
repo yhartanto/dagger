@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.base.ElementFormatter.elementToString;
@@ -24,6 +23,7 @@ import static javax.lang.model.element.ElementKind.PARAMETER;
 import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.EXECUTABLE;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.Formatter;
 import javax.inject.Inject;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 
 /**
@@ -101,9 +100,9 @@ public final class BindingDeclarationFormatter extends Formatter<BindingDeclarat
   }
 
   private String formatSubcomponentDeclaration(SubcomponentDeclaration subcomponentDeclaration) {
-    ImmutableList<TypeElement> moduleSubcomponents =
+    ImmutableList<XTypeElement> moduleSubcomponents =
         subcomponentDeclaration.moduleAnnotation().subcomponents();
-    int index = moduleSubcomponents.indexOf(toJavac(subcomponentDeclaration.subcomponentType()));
+    int index = moduleSubcomponents.indexOf(subcomponentDeclaration.subcomponentType());
     StringBuilder annotationValue = new StringBuilder();
     if (moduleSubcomponents.size() != 1) {
       annotationValue.append("{");
@@ -119,7 +118,7 @@ public final class BindingDeclarationFormatter extends Formatter<BindingDeclarat
 
     return String.format(
         "@%s(subcomponents = %s) for %s",
-        subcomponentDeclaration.moduleAnnotation().annotationName(),
+        subcomponentDeclaration.moduleAnnotation().simpleName(),
         annotationValue,
         subcomponentDeclaration.contributingModule().get());
   }
