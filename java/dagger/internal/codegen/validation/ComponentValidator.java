@@ -342,8 +342,7 @@ public final class ComponentValidator implements ClearableCache {
         // subcomponents and their modules separately from how it is done in ComponentDescriptor and
         // ModuleDescriptor
         @SuppressWarnings("deprecation")
-        ImmutableSet<TypeElement> transitiveModules =
-            getTransitiveModules(types, elements, moduleTypes);
+        ImmutableSet<TypeElement> transitiveModules = getTransitiveModules(moduleTypes);
 
         Set<XTypeElement> referencedModules = Sets.newHashSet();
         for (int i = 0; i < parameterTypes.size(); i++) {

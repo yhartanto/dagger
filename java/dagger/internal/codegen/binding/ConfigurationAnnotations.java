@@ -17,9 +17,11 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.consumingIterable;
+import static com.squareup.javapoet.TypeName.OBJECT;
 import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotation;
 import static dagger.internal.codegen.base.ModuleAnnotation.moduleAnnotation;
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.getTypeListValue;
@@ -33,18 +35,15 @@ import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.Component;
 import dagger.Module;
-import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
@@ -123,33 +122,22 @@ public final class ConfigurationAnnotations {
    */
   @Deprecated
   public static ImmutableSet<TypeElement> getTransitiveModules(
-      DaggerTypes types, DaggerElements elements, Iterable<TypeElement> seedModules) {
-    TypeMirror objectType = elements.getTypeElement(TypeName.OBJECT).asType();
-    Queue<TypeElement> moduleQueue = new ArrayDeque<>();
-    Iterables.addAll(moduleQueue, seedModules);
-    Set<TypeElement> moduleElements = Sets.newLinkedHashSet();
+      Collection<TypeElement> seedModules) {
+    Set<TypeElement> processedElements = Sets.newLinkedHashSet();
+    Queue<TypeElement> moduleQueue = new ArrayDeque<>(seedModules);
+    ImmutableSet.Builder<TypeElement> moduleElements = ImmutableSet.builder();
     for (TypeElement moduleElement : consumingIterable(moduleQueue)) {
-      moduleAnnotation(moduleElement)
-          .ifPresent(
-              moduleAnnotation -> {
-                ImmutableSet.Builder<TypeElement> moduleDependenciesBuilder =
-                    ImmutableSet.builder();
-                moduleDependenciesBuilder.addAll(moduleAnnotation.includes());
-                // We don't recur on the parent class because we don't want the parent class as a
-                // root that the component depends on, and also because we want the dependencies
-                // rooted against this element, not the parent.
-                addIncludesFromSuperclasses(
-                    types, moduleElement, moduleDependenciesBuilder, objectType);
-                ImmutableSet<TypeElement> moduleDependencies = moduleDependenciesBuilder.build();
-                moduleElements.add(moduleElement);
-                for (TypeElement dependencyType : moduleDependencies) {
-                  if (!moduleElements.contains(dependencyType)) {
-                    moduleQueue.add(dependencyType);
-                  }
-                }
-              });
+      if (processedElements.add(moduleElement)) {
+        moduleAnnotation(moduleElement)
+            .ifPresent(
+                moduleAnnotation -> {
+                  moduleElements.add(moduleElement);
+                  moduleQueue.addAll(moduleAnnotation.includes());
+                  moduleQueue.addAll(includesFromSuperclasses(moduleElement));
+                });
+      }
     }
-    return ImmutableSet.copyOf(moduleElements);
+    return moduleElements.build();
   }
 
   /** Returns the enclosed types annotated with the given annotation. */
@@ -160,21 +148,17 @@ public final class ConfigurationAnnotations {
         .collect(toImmutableSet());
   }
 
-  /** Traverses includes from superclasses and adds them into the builder. */
-  private static void addIncludesFromSuperclasses(
-      DaggerTypes types,
-      TypeElement element,
-      ImmutableSet.Builder<TypeElement> builder,
-      TypeMirror objectType) {
-    // Also add the superclass to the queue, in case any @Module definitions were on that.
+  /** Returns {@link Module#includes()} from all transitive super classes. */
+  private static ImmutableSet<TypeElement> includesFromSuperclasses(TypeElement element) {
+    ImmutableSet.Builder<TypeElement> builder = ImmutableSet.builder();
     TypeMirror superclass = element.getSuperclass();
-    while (!types.isSameType(objectType, superclass)
-        && superclass.getKind().equals(TypeKind.DECLARED)) {
-      element = MoreElements.asType(types.asElement(superclass));
+    while (superclass.getKind() == TypeKind.DECLARED && !OBJECT.equals(TypeName.get(superclass))) {
+      element = asTypeElement(superclass);
       moduleAnnotation(element)
           .ifPresent(moduleAnnotation -> builder.addAll(moduleAnnotation.includes()));
       superclass = element.getSuperclass();
     }
+    return builder.build();
   }
 
   private ConfigurationAnnotations() {}
