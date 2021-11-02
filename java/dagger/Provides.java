@@ -42,5 +42,4 @@ import java.lang.annotation.Target;
  * will fail to compile.
  */
 @Documented @Target(METHOD) @Retention(RUNTIME)
-public @interface Provides {
-}
+public @interface Provides {}

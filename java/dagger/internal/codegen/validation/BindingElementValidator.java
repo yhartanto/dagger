@@ -61,26 +61,19 @@ public abstract class BindingElementValidator<E extends XElement> {
   // TODO(bcorso): Inject this directly into InjectionAnnotations instead of using field injection.
   @Inject XProcessingEnv processingEnv;
 
-  private final ClassName bindingAnnotation;
   private final AllowsMultibindings allowsMultibindings;
   private final AllowsScoping allowsScoping;
   private final Map<E, ValidationReport> cache = new HashMap<>();
   private final InjectionAnnotations injectionAnnotations;
 
-  /**
-   * Creates a validator object.
-   *
-   * @param bindingAnnotation the annotation on an element that identifies it as a binding element
-   */
+  /** Creates a validator object. */
   // TODO(bcorso): Consider reworking BindingElementValidator and all subclasses to use composition
   // rather than inheritance. The web of inheritance makes it difficult to track what implementation
   // of a method is actually being used.
   protected BindingElementValidator(
-      ClassName bindingAnnotation,
       AllowsMultibindings allowsMultibindings,
       AllowsScoping allowsScoping,
       InjectionAnnotations injectionAnnotations) {
-    this.bindingAnnotation = bindingAnnotation;
     this.allowsMultibindings = allowsMultibindings;
     this.allowsScoping = allowsScoping;
     this.injectionAnnotations = injectionAnnotations;

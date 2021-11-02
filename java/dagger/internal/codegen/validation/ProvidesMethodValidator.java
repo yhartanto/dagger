@@ -58,15 +58,8 @@ final class ProvidesMethodValidator extends BindingMethodValidator {
   }
 
   private class Validator extends MethodValidator {
-    private final XMethodElement method;
-
     Validator(XMethodElement method) {
       super(method);
-      this.method = method;
-    }
-
-    @Override
-    protected void checkAdditionalMethodProperties() {
     }
 
     /** Adds an error if a {@link dagger.Provides @Provides} method depends on a producer type. */

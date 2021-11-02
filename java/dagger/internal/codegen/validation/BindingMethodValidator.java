@@ -90,7 +90,7 @@ abstract class BindingMethodValidator extends BindingElementValidator<XMethodEle
       AllowsMultibindings allowsMultibindings,
       AllowsScoping allowsScoping,
       InjectionAnnotations injectionAnnotations) {
-    super(methodAnnotation, allowsMultibindings, allowsScoping, injectionAnnotations);
+    super(allowsMultibindings, allowsScoping, injectionAnnotations);
     this.types = types;
     this.methodAnnotation = methodAnnotation;
     this.enclosingElementAnnotations = ImmutableSet.copyOf(enclosingElementAnnotations);
