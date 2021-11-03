@@ -18,7 +18,7 @@ package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.XTypeKt.isVoid;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreElements.asType;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.common.base.Verify.verify;
@@ -37,18 +37,19 @@ import static dagger.internal.codegen.binding.ConfigurationAnnotations.enclosedA
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.builderMethodRequiresNoArgs;
 import static dagger.internal.codegen.binding.ErrorMessages.ComponentCreatorMessages.moreThanOneRefToSubcomponent;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XElements.asMethod;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XTypeElements.getAllUnimplementedMethods;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static java.util.Comparator.comparing;
-import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.type.TypeKind.VOID;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.HashMultimap;
@@ -86,8 +87,6 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
 
 /**
@@ -96,6 +95,7 @@ import javax.lang.model.type.ExecutableType;
  */
 @Singleton
 public final class ComponentValidator implements ClearableCache {
+  private final XProcessingEnv processingEnv;
   private final DaggerElements elements;
   private final DaggerTypes types;
   private final ModuleValidator moduleValidator;
@@ -109,6 +109,7 @@ public final class ComponentValidator implements ClearableCache {
 
   @Inject
   ComponentValidator(
+      XProcessingEnv processingEnv,
       DaggerElements elements,
       DaggerTypes types,
       ModuleValidator moduleValidator,
@@ -118,6 +119,7 @@ public final class ComponentValidator implements ClearableCache {
       MethodSignatureFormatter methodSignatureFormatter,
       DependencyRequestFactory dependencyRequestFactory,
       KotlinMetadataUtil metadataUtil) {
+    this.processingEnv = processingEnv;
     this.elements = elements;
     this.types = types;
     this.moduleValidator = moduleValidator;
@@ -164,10 +166,6 @@ public final class ComponentValidator implements ClearableCache {
 
     private ComponentAnnotation componentAnnotation() {
       return anyComponentAnnotation(component).get();
-    }
-
-    private DeclaredType componentType() {
-      return asDeclared(toJavac(component).asType());
     }
 
     ValidationReport validateElement() {
@@ -448,7 +446,7 @@ public final class ComponentValidator implements ClearableCache {
     private void validateNoConflictingEntryPoints() {
       // Collect entry point methods that are not overridden by others. If the "same" method is
       // inherited from more than one supertype, each will be in the multimap.
-      SetMultimap<String, ExecutableElement> entryPointMethods = HashMultimap.create();
+      SetMultimap<String, XMethodElement> entryPoints = HashMultimap.create();
 
       // TODO(b/201729320): There's a bug in auto-common's MoreElements#overrides(), b/201729320,
       // which prevents us from using XTypeElement#getAllMethods() here (since that method relies on
@@ -459,35 +457,28 @@ public final class ComponentValidator implements ClearableCache {
       //    2. Add a new method in XProcessing which relies on Elements#overrides(), which does not
       //       have this issue. However, this approach risks causing issues for EJC (Eclipse) users.
       methodsIn(elements.getAllMembers(toJavac(component))).stream()
-          .filter(
-              method ->
-                  isEntryPoint(method, asExecutable(types.asMemberOf(componentType(), method))))
-          .forEach(
-              method ->
-                  addMethodUnlessOverridden(
-                      method, entryPointMethods.get(method.getSimpleName().toString())));
+          .map(method -> asMethod(toXProcessing(method, processingEnv)))
+          .filter(method -> isEntryPoint(method, method.asMemberOf(component.getType())))
+          .forEach(method -> addMethodUnlessOverridden(method, entryPoints.get(method.getName())));
 
-      for (Set<ExecutableElement> methods : asMap(entryPointMethods).values()) {
-        if (distinctKeys(methods).size() > 1) {
-          reportConflictingEntryPoints(methods);
-        }
-      }
+      asMap(entryPoints).values().stream()
+          .filter(methods -> distinctKeys(methods).size() > 1)
+          .forEach(this::reportConflictingEntryPoints);
     }
 
-    private void reportConflictingEntryPoints(Collection<ExecutableElement> methods) {
+    private void reportConflictingEntryPoints(Collection<XMethodElement> methods) {
       verify(
-          methods.stream().map(ExecutableElement::getEnclosingElement).distinct().count()
+          methods.stream().map(XMethodElement::getEnclosingElement).distinct().count()
               == methods.size(),
           "expected each method to be declared on a different type: %s",
           methods);
       StringBuilder message = new StringBuilder("conflicting entry point declarations:");
       methodSignatureFormatter
-          .typedFormatter(componentType())
+          .typedFormatter(component.getType())
           .formatIndentedList(
               message,
               ImmutableList.sortedCopyOf(
-                  comparing(
-                      method -> asType(method.getEnclosingElement()).getQualifiedName().toString()),
+                  comparing(method -> method.getEnclosingElement().getClassName().canonicalName()),
                   methods),
               1);
       report.addError(message.toString());
@@ -528,29 +519,30 @@ public final class ComponentValidator implements ClearableCache {
           .forEach(subcomponent -> report.addSubreport(validate(subcomponent)));
     }
 
-    private ImmutableSet<Key> distinctKeys(Set<ExecutableElement> methods) {
+    private ImmutableSet<Key> distinctKeys(Set<XMethodElement> methods) {
       return methods.stream()
           .map(this::dependencyRequest)
           .map(DependencyRequest::key)
           .collect(toImmutableSet());
     }
 
-    private DependencyRequest dependencyRequest(ExecutableElement method) {
-      ExecutableType methodType = asExecutable(types.asMemberOf(componentType(), method));
+    private DependencyRequest dependencyRequest(XMethodElement method) {
+      ExecutableType methodType =
+          asExecutable(types.asMemberOf(asDeclared(toJavac(component.getType())), toJavac(method)));
       return ComponentKind.forAnnotatedElement(component).get().isProducer()
           ? dependencyRequestFactory.forComponentProductionMethod(method, methodType)
           : dependencyRequestFactory.forComponentProvisionMethod(method, methodType);
     }
   }
 
-  private static boolean isEntryPoint(ExecutableElement method, ExecutableType methodType) {
-    return method.getModifiers().contains(ABSTRACT)
+  private static boolean isEntryPoint(XMethodElement method, XMethodType methodType) {
+    return method.isAbstract()
         && method.getParameters().isEmpty()
-        && !methodType.getReturnType().getKind().equals(VOID)
-        && methodType.getTypeVariables().isEmpty();
+        && !isVoid(methodType.getReturnType())
+        && methodType.getTypeVariableNames().isEmpty();
   }
 
-  private void addMethodUnlessOverridden(ExecutableElement method, Set<ExecutableElement> methods) {
+  private void addMethodUnlessOverridden(XMethodElement method, Set<XMethodElement> methods) {
     if (methods.stream().noneMatch(existingMethod -> overridesAsDeclared(existingMethod, method))) {
       methods.removeIf(existingMethod -> overridesAsDeclared(method, existingMethod));
       methods.add(method);
@@ -562,8 +554,11 @@ public final class ComponentValidator implements ClearableCache {
    * the type that declares {@code overrider}.
    */
   // TODO(dpb): Does this break for ECJ?
-  private boolean overridesAsDeclared(ExecutableElement overrider, ExecutableElement overridden) {
-    return elements.overrides(overrider, overridden, asType(overrider.getEnclosingElement()));
+  private boolean overridesAsDeclared(XMethodElement overrider, XMethodElement overridden) {
+    return elements.overrides(
+        toJavac(overrider),
+        toJavac(overridden),
+        toJavac(asTypeElement(overrider.getEnclosingElement())));
   }
 
   private static Optional<XAnnotation> checkForAnnotations(XType type, Set<ClassName> annotations) {
