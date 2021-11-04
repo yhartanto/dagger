@@ -78,8 +78,8 @@ public final class InjectionAnnotations {
     this.kotlinMetadataUtil = kotlinMetadataUtil;
   }
 
-  public Optional<AnnotationMirror> getQualifier(XElement element) {
-    return getQualifier(toJavac(element));
+  public Optional<XAnnotation> getQualifier(XElement element) {
+    return getQualifier(toJavac(element)).map(qualifier -> toXProcessing(qualifier, processingEnv));
   }
 
   public Optional<AnnotationMirror> getQualifier(Element e) {

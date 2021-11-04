@@ -19,8 +19,6 @@ package dagger.internal.codegen.validation;
 import static androidx.room.compiler.processing.XTypeKt.isVoid;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
-import static com.google.auto.common.MoreTypes.asDeclared;
-import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.common.base.Verify.verify;
 import static com.google.common.collect.Iterables.consumingIterable;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -72,7 +70,6 @@ import dagger.internal.codegen.binding.ModuleKind;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import java.util.ArrayDeque;
@@ -87,7 +84,6 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.type.ExecutableType;
 
 /**
  * Performs superficial validation of the contract of the {@link Component} and {@link
@@ -97,7 +93,6 @@ import javax.lang.model.type.ExecutableType;
 public final class ComponentValidator implements ClearableCache {
   private final XProcessingEnv processingEnv;
   private final DaggerElements elements;
-  private final DaggerTypes types;
   private final ModuleValidator moduleValidator;
   private final ComponentCreatorValidator creatorValidator;
   private final DependencyRequestValidator dependencyRequestValidator;
@@ -111,7 +106,6 @@ public final class ComponentValidator implements ClearableCache {
   ComponentValidator(
       XProcessingEnv processingEnv,
       DaggerElements elements,
-      DaggerTypes types,
       ModuleValidator moduleValidator,
       ComponentCreatorValidator creatorValidator,
       DependencyRequestValidator dependencyRequestValidator,
@@ -121,7 +115,6 @@ public final class ComponentValidator implements ClearableCache {
       KotlinMetadataUtil metadataUtil) {
     this.processingEnv = processingEnv;
     this.elements = elements;
-    this.types = types;
     this.moduleValidator = moduleValidator;
     this.creatorValidator = creatorValidator;
     this.dependencyRequestValidator = dependencyRequestValidator;
@@ -527,8 +520,7 @@ public final class ComponentValidator implements ClearableCache {
     }
 
     private DependencyRequest dependencyRequest(XMethodElement method) {
-      ExecutableType methodType =
-          asExecutable(types.asMemberOf(asDeclared(toJavac(component.getType())), toJavac(method)));
+      XMethodType methodType = method.asMemberOf(component.getType());
       return ComponentKind.forAnnotatedElement(component).get().isProducer()
           ? dependencyRequestFactory.forComponentProductionMethod(method, methodType)
           : dependencyRequestFactory.forComponentProvisionMethod(method, methodType);

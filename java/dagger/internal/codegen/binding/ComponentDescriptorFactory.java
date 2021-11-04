@@ -53,7 +53,6 @@ import dagger.spi.model.Scope;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.type.ExecutableType;
 
 /** A factory for {@link ComponentDescriptor}s. */
 public final class ComponentDescriptorFactory {
@@ -219,22 +218,15 @@ public final class ComponentDescriptorFactory {
       }
     }
 
-    // TODO(bcorso): Add an XConverters.toJavac() method to convert between XMethodType and
-    // ExecutableType so that we don't have to recalculate the method type for cases like this.
-    ExecutableType javaResolvedComponentMethod =
-        MoreTypes.asExecutable(
-            types.asMemberOf(
-                MoreTypes.asDeclared(toJavac(componentElement.getType())),
-                toJavac(componentMethod)));
     switch (componentMethod.getParameters().size()) {
       case 0:
         checkArgument(!isVoid(returnType), "component method cannot be void: %s", componentMethod);
         descriptor.dependencyRequest(
             componentAnnotation.isProduction()
                 ? dependencyRequestFactory.forComponentProductionMethod(
-                    componentMethod, javaResolvedComponentMethod)
+                    componentMethod, resolvedComponentMethod)
                 : dependencyRequestFactory.forComponentProvisionMethod(
-                    componentMethod, javaResolvedComponentMethod));
+                    componentMethod, resolvedComponentMethod));
         break;
 
       case 1:
@@ -244,12 +236,12 @@ public final class ComponentDescriptorFactory {
                 || MoreTypes.equivalence()
                     .equivalent(
                         toJavac(returnType),
-                        javaResolvedComponentMethod.getParameterTypes().get(0)),
+                        toJavac(resolvedComponentMethod.getParameterTypes().get(0))),
             "members injection method must return void or parameter type: %s",
             componentMethod);
         descriptor.dependencyRequest(
             dependencyRequestFactory.forComponentMembersInjectionMethod(
-                componentMethod, javaResolvedComponentMethod));
+                componentMethod, resolvedComponentMethod));
         break;
 
       default:
