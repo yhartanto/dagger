@@ -269,7 +269,9 @@ final class ComponentHierarchyValidator {
 
   private ImmutableSet<Scope> moduleScopes(ModuleDescriptor module) {
     return FluentIterable.concat(module.allBindingDeclarations())
-        .transform(declaration -> uniqueScopeOf(declaration.bindingElement().get()))
+        .transform(
+            declaration ->
+                uniqueScopeOf(toXProcessing(declaration.bindingElement().get(), processingEnv)))
         .filter(scope -> scope.isPresent() && !scope.get().isReusable())
         .transform(scope -> scope.get())
         .toSet();

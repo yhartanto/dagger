@@ -20,16 +20,17 @@ import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XElements.getAnnotatedAnnotations;
 import static dagger.spi.model.DaggerAnnotation.fromJava;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
-import com.google.auto.common.AnnotationMirrors;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.DaggerAnnotation;
 import dagger.spi.model.Scope;
 import java.util.Optional;
-import javax.lang.model.element.Element;
 
 /** Common names and convenience methods for {@link Scope}s. */
 public final class Scopes {
@@ -43,7 +44,7 @@ public final class Scopes {
    * Returns at most one associated scoped annotation from the source code element, throwing an
    * exception if there are more than one.
    */
-  public static Optional<Scope> uniqueScopeOf(Element element) {
+  public static Optional<Scope> uniqueScopeOf(XElement element) {
     return scopesOf(element).stream().collect(toOptional());
   }
 
@@ -59,14 +60,8 @@ public final class Scopes {
 
   /** Returns all of the associated scopes for a source code element. */
   public static ImmutableSet<Scope> scopesOf(XElement element) {
-    return scopesOf(toJavac(element));
-  }
-
-  /** Returns all of the associated scopes for a source code element. */
-  public static ImmutableSet<Scope> scopesOf(Element element) {
-    // TODO(bcorso): Replace Scope class reference with class name once auto-common is updated.
-    return AnnotationMirrors.getAnnotatedAnnotations(element, javax.inject.Scope.class)
-        .stream()
+    return getAnnotatedAnnotations(element, TypeNames.SCOPE).stream()
+        .map(XConverters::toJavac)
         .map(DaggerAnnotation::fromJava)
         .map(Scope::scope)
         .collect(toImmutableSet());
