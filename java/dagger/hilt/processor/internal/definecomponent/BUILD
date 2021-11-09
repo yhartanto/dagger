@@ -21,6 +21,9 @@ java_plugin(
     name = "processor",
     generates_api = 1,
     processor_class = "dagger.hilt.processor.internal.definecomponent.DefineComponentProcessor",
+    visibility = [
+        "//java/dagger/hilt:__pkg__",
+    ],
     deps = [":processor_lib"],
 )
 
