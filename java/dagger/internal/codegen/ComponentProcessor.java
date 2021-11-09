@@ -106,6 +106,13 @@ public class ComponentProcessor extends JavacBasicAnnotationProcessor {
   }
 
   @Override
+  public void initialize(XProcessingEnv env) {
+    ProcessorComponent.factory()
+        .create(env, testingPlugins.orElseGet(this::loadExternalPlugins))
+        .inject(this);
+  }
+
+  @Override
   public SourceVersion getSupportedSourceVersion() {
     return SourceVersion.latestSupported();
   }
@@ -121,10 +128,6 @@ public class ComponentProcessor extends JavacBasicAnnotationProcessor {
 
   @Override
   public Iterable<XProcessingStep> processingSteps() {
-    ProcessorComponent.factory()
-        .create(getXProcessingEnv(), testingPlugins.orElseGet(this::loadExternalPlugins))
-        .inject(this);
-
     validationBindingGraphPlugins.initializePlugins();
     externalBindingGraphPlugins.initializePlugins();
 
