@@ -37,6 +37,11 @@ final class JavacPluginCompilerOptions extends CompilerOptions {
   }
 
   @Override
+  public boolean experimentalMergedMode() {
+    return false;
+  }
+
+  @Override
   public boolean fastInit(TypeElement element) {
     return false;
   }
