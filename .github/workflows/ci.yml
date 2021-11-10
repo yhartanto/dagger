@@ -11,9 +11,9 @@ on:
 env:
   # Our Bazel builds currently rely on JDK 8.
   USE_JAVA_VERSION: '8'
-  # Our Bazel builds currently rely on 3.7.1. The version is set via
+  # Our Bazel builds currently rely on 4.2.1. The version is set via
   # baselisk by USE_BAZEL_VERSION: https://github.com/bazelbuild/bazelisk.
-  USE_BAZEL_VERSION: '3.7.1'
+  USE_BAZEL_VERSION: '4.2.1'
 
 jobs:
   validate-latest-dagger-version:
