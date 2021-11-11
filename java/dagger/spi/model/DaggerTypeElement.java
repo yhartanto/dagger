@@ -16,58 +16,32 @@
 
 package dagger.spi.model;
 
-import static dagger.spi.model.CompilerEnvironment.JAVA;
-import static dagger.spi.model.CompilerEnvironment.KSP;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
-import com.google.common.base.Preconditions;
-import com.google.devtools.ksp.symbol.KSClassDeclaration;
 import com.squareup.javapoet.ClassName;
-import javax.annotation.Nullable;
 import javax.lang.model.element.TypeElement;
 
 /** Wrapper type for a type element. */
 @AutoValue
 public abstract class DaggerTypeElement {
-
-  public static DaggerTypeElement fromJava(TypeElement element) {
-    return new AutoValue_DaggerTypeElement(JAVA, Preconditions.checkNotNull(element), null);
+  public static DaggerTypeElement from(XTypeElement typeElement) {
+    return new AutoValue_DaggerTypeElement(typeElement);
   }
 
-  public static DaggerTypeElement fromKsp(KSClassDeclaration element) {
-    return new AutoValue_DaggerTypeElement(KSP, null, Preconditions.checkNotNull(element));
-  }
+  abstract XTypeElement xprocessing();
 
   public TypeElement java() {
-    Preconditions.checkState(compiler() == JAVA);
-    return javaInternal();
-  }
-
-  public KSClassDeclaration ksp() {
-    Preconditions.checkState(compiler() == KSP);
-    return kspInternal();
+    return toJavac(xprocessing());
   }
 
   public ClassName className() {
-    if (compiler() == KSP) {
-      // TODO(bcorso): Add support for KSP. Consider using xprocessing types internally since that
-      // already has support for KSP class names?
-      throw new UnsupportedOperationException("Method className() is not yet supported in KSP.");
-    } else {
-      return ClassName.get(java());
-    }
+    return xprocessing().getClassName();
   }
-
-  public abstract CompilerEnvironment compiler();
-
-  @Nullable
-  abstract TypeElement javaInternal();
-
-  @Nullable
-  abstract KSClassDeclaration kspInternal();
 
   @Override
   public final String toString() {
-    return (compiler() == JAVA ? java() : ksp()).toString();
+    return xprocessing().toString();
   }
 }

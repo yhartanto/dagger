@@ -32,11 +32,10 @@ import static dagger.internal.codegen.extension.Optionals.firstPresent;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
-import static dagger.spi.model.DaggerAnnotation.fromJava;
-import static dagger.spi.model.DaggerType.fromJava;
 import static java.util.Arrays.asList;
 import static javax.lang.model.element.ElementKind.METHOD;
 
+import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XProcessingEnv;
@@ -58,6 +57,7 @@ import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.multibindings.Multibinds;
 import dagger.spi.model.DaggerAnnotation;
+import dagger.spi.model.DaggerType;
 import dagger.spi.model.Key;
 import dagger.spi.model.Key.MultibindingContributionIdentifier;
 import dagger.spi.model.RequestKind;
@@ -281,12 +281,22 @@ public final class KeyFactory {
   }
 
   public Key forMembersInjectedType(TypeMirror type) {
-    return Key.builder(fromJava(type)).build();
+    return forMembersInjectedType(toXProcessing(type, processingEnv));
+  }
+
+  public Key forMembersInjectedType(XType type) {
+    return Key.builder(DaggerType.from(type)).build();
   }
 
   Key forQualifiedType(Optional<AnnotationMirror> qualifier, TypeMirror type) {
-    return Key.builder(fromJava(boxPrimitives(type)))
-        .qualifier(qualifier.map(DaggerAnnotation::fromJava))
+    return forQualifiedType(
+        qualifier.map(annotation -> toXProcessing(annotation, processingEnv)),
+        toXProcessing(type, processingEnv));
+  }
+
+  Key forQualifiedType(Optional<XAnnotation> qualifier, XType type) {
+    return Key.builder(DaggerType.from(type.boxed()))
+        .qualifier(qualifier.map(DaggerAnnotation::from))
         .build();
   }
 
@@ -466,5 +476,13 @@ public final class KeyFactory {
 
     TypeMirror optionalValueType = OptionalType.from(key).valueType();
     return Optional.of(key.toBuilder().type(fromJava(extractKeyType(optionalValueType))).build());
+  }
+
+  private DaggerAnnotation fromJava(AnnotationMirror annotation) {
+    return DaggerAnnotation.from(toXProcessing(annotation, processingEnv));
+  }
+
+  private DaggerType fromJava(TypeMirror typeMirror) {
+    return DaggerType.from(toXProcessing(typeMirror, processingEnv));
   }
 }

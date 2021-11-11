@@ -16,66 +16,51 @@
 
 package dagger.spi.model;
 
-import static dagger.spi.model.CompilerEnvironment.JAVA;
-import static dagger.spi.model.CompilerEnvironment.KSP;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 
+import androidx.room.compiler.processing.XAnnotation;
 import com.google.auto.common.AnnotationMirrors;
-import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
 import com.google.common.base.Preconditions;
-import com.google.devtools.ksp.symbol.KSAnnotation;
 import com.squareup.javapoet.ClassName;
-import javax.annotation.Nullable;
 import javax.lang.model.element.AnnotationMirror;
 
 /** Wrapper type for an annotation. */
 @AutoValue
 public abstract class DaggerAnnotation {
+  private XAnnotation annotation;
 
-  public static DaggerAnnotation fromJava(AnnotationMirror annotationMirror) {
-    return new AutoValue_DaggerAnnotation(
-        JAVA,
-        AnnotationMirrors.equivalence().wrap(Preconditions.checkNotNull(annotationMirror)),
-        null);
+  public static DaggerAnnotation from(XAnnotation annotation) {
+    Preconditions.checkNotNull(annotation);
+    DaggerAnnotation daggerAnnotation =
+        new AutoValue_DaggerAnnotation(AnnotationMirrors.equivalence().wrap(toJavac(annotation)));
+    daggerAnnotation.annotation = annotation;
+    return daggerAnnotation;
   }
 
-  public static DaggerAnnotation fromKsp(KSAnnotation ksAnnotation) {
-    return new AutoValue_DaggerAnnotation(
-        KSP,
-        null,
-        Preconditions.checkNotNull(ksAnnotation));
-  }
+  abstract Equivalence.Wrapper<AnnotationMirror> annotationMirror();
 
   public DaggerTypeElement annotationTypeElement() {
-    return DaggerTypeElement.fromJava(
-        MoreTypes.asTypeElement(annotationMirror().get().getAnnotationType()));
+    return DaggerTypeElement.from(annotation.getType().getTypeElement());
   }
 
   public ClassName className() {
     return annotationTypeElement().className();
   }
 
+  public XAnnotation xprocessing() {
+    return annotation;
+  }
+
   public AnnotationMirror java() {
-    Preconditions.checkState(compiler() == JAVA);
-    return annotationMirror().get();
+    return toJavac(annotation);
   }
 
-  public KSAnnotation ksp() {
-    Preconditions.checkState(compiler() == KSP);
-    return kspInternal();
-  }
-
-  public abstract CompilerEnvironment compiler();
-
-  @Nullable
-  abstract Equivalence.Wrapper<AnnotationMirror> annotationMirror();
-
-  @Nullable
-  abstract KSAnnotation kspInternal();
-
+  // TODO(b/204390647): We'll need to update to auto-common to 1.2 before using AnnotationMirrors.
+  @SuppressWarnings("AnnotationMirrorToString")
   @Override
   public final String toString() {
-    return (compiler() == JAVA ? java() : ksp()).toString();
+    return java().toString();
   }
 }

@@ -17,6 +17,7 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -37,6 +38,7 @@ import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XVariableElement;
 import androidx.room.compiler.processing.compat.XConverters;
@@ -66,11 +68,16 @@ import javax.lang.model.type.TypeMirror;
  * may mean that the type will be generated in a later round of processing.
  */
 public final class DependencyRequestFactory {
+  private final XProcessingEnv processingEnv;
   private final KeyFactory keyFactory;
   private final InjectionAnnotations injectionAnnotations;
 
   @Inject
-  DependencyRequestFactory(KeyFactory keyFactory, InjectionAnnotations injectionAnnotations) {
+  DependencyRequestFactory(
+      XProcessingEnv processingEnv,
+      KeyFactory keyFactory,
+      InjectionAnnotations injectionAnnotations) {
+    this.processingEnv = processingEnv;
     this.keyFactory = keyFactory;
     this.injectionAnnotations = injectionAnnotations;
   }
@@ -178,10 +185,8 @@ public final class DependencyRequestFactory {
     if (isTypeOf(type, TypeNames.LISTENABLE_FUTURE)) {
       return DependencyRequest.builder()
           .kind(FUTURE)
-          .key(
-              keyFactory.forQualifiedType(
-                  qualifier.map(XConverters::toJavac), toJavac(unwrapType(type))))
-          .requestElement(DaggerElement.fromJava(toJavac(productionMethod)))
+          .key(keyFactory.forQualifiedType(qualifier, unwrapType(type)))
+          .requestElement(DaggerElement.from(productionMethod))
           .build();
     } else {
       return newDependencyRequest(productionMethod, type, qualifier);
@@ -197,8 +202,8 @@ public final class DependencyRequestFactory {
     XType membersInjectedType = getOnlyElement(membersInjectionMethodType.getParameterTypes());
     return DependencyRequest.builder()
         .kind(MEMBERS_INJECTION)
-        .key(keyFactory.forMembersInjectedType(toJavac(membersInjectedType)))
-        .requestElement(DaggerElement.fromJava(toJavac(membersInjectionMethod)))
+        .key(keyFactory.forMembersInjectedType(membersInjectedType))
+        .requestElement(DaggerElement.from(membersInjectionMethod))
         .build();
   }
 
@@ -243,7 +248,7 @@ public final class DependencyRequestFactory {
     return DependencyRequest.builder()
         .kind(requestKind)
         .key(keyFactory.forQualifiedType(qualifier, extractKeyType(type)))
-        .requestElement(DaggerElement.fromJava(requestElement))
+        .requestElement(DaggerElement.from(toXProcessing(requestElement, processingEnv)))
         .isNullable(allowsNull(requestKind, getNullableType(requestElement)))
         .build();
   }

@@ -16,12 +16,12 @@
 
 package dagger.internal.codegen;
 
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-import static dagger.spi.model.DaggerAnnotation.fromJava;
-import static dagger.spi.model.DaggerType.fromJava;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -37,6 +37,8 @@ import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoSet;
 import dagger.producers.ProducerModule;
 import dagger.producers.Produces;
+import dagger.spi.model.DaggerAnnotation;
+import dagger.spi.model.DaggerType;
 import dagger.spi.model.Key;
 import dagger.spi.model.Key.MultibindingContributionIdentifier;
 import java.lang.annotation.Retention;
@@ -63,6 +65,7 @@ import org.junit.runners.JUnit4;
 public class KeyFactoryTest {
   @Rule public CompilationRule compilationRule = new CompilationRule();
 
+  @Inject XProcessingEnv processingEnv;
   @Inject DaggerElements elements;
   @Inject DaggerTypes types;
   @Inject KeyFactory keyFactory;
@@ -314,6 +317,14 @@ public class KeyFactoryTest {
                       + "dagger.internal.codegen.KeyFactoryTest.SetProducesMethodsModule#%s",
                   producesMethod.getSimpleName()));
     }
+  }
+
+  private DaggerAnnotation fromJava(AnnotationMirror annotation) {
+    return DaggerAnnotation.from(toXProcessing(annotation, processingEnv));
+  }
+
+  private DaggerType fromJava(TypeMirror typeMirror) {
+    return DaggerType.from(toXProcessing(typeMirror, processingEnv));
   }
 
   @ProducerModule

@@ -16,16 +16,13 @@
 
 package dagger.internal.codegen.base;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.base.DiagnosticFormatting.stripCommonTypePrefixes;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.getAnnotatedAnnotations;
-import static dagger.spi.model.DaggerAnnotation.fromJava;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.DaggerAnnotation;
@@ -37,7 +34,7 @@ public final class Scopes {
 
   /** Returns a representation for {@link dagger.producers.ProductionScope} scope. */
   public static Scope productionScope(XProcessingEnv processingEnv) {
-    return Scope.scope(fromJava(toJavac(ProducerAnnotations.productionScope(processingEnv))));
+    return Scope.scope(DaggerAnnotation.from(ProducerAnnotations.productionScope(processingEnv)));
   }
 
   /**
@@ -61,8 +58,7 @@ public final class Scopes {
   /** Returns all of the associated scopes for a source code element. */
   public static ImmutableSet<Scope> scopesOf(XElement element) {
     return getAnnotatedAnnotations(element, TypeNames.SCOPE).stream()
-        .map(XConverters::toJavac)
-        .map(DaggerAnnotation::fromJava)
+        .map(DaggerAnnotation::from)
         .map(Scope::scope)
         .collect(toImmutableSet());
   }

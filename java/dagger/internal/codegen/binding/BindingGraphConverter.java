@@ -24,7 +24,7 @@ import static dagger.internal.codegen.extension.DaggerGraphs.unreachableNodes;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.spi.model.BindingKind.SUBCOMPONENT_CREATOR;
 
-import androidx.room.compiler.processing.compat.XConverters;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
@@ -60,10 +60,13 @@ import javax.lang.model.type.TypeMirror;
 
 /** Converts {@link BindingGraph}s to {@link dagger.spi.model.BindingGraph}s. */
 final class BindingGraphConverter {
+  private final XProcessingEnv processingEnv;
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
 
   @Inject
-  BindingGraphConverter(BindingDeclarationFormatter bindingDeclarationFormatter) {
+  BindingGraphConverter(
+      XProcessingEnv processingEnv, BindingDeclarationFormatter bindingDeclarationFormatter) {
+    this.processingEnv = processingEnv;
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
   }
 
@@ -90,7 +93,7 @@ final class BindingGraphConverter {
   }
 
   private MutableNetwork<Node, Edge> asNetwork(LegacyBindingGraph graph) {
-    Converter converter = new Converter(bindingDeclarationFormatter);
+    Converter converter = new Converter();
     converter.visitRootComponent(graph);
     return converter.network;
   }
@@ -120,25 +123,19 @@ final class BindingGraphConverter {
     }
   }
 
-  private static final class Converter {
+  private final class Converter {
     /** The path from the root graph to the currently visited graph. */
     private final Deque<LegacyBindingGraph> bindingGraphPath = new ArrayDeque<>();
 
     /** The {@link ComponentPath} for each component in {@link #bindingGraphPath}. */
     private final Deque<ComponentPath> componentPaths = new ArrayDeque<>();
 
-    private final BindingDeclarationFormatter bindingDeclarationFormatter;
     private final MutableNetwork<Node, Edge> network =
         NetworkBuilder.directed().allowsParallelEdges(true).allowsSelfLoops(true).build();
     private final Set<BindingNode> bindings = new HashSet<>();
 
     private final Map<ResolvedBindingsWithPath, ImmutableSet<BindingNode>> resolvedBindingsMap =
         new HashMap<>();
-
-    /** Constructs a converter for a root (component, not subcomponent) binding graph. */
-    private Converter(BindingDeclarationFormatter bindingDeclarationFormatter) {
-      this.bindingDeclarationFormatter = bindingDeclarationFormatter;
-    }
 
     private void visitRootComponent(LegacyBindingGraph graph) {
       visitComponent(graph, null);
@@ -168,8 +165,7 @@ final class BindingGraphConverter {
               bindingGraphPath.stream()
                   .map(LegacyBindingGraph::componentDescriptor)
                   .map(ComponentDescriptor::typeElement)
-                  .map(XConverters::toJavac)
-                  .map(DaggerTypeElement::fromJava)
+                  .map(DaggerTypeElement::from)
                   .collect(toImmutableList()));
       componentPaths.addLast(graphPath);
       ComponentNode currentComponent =
@@ -196,7 +192,7 @@ final class BindingGraphConverter {
                 binding,
                 subcomponentNode(binding.key().type().java(), graph),
                 new SubcomponentCreatorBindingEdgeImpl(
-                    resolvedBindings.subcomponentDeclarations()));
+                    processingEnv, resolvedBindings.subcomponentDeclarations()));
           }
         }
       }
@@ -361,6 +357,7 @@ final class BindingGraphConverter {
     private BindingNode bindingNode(
         ResolvedBindings resolvedBindings, Binding binding, TypeElement owningComponent) {
       return BindingNode.create(
+          processingEnv,
           pathFromRootToAncestor(owningComponent),
           binding,
           resolvedBindings.multibindingDeclarations(),
@@ -383,8 +380,7 @@ final class BindingGraphConverter {
       ComponentDescriptor subcomponent =
           graph.componentDescriptor().getChildComponentWithBuilderType(subcomponentBuilderElement);
       return ComponentNodeImpl.create(
-          componentPath()
-              .childPath(DaggerTypeElement.fromJava(toJavac(subcomponent.typeElement()))),
+          componentPath().childPath(DaggerTypeElement.from(subcomponent.typeElement())),
           subcomponent);
     }
   }

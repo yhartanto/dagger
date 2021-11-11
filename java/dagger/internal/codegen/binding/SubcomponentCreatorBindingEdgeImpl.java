@@ -16,11 +16,13 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerStreams.presentValues;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.stream.Collectors.joining;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.spi.model.BindingGraph.SubcomponentCreatorBindingEdge;
@@ -29,10 +31,13 @@ import dagger.spi.model.DaggerTypeElement;
 /** An implementation of {@link SubcomponentCreatorBindingEdge}. */
 public final class SubcomponentCreatorBindingEdgeImpl implements SubcomponentCreatorBindingEdge {
 
+  private final XProcessingEnv processingEnv;
   private final ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations;
 
   SubcomponentCreatorBindingEdgeImpl(
+      XProcessingEnv processingEnv,
       ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations) {
+    this.processingEnv = processingEnv;
     this.subcomponentDeclarations = subcomponentDeclarations;
   }
 
@@ -41,7 +46,8 @@ public final class SubcomponentCreatorBindingEdgeImpl implements SubcomponentCre
     return subcomponentDeclarations.stream()
         .map(SubcomponentDeclaration::contributingModule)
         .flatMap(presentValues())
-        .map(DaggerTypeElement::fromJava)
+        .map(module -> toXProcessing(module, processingEnv))
+        .map(DaggerTypeElement::from)
         .collect(toImmutableSet());
   }
 

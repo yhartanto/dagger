@@ -16,9 +16,11 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.BindingType.PRODUCTION;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -44,7 +46,10 @@ import javax.lang.model.element.Element;
 // could also implement.
 @AutoValue
 public abstract class BindingNode implements dagger.spi.model.Binding {
+  private XProcessingEnv processingEnv;
+
   public static BindingNode create(
+      XProcessingEnv processingEnv,
       ComponentPath component,
       Binding delegate,
       ImmutableSet<MultibindingDeclaration> multibindingDeclarations,
@@ -58,6 +63,7 @@ public abstract class BindingNode implements dagger.spi.model.Binding {
             multibindingDeclarations,
             optionalBindingDeclarations,
             subcomponentDeclarations);
+    node.processingEnv = processingEnv;
     node.bindingDeclarationFormatter = checkNotNull(bindingDeclarationFormatter);
     return node;
   }
@@ -99,12 +105,18 @@ public abstract class BindingNode implements dagger.spi.model.Binding {
 
   @Override
   public Optional<DaggerElement> bindingElement() {
-    return delegate().bindingElement().map(DaggerElement::fromJava);
+    return delegate()
+        .bindingElement()
+        .map(bindingElement -> toXProcessing(bindingElement, processingEnv))
+        .map(DaggerElement::from);
   }
 
   @Override
   public Optional<DaggerTypeElement> contributingModule() {
-    return delegate().contributingModule().map(DaggerTypeElement::fromJava);
+    return delegate()
+        .contributingModule()
+        .map(module -> toXProcessing(module, processingEnv))
+        .map(DaggerTypeElement::from);
   }
 
   @Override
