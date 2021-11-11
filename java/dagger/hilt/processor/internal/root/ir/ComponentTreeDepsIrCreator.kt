@@ -133,10 +133,10 @@ class ComponentTreeDepsIrCreator private constructor(
     val globalEntryPointsByComponent = aggregatedDeps
       .filter { it.test == null && it.module == null }
       .groupBy(keySelector = { it.test }, valueTransform = { it.fqName })
-    val result = mutableMapOf<ClassName, MutableSet<ClassName>>()
+    val result = mutableMapOf<ClassName, LinkedHashSet<ClassName>>()
     aggregatedRoots.forEach { aggregatedRoot ->
       if (!rootsUsingSharedComponent.contains(aggregatedRoot.root)) {
-        result.getOrPut(aggregatedRoot.root) { mutableSetOf() }.apply {
+        result.getOrPut(aggregatedRoot.root) { linkedSetOf() }.apply {
           addAll(globalModules)
           addAll(globalEntryPointsByComponent.values.flatten())
           addAll(testDepsByRoot.getOrElse(aggregatedRoot.root) { emptyList() })
@@ -145,13 +145,13 @@ class ComponentTreeDepsIrCreator private constructor(
     }
     // Add the Default/EarlyEntryPoint root if necessary.
     if (rootsUsingSharedComponent.isNotEmpty()) {
-      result.getOrPut(DEFAULT_ROOT_CLASS_NAME) { mutableSetOf() }.apply {
+      result.getOrPut(DEFAULT_ROOT_CLASS_NAME) { linkedSetOf() }.apply {
         addAll(globalModules)
         addAll(globalEntryPointsByComponent.values.flatten())
         addAll(rootsUsingSharedComponent.flatMap { testDepsByRoot.getOrElse(it) { emptyList() } })
       }
     } else if (hasEarlyEntryPoints) {
-      result.getOrPut(DEFAULT_ROOT_CLASS_NAME) { mutableSetOf() }.apply {
+      result.getOrPut(DEFAULT_ROOT_CLASS_NAME) { linkedSetOf() }.apply {
         addAll(globalModules)
         addAll(
           globalEntryPointsByComponent.entries
