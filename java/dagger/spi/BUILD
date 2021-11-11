@@ -58,6 +58,7 @@ gen_maven_artifact(
     artifact_target = ":spi",
     artifact_target_libs = [
         "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/model",
         "//java/dagger/spi/model",
     ],
@@ -71,6 +72,8 @@ gen_maven_artifact(
         "com.google.guava:guava",
         "com.squareup:javapoet",
         "javax.inject:javax.inject",
+        "org.jetbrains.kotlin:kotlin-stdlib",
+        "org.jetbrains.kotlin:kotlin-stdlib-jdk8",
     ],
     javadoc_root_packages = [
         "dagger.model",
@@ -80,5 +83,8 @@ gen_maven_artifact(
     # The shaded deps are added using jarjar, but they won't be shaded until later
     # due to: https://github.com/google/dagger/issues/2765. For the shaded rules see
     # util/deploy-dagger.sh
-    shaded_deps = ["@com_google_auto_auto_common//jar"],
+    shaded_deps = [
+        "@com_google_auto_auto_common//jar",
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-jar",
+    ],
 )
