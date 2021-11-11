@@ -104,7 +104,7 @@ public final class Processors {
             .addModifiers(PUBLIC)
             .addOriginatingElement(element)
             .addAnnotation(aggregatingAnnotation)
-            .addJavadoc("This class should only be referenced by generated code!")
+            .addJavadoc("This class should only be referenced by generated code! ")
             .addJavadoc("This class aggregates information across multiple compilations.\n");;
 
     addGeneratedAnnotation(builder, env, generatedAnnotationClass);
