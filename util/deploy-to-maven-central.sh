@@ -21,8 +21,8 @@ if [[ "$VERSION_NAME" =~ " " ]]; then
 fi
 
 BAZEL_VERSION=$(bazel --version)
-if [[ $BAZEL_VERSION != *"3.7.1"* ]]; then
-  echo "Must use Bazel version 3.7.1"
+if [[ $BAZEL_VERSION != *"4.2.1"* ]]; then
+  echo "Must use Bazel version 4.2.1"
   exit 4
 fi
 
