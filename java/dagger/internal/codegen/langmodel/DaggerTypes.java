@@ -334,6 +334,10 @@ public final class DaggerTypes implements Types {
   private static final ImmutableSet<Class<?>> FUTURE_TYPES =
       ImmutableSet.of(ListenableFuture.class, FluentFuture.class);
 
+  public static boolean isFutureType(XType type) {
+    return isFutureType(toJavac(type));
+  }
+
   public static boolean isFutureType(TypeMirror type) {
     return FUTURE_TYPES.stream().anyMatch(t -> MoreTypes.isTypeOf(t, type));
   }

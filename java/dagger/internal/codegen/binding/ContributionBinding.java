@@ -89,7 +89,7 @@ public abstract class ContributionBinding extends Binding implements HasContribu
       case MAP:
         return toJavac(MapType.from(key()).unwrappedFrameworkValueType());
       case SET:
-        return SetType.from(key()).elementType();
+        return toJavac(SetType.from(key()).elementType());
       case SET_VALUES:
       case UNIQUE:
         return key().type().java();

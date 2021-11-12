@@ -19,6 +19,7 @@ package dagger.internal.codegen.binding;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
 
+import androidx.room.compiler.processing.XMethodElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
@@ -30,7 +31,6 @@ import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
 
 /** A value object representing the mechanism by which a {@link Key} can be produced. */
@@ -63,7 +63,7 @@ public abstract class ProductionBinding extends ContributionBinding {
     SET_OF_FUTURE;
 
     /** Returns the kind of object a {@code @Produces}-annotated method returns. */
-    public static ProductionKind fromProducesMethod(ExecutableElement producesMethod) {
+    public static ProductionKind fromProducesMethod(XMethodElement producesMethod) {
       if (isFutureType(producesMethod.getReturnType())) {
         return FUTURE;
       } else if (ContributionType.fromBindingElement(producesMethod)

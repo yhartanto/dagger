@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.SourceFiles.bindingTypeElementTypeVariableNames;
@@ -67,7 +68,7 @@ final class StaticMemberSelects {
   static MemberSelect emptySetFactory(ContributionBinding binding) {
     return new ParameterizedStaticMethod(
         setFactoryClassName(binding),
-        ImmutableList.of(SetType.from(binding.key()).elementType()),
+        ImmutableList.of(toJavac(SetType.from(binding.key()).elementType())),
         CodeBlock.of("empty()"),
         FACTORY);
   }

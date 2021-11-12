@@ -200,11 +200,12 @@ public final class KeyFactory {
         returnType = getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments());
       } else if (contributionType.equals(ContributionType.SET_VALUES)
           && SetType.isSet(returnType)) {
-        SetType setType = SetType.from(returnType);
+        SetType setType = SetType.from(toXProcessing(returnType, processingEnv));
         if (isFutureType(setType.elementType())) {
           returnType =
               types.getDeclaredType(
-                  elements.getTypeElement(TypeNames.SET), unwrapType(setType.elementType()));
+                  elements.getTypeElement(TypeNames.SET),
+                  toJavac(unwrapType(setType.elementType())));
         }
       }
     }
@@ -468,7 +469,7 @@ public final class KeyFactory {
       if (!setType.isRawType() && setType.elementsAreTypeOf(wrappingClassName)) {
         return Optional.of(
             key.toBuilder()
-                .type(fromJava(setOf(setType.unwrappedElementType(wrappingClassName))))
+                .type(fromJava(setOf(toJavac(setType.unwrappedElementType(wrappingClassName)))))
                 .build());
       }
     }

@@ -16,12 +16,14 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
+import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -41,7 +43,6 @@ import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.DependencyRequest;
 import java.util.Collections;
 import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 
 /** A binding expression for multibound sets. */
 final class SetRequestRepresentation extends RequestRepresentation {
@@ -133,7 +134,7 @@ final class SetRequestRepresentation extends RequestRepresentation {
   private DeclaredType immutableSetType() {
     return types.getDeclaredType(
         elements.getTypeElement(TypeNames.IMMUTABLE_SET),
-        SetType.from(binding.key()).elementType());
+        toJavac(SetType.from(binding.key()).elementType()));
   }
 
   private CodeBlock getContributionExpression(
@@ -163,9 +164,9 @@ final class SetRequestRepresentation extends RequestRepresentation {
   }
 
   private CodeBlock maybeTypeParameter(ClassName requestingClass) {
-    TypeMirror elementType = SetType.from(binding.key()).elementType();
-    return isTypeAccessibleFrom(elementType, requestingClass.packageName())
-        ? CodeBlock.of("<$T>", elementType)
+    XType elementType = SetType.from(binding.key()).elementType();
+    return isTypeAccessibleFrom(toJavac(elementType), requestingClass.packageName())
+        ? CodeBlock.of("<$T>", elementType.getTypeName())
         : CodeBlock.of("");
   }
 

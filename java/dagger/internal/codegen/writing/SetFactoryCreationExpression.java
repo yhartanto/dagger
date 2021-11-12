@@ -55,8 +55,8 @@ final class SetFactoryCreationExpression extends MultibindingFactoryCreationExpr
       builder.add(
           "<$T>",
           setType.elementsAreTypeOf(TypeNames.PRODUCED)
-              ? setType.unwrappedElementType(TypeNames.PRODUCED)
-              : setType.elementType());
+              ? setType.unwrappedElementType(TypeNames.PRODUCED).getTypeName()
+              : setType.elementType().getTypeName());
     }
 
     int individualProviders = 0;

@@ -305,7 +305,9 @@ public final class BindingFactory {
                 keyFactory.forProducesMethod(producesMethod, contributedBy),
                 this::producesMethodBinding)
             .kind(PRODUCTION)
-            .productionKind(ProductionKind.fromProducesMethod(producesMethod))
+            .productionKind(
+                ProductionKind.fromProducesMethod(
+                    asMethod(toXProcessing(producesMethod, processingEnv))))
             .thrownTypes(producesMethod.getThrownTypes())
             .executorRequest(dependencyRequestFactory.forProductionImplementationExecutor())
             .monitorRequest(dependencyRequestFactory.forProductionComponentMonitor());

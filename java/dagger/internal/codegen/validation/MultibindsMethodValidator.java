@@ -25,7 +25,6 @@ import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
-import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
@@ -99,7 +98,7 @@ class MultibindsMethodValidator extends BindingMethodValidator {
       }
       SetType setType = SetType.from(returnType);
       return !setType.isRawType()
-          && MoreTypes.isType(setType.elementType()) // No wildcards.
+          && !isWildcard(setType.elementType())
           && !isFrameworkType(setType.elementType());
     }
   }
