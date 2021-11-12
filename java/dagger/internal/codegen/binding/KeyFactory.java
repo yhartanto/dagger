@@ -101,9 +101,19 @@ public final class KeyFactory {
         elements.getTypeElement(TypeNames.SET), boxPrimitives(elementType));
   }
 
+  private DeclaredType mapOf(XType keyType, XType valueType) {
+    return mapOf(toJavac(keyType), toJavac(valueType));
+  }
+
   private DeclaredType mapOf(TypeMirror keyType, TypeMirror valueType) {
     return types.getDeclaredType(
         elements.getTypeElement(TypeNames.MAP), boxPrimitives(keyType), boxPrimitives(valueType));
+  }
+
+  /** Returns {@code Map<KeyType, FrameworkType<ValueType>>}. */
+  private TypeMirror mapOfFrameworkType(
+      XType keyType, ClassName frameworkClassName, XType valueType) {
+    return mapOfFrameworkType(toJavac(keyType), frameworkClassName, toJavac(valueType));
   }
 
   /** Returns {@code Map<KeyType, FrameworkType<ValueType>>}. */
@@ -410,10 +420,10 @@ public final class KeyFactory {
         }
         DeclaredType wrappedValueType =
             types.getDeclaredType(
-                wrappingElement, mapType.unwrappedValueType(currentWrappingClassName));
+                wrappingElement, toJavac(mapType.unwrappedValueType(currentWrappingClassName)));
         return Optional.of(
             possibleMapKey.toBuilder()
-                .type(fromJava(mapOf(mapType.keyType(), wrappedValueType)))
+                .type(fromJava(mapOf(toJavac(mapType.keyType()), wrappedValueType)))
                 .build());
       }
     }
@@ -437,10 +447,11 @@ public final class KeyFactory {
           // associated element.
           return Optional.empty();
         }
-        DeclaredType wrappedValueType = types.getDeclaredType(wrappingElement, mapType.valueType());
+        DeclaredType wrappedValueType =
+            types.getDeclaredType(wrappingElement, toJavac(mapType.valueType()));
         return Optional.of(
             possibleMapKey.toBuilder()
-                .type(fromJava(mapOf(mapType.keyType(), wrappedValueType)))
+                .type(fromJava(mapOf(toJavac(mapType.keyType()), wrappedValueType)))
                 .build());
       }
     }

@@ -19,7 +19,8 @@ package dagger.internal.codegen.base;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
-import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
+import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
+import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 
 import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreTypes;
@@ -28,28 +29,26 @@ import com.google.common.base.Equivalence;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.Key;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /** Information about a {@link java.util.Map} {@link TypeMirror}. */
 @AutoValue
 public abstract class MapType {
-  /**
-   * The map type itself, wrapped using {@link MoreTypes#equivalence()}. Use
-   * {@link #declaredMapType()} instead.
-   */
-  protected abstract Equivalence.Wrapper<DeclaredType> wrappedDeclaredMapType();
+  private XType type;
 
   /**
-   * The map type itself.
+   * The map type itself, wrapped in {@link MoreTypes#equivalence()}. Use {@link #type()} instead.
    */
-  private DeclaredType declaredMapType() {
-    return wrappedDeclaredMapType().get();
+  abstract Equivalence.Wrapper<TypeMirror> wrappedType();
+
+  /** The map type itself. */
+  private XType type() {
+    return type;
   }
 
   /** {@code true} if the map type is the raw {@link java.util.Map} type. */
   public boolean isRawType() {
-    return declaredMapType().getTypeArguments().isEmpty();
+    return type().getTypeArguments().isEmpty();
   }
 
   /**
@@ -57,9 +56,9 @@ public abstract class MapType {
    *
    * @throws IllegalStateException if {@link #isRawType()} is true.
    */
-  public TypeMirror keyType() {
+  public XType keyType() {
     checkState(!isRawType());
-    return declaredMapType().getTypeArguments().get(0);
+    return type().getTypeArguments().get(0);
   }
 
   /**
@@ -67,24 +66,17 @@ public abstract class MapType {
    *
    * @throws IllegalStateException if {@link #isRawType()} is true.
    */
-  public TypeMirror valueType() {
+  public XType valueType() {
     checkState(!isRawType());
-    return declaredMapType().getTypeArguments().get(1);
+    return type().getTypeArguments().get(1);
   }
 
-  /**
-   * Returns {@code true} if the raw type of {@link #valueType()} is {@code className}.
-   *
-   * @throws IllegalStateException if {@link #isRawType()} is true.
-   */
+  /** Returns {@code true} if the raw type of {@link #valueType()} is {@code className}. */
   public boolean valuesAreTypeOf(ClassName className) {
-    return MoreTypes.isType(valueType()) && isTypeOf(className, valueType());
+    return !isRawType() && isTypeOf(valueType(), className);
   }
 
-  /**
-   * Returns {@code true} if the {@linkplain #valueType() value type} of the {@link java.util.Map}
-   * is a {@linkplain FrameworkTypes#isFrameworkType(TypeMirror) framework type}.
-   */
+  /** Returns {@code true} if the raw type of {@link #valueType()} is a framework type. */
   public boolean valuesAreFrameworkType() {
     return FrameworkTypes.isFrameworkType(valueType());
   }
@@ -96,9 +88,8 @@ public abstract class MapType {
    * @throws IllegalStateException if {@link #isRawType()} is true or {@link #valueType()} is not a
    *     framework type
    */
-  public TypeMirror unwrappedFrameworkValueType() {
-    checkState(
-        valuesAreFrameworkType(), "called unwrappedFrameworkValueType() on %s", declaredMapType());
+  public XType unwrappedFrameworkValueType() {
+    checkState(valuesAreFrameworkType(), "called unwrappedFrameworkValueType() on %s", type());
     return uncheckedUnwrappedValueType();
   }
 
@@ -109,28 +100,23 @@ public abstract class MapType {
    *     {@code WrappingClass<V>}
    */
   // TODO(b/202033221): Consider using stricter input type, e.g. FrameworkType.
-  public TypeMirror unwrappedValueType(ClassName wrappingClass) {
+  public XType unwrappedValueType(ClassName wrappingClass) {
     checkState(valuesAreTypeOf(wrappingClass), "expected values to be %s: %s", wrappingClass, this);
     return uncheckedUnwrappedValueType();
   }
 
-  private TypeMirror uncheckedUnwrappedValueType() {
-    return MoreTypes.asDeclared(valueType()).getTypeArguments().get(0);
+  private XType uncheckedUnwrappedValueType() {
+    return unwrapType(valueType());
   }
 
   /** {@code true} if {@code type} is a {@link java.util.Map} type. */
   public static boolean isMap(XType type) {
-    return isMap(toJavac(type));
-  }
-
-  /** {@code true} if {@code type} is a {@link java.util.Map} type. */
-  public static boolean isMap(TypeMirror type) {
-    return MoreTypes.isType(type) && isTypeOf(TypeNames.MAP, type);
+    return isTypeOf(type, TypeNames.MAP);
   }
 
   /** {@code true} if {@code key.type()} is a {@link java.util.Map} type. */
   public static boolean isMap(Key key) {
-    return isMap(key.type().java());
+    return isMap(key.type().xprocessing());
   }
 
   /**
@@ -139,17 +125,10 @@ public abstract class MapType {
    * @throws IllegalArgumentException if {@code type} is not a {@link java.util.Map} type
    */
   public static MapType from(XType type) {
-    return from(toJavac(type));
-  }
-
-  /**
-   * Returns a {@link MapType} for {@code type}.
-   *
-   * @throws IllegalArgumentException if {@code type} is not a {@link java.util.Map} type
-   */
-  public static MapType from(TypeMirror type) {
     checkArgument(isMap(type), "%s is not a Map", type);
-    return new AutoValue_MapType(MoreTypes.equivalence().wrap(MoreTypes.asDeclared(type)));
+    MapType mapType = new AutoValue_MapType(MoreTypes.equivalence().wrap(toJavac(type)));
+    mapType.type = type;
+    return mapType;
   }
 
   /**
@@ -158,6 +137,6 @@ public abstract class MapType {
    * @throws IllegalArgumentException if {@code key.type()} is not a {@link java.util.Map} type
    */
   public static MapType from(Key key) {
-    return from(key.type().java());
+    return from(key.type().xprocessing());
   }
 }

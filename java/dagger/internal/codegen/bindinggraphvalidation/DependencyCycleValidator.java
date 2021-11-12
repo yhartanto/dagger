@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.bindinggraphvalidation;
 
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Iterables.limit;
@@ -29,6 +30,8 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -62,10 +65,13 @@ import javax.lang.model.type.TypeMirror;
 /** Reports errors for dependency cycles. */
 final class DependencyCycleValidator implements BindingGraphPlugin {
 
+  private final XProcessingEnv processingEnv;
   private final DependencyRequestFormatter dependencyRequestFormatter;
 
   @Inject
-  DependencyCycleValidator(DependencyRequestFormatter dependencyRequestFormatter) {
+  DependencyCycleValidator(
+      XProcessingEnv processingEnv, DependencyRequestFormatter dependencyRequestFormatter) {
+    this.processingEnv = processingEnv;
     this.dependencyRequestFormatter = dependencyRequestFormatter;
   }
 
@@ -205,7 +211,7 @@ final class DependencyCycleValidator implements BindingGraphPlugin {
       return false;
     }
     if (breaksCycle(
-        edge.dependencyRequest().key().type().java(), edge.dependencyRequest().kind())) {
+        edge.dependencyRequest().key().type().xprocessing(), edge.dependencyRequest().kind())) {
       return true;
     }
     Node target = graph.network().incidentNodes(edge).target();
@@ -214,12 +220,13 @@ final class DependencyCycleValidator implements BindingGraphPlugin {
        * breaks the cycle, so does the optional binding. */
       TypeMirror optionalValueType = OptionalType.from(edge.dependencyRequest().key()).valueType();
       RequestKind requestKind = getRequestKind(optionalValueType);
-      return breaksCycle(extractKeyType(optionalValueType), requestKind);
+      return breaksCycle(
+          toXProcessing(extractKeyType(optionalValueType), processingEnv), requestKind);
     }
     return false;
   }
 
-  private boolean breaksCycle(TypeMirror requestedType, RequestKind requestKind) {
+  private boolean breaksCycle(XType requestedType, RequestKind requestKind) {
     switch (requestKind) {
       case PROVIDER:
       case LAZY:
@@ -228,8 +235,7 @@ final class DependencyCycleValidator implements BindingGraphPlugin {
 
       case INSTANCE:
         if (MapType.isMap(requestedType)) {
-          MapType mapType = MapType.from(requestedType);
-          return !mapType.isRawType() && mapType.valuesAreTypeOf(TypeNames.PROVIDER);
+          return MapType.from(requestedType).valuesAreTypeOf(TypeNames.PROVIDER);
         }
         // fall through
 

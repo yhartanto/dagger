@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
@@ -128,7 +129,9 @@ final class MapRequestRepresentation extends RequestRepresentation {
   private DeclaredType immutableMapType() {
     MapType mapType = MapType.from(binding.key());
     return types.getDeclaredType(
-        elements.getTypeElement(TypeNames.IMMUTABLE_MAP), mapType.keyType(), mapType.valueType());
+        elements.getTypeElement(TypeNames.IMMUTABLE_MAP),
+        toJavac(mapType.keyType()),
+        toJavac(mapType.valueType()));
   }
 
   private CodeBlock keyAndValueExpression(DependencyRequest dependency, ClassName requestingClass) {
@@ -155,7 +158,8 @@ final class MapRequestRepresentation extends RequestRepresentation {
     TypeMirror bindingKeyType = binding.key().type().java();
     MapType mapType = MapType.from(binding.key());
     return isTypeAccessibleFrom(bindingKeyType, requestingClass.packageName())
-        ? CodeBlock.of("<$T, $T>", mapType.keyType(), mapType.valueType())
+        ? CodeBlock.of(
+            "<$T, $T>", mapType.keyType().getTypeName(), mapType.valueType().getTypeName())
         : CodeBlock.of("");
   }
 

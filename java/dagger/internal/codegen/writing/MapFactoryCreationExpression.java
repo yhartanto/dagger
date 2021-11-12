@@ -21,6 +21,7 @@ import static dagger.internal.codegen.binding.MapKeys.getMapKeyExpression;
 import static dagger.internal.codegen.binding.SourceFiles.mapFactoryClassName;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 
+import androidx.room.compiler.processing.XType;
 import com.squareup.javapoet.CodeBlock;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
@@ -32,7 +33,6 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.spi.model.DependencyRequest;
 import java.util.stream.Stream;
-import javax.lang.model.type.TypeMirror;
 
 /** A factory creation expression for a multibound map. */
 final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpression {
@@ -60,16 +60,16 @@ final class MapFactoryCreationExpression extends MultibindingFactoryCreationExpr
   public CodeBlock creationExpression() {
     CodeBlock.Builder builder = CodeBlock.builder().add("$T.", mapFactoryClassName(binding));
     if (!useRawType()) {
-      MapType mapType = MapType.from(binding.key().type().java());
+      MapType mapType = MapType.from(binding.key());
       // TODO(ronshapiro): either inline this into mapFactoryClassName, or add a
       // mapType.unwrappedValueType() method that doesn't require a framework type
-      TypeMirror valueType =
+      XType valueType =
           Stream.of(TypeNames.PROVIDER, TypeNames.PRODUCER, TypeNames.PRODUCED)
               .filter(mapType::valuesAreTypeOf)
               .map(mapType::unwrappedValueType)
               .collect(toOptional())
               .orElseGet(mapType::valueType);
-      builder.add("<$T, $T>", mapType.keyType(), valueType);
+      builder.add("<$T, $T>", mapType.keyType().getTypeName(), valueType.getTypeName());
     }
 
     builder.add("builder($L)", binding.dependencies().size());

@@ -21,6 +21,7 @@ import static dagger.internal.codegen.validation.BindingElementValidator.AllowsM
 import static dagger.internal.codegen.validation.BindingElementValidator.AllowsScoping.NO_SCOPING;
 import static dagger.internal.codegen.validation.BindingMethodValidator.Abstractness.MUST_BE_ABSTRACT;
 import static dagger.internal.codegen.validation.BindingMethodValidator.ExceptionSuperclass.NO_EXCEPTIONS;
+import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
@@ -88,7 +89,7 @@ class MultibindsMethodValidator extends BindingMethodValidator {
       }
       MapType mapType = MapType.from(returnType);
       return !mapType.isRawType()
-          && MoreTypes.isType(mapType.valueType()) // No wildcards.
+          && !isWildcard(mapType.valueType())
           && !isFrameworkType(mapType.valueType());
     }
 

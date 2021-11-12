@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.unwrapOptionalEquivalence;
 import static java.util.Arrays.asList;
 
@@ -86,7 +87,7 @@ public abstract class ContributionBinding extends Binding implements HasContribu
   public final TypeMirror contributedType() {
     switch (contributionType()) {
       case MAP:
-        return MapType.from(key()).unwrappedFrameworkValueType();
+        return toJavac(MapType.from(key()).unwrappedFrameworkValueType());
       case SET:
         return SetType.from(key()).elementType();
       case SET_VALUES:
