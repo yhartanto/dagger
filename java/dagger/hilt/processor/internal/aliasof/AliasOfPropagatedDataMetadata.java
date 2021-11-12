@@ -16,14 +16,17 @@
 
 package dagger.hilt.processor.internal.aliasof;
 
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AggregatedElements;
 import dagger.hilt.processor.internal.AnnotationValues;
+import dagger.hilt.processor.internal.BadInputException;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.root.ir.AliasOfPropagatedDataIr;
@@ -42,7 +45,7 @@ public abstract class AliasOfPropagatedDataMetadata {
   /** Returns the aggregating element */
   public abstract TypeElement aggregatingElement();
 
-  abstract TypeElement defineComponentScopeElement();
+  abstract ImmutableList<TypeElement> defineComponentScopeElements();
 
   abstract TypeElement aliasElement();
 
@@ -67,7 +70,9 @@ public abstract class AliasOfPropagatedDataMetadata {
   public static AliasOfPropagatedDataIr toIr(AliasOfPropagatedDataMetadata metadata) {
     return new AliasOfPropagatedDataIr(
         ClassName.get(metadata.aggregatingElement()),
-        ClassName.get(metadata.defineComponentScopeElement()),
+        metadata.defineComponentScopeElements().stream()
+            .map(ClassName::get)
+            .collect(toImmutableList()),
         ClassName.get(metadata.aliasElement()));
   }
 
@@ -78,9 +83,22 @@ public abstract class AliasOfPropagatedDataMetadata {
     ImmutableMap<String, AnnotationValue> values =
         Processors.getAnnotationValues(elements, annotationMirror);
 
+    ImmutableList<TypeElement> defineComponentScopes;
+    if (values.containsKey("defineComponentScopes")) {
+      defineComponentScopes =
+          ImmutableList.copyOf(
+              AnnotationValues.getTypeElements(values.get("defineComponentScopes")));
+    } else if (values.containsKey("defineComponentScope")) {
+      // Older version of AliasOfPropagatedData only passed a single defineComponentScope class
+      // value. Fall back on reading the single value if we get old propagated data.
+      defineComponentScopes =
+          ImmutableList.of(AnnotationValues.getTypeElement(values.get("defineComponentScope")));
+    } else {
+      throw new BadInputException(
+          "AliasOfPropagatedData is missing defineComponentScopes", element);
+    }
+
     return new AutoValue_AliasOfPropagatedDataMetadata(
-        element,
-        AnnotationValues.getTypeElement(values.get("defineComponentScope")),
-        AnnotationValues.getTypeElement(values.get("alias")));
+        element, defineComponentScopes, AnnotationValues.getTypeElement(values.get("alias")));
   }
 }

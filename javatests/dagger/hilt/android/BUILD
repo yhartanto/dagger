@@ -92,6 +92,29 @@ android_local_test(
 )
 
 android_local_test(
+    name = "AliasOfMultipleScopesTest",
+    srcs = ["AliasOfMultipleScopesTest.java"],
+    manifest = "AndroidManifest.xml",
+    manifest_values = {
+        "minSdkVersion": "14",
+    },
+    deps = [
+        "//:android_local_test_exports",
+        "//java/dagger/hilt:define_component",
+        "//java/dagger/hilt:entry_point",
+        "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt/android:android_entry_point",
+        "//java/dagger/hilt/android:package_info",
+        "//java/dagger/hilt/android/qualifiers",
+        "//java/dagger/hilt/android/scopes",
+        "//java/dagger/hilt/android/testing:hilt_android_rule",
+        "//java/dagger/hilt/android/testing:hilt_android_test",
+        "//java/dagger/hilt/migration:alias_of",
+        "//third_party/java/truth",
+    ],
+)
+
+android_local_test(
     name = "EarlyEntryPointHiltAndroidAppRuntimeTest",
     size = "small",
     srcs = ["EarlyEntryPointHiltAndroidAppRuntimeTest.java"],

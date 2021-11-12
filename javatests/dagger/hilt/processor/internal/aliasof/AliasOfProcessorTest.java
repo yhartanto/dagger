@@ -81,4 +81,41 @@ public final class AliasOfProcessorTest {
                 + " @AliasOf. @DefineComponent scopes cannot be aliases of other scopes:"
                 + " [@test.AliasScope]");
   }
+
+  @Test
+  public void fails_conflictingAliasScope() {
+    JavaFileObject scope =
+        JavaFileObjects.forSourceLines(
+            "test.AliasScope",
+            "package test;",
+            "",
+            "import javax.inject.Scope;",
+            "import javax.inject.Singleton;",
+            "import dagger.hilt.android.scopes.ActivityScoped;",
+            "import dagger.hilt.migration.AliasOf;",
+            "",
+            "@Scope",
+            "@AliasOf({Singleton.class, ActivityScoped.class})",
+            "public @interface AliasScope{}");
+
+    JavaFileObject root =
+        JavaFileObjects.forSourceLines(
+            "test.MyApp",
+            "package test;",
+            "",
+            "import android.app.Application;",
+            "import dagger.hilt.android.HiltAndroidApp;",
+            "",
+            "@HiltAndroidApp(Application.class)",
+            "public final class MyApp extends Hilt_MyApp {}");
+
+    Compilation compilation =
+        compiler()
+            .withOptions("-Xlint:-processing") // Suppresses unclaimed annotation warning
+            .compile(root, scope);
+
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
+    assertThat(compilation).hadErrorContaining("has conflicting scopes");
+  }
 }

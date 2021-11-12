@@ -40,17 +40,21 @@ public final class AliasOfs {
     ImmutableSetMultimap.Builder<ClassName, ClassName> builder = ImmutableSetMultimap.builder();
     metadatas.forEach(
         metadata -> {
-          ClassName defineComponentScopeName =
-              ClassName.get(metadata.defineComponentScopeElement());
           ClassName aliasScopeName = ClassName.get(metadata.aliasElement());
-          ProcessorErrors.checkState(
-              defineComponentScopes.contains(defineComponentScopeName),
-              metadata.aliasElement(),
-              "The scope %s cannot be an alias for %s. You can only have aliases of a scope"
-                  + " defined directly on a @DefineComponent type.",
-              aliasScopeName,
-              defineComponentScopeName);
-          builder.put(defineComponentScopeName, aliasScopeName);
+          metadata
+              .defineComponentScopeElements()
+              .forEach(
+                  defineComponentScope -> {
+                    ClassName defineComponentScopeName = ClassName.get(defineComponentScope);
+                    ProcessorErrors.checkState(
+                        defineComponentScopes.contains(defineComponentScopeName),
+                        metadata.aliasElement(),
+                        "The scope %s cannot be an alias for %s. You can only have aliases of a"
+                            + " scope defined directly on a @DefineComponent type.",
+                        aliasScopeName,
+                        defineComponentScopeName);
+                    builder.put(defineComponentScopeName, aliasScopeName);
+                  });
         });
     return new AliasOfs(builder.build());
   }

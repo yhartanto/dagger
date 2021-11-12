@@ -59,10 +59,11 @@ data class AggregatedRootIr(
   val isTestRoot = TEST_ROOT_ANNOTATIONS.contains(rootAnnotation.toString())
 
   companion object {
-    private val TEST_ROOT_ANNOTATIONS = listOf(
-      "dagger.hilt.android.testing.HiltAndroidTest",
-      "dagger.hilt.android.internal.testing.InternalTestRoot",
-    )
+    private val TEST_ROOT_ANNOTATIONS =
+      listOf(
+        "dagger.hilt.android.testing.HiltAndroidTest",
+        "dagger.hilt.android.internal.testing.InternalTestRoot",
+      )
   }
 }
 
@@ -76,7 +77,7 @@ data class AggregatedUninstallModulesIr(
 /** Represents [dagger.hilt.internal.aliasof.AliasOfPropagatedData] */
 data class AliasOfPropagatedDataIr(
   val fqName: ClassName,
-  val defineComponentScope: ClassName,
+  val defineComponentScopes: List<ClassName>,
   val alias: ClassName,
 )
 
@@ -98,7 +99,4 @@ data class DefineComponentClassesIr(
 )
 
 /** Represents [dagger.hilt.internal.processedrootsentinel.ProcessedRootSentinel] */
-data class ProcessedRootSentinelIr(
-  val fqName: ClassName,
-  val roots: List<ClassName>
-)
+data class ProcessedRootSentinelIr(val fqName: ClassName, val roots: List<ClassName>)

@@ -26,6 +26,10 @@
         android:exported="false"
         tools:ignore="MissingClass"/>
     <activity
+        android:name=".AliasOfMultipleScopesTest$TestActivity"
+        android:exported="false"
+        tools:ignore="MissingClass"/>
+    <activity
         android:name=".DefaultViewModelFactoryTest$TestActivity"
         android:exported="false"
         tools:ignore="MissingClass"/>

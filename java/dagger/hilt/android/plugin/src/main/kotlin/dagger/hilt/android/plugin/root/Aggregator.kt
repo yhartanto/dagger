@@ -192,12 +192,17 @@ internal class Aggregator private constructor(
         }
         AggregatedAnnotation.ALIAS_OF -> {
           return object : AnnotationVisitor(asmApiVersion, nextAnnotationVisitor) {
-            lateinit var defineComponentScopeClassName: Type
+            val defineComponentScopeClassNames = mutableSetOf<Type>()
             lateinit var aliasClassName: Type
 
+            // visit() handles both array and non-array values.
+            // For array values, each value in the array will be visited individually.
             override fun visit(name: String, value: Any?) {
               when (name) {
-                "defineComponentScope" -> defineComponentScopeClassName = (value as Type)
+                // Older versions of AliasOfPropagatedData only passed a single defineComponentScope
+                // class value. Fall back on reading the single value if we get old propagated data.
+                "defineComponentScope",
+                "defineComponentScopes" -> defineComponentScopeClassNames.add(value as Type)
                 "alias" -> aliasClassName = (value as Type)
               }
               super.visit(name, value)
@@ -207,7 +212,8 @@ internal class Aggregator private constructor(
               aliasOfDeps.add(
                 AliasOfPropagatedDataIr(
                   fqName = annotatedClassName,
-                  defineComponentScope = defineComponentScopeClassName.toClassName(),
+                  defineComponentScopes =
+                    defineComponentScopeClassNames.map({ it.toClassName() }).toList(),
                   alias = aliasClassName.toClassName(),
                 )
               )
