@@ -83,6 +83,13 @@ jobs:
         with:
           name: local-snapshot
           path: ~/.m2/repository/com/google/dagger
+      - name: 'Clean bazel cache'
+        # According to the documentation, we should be able to exclude these via
+        # the actions/cache path, e.g. "!~/.cache/bazel/*/*/external/" but that
+        # doesn't seem to work.
+        run: |
+          rm -rf $(bazel info repository_cache)
+          rm -rf ~/.cache/bazel/*/*/external/
   artifact-java-local-tests:
     name: 'Artifact Java local tests'
     needs: bazel-test
@@ -226,6 +233,13 @@ jobs:
         env:
           CI_DEPLOY_USERNAME: ${{ secrets.CI_DEPLOY_USERNAME }}
           CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}
+      - name: 'Clean bazel cache'
+        # According to the documentation, we should be able to exclude these via
+        # the actions/cache path, e.g. "!~/.cache/bazel/*/*/external/" but that
+        # doesn't seem to work.
+        run: |
+          rm -rf $(bazel info repository_cache)
+          rm -rf ~/.cache/bazel/*/*/external/
   artifact-android-emulator-legacy-api-tests:
     name: 'Artifact Android emulator tests (API ${{ matrix.api-level }})'
     # We only run this on master push (essentially a postsubmit) since these
@@ -311,3 +325,10 @@ jobs:
       run: ./util/deploy-hilt-gradle-plugin.sh "install:install-file" "LOCAL-SNAPSHOT"
       env:
         AGP_VERSION: '+'
+    - name: 'Clean bazel cache'
+      # According to the documentation, we should be able to exclude these via
+      # the actions/cache path, e.g. "!~/.cache/bazel/*/*/external/" but that
+      # doesn't seem to work.
+      run: |
+        rm -rf $(bazel info repository_cache)
+        rm -rf ~/.cache/bazel/*/*/external/
