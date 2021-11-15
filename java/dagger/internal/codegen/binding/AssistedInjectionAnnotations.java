@@ -35,6 +35,7 @@ import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.XVariableElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
@@ -192,6 +193,11 @@ public final class AssistedInjectionAnnotations {
     return constructor.getParameters().stream()
         .filter(AssistedInjectionAnnotations::isAssistedParameter)
         .collect(toImmutableList());
+  }
+
+  /** Returns {@code true} if this binding is uses assisted injection. */
+  public static boolean isAssistedParameter(XVariableElement param) {
+    return param.hasAnnotation(TypeNames.ASSISTED);
   }
 
   /** Returns {@code true} if this binding is uses assisted injection. */

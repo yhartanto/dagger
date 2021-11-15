@@ -20,7 +20,6 @@ import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XElementKt.isVariableElement;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
-import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -32,10 +31,10 @@ import static dagger.internal.codegen.base.Scopes.uniqueScopeOf;
 import static dagger.internal.codegen.binding.ComponentDescriptor.isComponentProductionMethod;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asVariable;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.spi.model.BindingKind.ASSISTED_FACTORY;
 import static dagger.spi.model.BindingKind.ASSISTED_INJECTION;
 import static dagger.spi.model.BindingKind.BOUND_INSTANCE;
@@ -50,11 +49,12 @@ import static dagger.spi.model.BindingKind.OPTIONAL;
 import static dagger.spi.model.BindingKind.PRODUCTION;
 import static dagger.spi.model.BindingKind.PROVISION;
 import static dagger.spi.model.BindingKind.SUBCOMPONENT_CREATOR;
-import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
 import static javax.lang.model.element.ElementKind.METHOD;
 
 import androidx.room.compiler.processing.XConstructorElement;
+import androidx.room.compiler.processing.XConstructorType;
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
@@ -64,13 +64,11 @@ import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.squareup.javapoet.ClassName;
 import dagger.Module;
-import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
@@ -90,11 +88,8 @@ import java.util.function.BiFunction;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.TypeParameterElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
 /** A factory for {@link Binding} objects. */
@@ -137,71 +132,47 @@ public final class BindingFactory {
    */
   // TODO(dpb): See if we can just pass the parameterized type and not also the constructor.
   public ProvisionBinding injectionBinding(
-      XConstructorElement constructorElement, Optional<TypeMirror> resolvedType) {
-    return injectionBinding(toJavac(constructorElement), resolvedType);
-  }
-
-  /**
-   * Returns an {@link dagger.spi.model.BindingKind#INJECTION} binding.
-   *
-   * @param constructorElement the {@code @Inject}-annotated constructor
-   * @param resolvedType the parameterized type if the constructor is for a generic class and the
-   *     binding should be for the parameterized type
-   */
-  // TODO(dpb): See if we can just pass the parameterized type and not also the constructor.
-  public ProvisionBinding injectionBinding(
-      ExecutableElement constructorElement, Optional<TypeMirror> resolvedType) {
-    checkArgument(constructorElement.getKind().equals(CONSTRUCTOR));
+      XConstructorElement constructorElement, Optional<XType> resolvedEnclosingType) {
     checkArgument(
-        isAnnotationPresent(constructorElement, Inject.class)
-            || isAnnotationPresent(constructorElement, AssistedInject.class));
+        constructorElement.hasAnnotation(TypeNames.INJECT)
+            || constructorElement.hasAnnotation(TypeNames.ASSISTED_INJECT));
     checkArgument(!injectionAnnotations.getQualifier(constructorElement).isPresent());
 
-    ExecutableType constructorType = MoreTypes.asExecutable(constructorElement.asType());
-    DeclaredType constructedType =
-        MoreTypes.asDeclared(constructorElement.getEnclosingElement().asType());
+    XConstructorType constructorType = constructorElement.getExecutableType();
+    XType enclosingType = constructorElement.getEnclosingElement().getType();
     // If the class this is constructing has some type arguments, resolve everything.
-    if (!constructedType.getTypeArguments().isEmpty() && resolvedType.isPresent()) {
-      DeclaredType resolved = MoreTypes.asDeclared(resolvedType.get());
-      // Validate that we're resolving from the correct type.
-      checkState(
-          types.isSameType(types.erasure(resolved), types.erasure(constructedType)),
-          "erased expected type: %s, erased actual type: %s",
-          types.erasure(resolved),
-          types.erasure(constructedType));
-      constructorType = MoreTypes.asExecutable(types.asMemberOf(resolved, constructorElement));
-      constructedType = resolved;
+    if (!enclosingType.getTypeArguments().isEmpty() && resolvedEnclosingType.isPresent()) {
+      checkIsSameErasedType(resolvedEnclosingType.get(), enclosingType);
+      enclosingType = resolvedEnclosingType.get();
+      constructorType = constructorElement.asMemberOf(enclosingType);
     }
 
     // Collect all dependency requests within the provision method.
     // Note: we filter out @Assisted parameters since these aren't considered dependency requests.
     ImmutableSet.Builder<DependencyRequest> provisionDependencies = ImmutableSet.builder();
     for (int i = 0; i < constructorElement.getParameters().size(); i++) {
-      VariableElement parameter = constructorElement.getParameters().get(i);
-      TypeMirror parameterType = constructorType.getParameterTypes().get(i);
+      XExecutableParameterElement parameter = constructorElement.getParameters().get(i);
+      XType parameterType = constructorType.getParameterTypes().get(i);
       if (!AssistedInjectionAnnotations.isAssistedParameter(parameter)) {
         provisionDependencies.add(
             dependencyRequestFactory.forRequiredResolvedVariable(parameter, parameterType));
       }
     }
 
-    Key key = keyFactory.forInjectConstructorWithResolvedType(constructedType);
     ProvisionBinding.Builder builder =
         ProvisionBinding.builder()
             .contributionType(ContributionType.UNIQUE)
-            .bindingElement(constructorElement)
-            .key(key)
+            .bindingElement(toJavac(constructorElement))
+            .key(keyFactory.forInjectConstructorWithResolvedType(enclosingType))
             .provisionDependencies(provisionDependencies.build())
-            .injectionSites(injectionSiteFactory.getInjectionSites(constructedType))
+            .injectionSites(injectionSiteFactory.getInjectionSites(enclosingType))
             .kind(
-                isAnnotationPresent(constructorElement, AssistedInject.class)
+                constructorElement.hasAnnotation(TypeNames.ASSISTED_INJECT)
                     ? ASSISTED_INJECTION
                     : INJECTION)
-            .scope(
-                uniqueScopeOf(
-                    toXProcessing(constructorElement.getEnclosingElement(), processingEnv)));
+            .scope(uniqueScopeOf(constructorElement.getEnclosingElement()));
 
-    if (hasNonDefaultTypeParameters(key.type().java(), types)) {
+    if (hasNonDefaultTypeParameters(enclosingType)) {
       builder.unresolved(injectionBinding(constructorElement, Optional.empty()));
     }
     return builder.build();
@@ -621,79 +592,55 @@ public final class BindingFactory {
    *     parameterization of that type, the returned binding will be for the resolved type
    */
   // TODO(dpb): See if we can just pass one nongeneric/parameterized type.
-  public MembersInjectionBinding membersInjectionBinding(
-      XType type, Optional<TypeMirror> resolvedType) {
-    return membersInjectionBinding(asDeclared(toJavac(type)), resolvedType);
-  }
-
-  /**
-   * Returns a {@link dagger.spi.model.BindingKind#MEMBERS_INJECTION} binding.
-   *
-   * @param resolvedType if {@code declaredType} is a generic class and {@code resolvedType} is a
-   *     parameterization of that type, the returned binding will be for the resolved type
-   */
-  // TODO(dpb): See if we can just pass one nongeneric/parameterized type.
-  public MembersInjectionBinding membersInjectionBinding(
-      DeclaredType declaredType, Optional<TypeMirror> resolvedType) {
+  public MembersInjectionBinding membersInjectionBinding(XType type, Optional<XType> resolvedType) {
     // If the class this is injecting has some type arguments, resolve everything.
-    if (!declaredType.getTypeArguments().isEmpty() && resolvedType.isPresent()) {
-      DeclaredType resolved = asDeclared(resolvedType.get());
-      // Validate that we're resolving from the correct type.
-      checkState(
-          types.isSameType(types.erasure(resolved), types.erasure(declaredType)),
-          "erased expected type: %s, erased actual type: %s",
-          types.erasure(resolved),
-          types.erasure(declaredType));
-      declaredType = resolved;
+    if (!type.getTypeArguments().isEmpty() && resolvedType.isPresent()) {
+      checkIsSameErasedType(resolvedType.get(), type);
+      type = resolvedType.get();
     }
-    ImmutableSortedSet<InjectionSite> injectionSites =
-        injectionSiteFactory.getInjectionSites(declaredType);
+    ImmutableSortedSet<InjectionSite> injectionSites = injectionSiteFactory.getInjectionSites(type);
     ImmutableSet<DependencyRequest> dependencies =
         injectionSites.stream()
             .flatMap(injectionSite -> injectionSite.dependencies().stream())
             .collect(toImmutableSet());
 
-    Key key = keyFactory.forMembersInjectedType(declaredType);
-    TypeElement typeElement = asTypeElement(declaredType);
     return MembersInjectionBinding.create(
-        key,
+        keyFactory.forMembersInjectedType(type),
         dependencies,
-        hasNonDefaultTypeParameters(key.type().java(), types)
+        hasNonDefaultTypeParameters(type)
             ? Optional.of(
-                membersInjectionBinding(asDeclared(typeElement.asType()), Optional.empty()))
+                membersInjectionBinding(type.getTypeElement().getType(), Optional.empty()))
             : Optional.empty(),
         injectionSites);
   }
 
-  private static boolean hasNonDefaultTypeParameters(TypeMirror type, DaggerTypes types) {
+  private void checkIsSameErasedType(XType type1, XType type2) {
+    checkState(
+        types.isSameType(types.erasure(toJavac(type1)), types.erasure(toJavac(type2))),
+        "erased expected type: %s, erased actual type: %s",
+        types.erasure(toJavac(type1)),
+        types.erasure(toJavac(type2)));
+  }
+
+  private static boolean hasNonDefaultTypeParameters(XType type) {
     // If the type is not declared, then it can't have type parameters.
-    if (type.getKind() != TypeKind.DECLARED) {
+    if (!isDeclared(type)) {
       return false;
     }
 
     // If the element has no type parameters, none can be non-default.
-    TypeElement element = asTypeElement(type);
-    if (element.getTypeParameters().isEmpty()) {
+    XType defaultType = type.getTypeElement().getType();
+    if (defaultType.getTypeArguments().isEmpty()) {
       return false;
     }
 
-    ImmutableList<TypeMirror> defaultTypes =
-        element.getTypeParameters().stream()
-            .map(TypeParameterElement::asType)
-            .collect(toImmutableList());
-
-    ImmutableList<TypeMirror> actualTypes =
-        type.getKind() == TypeKind.DECLARED
-            ? ImmutableList.copyOf(asDeclared(type).getTypeArguments())
-            : ImmutableList.of();
-
     // The actual type parameter size can be different if the user is using a raw type.
-    if (defaultTypes.size() != actualTypes.size()) {
+    if (defaultType.getTypeArguments().size() != type.getTypeArguments().size()) {
       return true;
     }
 
-    for (int i = 0; i < defaultTypes.size(); i++) {
-      if (!types.isSameType(defaultTypes.get(i), actualTypes.get(i))) {
+    for (int i = 0; i < defaultType.getTypeArguments().size(); i++) {
+      if (!defaultType.getTypeArguments().get(i).isSameType(type.getTypeArguments().get(i))) {
         return true;
       }
     }

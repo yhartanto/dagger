@@ -18,7 +18,6 @@ package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
-import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -257,7 +256,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   @CanIgnoreReturnValue
   private Optional<ProvisionBinding> tryRegisterConstructor(
       XConstructorElement constructorElement,
-      Optional<TypeMirror> resolvedType,
+      Optional<XType> resolvedType,
       boolean warnIfNotAlreadyGenerated) {
     XTypeElement typeElement = constructorElement.getEnclosingElement();
     XType type = typeElement.getType();
@@ -311,9 +310,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
 
   @CanIgnoreReturnValue
   private Optional<MembersInjectionBinding> tryRegisterMembersInjectedType(
-      XTypeElement typeElement,
-      Optional<TypeMirror> resolvedType,
-      boolean warnIfNotAlreadyGenerated) {
+      XTypeElement typeElement, Optional<XType> resolvedType, boolean warnIfNotAlreadyGenerated) {
     XType type = typeElement.getType();
     Key key = keyFactory.forInjectConstructorWithResolvedType(type);
     MembersInjectionBinding cachedBinding = membersInjectionBindings.getBinding(key);
@@ -350,7 +347,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
     }
 
     // ok, let's see if we can find an @Inject constructor
-    XTypeElement element = toXProcessing(asType(types.asElement(key.type().java())), processingEnv);
+    XTypeElement element = key.type().xprocessing().getTypeElement();
     ImmutableSet<XConstructorElement> injectConstructors =
         ImmutableSet.<XConstructorElement>builder()
             .addAll(injectedConstructors(element))
@@ -362,7 +359,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
         return Optional.empty();
       case 1:
         return tryRegisterConstructor(
-            getOnlyElement(injectConstructors), Optional.of(key.type().java()), true);
+            getOnlyElement(injectConstructors), Optional.of(key.type().xprocessing()), true);
       default:
         throw new IllegalStateException("Found multiple @Inject constructors: "
             + injectConstructors);
@@ -380,9 +377,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
       return Optional.of(binding);
     }
     return tryRegisterMembersInjectedType(
-        toXProcessing(asTypeElement(key.type().java()), processingEnv),
-        Optional.of(key.type().java()),
-        true);
+        key.type().xprocessing().getTypeElement(), Optional.of(key.type().xprocessing()), true);
   }
 
   @Override

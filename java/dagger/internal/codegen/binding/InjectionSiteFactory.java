@@ -16,11 +16,16 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.isAnnotationPresent;
+import static com.google.auto.common.MoreTypes.asDeclared;
+import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.langmodel.DaggerElements.DECLARATION_ORDER;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XType;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableSortedSet;
@@ -60,6 +65,12 @@ final class InjectionSiteFactory {
     this.types = types;
     this.elements = elements;
     this.dependencyRequestFactory = dependencyRequestFactory;
+  }
+
+  /** Returns the injection sites for a type. */
+  ImmutableSortedSet<InjectionSite> getInjectionSites(XType type) {
+    checkArgument(isDeclared(type));
+    return getInjectionSites(asDeclared(toJavac(type)));
   }
 
   /** Returns the injection sites for a type. */
