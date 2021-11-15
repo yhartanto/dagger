@@ -56,6 +56,7 @@ import androidx.room.compiler.processing.XConstructorType;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
@@ -76,7 +77,6 @@ import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.ProductionBinding.ProductionKind;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.DaggerType;
@@ -88,9 +88,7 @@ import java.util.function.BiFunction;
 import javax.inject.Inject;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.TypeMirror;
 
 /** A factory for {@link Binding} objects. */
 public final class BindingFactory {
@@ -99,7 +97,6 @@ public final class BindingFactory {
   private final KeyFactory keyFactory;
   private final DependencyRequestFactory dependencyRequestFactory;
   private final InjectionSiteFactory injectionSiteFactory;
-  private final DaggerElements elements;
   private final InjectionAnnotations injectionAnnotations;
   private final KotlinMetadataUtil metadataUtil;
 
@@ -107,7 +104,6 @@ public final class BindingFactory {
   BindingFactory(
       XProcessingEnv processingEnv,
       DaggerTypes types,
-      DaggerElements elements,
       KeyFactory keyFactory,
       DependencyRequestFactory dependencyRequestFactory,
       InjectionSiteFactory injectionSiteFactory,
@@ -115,7 +111,6 @@ public final class BindingFactory {
       KotlinMetadataUtil metadataUtil) {
     this.processingEnv = processingEnv;
     this.types = types;
-    this.elements = elements;
     this.keyFactory = keyFactory;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.injectionSiteFactory = injectionSiteFactory;
@@ -179,42 +174,29 @@ public final class BindingFactory {
   }
 
   public ProvisionBinding assistedFactoryBinding(
-      TypeElement factory, Optional<TypeMirror> resolvedType) {
+      XTypeElement factory, Optional<XType> resolvedFactoryType) {
 
     // If the class this is constructing has some type arguments, resolve everything.
-    DeclaredType factoryType = MoreTypes.asDeclared(factory.asType());
-    if (!factoryType.getTypeArguments().isEmpty() && resolvedType.isPresent()) {
-      DeclaredType resolved = MoreTypes.asDeclared(resolvedType.get());
-      // Validate that we're resolving from the correct type by checking that the erasure of the
-      // resolvedType is the same as the erasure of the factoryType.
-      checkState(
-          types.isSameType(types.erasure(resolved), types.erasure(factoryType)),
-          "erased expected type: %s, erased actual type: %s",
-          types.erasure(resolved),
-          types.erasure(factoryType));
-      factoryType = resolved;
+    XType factoryType = factory.getType();
+    if (!factoryType.getTypeArguments().isEmpty() && resolvedFactoryType.isPresent()) {
+      checkIsSameErasedType(resolvedFactoryType.get(), factoryType);
+      factoryType = resolvedFactoryType.get();
     }
 
-    ExecutableElement factoryMethod =
-        AssistedInjectionAnnotations.assistedFactoryMethod(factory, elements);
-    ExecutableType factoryMethodType =
-        MoreTypes.asExecutable(types.asMemberOf(factoryType, factoryMethod));
+    XMethodElement factoryMethod = AssistedInjectionAnnotations.assistedFactoryMethod(factory);
+    XMethodType factoryMethodType = factoryMethod.asMemberOf(factoryType);
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .key(Key.builder(fromJava(factoryType)).build())
-        .bindingElement(factory)
+        .key(Key.builder(DaggerType.from(factoryType)).build())
+        .bindingElement(toJavac(factory))
         .provisionDependencies(
             ImmutableSet.of(
                 DependencyRequest.builder()
-                    .key(Key.builder(fromJava(factoryMethodType.getReturnType())).build())
+                    .key(Key.builder(DaggerType.from(factoryMethodType.getReturnType())).build())
                     .kind(RequestKind.PROVIDER)
                     .build()))
         .kind(ASSISTED_FACTORY)
         .build();
-  }
-
-  private DaggerType fromJava(TypeMirror typeMirror) {
-    return DaggerType.from(toXProcessing(typeMirror, processingEnv));
   }
 
   /**

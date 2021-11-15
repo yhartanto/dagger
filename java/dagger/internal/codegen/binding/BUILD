@@ -43,5 +43,6 @@ java_library(
         "//third_party/java/guava/graph",
         "//third_party/java/guava/util/concurrent",
         "//third_party/java/javapoet",
+        "@maven//:org_jetbrains_kotlin_kotlin_stdlib_jdk8",
     ],
 )

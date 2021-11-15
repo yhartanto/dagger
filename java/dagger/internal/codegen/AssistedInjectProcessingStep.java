@@ -26,7 +26,6 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedParameter;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
 import java.util.HashSet;
@@ -35,12 +34,10 @@ import javax.inject.Inject;
 
 /** An annotation processor for {@link dagger.assisted.AssistedInject}-annotated elements. */
 final class AssistedInjectProcessingStep extends TypeCheckingProcessingStep<XConstructorElement> {
-  private final DaggerTypes types;
   private final XMessager messager;
 
   @Inject
-  AssistedInjectProcessingStep(DaggerTypes types, XMessager messager) {
-    this.types = types;
+  AssistedInjectProcessingStep(XMessager messager) {
     this.messager = messager;
   }
 
@@ -61,7 +58,7 @@ final class AssistedInjectProcessingStep extends TypeCheckingProcessingStep<XCon
 
       XType assistedInjectType = constructor.getEnclosingElement().getType();
       ImmutableList<AssistedParameter> assistedParameters =
-          assistedInjectAssistedParameters(assistedInjectType, types);
+          assistedInjectAssistedParameters(assistedInjectType);
 
       Set<AssistedParameter> uniqueAssistedParameters = new HashSet<>();
       for (AssistedParameter assistedParameter : assistedParameters) {
@@ -72,7 +69,7 @@ final class AssistedInjectProcessingStep extends TypeCheckingProcessingStep<XCon
                       + " an identifier on the parameter by using @Assisted(\"identifier\") in both"
                       + " the factory and @AssistedInject constructor",
                   assistedParameter),
-              assistedParameter.variableElement());
+              assistedParameter.element());
         }
       }
 

@@ -16,18 +16,21 @@
 
 package dagger.internal.codegen.writing;
 
-import static com.google.auto.common.MoreElements.asType;
-import static com.google.auto.common.MoreTypes.asDeclared;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedFactoryMethod;
 import static dagger.internal.codegen.writing.AssistedInjectionParameters.assistedFactoryParameterSpecs;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
@@ -36,25 +39,19 @@ import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.BindingGraph;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
-import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.xprocessing.MethodSpecs;
 import dagger.spi.model.DependencyRequest;
 import java.util.Optional;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
 
 /**
  * A {@link dagger.internal.codegen.writing.RequestRepresentation} for {@link
  * dagger.assisted.AssistedFactory} methods.
  */
 final class AssistedFactoryRequestRepresentation extends RequestRepresentation {
+  private final XProcessingEnv processingEnv;
   private final ProvisionBinding binding;
   private final BindingGraph graph;
   private final SimpleMethodRequestRepresentation.Factory simpleMethodRequestRepresentationFactory;
-  private final DaggerElements elements;
-  private final DaggerTypes types;
   private final ComponentImplementation componentImplementation;
 
   @AssistedInject
@@ -63,14 +60,12 @@ final class AssistedFactoryRequestRepresentation extends RequestRepresentation {
       BindingGraph graph,
       ComponentImplementation componentImplementation,
       SimpleMethodRequestRepresentation.Factory simpleMethodRequestRepresentationFactory,
-      DaggerTypes types,
-      DaggerElements elements) {
+      XProcessingEnv processingEnv) {
     this.binding = checkNotNull(binding);
     this.graph = graph;
     this.componentImplementation = componentImplementation;
     this.simpleMethodRequestRepresentationFactory = simpleMethodRequestRepresentationFactory;
-    this.elements = elements;
-    this.types = types;
+    this.processingEnv = processingEnv;
   }
 
   @Override
@@ -93,16 +88,17 @@ final class AssistedFactoryRequestRepresentation extends RequestRepresentation {
 
   private TypeSpec anonymousfactoryImpl(
       Binding assistedBinding, Expression assistedInjectionExpression) {
-    TypeElement factory = asType(binding.bindingElement().get());
-    DeclaredType factoryType = asDeclared(binding.key().type().java());
-    ExecutableElement factoryMethod = assistedFactoryMethod(factory, elements);
+    XTypeElement factory =
+        asTypeElement(toXProcessing(binding.bindingElement().get(), processingEnv));
+    XType factoryType = binding.key().type().xprocessing();
+    XMethodElement factoryMethod = assistedFactoryMethod(factory);
 
     // We can't use MethodSpec.overriding directly because we need to control the parameter names.
-    MethodSpec factoryOverride = MethodSpec.overriding(factoryMethod, factoryType, types).build();
+    MethodSpec factoryOverride = MethodSpecs.overriding(factoryMethod, factoryType).build();
     TypeSpec.Builder builder =
         TypeSpec.anonymousClassBuilder("")
             .addMethod(
-                MethodSpec.methodBuilder(factoryMethod.getSimpleName().toString())
+                MethodSpec.methodBuilder(factoryMethod.getName())
                     .addModifiers(factoryOverride.modifiers)
                     .addTypeVariables(factoryOverride.typeVariables)
                     .returns(factoryOverride.returnType)
@@ -111,16 +107,15 @@ final class AssistedFactoryRequestRepresentation extends RequestRepresentation {
                     .addParameters(
                         assistedFactoryParameterSpecs(
                             binding,
-                            elements,
-                            types,
+                            processingEnv,
                             componentImplementation.shardImplementation(assistedBinding)))
                     .addStatement("return $L", assistedInjectionExpression.codeBlock())
                     .build());
 
-    if (factory.getKind() == ElementKind.INTERFACE) {
-      builder.addSuperinterface(TypeName.get(factoryType));
+    if (factory.isInterface()) {
+      builder.addSuperinterface(factoryType.getTypeName());
     } else {
-      builder.superclass(TypeName.get(factoryType));
+      builder.superclass(factoryType.getTypeName());
     }
 
     return builder.build();

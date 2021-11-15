@@ -16,27 +16,28 @@
 
 package dagger.internal.codegen.writing;
 
-import static com.google.auto.common.MoreElements.asExecutable;
-import static com.google.auto.common.MoreTypes.asDeclared;
-import static com.google.auto.common.MoreTypes.asExecutable;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 
+import androidx.room.compiler.processing.XConstructorElement;
+import androidx.room.compiler.processing.XConstructorType;
+import androidx.room.compiler.processing.XMethodType;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ParameterSpec;
-import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
 import dagger.internal.codegen.binding.AssistedInjectionAnnotations.AssistedFactoryMetadata;
 import dagger.internal.codegen.binding.Binding;
-import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.spi.model.BindingKind;
 import java.util.List;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.TypeMirror;
 
 /** Utility class for generating unique assisted parameter names for a component shard. */
 final class AssistedInjectionParameters {
@@ -48,16 +49,13 @@ final class AssistedInjectionParameters {
    * dagger.assisted.AssistedInject}-annotated constructor.
    */
   public static ImmutableList<ParameterSpec> assistedFactoryParameterSpecs(
-      Binding binding,
-      DaggerElements elements,
-      DaggerTypes types,
-      ShardImplementation shardImplementation) {
+      Binding binding, XProcessingEnv processingEnv, ShardImplementation shardImplementation) {
     checkArgument(binding.kind() == BindingKind.ASSISTED_FACTORY);
-    AssistedFactoryMetadata metadata =
-        AssistedFactoryMetadata.create(binding.bindingElement().get().asType(), elements, types);
-    ExecutableType factoryMethodType =
-        asExecutable(
-            types.asMemberOf(asDeclared(binding.key().type().java()), metadata.factoryMethod()));
+    XTypeElement factory =
+        asTypeElement(toXProcessing(binding.bindingElement().get(), processingEnv));
+    AssistedFactoryMetadata metadata = AssistedFactoryMetadata.create(factory.getType());
+    XMethodType factoryMethodType =
+        metadata.factoryMethod().asMemberOf(binding.key().type().xprocessing());
     return assistedParameterSpecs(
         // Use the order of the parameters from the @AssistedFactory method but use the parameter
         // names of the @AssistedInject constructor.
@@ -76,28 +74,28 @@ final class AssistedInjectionParameters {
    * dagger.assisted.AssistedInject}-annotated constructor.
    */
   public static ImmutableList<ParameterSpec> assistedParameterSpecs(
-      Binding binding, DaggerTypes types, ShardImplementation shardImplementation) {
+      Binding binding, XProcessingEnv processingEnv, ShardImplementation shardImplementation) {
     checkArgument(binding.kind() == BindingKind.ASSISTED_INJECTION);
-    ExecutableElement constructor = asExecutable(binding.bindingElement().get());
-    ExecutableType constructorType =
-        asExecutable(types.asMemberOf(asDeclared(binding.key().type().java()), constructor));
+    XConstructorElement constructor =
+        asConstructor(toXProcessing(binding.bindingElement().get(), processingEnv));
+    XConstructorType constructorType = constructor.asMemberOf(binding.key().type().xprocessing());
     return assistedParameterSpecs(
         constructor.getParameters(), constructorType.getParameterTypes(), shardImplementation);
   }
 
   private static ImmutableList<ParameterSpec> assistedParameterSpecs(
-      List<? extends VariableElement> paramElements,
-      List<? extends TypeMirror> paramTypes,
+      List<? extends XVariableElement> paramElements,
+      List<XType> paramTypes,
       ShardImplementation shardImplementation) {
     ImmutableList.Builder<ParameterSpec> assistedParameterSpecs = ImmutableList.builder();
     for (int i = 0; i < paramElements.size(); i++) {
-      VariableElement paramElement = paramElements.get(i);
-      TypeMirror paramType = paramTypes.get(i);
+      XVariableElement paramElement = paramElements.get(i);
+      XType paramType = paramTypes.get(i);
       if (AssistedInjectionAnnotations.isAssistedParameter(paramElement)) {
         assistedParameterSpecs.add(
             ParameterSpec.builder(
-                    TypeName.get(paramType),
-                    shardImplementation.getUniqueFieldNameForAssistedParam(paramElement))
+                    paramType.getTypeName(),
+                    shardImplementation.getUniqueFieldNameForAssistedParam(toJavac(paramElement)))
                 .build());
       }
     }

@@ -18,7 +18,6 @@ package dagger.internal.codegen;
 
 import static androidx.room.compiler.processing.XElementKt.isConstructor;
 import static androidx.room.compiler.processing.XElementKt.isMethod;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedFactoryMethod;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.langmodel.DaggerElements.closestEnclosingTypeElement;
@@ -33,7 +32,6 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.validation.TypeCheckingProcessingStep;
 import dagger.internal.codegen.validation.ValidationReport;
 import javax.inject.Inject;
@@ -45,18 +43,15 @@ import javax.inject.Inject;
  */
 final class AssistedProcessingStep extends TypeCheckingProcessingStep<XExecutableParameterElement> {
   private final InjectionAnnotations injectionAnnotations;
-  private final DaggerElements elements;
   private final XMessager messager;
   private final XProcessingEnv processingEnv;
 
   @Inject
   AssistedProcessingStep(
       InjectionAnnotations injectionAnnotations,
-      DaggerElements elements,
       XMessager messager,
       XProcessingEnv processingEnv) {
     this.injectionAnnotations = injectionAnnotations;
-    this.elements = elements;
     this.messager = messager;
     this.processingEnv = processingEnv;
   }
@@ -109,7 +104,7 @@ final class AssistedProcessingStep extends TypeCheckingProcessingStep<XExecutabl
       XTypeElement enclosingElement = closestEnclosingTypeElement(executableElement, processingEnv);
       return isAssistedFactoryType(enclosingElement)
           // This assumes we've already validated AssistedFactory and that a valid method exists.
-          && assistedFactoryMethod(enclosingElement, elements).equals(toJavac(executableElement));
+          && assistedFactoryMethod(enclosingElement).equals(executableElement);
     }
     return false;
   }
