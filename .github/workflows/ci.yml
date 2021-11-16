@@ -9,6 +9,7 @@ on:
       - master
 
 env:
+  USE_JAVA_DISTRIBUTION: 'zulu'
   # Our Bazel builds currently rely on JDK 8.
   USE_JAVA_VERSION: '8'
   # Our Bazel builds currently rely on 4.2.1. The version is set via
@@ -33,14 +34,16 @@ jobs:
           path: gh-pages
       - name: 'Validate latest Dagger version'
         run: ./gh-pages/.github/scripts/validate-latest-dagger-version.sh gh-pages/_config.yml
+        shell: bash
   bazel-build:
     name: 'Bazel build'
     needs: validate-latest-dagger-version
     runs-on: ubuntu-latest
     steps:
       - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
           java-version: '${{ env.USE_JAVA_VERSION }}'
       - name: 'Check out repository'
         uses: actions/checkout@v2
@@ -53,6 +56,7 @@ jobs:
             ${{ runner.os }}-bazel-build-
       - name: 'Java build'
         run: bazel build //java/...
+        shell: bash
       - name: 'Install local snapshot'
         run: ./util/install-local-snapshot.sh
         shell: bash
@@ -68,14 +72,16 @@ jobs:
         run: |
           rm -rf $(bazel info repository_cache)
           rm -rf ~/.cache/bazel/*/*/external/
+        shell: bash
   bazel-test:
     name: 'Bazel tests'
     needs: bazel-build
     runs-on: ubuntu-latest
     steps:
       - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
           java-version: '${{ env.USE_JAVA_VERSION }}'
       - name: 'Check out repository'
         uses: actions/checkout@v2
@@ -122,6 +128,7 @@ jobs:
         run: |
           rm -rf $(bazel info repository_cache)
           rm -rf ~/.cache/bazel/*/*/external/
+        shell: bash
   artifact-java-local-tests:
     name: 'Artifact Java local tests'
     needs: bazel-build
@@ -224,8 +231,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
           java-version: '${{ env.USE_JAVA_VERSION }}'
       - name: 'Check out repository'
         uses: actions/checkout@v2
@@ -272,6 +280,7 @@ jobs:
         run: |
           rm -rf $(bazel info repository_cache)
           rm -rf ~/.cache/bazel/*/*/external/
+        shell: bash
   artifact-android-emulator-legacy-api-tests:
     name: 'Artifact Android emulator tests (API ${{ matrix.api-level }})'
     # We only run this on master push (essentially a postsubmit) since these
@@ -323,9 +332,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
-        java-version: '${{ env.USE_JAVA_VERSION }}'
+          distribution: '${{ env.USE_JAVA_DISTRIBUTION }}'
+          java-version: '${{ env.USE_JAVA_VERSION }}'
     - name: 'Check out repository'
       uses: actions/checkout@v2
     - name: 'Cache local Maven repository'
@@ -355,6 +365,7 @@ jobs:
           ${{ runner.os }}-gradle-
     - name: 'Build and install Hilt Gradle plugin local snapshot'
       run: ./util/deploy-hilt-gradle-plugin.sh "install:install-file" "LOCAL-SNAPSHOT"
+      shell: bash
       env:
         AGP_VERSION: '+'
     - name: 'Clean bazel cache'
@@ -364,3 +375,4 @@ jobs:
       run: |
         rm -rf $(bazel info repository_cache)
         rm -rf ~/.cache/bazel/*/*/external/
+      shell: bash

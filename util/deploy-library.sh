@@ -23,8 +23,7 @@ deploy_library() {
   shift 8
   local extra_maven_args=("$@")
 
-  bazel build --define=pom_version="$version_name" \
-    $library $pomfile
+  bazel build --define=pom_version="$version_name" $library $pomfile
 
   # Shade the library if shaded_rules exist
   if [[ ! -z "$shaded_rules" ]]; then
