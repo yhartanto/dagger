@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import androidx.room.compiler.processing.XMethodElement;
@@ -61,7 +60,7 @@ abstract class OptionalBindingDeclaration extends BindingDeclaration {
       checkArgument(method.hasAnnotation(TypeNames.BINDS_OPTIONAL_OF));
       return new AutoValue_OptionalBindingDeclaration(
           Optional.of(method),
-          Optional.of(toJavac(contributingModule)),
+          Optional.of(contributingModule),
           keyFactory.forBindsOptionalOfMethod(method, contributingModule));
     }
   }

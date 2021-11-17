@@ -44,6 +44,31 @@ import java.util.Optional;
 /** A utility class for {@link XElement} helper methods. */
 public final class XElements {
 
+  /**
+   * Returns the closest enclosing element that is a {@link XTypeElement} or throws an {@link
+   * IllegalStateException} if one doesn't exists.
+   */
+  public static XTypeElement closestEnclosingTypeElement(XElement element) {
+    return optionalClosestEnclosingTypeElement(element)
+        .orElseThrow(() -> new IllegalStateException("No enclosing TypeElement for: " + element));
+  }
+
+  private static Optional<XTypeElement> optionalClosestEnclosingTypeElement(XElement element) {
+    if (isTypeElement(element)) {
+      return Optional.of(asTypeElement(element));
+    } else if (isConstructor(element)) {
+      return Optional.of(asConstructor(element).getEnclosingElement());
+    } else if (isMethod(element)) {
+      return optionalClosestEnclosingTypeElement(asMethod(element).getEnclosingElement());
+    } else if (isField(element)) {
+      return optionalClosestEnclosingTypeElement(asField(element).getEnclosingElement());
+    } else if (isMethodParameter(element)) {
+      return optionalClosestEnclosingTypeElement(
+          asMethodParameter(element).getEnclosingMethodElement());
+    }
+    return Optional.empty();
+  }
+
   public static boolean isExecutable(XElement element) {
     return isConstructor(element) || isMethod(element);
   }

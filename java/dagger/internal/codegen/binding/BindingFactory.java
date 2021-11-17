@@ -75,7 +75,6 @@ import dagger.internal.codegen.base.SetType;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.ProductionBinding.ProductionKind;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.DaggerType;
@@ -97,7 +96,6 @@ public final class BindingFactory {
   private final DependencyRequestFactory dependencyRequestFactory;
   private final InjectionSiteFactory injectionSiteFactory;
   private final InjectionAnnotations injectionAnnotations;
-  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
   BindingFactory(
@@ -106,15 +104,13 @@ public final class BindingFactory {
       KeyFactory keyFactory,
       DependencyRequestFactory dependencyRequestFactory,
       InjectionSiteFactory injectionSiteFactory,
-      InjectionAnnotations injectionAnnotations,
-      KotlinMetadataUtil metadataUtil) {
+      InjectionAnnotations injectionAnnotations) {
     this.processingEnv = processingEnv;
     this.types = types;
     this.keyFactory = keyFactory;
     this.dependencyRequestFactory = dependencyRequestFactory;
     this.injectionSiteFactory = injectionSiteFactory;
     this.injectionAnnotations = injectionAnnotations;
-    this.metadataUtil = metadataUtil;
   }
 
   /**
@@ -280,14 +276,10 @@ public final class BindingFactory {
     if (!types.isSameType(methodType, method.asType())) {
       builder.unresolved(create.apply(method, MoreElements.asType(method.getEnclosingElement())));
     }
-    boolean isKotlinObject =
-        metadataUtil.isObjectClass(contributedBy)
-            || metadataUtil.isCompanionObjectClass(contributedBy);
     return builder
         .contributionType(ContributionType.fromBindingElement(method))
         .bindingElement(toXProcessing(method, processingEnv))
-        .contributingModule(contributedBy)
-        .isContributingModuleKotlinObject(isKotlinObject)
+        .contributingModule(toXProcessing(contributedBy, processingEnv))
         .key(key)
         .dependencies(
             dependencyRequestFactory.forRequiredResolvedVariables(
@@ -500,14 +492,10 @@ public final class BindingFactory {
       ContributionBinding.Builder<?, ?> builder,
       DelegateDeclaration delegateDeclaration,
       ClassName frameworkType) {
-    boolean isKotlinObject =
-        metadataUtil.isObjectClass(delegateDeclaration.contributingModule().get())
-            || metadataUtil.isCompanionObjectClass(delegateDeclaration.contributingModule().get());
     return builder
         .contributionType(delegateDeclaration.contributionType())
         .bindingElement(delegateDeclaration.bindingElement().get())
         .contributingModule(delegateDeclaration.contributingModule().get())
-        .isContributingModuleKotlinObject(isKotlinObject)
         .key(keyFactory.forDelegateBinding(delegateDeclaration, frameworkType))
         .dependencies(delegateDeclaration.delegateRequest())
         .wrappedMapKeyAnnotation(delegateDeclaration.wrappedMapKey())

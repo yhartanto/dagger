@@ -25,6 +25,7 @@ import static javax.lang.model.type.TypeKind.DECLARED;
 import static javax.lang.model.type.TypeKind.EXECUTABLE;
 
 import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
@@ -84,6 +85,7 @@ public final class BindingDeclarationFormatter extends Formatter<BindingDeclarat
               MoreElements.asExecutable(bindingElement),
               bindingDeclaration
                   .contributingModule()
+                  .map(XConverters::toJavac)
                   .map(module -> MoreTypes.asDeclared(module.asType())));
 
         case DECLARED:

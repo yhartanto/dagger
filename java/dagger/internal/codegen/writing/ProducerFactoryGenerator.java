@@ -137,7 +137,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
                     factoryBuilder,
                     constructorBuilder,
                     uniqueFieldNames.getUniqueName("module"),
-                    TypeName.get(binding.bindingTypeElement().get().asType())))
+                    binding.bindingTypeElement().get().getType().getTypeName()))
             : Optional.empty();
 
     List<CodeBlock> frameworkFieldAssignments = new ArrayList<>();
@@ -295,7 +295,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
                 "$S",
                 String.format(
                     "%s#%s",
-                    ClassName.get(binding.bindingTypeElement().get()),
+                    binding.bindingTypeElement().get().getClassName(),
                     toJavac(binding.bindingElement().get()).getSimpleName()))
             : CodeBlock.of("$T.class", generatedTypeName);
     return CodeBlock.of("$T.create($L)", PRODUCER_TOKEN, producerTokenArgs);
@@ -523,7 +523,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
             "$L.$L($L)",
             binding.requiresModuleInstance()
                 ? "module"
-                : CodeBlock.of("$T", ClassName.get(binding.bindingTypeElement().get())),
+                : CodeBlock.of("$T", binding.bindingTypeElement().get().getClassName()),
             toJavac(binding.bindingElement().get()).getSimpleName(),
             makeParametersCodeBlock(parameterCodeBlocks));
 

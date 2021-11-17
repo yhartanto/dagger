@@ -21,10 +21,10 @@ import static dagger.internal.codegen.base.MoreAnnotationMirrors.unwrapOptionalE
 import static java.util.Arrays.asList;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
-import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import dagger.internal.codegen.base.ContributionType;
@@ -37,7 +37,6 @@ import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
@@ -67,7 +66,7 @@ public abstract class ContributionBinding extends Binding implements HasContribu
 
   @Override
   public boolean requiresModuleInstance() {
-    return !isContributingModuleKotlinObject().orElse(false) && super.requiresModuleInstance();
+    return !isContributingModuleKotlinObject() && super.requiresModuleInstance();
   }
 
   @Override
@@ -79,7 +78,11 @@ public abstract class ContributionBinding extends Binding implements HasContribu
    * Returns {@code true} if the contributing module is a Kotlin object. Note that a companion
    * object is also considered a Kotlin object.
    */
-  abstract Optional<Boolean> isContributingModuleKotlinObject();
+  private boolean isContributingModuleKotlinObject() {
+    return contributingModule().isPresent()
+        && (contributingModule().get().isKotlinObject()
+            || contributingModule().get().isCompanionObject());
+  }
 
   /**
    * The {@link TypeMirror type} for the {@code Factory<T>} or {@code Producer<T>} which is created
@@ -125,9 +128,7 @@ public abstract class ContributionBinding extends Binding implements HasContribu
       return bindingElement(Optional.empty());
     };
 
-    abstract B contributingModule(TypeElement contributingModule);
-
-    abstract B isContributingModuleKotlinObject(boolean isModuleKotlinObject);
+    abstract B contributingModule(XTypeElement contributingModule);
 
     public abstract B key(Key key);
 
@@ -139,16 +140,6 @@ public abstract class ContributionBinding extends Binding implements HasContribu
     public abstract B kind(BindingKind kind);
 
     @CheckReturnValue
-    abstract C autoBuild();
-
-    @CheckReturnValue
-    public C build() {
-      C binding = autoBuild();
-      Preconditions.checkState(
-          binding.contributingModule().isPresent()
-              == binding.isContributingModuleKotlinObject().isPresent(),
-          "The contributionModule and isModuleKotlinObject must both be set together.");
-      return binding;
-    }
+    abstract C build();
   }
 }

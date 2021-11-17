@@ -34,7 +34,6 @@ import javax.inject.Inject;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 
 /** Represents the full members injection of a particular type. */
@@ -61,7 +60,7 @@ public abstract class MembersInjectionBinding extends Binding {
   public abstract Optional<MembersInjectionBinding> unresolved();
 
   @Override
-  public Optional<TypeElement> contributingModule() {
+  public Optional<XTypeElement> contributingModule() {
     return Optional.empty();
   }
 

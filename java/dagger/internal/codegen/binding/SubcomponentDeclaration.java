@@ -81,7 +81,7 @@ public abstract class SubcomponentDeclaration extends BindingDeclaration {
         declarations.add(
             new AutoValue_SubcomponentDeclaration(
                 Optional.of(subcomponentAttribute),
-                Optional.of(toJavac(module)),
+                Optional.of(module),
                 keyFactory.forSubcomponentCreator(
                     toJavac(getSubcomponentCreator(subcomponent).get().getType())),
                 subcomponent,

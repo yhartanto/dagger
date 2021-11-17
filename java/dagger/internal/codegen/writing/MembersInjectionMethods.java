@@ -44,7 +44,6 @@ import dagger.spi.model.Key;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.inject.Inject;
-import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
@@ -107,7 +106,7 @@ final class MembersInjectionMethods {
             ? keyType
             : elements.getTypeElement(TypeName.OBJECT).asType();
     TypeName membersInjectedTypeName = TypeName.get(membersInjectedType);
-    Name bindingTypeName = binding.bindingTypeElement().get().getSimpleName();
+    String bindingTypeName = binding.bindingTypeElement().get().getName();
     // TODO(ronshapiro): include type parameters in this name e.g. injectFooOfT, and outer class
     // simple names Foo.Builder -> injectFooBuilder
     String methodName = shardImplementation.getUniqueMethodName("inject" + bindingTypeName);

@@ -24,7 +24,6 @@ import static dagger.internal.codegen.extension.DaggerGraphs.unreachableNodes;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.spi.model.BindingKind.SUBCOMPONENT_CREATOR;
 
-import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
@@ -60,13 +59,10 @@ import javax.lang.model.type.TypeMirror;
 
 /** Converts {@link BindingGraph}s to {@link dagger.spi.model.BindingGraph}s. */
 final class BindingGraphConverter {
-  private final XProcessingEnv processingEnv;
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
 
   @Inject
-  BindingGraphConverter(
-      XProcessingEnv processingEnv, BindingDeclarationFormatter bindingDeclarationFormatter) {
-    this.processingEnv = processingEnv;
+  BindingGraphConverter(BindingDeclarationFormatter bindingDeclarationFormatter) {
     this.bindingDeclarationFormatter = bindingDeclarationFormatter;
   }
 
@@ -192,7 +188,7 @@ final class BindingGraphConverter {
                 binding,
                 subcomponentNode(binding.key().type().java(), graph),
                 new SubcomponentCreatorBindingEdgeImpl(
-                    processingEnv, resolvedBindings.subcomponentDeclarations()));
+                    resolvedBindings.subcomponentDeclarations()));
           }
         }
       }
@@ -357,7 +353,6 @@ final class BindingGraphConverter {
     private BindingNode bindingNode(
         ResolvedBindings resolvedBindings, Binding binding, TypeElement owningComponent) {
       return BindingNode.create(
-          processingEnv,
           pathFromRootToAncestor(owningComponent),
           binding,
           resolvedBindings.multibindingDeclarations(),

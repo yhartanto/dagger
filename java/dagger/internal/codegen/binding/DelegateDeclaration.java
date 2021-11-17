@@ -77,7 +77,7 @@ public abstract class DelegateDeclaration extends BindingDeclaration
           ContributionType.fromBindingElement(bindsMethod),
           keyFactory.forBindsMethod(bindsMethod, contributingModule),
           Optional.<XElement>of(bindsMethod),
-          Optional.of(toJavac(contributingModule)),
+          Optional.of(contributingModule),
           delegateRequest,
           wrapOptionalInEquivalence(getMapKey(toJavac(bindsMethod))));
     }

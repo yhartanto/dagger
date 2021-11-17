@@ -25,6 +25,7 @@ import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod.requiresInjectionMethod;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -42,7 +43,6 @@ import dagger.internal.codegen.writing.InjectionMethods.ProvisionMethod;
 import dagger.spi.model.DependencyRequest;
 import java.util.Optional;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
@@ -114,9 +114,11 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
         } else if (metadataUtil.isObjectClass(asType(method.getEnclosingElement()))) {
           // Call through the singleton instance.
           // See: https://kotlinlang.org/docs/reference/java-to-kotlin-interop.html#static-methods
-          module = CodeBlock.of("$T.INSTANCE", provisionBinding.bindingTypeElement().get());
+          module =
+              CodeBlock.of(
+                  "$T.INSTANCE", provisionBinding.bindingTypeElement().get().getClassName());
         } else {
-          module = CodeBlock.of("$T", provisionBinding.bindingTypeElement().get());
+          module = CodeBlock.of("$T", provisionBinding.bindingTypeElement().get().getClassName());
         }
         invocation = CodeBlock.of("$L.$L($L)", module, method.getSimpleName(), arguments);
         break;
@@ -178,7 +180,7 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
     return provisionBinding.requiresModuleInstance()
         ? provisionBinding
             .contributingModule()
-            .map(Element::asType)
+            .map(XTypeElement::getType)
             .map(ComponentRequirement::forModule)
             .map(module -> componentRequirementExpressions.getExpression(module, requestingClass))
         : Optional.empty();

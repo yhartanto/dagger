@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import androidx.room.compiler.processing.XMethodElement;
@@ -93,7 +92,7 @@ public abstract class MultibindingDeclaration extends BindingDeclaration
           method);
       return new AutoValue_MultibindingDeclaration(
           Optional.of(method),
-          Optional.of(toJavac(contributingType)),
+          Optional.of(contributingType),
           keyFactory.forMultibindsMethod(method, methodType),
           contributionType(returnType));
     }
