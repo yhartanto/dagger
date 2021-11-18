@@ -75,7 +75,7 @@ jobs:
         shell: bash
   bazel-test:
     name: 'Bazel tests'
-    needs: bazel-build
+    needs: validate-latest-dagger-version
     runs-on: ubuntu-latest
     steps:
       - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'
@@ -104,7 +104,6 @@ jobs:
           key: ${{ runner.os }}-bazel-test-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-bazel-test-
-            ${{ runner.os }}-bazel-build-${{ github.sha }}
             ${{ runner.os }}-bazel-build-
       - name: 'Cache Gradle files'
         uses: actions/cache@v2
