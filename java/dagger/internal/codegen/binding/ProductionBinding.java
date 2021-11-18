@@ -20,6 +20,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
 
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
@@ -31,7 +32,6 @@ import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.lang.model.type.TypeMirror;
 
 /** A value object representing the mechanism by which a {@link Key} can be produced. */
 @AutoValue
@@ -84,7 +84,7 @@ public abstract class ProductionBinding extends ContributionBinding {
   public abstract Optional<ProductionKind> productionKind();
 
   /** Returns the list of types in the throws clause of the method. */
-  public abstract ImmutableList<? extends TypeMirror> thrownTypes();
+  public abstract ImmutableList<XType> thrownTypes();
 
   /**
    * If this production requires an executor, this will be the corresponding request.  All
@@ -110,7 +110,7 @@ public abstract class ProductionBinding extends ContributionBinding {
   public static Builder builder() {
     return new AutoValue_ProductionBinding.Builder()
         .explicitDependencies(ImmutableList.<DependencyRequest>of())
-        .thrownTypes(ImmutableList.<TypeMirror>of());
+        .thrownTypes(ImmutableList.<XType>of());
   }
 
   @Override
@@ -142,7 +142,7 @@ public abstract class ProductionBinding extends ContributionBinding {
     @Override
     public abstract Builder unresolved(ProductionBinding unresolved);
 
-    abstract Builder thrownTypes(Iterable<? extends TypeMirror> thrownTypes);
+    abstract Builder thrownTypes(Iterable<XType> thrownTypes);
 
     abstract Builder executorRequest(DependencyRequest executorRequest);
 

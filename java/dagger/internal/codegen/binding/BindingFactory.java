@@ -17,10 +17,10 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.XElementKt.isMethod;
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
 import static androidx.room.compiler.processing.XElementKt.isVariableElement;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
-import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -32,6 +32,7 @@ import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullab
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.asVariable;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.spi.model.BindingKind.ASSISTED_FACTORY;
@@ -48,7 +49,6 @@ import static dagger.spi.model.BindingKind.OPTIONAL;
 import static dagger.spi.model.BindingKind.PRODUCTION;
 import static dagger.spi.model.BindingKind.PROVISION;
 import static dagger.spi.model.BindingKind.SUBCOMPONENT_CREATOR;
-import static javax.lang.model.element.ElementKind.METHOD;
 
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XConstructorType;
@@ -60,9 +60,6 @@ import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
-import androidx.room.compiler.processing.compat.XConverters;
-import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -84,9 +81,6 @@ import dagger.spi.model.RequestKind;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import javax.inject.Inject;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.ExecutableType;
 
 /** A factory for {@link Binding} objects. */
 public final class BindingFactory {
@@ -202,17 +196,6 @@ public final class BindingFactory {
    */
   public ProvisionBinding providesMethodBinding(
       XMethodElement providesMethod, XTypeElement contributedBy) {
-    return providesMethodBinding(toJavac(providesMethod), toJavac(contributedBy));
-  }
-
-  /**
-   * Returns a {@link dagger.spi.model.BindingKind#PROVISION} binding for a
-   * {@code @Provides}-annotated method.
-   *
-   * @param contributedBy the installed module that declares or inherits the method
-   */
-  public ProvisionBinding providesMethodBinding(
-      ExecutableElement providesMethod, TypeElement contributedBy) {
     return setMethodBindingProperties(
             ProvisionBinding.builder(),
             providesMethod,
@@ -220,7 +203,7 @@ public final class BindingFactory {
             keyFactory.forProvidesMethod(providesMethod, contributedBy),
             this::providesMethodBinding)
         .kind(PROVISION)
-        .scope(uniqueScopeOf(toXProcessing(providesMethod, processingEnv)))
+        .scope(uniqueScopeOf(providesMethod))
         .nullableType(getNullableType(providesMethod))
         .build();
   }
@@ -233,17 +216,6 @@ public final class BindingFactory {
    */
   public ProductionBinding producesMethodBinding(
       XMethodElement producesMethod, XTypeElement contributedBy) {
-    return producesMethodBinding(toJavac(producesMethod), toJavac(contributedBy));
-  }
-
-  /**
-   * Returns a {@link dagger.spi.model.BindingKind#PRODUCTION} binding for a
-   * {@code @Produces}-annotated method.
-   *
-   * @param contributedBy the installed module that declares or inherits the method
-   */
-  public ProductionBinding producesMethodBinding(
-      ExecutableElement producesMethod, TypeElement contributedBy) {
     // TODO(beder): Add nullability checking with Java 8.
     ProductionBinding.Builder builder =
         setMethodBindingProperties(
@@ -253,9 +225,7 @@ public final class BindingFactory {
                 keyFactory.forProducesMethod(producesMethod, contributedBy),
                 this::producesMethodBinding)
             .kind(PRODUCTION)
-            .productionKind(
-                ProductionKind.fromProducesMethod(
-                    asMethod(toXProcessing(producesMethod, processingEnv))))
+            .productionKind(ProductionKind.fromProducesMethod(producesMethod))
             .thrownTypes(producesMethod.getThrownTypes())
             .executorRequest(dependencyRequestFactory.forProductionImplementationExecutor())
             .monitorRequest(dependencyRequestFactory.forProductionComponentMonitor());
@@ -265,24 +235,22 @@ public final class BindingFactory {
   private <C extends ContributionBinding, B extends ContributionBinding.Builder<C, B>>
       B setMethodBindingProperties(
           B builder,
-          ExecutableElement method,
-          TypeElement contributedBy,
+          XMethodElement method,
+          XTypeElement contributedBy,
           Key key,
-          BiFunction<ExecutableElement, TypeElement, C> create) {
-    checkArgument(method.getKind().equals(METHOD));
-    ExecutableType methodType =
-        MoreTypes.asExecutable(
-            types.asMemberOf(MoreTypes.asDeclared(contributedBy.asType()), method));
-    if (!types.isSameType(methodType, method.asType())) {
-      builder.unresolved(create.apply(method, MoreElements.asType(method.getEnclosingElement())));
+          BiFunction<XMethodElement, XTypeElement, C> create) {
+    XMethodType methodType = method.asMemberOf(contributedBy.getType());
+    if (!types.isSameType(toJavac(methodType), toJavac(method.getExecutableType()))) {
+      checkState(isTypeElement(method.getEnclosingElement()));
+      builder.unresolved(create.apply(method, asTypeElement(method.getEnclosingElement())));
     }
     return builder
         .contributionType(ContributionType.fromBindingElement(method))
-        .bindingElement(toXProcessing(method, processingEnv))
-        .contributingModule(toXProcessing(contributedBy, processingEnv))
+        .bindingElement(method)
+        .contributingModule(contributedBy)
         .key(key)
         .dependencies(
-            dependencyRequestFactory.forRequiredResolvedVariables(
+            dependencyRequestFactory.forRequiredResolvedXVariables(
                 method.getParameters(), methodType.getParameterTypes()))
         .wrappedMapKeyAnnotation(wrapOptionalInEquivalence(getMapKey(method)));
   }
@@ -368,8 +336,7 @@ public final class BindingFactory {
    *     method
    */
   public ContributionBinding componentDependencyMethodBinding(
-      ComponentDescriptor componentDescriptor, ExecutableElement dependencyMethod) {
-    checkArgument(dependencyMethod.getKind().equals(METHOD));
+      ComponentDescriptor componentDescriptor, XMethodElement dependencyMethod) {
     checkArgument(dependencyMethod.getParameters().isEmpty());
     ContributionBinding.Builder<?, ?> builder;
     if (componentDescriptor.isProduction() && isComponentProductionMethod(dependencyMethod)) {
@@ -384,11 +351,11 @@ public final class BindingFactory {
               .key(keyFactory.forComponentMethod(dependencyMethod))
               .nullableType(getNullableType(dependencyMethod))
               .kind(COMPONENT_PROVISION)
-              .scope(uniqueScopeOf(toXProcessing(dependencyMethod, processingEnv)));
+              .scope(uniqueScopeOf(dependencyMethod));
     }
     return builder
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(toXProcessing(dependencyMethod, processingEnv))
+        .bindingElement(dependencyMethod)
         .build();
   }
 
@@ -406,8 +373,7 @@ public final class BindingFactory {
         .contributionType(ContributionType.UNIQUE)
         .bindingElement(element)
         .key(requirement.key().get())
-        .nullableType(
-            getNullableType(parameterElement).map(XConverters::toJavac).map(MoreTypes::asDeclared))
+        .nullableType(getNullableType(parameterElement))
         .kind(BOUND_INSTANCE)
         .build();
   }
@@ -421,15 +387,13 @@ public final class BindingFactory {
    * @param component the component that declares or inherits the method
    */
   ProvisionBinding subcomponentCreatorBinding(
-      ExecutableElement subcomponentCreatorMethod, TypeElement component) {
-    checkArgument(subcomponentCreatorMethod.getKind().equals(METHOD));
+      XMethodElement subcomponentCreatorMethod, XTypeElement component) {
     checkArgument(subcomponentCreatorMethod.getParameters().isEmpty());
     Key key =
-        keyFactory.forSubcomponentCreatorMethod(
-            subcomponentCreatorMethod, asDeclared(component.asType()));
+        keyFactory.forSubcomponentCreatorMethod(subcomponentCreatorMethod, component.getType());
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(toXProcessing(subcomponentCreatorMethod, processingEnv))
+        .bindingElement(subcomponentCreatorMethod)
         .key(key)
         .kind(SUBCOMPONENT_CREATOR)
         .build();

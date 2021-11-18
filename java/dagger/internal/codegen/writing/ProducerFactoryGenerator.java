@@ -41,6 +41,7 @@ import static dagger.internal.codegen.javapoet.TypeNames.listenableFutureOf;
 import static dagger.internal.codegen.javapoet.TypeNames.producedOf;
 import static dagger.internal.codegen.writing.GwtCompatibility.gwtIncompatibleAnnotation;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PROTECTED;
@@ -49,7 +50,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
-import com.google.common.collect.FluentIterable;
+import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -85,7 +86,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.type.TypeMirror;
 
 /** Generates {@link Producer} implementations from {@link ProductionBinding} instances. */
 public final class ProducerFactoryGenerator extends SourceFileGenerator<ProductionBinding> {
@@ -206,7 +206,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
             .addAnnotation(Override.class)
             .addModifiers(PUBLIC)
             .addParameter(futureTransform.applyArgType(), futureTransform.applyArgName())
-            .addExceptions(getThrownTypeNames(binding.thrownTypes()))
+            .addExceptions(binding.thrownTypes().stream().map(XType::getTypeName).collect(toList()))
             .addCode(
                 getInvocationCodeBlock(
                     binding, providedTypeName, futureTransform.parameterCodeBlocks()));
@@ -543,16 +543,6 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
         throw new AssertionError();
     }
     return CodeBlock.of("return $L;", returnCodeBlock);
-  }
-
-  /**
-   * Converts the list of thrown types into type names.
-   *
-   * @param thrownTypes the list of thrown types.
-   */
-  private FluentIterable<? extends TypeName> getThrownTypeNames(
-      Iterable<? extends TypeMirror> thrownTypes) {
-    return FluentIterable.from(thrownTypes).transform(TypeName::get);
   }
 
   @Override

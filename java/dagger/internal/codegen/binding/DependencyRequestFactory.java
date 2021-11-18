@@ -26,6 +26,7 @@ import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.base.RequestKinds.frameworkClassName;
 import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 import static dagger.spi.model.RequestKind.FUTURE;
@@ -80,6 +81,13 @@ public final class DependencyRequestFactory {
     this.processingEnv = processingEnv;
     this.keyFactory = keyFactory;
     this.injectionAnnotations = injectionAnnotations;
+  }
+
+  ImmutableSet<DependencyRequest> forRequiredResolvedXVariables(
+      List<? extends XVariableElement> variables, List<XType> resolvedTypes) {
+    return forRequiredResolvedVariables(
+        variables.stream().map(XConverters::toJavac).collect(toImmutableList()),
+        resolvedTypes.stream().map(XConverters::toJavac).collect(toImmutableList()));
   }
 
   ImmutableSet<DependencyRequest> forRequiredResolvedVariables(

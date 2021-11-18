@@ -31,7 +31,6 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.XMethodElement;
-import com.google.auto.common.MoreTypes;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
@@ -101,7 +100,7 @@ final class DependencyMethodProviderCreationExpression
             .returns(keyType)
             .addStatement("return $L", invocation);
     if (binding.nullableType().isPresent()) {
-      getMethod.addAnnotation(ClassName.get(MoreTypes.asTypeElement(binding.nullableType().get())));
+      getMethod.addAnnotation(binding.nullableType().get().getTypeElement().getClassName());
     }
 
     // We need to use the componentShard here since the generated type is static and shards are

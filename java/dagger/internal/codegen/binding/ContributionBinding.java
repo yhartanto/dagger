@@ -21,6 +21,7 @@ import static dagger.internal.codegen.base.MoreAnnotationMirrors.unwrapOptionalE
 import static java.util.Arrays.asList;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
@@ -37,7 +38,6 @@ import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /**
@@ -47,7 +47,7 @@ import javax.lang.model.type.TypeMirror;
 public abstract class ContributionBinding extends Binding implements HasContributionType {
 
   /** Returns the type that specifies this' nullability, absent if not nullable. */
-  public abstract Optional<DeclaredType> nullableType();
+  public abstract Optional<XType> nullableType();
 
   public abstract Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKeyAnnotation();
 
@@ -132,7 +132,7 @@ public abstract class ContributionBinding extends Binding implements HasContribu
 
     public abstract B key(Key key);
 
-    public abstract B nullableType(Optional<DeclaredType> nullableType);
+    public abstract B nullableType(Optional<XType> nullableType);
 
     abstract B wrappedMapKeyAnnotation(
         Optional<Equivalence.Wrapper<AnnotationMirror>> wrappedMapKeyAnnotation);

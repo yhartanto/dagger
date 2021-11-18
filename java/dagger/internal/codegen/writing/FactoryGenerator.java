@@ -44,6 +44,8 @@ import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -61,7 +63,6 @@ import dagger.internal.codegen.base.UniqueNameSet;
 import dagger.internal.codegen.binding.Binding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
-import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
@@ -264,7 +265,9 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
     if (binding.kind().equals(PROVISION)) {
       binding
           .nullableType()
-          .ifPresent(nullableType -> CodeBlocks.addAnnotation(getMethod, nullableType));
+          .map(XType::getTypeElement)
+          .map(XTypeElement::getClassName)
+          .ifPresent(getMethod::addAnnotation);
       getMethod.addStatement("return $L", invokeNewInstance);
     } else if (!binding.injectionSites().isEmpty()) {
       CodeBlock instance = CodeBlock.of("instance");

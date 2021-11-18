@@ -66,6 +66,16 @@ public final class MapKeys {
    * @throws IllegalArgumentException if the element is annotated with more than one {@code MapKey}
    *     annotation
    */
+  static Optional<AnnotationMirror> getMapKey(XElement bindingElement) {
+    return getMapKey(toJavac(bindingElement));
+  }
+
+  /**
+   * If {@code bindingElement} is annotated with a {@link MapKey} annotation, returns it.
+   *
+   * @throws IllegalArgumentException if the element is annotated with more than one {@code MapKey}
+   *     annotation
+   */
   static Optional<AnnotationMirror> getMapKey(Element bindingElement) {
     ImmutableSet<? extends AnnotationMirror> mapKeys = getMapKeys(bindingElement);
     return mapKeys.isEmpty()

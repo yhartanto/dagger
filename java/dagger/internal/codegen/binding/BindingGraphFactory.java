@@ -17,6 +17,7 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.auto.common.MoreTypes.isTypeOf;
@@ -28,6 +29,7 @@ import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAss
 import static dagger.internal.codegen.binding.ComponentDescriptor.isComponentContributionMethod;
 import static dagger.internal.codegen.binding.SourceFiles.generatedMonitoringModuleName;
 import static dagger.internal.codegen.langmodel.DaggerElements.checkTypePresent;
+import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.spi.model.BindingKind.ASSISTED_INJECTION;
 import static dagger.spi.model.BindingKind.DELEGATE;
 import static dagger.spi.model.BindingKind.INJECTION;
@@ -153,8 +155,9 @@ public final class BindingGraphFactory implements ClearableCache {
       for (ExecutableElement method : dependencyMethods) {
         // MembersInjection methods aren't "provided" explicitly, so ignore them.
         if (isComponentContributionMethod(method)) {
-          ContributionBinding binding = bindingFactory.componentDependencyMethodBinding(
-              componentDescriptor, method);
+          ContributionBinding binding =
+              bindingFactory.componentDependencyMethodBinding(
+                  componentDescriptor, asMethod(toXProcessing(method, processingEnv)));
           if (dedupeBindings.put(
               method.getSimpleName().toString(),
               // Remove the binding element since we know that will be different, but everything
@@ -187,8 +190,8 @@ public final class BindingGraphFactory implements ClearableCache {
                   .contains(childComponent)) {
                 explicitBindingsBuilder.add(
                     bindingFactory.subcomponentCreatorBinding(
-                        builderEntryPoint.methodElement(),
-                        toJavac(componentDescriptor.typeElement())));
+                        asMethod(toXProcessing(builderEntryPoint.methodElement(), processingEnv)),
+                        componentDescriptor.typeElement()));
               }
             });
 

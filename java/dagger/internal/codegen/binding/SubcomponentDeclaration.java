@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getSubcomponentCreator;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 
@@ -83,7 +82,7 @@ public abstract class SubcomponentDeclaration extends BindingDeclaration {
                 Optional.of(subcomponentAttribute),
                 Optional.of(module),
                 keyFactory.forSubcomponentCreator(
-                    toJavac(getSubcomponentCreator(subcomponent).get().getType())),
+                    getSubcomponentCreator(subcomponent).get().getType()),
                 subcomponent,
                 moduleAnnotation));
       }

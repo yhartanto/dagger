@@ -413,7 +413,7 @@ public abstract class ComponentDescriptor {
   }
 
   /** Returns {@code true} if a method could be a component production entry point. */
-  static boolean isComponentProductionMethod(ExecutableElement method) {
+  static boolean isComponentProductionMethod(XMethodElement method) {
     return isComponentContributionMethod(method) && isFutureType(method.getReturnType());
   }
 }

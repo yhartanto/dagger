@@ -18,7 +18,6 @@ package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
-import static com.google.auto.common.MoreTypes.asExecutable;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -32,6 +31,7 @@ import static dagger.internal.codegen.extension.Optionals.firstPresent;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static java.util.Arrays.asList;
 import static javax.lang.model.element.ElementKind.METHOD;
 
@@ -125,39 +125,38 @@ public final class KeyFactory {
             elements.getTypeElement(frameworkClassName), boxPrimitives(valueType)));
   }
 
-  Key forComponentMethod(ExecutableElement componentMethod) {
-    checkArgument(componentMethod.getKind().equals(METHOD));
+  Key forComponentMethod(XMethodElement componentMethod) {
     return forMethod(componentMethod, componentMethod.getReturnType());
   }
 
-  Key forProductionComponentMethod(ExecutableElement componentMethod) {
-    checkArgument(componentMethod.getKind().equals(METHOD));
-    TypeMirror returnType = componentMethod.getReturnType();
-    TypeMirror keyType =
-        isFutureType(returnType)
-            ? getOnlyElement(MoreTypes.asDeclared(returnType).getTypeArguments())
-            : returnType;
+  Key forProductionComponentMethod(XMethodElement componentMethod) {
+    XType returnType = componentMethod.getReturnType();
+    XType keyType =
+        isFutureType(returnType) ? getOnlyElement(returnType.getTypeArguments()) : returnType;
     return forMethod(componentMethod, keyType);
   }
 
   Key forSubcomponentCreatorMethod(
-      ExecutableElement subcomponentCreatorMethod, DeclaredType declaredContainer) {
-    checkArgument(subcomponentCreatorMethod.getKind().equals(METHOD));
-    ExecutableType resolvedMethod =
-        asExecutable(types.asMemberOf(declaredContainer, subcomponentCreatorMethod));
-    return Key.builder(fromJava(resolvedMethod.getReturnType())).build();
+      XMethodElement subcomponentCreatorMethod, XType declaredContainer) {
+    checkArgument(isDeclared(declaredContainer));
+    XMethodType resolvedMethod = subcomponentCreatorMethod.asMemberOf(declaredContainer);
+    return Key.builder(DaggerType.from(resolvedMethod.getReturnType())).build();
   }
 
   public Key forSubcomponentCreator(XType creatorType) {
-    return forSubcomponentCreator(toJavac(creatorType));
+    return Key.builder(DaggerType.from(creatorType)).build();
   }
 
-  public Key forSubcomponentCreator(TypeMirror creatorType) {
-    return Key.builder(fromJava(creatorType)).build();
+  public Key forProvidesMethod(XMethodElement method, XTypeElement contributingModule) {
+    return forProvidesMethod(toJavac(method), toJavac(contributingModule));
   }
 
   public Key forProvidesMethod(ExecutableElement method, TypeElement contributingModule) {
     return forBindingMethod(method, contributingModule, Optional.of(TypeNames.PROVIDER));
+  }
+
+  public Key forProducesMethod(XMethodElement method, XTypeElement contributingModule) {
+    return forProducesMethod(toJavac(method), toJavac(contributingModule));
   }
 
   public Key forProducesMethod(ExecutableElement method, TypeElement contributingModule) {
@@ -277,6 +276,10 @@ public final class KeyFactory {
     return delegateDeclaration.contributionType().equals(ContributionType.MAP)
         ? wrapMapValue(delegateDeclaration.key(), frameworkType)
         : delegateDeclaration.key();
+  }
+
+  private Key forMethod(XMethodElement method, XType keyType) {
+    return forMethod(toJavac(method), toJavac(keyType));
   }
 
   private Key forMethod(ExecutableElement method, TypeMirror keyType) {
