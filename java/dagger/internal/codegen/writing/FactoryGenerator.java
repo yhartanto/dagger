@@ -17,7 +17,6 @@
 package dagger.internal.codegen.writing;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Maps.transformValues;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
@@ -171,13 +170,16 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
     UniqueNameSet uniqueFieldNames = new UniqueNameSet();
     // TODO(bcorso, dpb): Add a test for the case when a Factory parameter is named "module".
     moduleParameter(binding).ifPresent(module -> uniqueFieldNames.claim(module.name));
-    return ImmutableMap.copyOf(
-        transformValues(
-            generateBindingFieldsForDependencies(binding),
-            field ->
+    // We avoid Maps.transformValues here because it would implicitly depend on the order in which
+    // the transform function is evaluated on each entry in the map.
+    ImmutableMap.Builder<DependencyRequest, FieldSpec> builder = ImmutableMap.builder();
+    generateBindingFieldsForDependencies(binding).forEach(
+        (dependency, field) ->
+            builder.put(dependency,
                 FieldSpec.builder(
                         field.type(), uniqueFieldNames.getUniqueName(field.name()), PRIVATE, FINAL)
                     .build()));
+    return builder.build();
   }
 
   private void addCreateMethod(ProvisionBinding binding, TypeSpec.Builder factoryBuilder) {
