@@ -43,30 +43,8 @@ bash $(dirname $0)/deploy-all.sh \
 # Note: we detach from head before making any sed changes to avoid commiting
 # a particular version to master.
 git checkout --detach
-
-# Set the version string that is used as a tag in all of our libraries. If
-# another repo depends on a versioned tag of Dagger, their java_library.tags
-# should match the versioned release.
-sed -i s/'${project.version}'/"${VERSION_NAME}"/g build_defs.bzl
-
-# Note: We avoid commiting until after deploying in case deploying fails and
-# we need to run the script again.
-git commit -m "${VERSION_NAME} release" build_defs.bzl
-git tag -a -m "Dagger ${VERSION_NAME}" dagger-"${VERSION_NAME}"
-git push origin tag dagger-"${VERSION_NAME}"
-
+bash $(dirname $0)/publish-tagged-release.sh $VERSION_NAME
 # Switch back to the original HEAD
 git checkout -
 
-# Publish javadocs to gh-pages
-bazel build //:user-docs.jar
-git clone --quiet --branch gh-pages \
-    https://github.com/google/dagger gh-pages > /dev/null
-cd gh-pages
-unzip ../bazel-bin/user-docs.jar -d api/$VERSION_NAME
-rm -rf api/$VERSION_NAME/META-INF/
-git add api/$VERSION_NAME
-git commit -m "$VERSION_NAME docs"
-git push origin gh-pages
-cd ..
-rm -rf gh-pages
+bash $(dirname $0)/publish-tagged-docs.sh $VERSION_NAME
