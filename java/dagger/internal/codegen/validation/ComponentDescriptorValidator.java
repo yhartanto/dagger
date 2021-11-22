@@ -18,7 +18,6 @@ package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.in;
@@ -42,7 +41,6 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.base.Equivalence.Wrapper;
@@ -63,8 +61,6 @@ import dagger.internal.codegen.binding.ModuleDescriptor;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.compileroption.ValidationType;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.spi.model.Scope;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -92,27 +88,18 @@ import javax.tools.Diagnostic;
 // TODO(dpb): Combine with ComponentHierarchyValidator.
 public final class ComponentDescriptorValidator {
 
-  private final XProcessingEnv processingEnv;
-  private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final ComponentHierarchyValidator componentHierarchyValidator;
-  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
   ComponentDescriptorValidator(
-      XProcessingEnv processingEnv,
-      DaggerElements elements,
       CompilerOptions compilerOptions,
       MethodSignatureFormatter methodSignatureFormatter,
-      ComponentHierarchyValidator componentHierarchyValidator,
-      KotlinMetadataUtil metadataUtil) {
-    this.processingEnv = processingEnv;
-    this.elements = elements;
+      ComponentHierarchyValidator componentHierarchyValidator) {
     this.compilerOptions = compilerOptions;
     this.methodSignatureFormatter = methodSignatureFormatter;
     this.componentHierarchyValidator = componentHierarchyValidator;
-    this.metadataUtil = metadataUtil;
   }
 
   public ValidationReport validate(ComponentDescriptor component) {
@@ -211,7 +198,6 @@ public final class ComponentDescriptorValidator {
           scopedTypesIn(
               component.dependencies().stream()
                   .map(ComponentRequirement::typeElement)
-                  .map(typeElement -> toXProcessing(typeElement, processingEnv))
                   .collect(toImmutableSet()));
       if (!scopes.isEmpty()) {
         // Dagger 1.x scope compatibility requires this be suppress-able.
@@ -319,7 +305,7 @@ public final class ComponentDescriptorValidator {
       Set<ComponentRequirement> mustBePassed =
           Sets.filter(
               componentModuleAndDependencyRequirements,
-              input -> input.nullPolicy(elements, metadataUtil).equals(NullPolicy.THROW));
+              input -> input.nullPolicy().equals(NullPolicy.THROW));
       // Component requirements that the creator must be able to set, but can't
       Set<ComponentRequirement> missingRequirements =
           Sets.difference(mustBePassed, creatorModuleAndDependencyRequirements);

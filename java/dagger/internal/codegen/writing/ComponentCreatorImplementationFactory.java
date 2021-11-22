@@ -17,6 +17,7 @@
 package dagger.internal.codegen.writing;
 
 import static androidx.room.compiler.processing.XTypeKt.isVoid;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -51,8 +52,6 @@ import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.xprocessing.MethodSpecs;
 import java.util.Optional;
 import java.util.Set;
@@ -64,19 +63,13 @@ import javax.lang.model.element.Modifier;
 final class ComponentCreatorImplementationFactory {
 
   private final ComponentImplementation componentImplementation;
-  private final DaggerElements elements;
-  private final KotlinMetadataUtil metadataUtil;
   private final ModuleProxies moduleProxies;
 
   @Inject
   ComponentCreatorImplementationFactory(
       ComponentImplementation componentImplementation,
-      DaggerElements elements,
-      KotlinMetadataUtil metadataUtil,
       ModuleProxies moduleProxies) {
     this.componentImplementation = componentImplementation;
-    this.elements = elements;
-    this.metadataUtil = metadataUtil;
     this.moduleProxies = moduleProxies;
   }
 
@@ -186,7 +179,7 @@ final class ComponentCreatorImplementationFactory {
               Sets.intersection(neededUserSettableRequirements(), setterMethods()),
               requirement ->
                   FieldSpec.builder(
-                          TypeName.get(requirement.type()),
+                          requirement.type().getTypeName(),
                           fieldNames.getUniqueName(requirement.variableName()),
                           PRIVATE)
                       .build());
@@ -233,7 +226,7 @@ final class ComponentCreatorImplementationFactory {
       method.addStatement(
           "this.$N = $L",
           fields.get(requirement),
-          requirement.nullPolicy(elements, metadataUtil).equals(NullPolicy.ALLOW)
+          requirement.nullPolicy().equals(NullPolicy.ALLOW)
               ? CodeBlock.of("$N", parameter)
               : CodeBlock.of("$T.checkNotNull($N)", Preconditions.class, parameter));
       return maybeReturnThis(method);
@@ -258,7 +251,7 @@ final class ComponentCreatorImplementationFactory {
               UnsupportedOperationException.class,
               String.class,
               "%s cannot be set because it is inherited from the enclosing component",
-              TypeNames.rawTypeName(TypeName.get(requirement.type())))
+              TypeNames.rawTypeName(requirement.type().getTypeName()))
           .build();
     }
 
@@ -306,7 +299,7 @@ final class ComponentCreatorImplementationFactory {
 
     private void addNullHandlingForField(
         ComponentRequirement requirement, FieldSpec field, MethodSpec.Builder factoryMethod) {
-      switch (requirement.nullPolicy(elements, metadataUtil)) {
+      switch (requirement.nullPolicy()) {
         case NEW:
           checkState(requirement.kind().isModule());
           factoryMethod
@@ -330,7 +323,7 @@ final class ComponentCreatorImplementationFactory {
 
     private void addNullHandlingForParameter(
         ComponentRequirement requirement, String parameter, MethodSpec.Builder factoryMethod) {
-      if (!requirement.nullPolicy(elements, metadataUtil).equals(NullPolicy.ALLOW)) {
+      if (!requirement.nullPolicy().equals(NullPolicy.ALLOW)) {
         // Factory method parameters are always required unless they are a nullable
         // binds-instance (i.e. ALLOW)
         factoryMethod.addStatement("$T.checkNotNull($L)", Preconditions.class, parameter);
@@ -439,7 +432,10 @@ final class ComponentCreatorImplementationFactory {
      * Returns whether the given {@code requirement} is for a module type owned by the component.
      */
     private boolean isOwnedModule(ComponentRequirement requirement) {
-      return componentImplementation.graph().ownedModuleTypes().contains(requirement.typeElement());
+      return componentImplementation
+          .graph()
+          .ownedModuleTypes()
+          .contains(toJavac(requirement.typeElement()));
     }
 
     @Override
@@ -499,10 +495,10 @@ final class ComponentCreatorImplementationFactory {
 
     @Override
     protected MethodSpec.Builder setterMethodBuilder(ComponentRequirement requirement) {
-      String name = simpleVariableName(requirement.typeElement());
+      String name = simpleVariableName(requirement.typeElement().getClassName());
       return methodBuilder(name)
           .addModifiers(PUBLIC)
-          .addParameter(TypeName.get(requirement.type()), name)
+          .addParameter(requirement.type().getTypeName(), name)
           .returns(componentImplementation.getCreatorName());
     }
   }

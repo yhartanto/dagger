@@ -16,35 +16,29 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.XElementKt.isConstructor;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.binding.SourceFiles.simpleVariableName;
-import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
-import static javax.lang.model.element.ElementKind.CONSTRUCTOR;
-import static javax.lang.model.element.Modifier.ABSTRACT;
-import static javax.lang.model.element.Modifier.PRIVATE;
-import static javax.lang.model.element.Modifier.STATIC;
+import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
+import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
+import static dagger.internal.codegen.xprocessing.XTypeElements.isNested;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
+import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Equivalence;
-import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ParameterSpec;
-import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
-import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.Key;
 import java.util.Optional;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 /** A type that a component needs an instance of. */
@@ -73,6 +67,8 @@ public abstract class ComponentRequirement {
     }
   }
 
+  private XType type;
+
   /** The kind of requirement. */
   public abstract Kind kind();
 
@@ -89,13 +85,13 @@ public abstract class ComponentRequirement {
   public abstract Equivalence.Wrapper<TypeMirror> wrappedType();
 
   /** The type of the instance the component must have. */
-  public TypeMirror type() {
-    return wrappedType().get();
+  public XType type() {
+    return type;
   }
 
   /** The element associated with the type of this requirement. */
-  public TypeElement typeElement() {
-    return MoreTypes.asTypeElement(type());
+  public XTypeElement typeElement() {
+    return type.getTypeElement();
   }
 
   /** The action a component builder should take if it {@code null} is passed. */
@@ -118,15 +114,15 @@ public abstract class ComponentRequirement {
   abstract Optional<NullPolicy> overrideNullPolicy();
 
   /** The requirement's null policy. */
-  public NullPolicy nullPolicy(DaggerElements elements, KotlinMetadataUtil metadataUtil) {
+  public NullPolicy nullPolicy() {
     if (overrideNullPolicy().isPresent()) {
       return overrideNullPolicy().get();
     }
     switch (kind()) {
       case MODULE:
-        return componentCanMakeNewInstances(typeElement(), metadataUtil)
+        return componentCanMakeNewInstances(typeElement())
             ? NullPolicy.NEW
-            : requiresAPassedInstance(elements, metadataUtil) ? NullPolicy.THROW : NullPolicy.ALLOW;
+            : requiresAPassedInstance() ? NullPolicy.THROW : NullPolicy.ALLOW;
       case DEPENDENCY:
       case BOUND_INSTANCE:
         return NullPolicy.THROW;
@@ -138,13 +134,12 @@ public abstract class ComponentRequirement {
    * Returns true if the passed {@link ComponentRequirement} requires a passed instance in order to
    * be used within a component.
    */
-  public boolean requiresAPassedInstance(DaggerElements elements, KotlinMetadataUtil metadataUtil) {
+  public boolean requiresAPassedInstance() {
     if (!kind().isModule()) {
       // Bound instances and dependencies always require the user to provide an instance.
       return true;
     }
-    return requiresModuleInstance(elements, metadataUtil)
-        && !componentCanMakeNewInstances(typeElement(), metadataUtil);
+    return requiresModuleInstance() && !componentCanMakeNewInstances(typeElement());
   }
 
   /**
@@ -157,25 +152,19 @@ public abstract class ComponentRequirement {
    * <p>Alternatively, if the module is a Kotlin Object then the binding methods are considered
    * {@code static}, requiring no module instance.
    */
-  private boolean requiresModuleInstance(DaggerElements elements, KotlinMetadataUtil metadataUtil) {
-    boolean isKotlinObject =
-        metadataUtil.isObjectClass(typeElement())
-            || metadataUtil.isCompanionObjectClass(typeElement());
-    if (isKotlinObject) {
+  private boolean requiresModuleInstance() {
+    if (typeElement().isKotlinObject() || typeElement().isCompanionObject()) {
       return false;
     }
-
-    ImmutableSet<ExecutableElement> methods = elements.getLocalAndInheritedMethods(typeElement());
-    return methods.stream()
+    return asStream(typeElement().getAllNonPrivateInstanceMethods())
         .filter(this::isBindingMethod)
-        .map(ExecutableElement::getModifiers)
-        .anyMatch(modifiers -> !modifiers.contains(ABSTRACT) && !modifiers.contains(STATIC));
+        .anyMatch(method -> !method.isAbstract() && !method.isStatic());
   }
 
-  private boolean isBindingMethod(ExecutableElement method) {
+  private boolean isBindingMethod(XMethodElement method) {
     // TODO(cgdecker): At the very least, we should have utility methods to consolidate this stuff
     // in one place; listing individual annotations all over the place is brittle.
-    return isAnyAnnotationPresent(
+    return hasAnyAnnotation(
         method,
         TypeNames.PROVIDES,
         TypeNames.PRODUCES,
@@ -194,51 +183,57 @@ public abstract class ComponentRequirement {
 
   /** Returns a parameter spec for this requirement. */
   public ParameterSpec toParameterSpec() {
-    return ParameterSpec.builder(TypeName.get(type()), variableName()).build();
+    return ParameterSpec.builder(type().getTypeName(), variableName()).build();
   }
 
   public static ComponentRequirement forDependency(XType type) {
-    return forDependency(toJavac(type));
-  }
-
-  public static ComponentRequirement forDependency(TypeMirror type) {
-    return new AutoValue_ComponentRequirement(
-        Kind.DEPENDENCY,
-        MoreTypes.equivalence().wrap(checkNotNull(type)),
-        Optional.empty(),
-        Optional.empty(),
-        simpleVariableName(MoreTypes.asTypeElement(type)));
+    checkArgument(isDeclared(checkNotNull(type)));
+    ComponentRequirement requirement =
+        new AutoValue_ComponentRequirement(
+            Kind.DEPENDENCY,
+            MoreTypes.equivalence().wrap(toJavac(type)),
+            Optional.empty(),
+            Optional.empty(),
+            simpleVariableName(type.getTypeElement().getClassName()));
+    requirement.type = type;
+    return requirement;
   }
 
   public static ComponentRequirement forModule(XType type) {
-    return forModule(toJavac(type));
-  }
-
-  public static ComponentRequirement forModule(TypeMirror type) {
-    return new AutoValue_ComponentRequirement(
-        Kind.MODULE,
-        MoreTypes.equivalence().wrap(checkNotNull(type)),
-        Optional.empty(),
-        Optional.empty(),
-        simpleVariableName(MoreTypes.asTypeElement(type)));
+    checkArgument(isDeclared(checkNotNull(type)));
+    ComponentRequirement requirement =
+        new AutoValue_ComponentRequirement(
+            Kind.MODULE,
+            MoreTypes.equivalence().wrap(toJavac(type)),
+            Optional.empty(),
+            Optional.empty(),
+            simpleVariableName(type.getTypeElement().getClassName()));
+    requirement.type = type;
+    return requirement;
   }
 
   static ComponentRequirement forBoundInstance(
       Key key, boolean nullable, XElement elementForVariableName) {
-    return new AutoValue_ComponentRequirement(
-        Kind.BOUND_INSTANCE,
-        MoreTypes.equivalence().wrap(key.type().java()),
-        nullable ? Optional.of(NullPolicy.ALLOW) : Optional.empty(),
-        Optional.of(key),
-        toJavac(elementForVariableName).getSimpleName().toString());
+    ComponentRequirement requirement =
+        new AutoValue_ComponentRequirement(
+            Kind.BOUND_INSTANCE,
+            MoreTypes.equivalence().wrap(key.type().java()),
+            nullable ? Optional.of(NullPolicy.ALLOW) : Optional.empty(),
+            Optional.of(key),
+            toJavac(elementForVariableName).getSimpleName().toString());
+    requirement.type = key.type().xprocessing();
+    return requirement;
   }
 
   public static ComponentRequirement forBoundInstance(ContributionBinding binding) {
     checkArgument(binding.kind().equals(BindingKind.BOUND_INSTANCE));
-    return forBoundInstance(
-        binding.key(),
-        binding.nullableType().isPresent(),
-        binding.bindingElement().get());
+    ComponentRequirement requirement =
+        forBoundInstance(
+            binding.key(),
+            binding.nullableType().isPresent(),
+            binding.bindingElement().get());
+    requirement.type = binding.key().type().xprocessing();
+    return requirement;
   }
 
   /**
@@ -246,19 +241,11 @@ public abstract class ComponentRequirement {
    * rather than requiring that they be passed.
    */
   // TODO(bcorso): Should this method throw if its called knowing that an instance is not needed?
-  public static boolean componentCanMakeNewInstances(
-      XTypeElement typeElement, KotlinMetadataUtil metadataUtil) {
-    return componentCanMakeNewInstances(toJavac(typeElement), metadataUtil);
-  }
-
-  /**
-   * Returns true if and only if a component can instantiate new instances (typically of a module)
-   * rather than requiring that they be passed.
-   */
-  // TODO(bcorso): Should this method throw if its called knowing that an instance is not needed?
-  public static boolean componentCanMakeNewInstances(
-      TypeElement typeElement, KotlinMetadataUtil metadataUtil) {
-    switch (typeElement.getKind()) {
+  public static boolean componentCanMakeNewInstances(XTypeElement typeElement) {
+    // TODO(bcorso): Investigate how we should replace this in XProcessing. It's not clear what the
+    // complete set of kinds are in XProcessing and if they're mutually exclusive. For example,
+    // does XTypeElement#isClass() cover XTypeElement#isDataClass(), etc?
+    switch (toJavac(typeElement).getKind()) {
       case CLASS:
         break;
       case ENUM:
@@ -266,10 +253,10 @@ public abstract class ComponentRequirement {
       case INTERFACE:
         return false;
       default:
-        throw new AssertionError("TypeElement cannot have kind: " + typeElement.getKind());
+        throw new AssertionError("TypeElement cannot have kind: " + toJavac(typeElement).getKind());
     }
 
-    if (typeElement.getModifiers().contains(ABSTRACT)) {
+    if (typeElement.isAbstract()) {
       return false;
     }
 
@@ -277,15 +264,10 @@ public abstract class ComponentRequirement {
       return false;
     }
 
-    if (metadataUtil.isObjectClass(typeElement)
-        || metadataUtil.isCompanionObjectClass(typeElement)) {
-      return false;
-    }
-
-    for (Element enclosed : typeElement.getEnclosedElements()) {
-      if (enclosed.getKind().equals(CONSTRUCTOR)
-          && MoreElements.asExecutable(enclosed).getParameters().isEmpty()
-          && !enclosed.getModifiers().contains(PRIVATE)) {
+    for (XElement enclosed : typeElement.getEnclosedElements()) {
+      if (isConstructor(enclosed)
+          && asConstructor(enclosed).getParameters().isEmpty()
+          && !asConstructor(enclosed).isPrivate()) {
         return true;
       }
     }
@@ -295,17 +277,7 @@ public abstract class ComponentRequirement {
     return false;
   }
 
-  private static boolean requiresEnclosingInstance(TypeElement typeElement) {
-    switch (typeElement.getNestingKind()) {
-      case TOP_LEVEL:
-        return false;
-      case MEMBER:
-        return !typeElement.getModifiers().contains(STATIC);
-      case ANONYMOUS:
-      case LOCAL:
-        return true;
-    }
-    throw new AssertionError(
-        "TypeElement cannot have nesting kind: " + typeElement.getNestingKind());
+  private static boolean requiresEnclosingInstance(XTypeElement typeElement) {
+    return isNested(typeElement) && !typeElement.isStatic();
   }
 }

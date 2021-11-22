@@ -22,6 +22,7 @@ import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
 import static androidx.room.compiler.processing.XElementKt.isVariableElement;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
@@ -39,6 +40,7 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import java.util.Collection;
 import java.util.Optional;
+import javax.lang.model.element.ElementKind;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XElement} helper methods. */
@@ -67,6 +69,10 @@ public final class XElements {
           asMethodParameter(element).getEnclosingMethodElement());
     }
     return Optional.empty();
+  }
+
+  public static boolean isEnum(XElement element) {
+    return toJavac(element).getKind() == ElementKind.ENUM;
   }
 
   public static boolean isExecutable(XElement element) {

@@ -26,7 +26,6 @@ import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeName;
@@ -69,7 +68,7 @@ final class DependencyMethodProducerCreationExpression
         graph.componentDescriptor().getDependencyThatDefinesMethod(binding.bindingElement().get());
     FieldSpec dependencyField =
         FieldSpec.builder(
-                ClassName.get(dependency.typeElement()), dependency.variableName(), PRIVATE, FINAL)
+                dependency.typeElement().getClassName(), dependency.variableName(), PRIVATE, FINAL)
             .initializer(
                 componentRequirementExpressions.getExpressionDuringInitialization(
                     dependency,

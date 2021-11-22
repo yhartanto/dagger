@@ -43,6 +43,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -60,7 +61,6 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.base.UniqueNameSet;
@@ -79,7 +79,6 @@ import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.javapoet.TypeSpecs;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.BindingGraph.Node;
@@ -252,7 +251,6 @@ public final class ComponentImplementation {
   private final ComponentNames componentNames;
   private final DaggerElements elements;
   private final DaggerTypes types;
-  private final KotlinMetadataUtil metadataUtil;
   private final ImmutableMap<ComponentImplementation, FieldSpec> componentFieldsByImplementation;
   private final XMessager messager;
   private final boolean isFastInit;
@@ -269,7 +267,6 @@ public final class ComponentImplementation {
       CompilerOptions compilerOptions,
       DaggerElements elements,
       DaggerTypes types,
-      KotlinMetadataUtil metadataUtil,
       XMessager messager) {
     this.parent = parent;
     this.childComponentImplementationFactory = childComponentImplementationFactory;
@@ -280,7 +277,6 @@ public final class ComponentImplementation {
     this.componentNames = componentNames;
     this.elements = elements;
     this.types = types;
-    this.metadataUtil = metadataUtil;
 
     // The first group of keys belong to the component itself. We call this the componentShard.
     this.componentShard = new ShardImplementation(componentNames.get(graph.componentPath()));
@@ -461,7 +457,7 @@ public final class ComponentImplementation {
                       requirement -> requirement,
                       requirement ->
                           ParameterSpec.builder(
-                                  TypeName.get(requirement.type()),
+                                  requirement.type().getTypeName(),
                                   getUniqueFieldName(requirement.variableName() + "Param"))
                               .build()));
     }
@@ -703,7 +699,10 @@ public final class ComponentImplementation {
 
     private void addFactoryMethods() {
       if (parent.isPresent()) {
-        graph.factoryMethod().ifPresent(this::createSubcomponentFactoryMethod);
+        graph
+            .factoryMethod()
+            .map(XConverters::toJavac)
+            .ifPresent(this::createSubcomponentFactoryMethod);
       } else {
         createRootComponentFactoryMethod();
       }
@@ -774,8 +773,7 @@ public final class ComponentImplementation {
     /** {@code true} if all of the graph's required dependencies can be automatically constructed */
     private boolean canInstantiateAllRequirements() {
       return !Iterables.any(
-          graph.componentRequirements(),
-          dependency -> dependency.requiresAPassedInstance(elements, metadataUtil));
+          graph.componentRequirements(), ComponentRequirement::requiresAPassedInstance);
     }
 
     private void createSubcomponentFactoryMethod(ExecutableElement factoryMethod) {

@@ -295,8 +295,8 @@ public final class KeyFactory {
   }
 
   // TODO(ronshapiro): Remove these conveniences which are simple wrappers around Key.Builder
-  Key forType(TypeMirror type) {
-    return Key.builder(fromJava(type)).build();
+  Key forType(XType type) {
+    return Key.builder(DaggerType.from(type)).build();
   }
 
   public Key forMembersInjectedType(TypeMirror type) {

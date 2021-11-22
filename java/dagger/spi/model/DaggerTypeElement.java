@@ -30,7 +30,7 @@ public abstract class DaggerTypeElement {
     return new AutoValue_DaggerTypeElement(typeElement);
   }
 
-  abstract XTypeElement xprocessing();
+  public abstract XTypeElement xprocessing();
 
   public TypeElement java() {
     return toJavac(xprocessing());

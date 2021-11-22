@@ -48,6 +48,11 @@ public final class XTypeElements {
     }
   }
 
+  /** Returns {@code true} if the given element is nested. */
+  public static boolean isNested(XTypeElement typeElement) {
+    return typeElement.getEnclosingTypeElement() != null;
+  }
+
   /** Returns {@code true} if the given {@code type} has type parameters. */
   public static boolean hasTypeParameters(XTypeElement type) {
     // TODO(bcorso): Add support for XTypeElement#getTypeParameters() or at least

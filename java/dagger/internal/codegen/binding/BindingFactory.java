@@ -20,7 +20,6 @@ import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
 import static androidx.room.compiler.processing.XElementKt.isVariableElement;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -56,7 +55,6 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
-import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
@@ -84,7 +82,6 @@ import javax.inject.Inject;
 
 /** A factory for {@link Binding} objects. */
 public final class BindingFactory {
-  private final XProcessingEnv processingEnv;
   private final DaggerTypes types;
   private final KeyFactory keyFactory;
   private final DependencyRequestFactory dependencyRequestFactory;
@@ -93,13 +90,11 @@ public final class BindingFactory {
 
   @Inject
   BindingFactory(
-      XProcessingEnv processingEnv,
       DaggerTypes types,
       KeyFactory keyFactory,
       DependencyRequestFactory dependencyRequestFactory,
       InjectionSiteFactory injectionSiteFactory,
       InjectionAnnotations injectionAnnotations) {
-    this.processingEnv = processingEnv;
     this.types = types;
     this.keyFactory = keyFactory;
     this.dependencyRequestFactory = dependencyRequestFactory;
@@ -308,7 +303,7 @@ public final class BindingFactory {
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
         .bindingElement(componentDefinitionType)
-        .key(keyFactory.forType(toJavac(componentDefinitionType.getType())))
+        .key(keyFactory.forType(componentDefinitionType.getType()))
         .kind(COMPONENT)
         .build();
   }
@@ -321,7 +316,7 @@ public final class BindingFactory {
     checkNotNull(dependency);
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .bindingElement(toXProcessing(dependency.typeElement(), processingEnv))
+        .bindingElement(dependency.typeElement())
         .key(keyFactory.forType(dependency.type()))
         .kind(COMPONENT_DEPENDENCY)
         .build();

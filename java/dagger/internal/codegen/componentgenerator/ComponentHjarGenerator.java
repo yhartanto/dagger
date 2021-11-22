@@ -51,7 +51,6 @@ import dagger.internal.codegen.binding.ComponentDescriptor;
 import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.MethodSignature;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import dagger.internal.codegen.langmodel.DaggerElements;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import java.util.Set;
@@ -76,21 +75,16 @@ import javax.lang.model.type.DeclaredType;
  * normal step. Method bodies are omitted as Turbine ignores them entirely.
  */
 final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescriptor> {
-  private final DaggerElements elements;
   private final DaggerTypes types;
-  private final KotlinMetadataUtil metadataUtil;
 
   @Inject
   ComponentHjarGenerator(
       XFiler filer,
       DaggerElements elements,
       DaggerTypes types,
-      SourceVersion sourceVersion,
-      KotlinMetadataUtil metadataUtil) {
+      SourceVersion sourceVersion) {
     super(filer, elements, sourceVersion);
-    this.elements = elements;
     this.types = types;
-    this.metadataUtil = metadataUtil;
   }
 
   @Override
@@ -145,8 +139,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
     if (noArgFactoryMethod
         && !hasBindsInstanceMethods(componentDescriptor)
         && componentRequirements(componentDescriptor)
-            .noneMatch(
-                requirement -> requirement.requiresAPassedInstance(elements, metadataUtil))) {
+            .noneMatch(ComponentRequirement::requiresAPassedInstance)) {
       generatedComponent.addMethod(createMethod(componentDescriptor));
     }
 
@@ -218,12 +211,11 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
   }
 
   private static MethodSpec builderSetterMethod(
-      TypeElement componentRequirement, ClassName builderClass) {
-    String simpleName =
-        UPPER_CAMEL.to(LOWER_CAMEL, componentRequirement.getSimpleName().toString());
+      XTypeElement componentRequirement, ClassName builderClass) {
+    String simpleName = UPPER_CAMEL.to(LOWER_CAMEL, componentRequirement.getName());
     return MethodSpec.methodBuilder(simpleName)
         .addModifiers(PUBLIC)
-        .addParameter(ClassName.get(componentRequirement), simpleName)
+        .addParameter(componentRequirement.getClassName(), simpleName)
         .returns(builderClass)
         .build();
   }

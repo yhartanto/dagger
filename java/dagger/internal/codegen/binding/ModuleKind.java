@@ -80,6 +80,16 @@ public enum ModuleKind {
     return kinds.stream().findAny();
   }
 
+  public static void checkIsModule(XTypeElement moduleElement) {
+    // If the type element is a Kotlin companion object, then assert it is a module if its enclosing
+    // type is a module.
+    if (moduleElement.isCompanionObject()) {
+      checkArgument(forAnnotatedElement(moduleElement.getEnclosingTypeElement()).isPresent());
+    } else {
+      checkArgument(forAnnotatedElement(moduleElement).isPresent());
+    }
+  }
+
   public static void checkIsModule(TypeElement moduleElement, KotlinMetadataUtil metadataUtil) {
     // If the type element is a Kotlin companion object, then assert it is a module if its enclosing
     // type is a module.

@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Iterables.transform;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
@@ -25,6 +26,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -353,10 +355,10 @@ public abstract class BindingGraph {
    * </code></pre>
    */
   // TODO(b/73294201): Consider returning the resolved ExecutableType for the factory method.
-  public final Optional<ExecutableElement> factoryMethod() {
+  public final Optional<XExecutableElement> factoryMethod() {
     return topLevelBindingGraph().network().inEdges(componentNode()).stream()
         .filter(edge -> edge instanceof ChildFactoryMethodEdge)
-        .map(edge -> ((ChildFactoryMethodEdge) edge).factoryMethod().java())
+        .map(edge -> ((ChildFactoryMethodEdge) edge).factoryMethod().xprocessing())
         .collect(toOptional());
   }
 
@@ -370,8 +372,8 @@ public abstract class BindingGraph {
     return factoryMethod().get().getParameters().stream()
         .collect(
             toImmutableMap(
-                parameter -> ComponentRequirement.forModule(parameter.asType()),
-                parameter -> parameter));
+                parameter -> ComponentRequirement.forModule(parameter.getType()),
+                XConverters::toJavac));
   }
 
   /**
@@ -395,7 +397,7 @@ public abstract class BindingGraph {
         .filter(
             requirement ->
                 !requirement.kind().isModule()
-                    || requiredModules.contains(requirement.typeElement()))
+                    || requiredModules.contains(toJavac(requirement.typeElement())))
         .forEach(requirements::add);
     if (factoryMethod().isPresent()) {
       requirements.addAll(factoryMethodParameters().keySet());

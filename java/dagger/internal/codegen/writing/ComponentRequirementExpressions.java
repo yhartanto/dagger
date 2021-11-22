@@ -23,6 +23,7 @@ import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecK
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.base.Supplier;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -36,7 +37,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
-import javax.lang.model.element.TypeElement;
 
 /**
  * A central repository of expressions used to access any {@link ComponentRequirement} available to
@@ -133,7 +133,7 @@ public final class ComponentRequirementExpressions {
 
     private MemberSelect createField() {
       String fieldName = componentShard.getUniqueFieldName(componentRequirement.variableName());
-      TypeName fieldType = TypeName.get(componentRequirement.type());
+      TypeName fieldType = componentRequirement.type().getTypeName();
       FieldSpec field = FieldSpec.builder(fieldType, fieldName, PRIVATE, FINAL).build();
       componentShard.addField(COMPONENT_REQUIREMENT_FIELD, field);
       componentShard.addComponentRequirementInitialization(fieldInitialization(field));
@@ -149,7 +149,7 @@ public final class ComponentRequirementExpressions {
    * instantiated by the component (i.e. a static class with a no-arg constructor).
    */
   private final class InstantiableModuleField extends AbstractField {
-    private final TypeElement moduleElement;
+    private final XTypeElement moduleElement;
 
     InstantiableModuleField(ComponentRequirement module) {
       super(module);

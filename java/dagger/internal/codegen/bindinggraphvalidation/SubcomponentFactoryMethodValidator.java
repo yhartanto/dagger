@@ -16,17 +16,14 @@
 
 package dagger.internal.codegen.bindinggraphvalidation;
 
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
-import static com.google.auto.common.MoreTypes.asDeclared;
-import static com.google.auto.common.MoreTypes.asExecutable;
-import static com.google.auto.common.MoreTypes.asTypeElements;
 import static com.google.common.collect.Sets.union;
 import static dagger.internal.codegen.binding.ComponentRequirement.componentCanMakeNewInstances;
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
-import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XExecutableType;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
@@ -34,8 +31,6 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import dagger.internal.codegen.base.Util;
 import dagger.internal.codegen.binding.ComponentNodeImpl;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraph.ChildFactoryMethodEdge;
 import dagger.spi.model.BindingGraph.ComponentNode;
@@ -46,24 +41,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Inject;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.ExecutableType;
 
 /** Reports an error if a subcomponent factory method is missing required modules. */
 final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
 
-  private final XProcessingEnv processingEnv;
-  private final DaggerTypes types;
-  private final KotlinMetadataUtil metadataUtil;
   private final Map<ComponentNode, Set<XTypeElement>> inheritedModulesCache = new HashMap<>();
 
   @Inject
-  SubcomponentFactoryMethodValidator(
-      XProcessingEnv processingEnv, DaggerTypes types, KotlinMetadataUtil metadataUtil) {
-    this.processingEnv = processingEnv;
-    this.types = types;
-    this.metadataUtil = metadataUtil;
-  }
+  SubcomponentFactoryMethodValidator() {}
 
   @Override
   public String pluginName() {
@@ -101,25 +86,24 @@ final class SubcomponentFactoryMethodValidator implements BindingGraphPlugin {
         .filter(binding -> binding.componentPath().equals(child.componentPath()))
         // that require a module instance
         .filter(binding -> binding.requiresModuleInstance())
-        .map(binding -> toXProcessing(binding.contributingModule().get().java(), processingEnv))
+        .map(binding -> binding.contributingModule().get().xprocessing())
         .distinct()
         // module owned by child
         .filter(module -> modulesOwnedByChild.contains(module))
         // module not in the method parameters
         .filter(module -> !factoryMethodParameters.contains(module))
         // module doesn't have an accessible no-arg constructor
-        .filter(moduleType -> !componentCanMakeNewInstances(moduleType, metadataUtil))
+        .filter(moduleType -> !componentCanMakeNewInstances(moduleType))
         .collect(toImmutableSet());
   }
 
   private ImmutableSet<XTypeElement> subgraphFactoryMethodParameters(
       ChildFactoryMethodEdge edge, BindingGraph bindingGraph) {
     ComponentNode parent = (ComponentNode) bindingGraph.network().incidentNodes(edge).source();
-    DeclaredType parentType = asDeclared(parent.componentPath().currentComponent().java().asType());
-    ExecutableType factoryMethodType =
-        asExecutable(types.asMemberOf(parentType, edge.factoryMethod().java()));
-    return asTypeElements(factoryMethodType.getParameterTypes()).stream()
-        .map(typeElement -> toXProcessing(typeElement, processingEnv))
+    XType parentType = parent.componentPath().currentComponent().xprocessing().getType();
+    XExecutableType factoryMethodType = edge.factoryMethod().xprocessing().asMemberOf(parentType);
+    return factoryMethodType.getParameterTypes().stream()
+        .map(XType::getTypeElement)
         .collect(toImmutableSet());
   }
 

@@ -145,7 +145,7 @@ public final class BindingGraphFactory implements ClearableCache {
     for (ComponentRequirement dependency : componentDescriptor.dependencies()) {
       explicitBindingsBuilder.add(bindingFactory.componentDependencyBinding(dependency));
       List<ExecutableElement> dependencyMethods =
-          methodsIn(elements.getAllMembers(dependency.typeElement()));
+          methodsIn(elements.getAllMembers(toJavac(dependency.typeElement())));
 
       // Within a component dependency, we want to allow the same method to appear multiple
       // times assuming it is the exact same method. We do this by tracking a set of bindings

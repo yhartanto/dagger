@@ -114,7 +114,7 @@ public final class ComponentDescriptorFactory {
         ImmutableMap.builder();
     for (ComponentRequirement componentDependency : componentDependencies) {
       for (ExecutableElement dependencyMethod :
-          methodsIn(elements.getAllMembers(componentDependency.typeElement()))) {
+          methodsIn(elements.getAllMembers(toJavac(componentDependency.typeElement())))) {
         if (isComponentContributionMethod(dependencyMethod)) {
           dependenciesByDependencyMethod.put(
               (XMethodElement) toXProcessing(dependencyMethod, processingEnv), componentDependency);
