@@ -19,6 +19,7 @@ package dagger.internal.codegen.compileroption;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static dagger.internal.codegen.compileroption.FeatureStatus.DISABLED;
 import static dagger.internal.codegen.compileroption.FeatureStatus.ENABLED;
@@ -100,13 +101,35 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
-  public boolean experimentalMergedMode() {
-    return false;
+  public boolean experimentalMergedMode(TypeElement component) {
+    boolean isExperimental = experimentalMergedModeInternal();
+    if (isExperimental) {
+      checkState(
+          !fastInitInternal(component),
+          "Both fast init and experimental merged mode were turned on, please specify exactly one"
+              + " compilation mode.");
+    }
+    return isExperimental;
   }
 
   @Override
   public boolean fastInit(TypeElement component) {
+    boolean isFastInit = fastInitInternal(component);
+    if (isFastInit) {
+      checkState(
+          !experimentalMergedModeInternal(),
+          "Both fast init and experimental merged mode were turned on, please specify exactly one"
+              + " compilation mode.");
+    }
+    return isFastInit;
+  }
+
+  private boolean fastInitInternal(TypeElement component) {
     return isEnabled(FAST_INIT);
+  }
+
+  private boolean experimentalMergedModeInternal() {
+    return false;
   }
 
   @Override
