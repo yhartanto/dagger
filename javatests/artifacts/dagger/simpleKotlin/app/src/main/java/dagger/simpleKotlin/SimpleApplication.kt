@@ -38,6 +38,9 @@ class SimpleApplication {
   @Component(modules = [SimpleModule::class])
   interface SimpleComponent {
     fun foo(): Foo
+
+    // Reproduces a regression in https://github.com/google/dagger/issues/2997.
+    fun mySubcomponentFactory(): MySubcomponent.Factory
   }
 
   companion object {

@@ -165,8 +165,7 @@ public abstract class ComponentCreatorDescriptor {
         XExecutableParameterElement parameter = getOnlyElement(method.getParameters());
         XType parameterType = getOnlyElement(resolvedMethodType.getParameterTypes());
         setterMethods.put(
-            requirement(
-                method, parameter, parameterType, dependencyRequestFactory, method.getName()),
+            requirement(method, parameter, parameterType, dependencyRequestFactory, method),
             method);
       }
     }
@@ -187,7 +186,7 @@ public abstract class ComponentCreatorDescriptor {
               parameter,
               parameterType,
               dependencyRequestFactory,
-              parameter.getName()),
+              parameter),
           parameter);
     }
     // Validation should have ensured exactly one creator annotation is present on the type.
@@ -201,13 +200,13 @@ public abstract class ComponentCreatorDescriptor {
       XExecutableParameterElement parameter,
       XType parameterType,
       DependencyRequestFactory dependencyRequestFactory,
-      String variableName) {
+      XElement elementForVariableName) {
     if (method.hasAnnotation(TypeNames.BINDS_INSTANCE)
         || parameter.hasAnnotation(TypeNames.BINDS_INSTANCE)) {
       DependencyRequest request =
           dependencyRequestFactory.forRequiredResolvedVariable(parameter, parameterType);
       return ComponentRequirement.forBoundInstance(
-          request.key(), request.isNullable(), variableName);
+          request.key(), request.isNullable(), elementForVariableName);
     }
 
     return moduleAnnotation(parameterType.getTypeElement()).isPresent()

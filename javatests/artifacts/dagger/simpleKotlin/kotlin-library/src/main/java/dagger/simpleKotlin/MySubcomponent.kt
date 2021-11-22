@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Dagger Authors.
+ * Copyright (C) 2021 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,22 @@
  * limitations under the License.
  */
 
-buildscript {
-    ext.kotlin_version = "1.5.0"
+package dagger.simpleKotlin
+
+import dagger.BindsInstance
+import dagger.Subcomponent
+
+/**
+ * This subcomponent reproduces a regression in https://github.com/google/dagger/issues/2997.
+ */
+@Subcomponent
+abstract class MySubcomponent {
+    abstract fun instance(): InstanceType
+
+    @Subcomponent.Factory
+    interface Factory {
+        fun create(@BindsInstance instance: InstanceType): MySubcomponent
+    }
 }
 
-allprojects {
-  repositories {
-    jcenter()
-    mavenCentral()
-    mavenLocal()
-  }
-}
+class InstanceType

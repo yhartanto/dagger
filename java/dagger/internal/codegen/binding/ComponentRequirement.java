@@ -26,6 +26,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
@@ -222,13 +223,14 @@ public abstract class ComponentRequirement {
         simpleVariableName(MoreTypes.asTypeElement(type)));
   }
 
-  static ComponentRequirement forBoundInstance(Key key, boolean nullable, String variableName) {
+  static ComponentRequirement forBoundInstance(
+      Key key, boolean nullable, XElement elementForVariableName) {
     return new AutoValue_ComponentRequirement(
         Kind.BOUND_INSTANCE,
         MoreTypes.equivalence().wrap(key.type().java()),
         nullable ? Optional.of(NullPolicy.ALLOW) : Optional.empty(),
         Optional.of(key),
-        variableName);
+        toJavac(elementForVariableName).getSimpleName().toString());
   }
 
   public static ComponentRequirement forBoundInstance(ContributionBinding binding) {
@@ -236,7 +238,7 @@ public abstract class ComponentRequirement {
     return forBoundInstance(
         binding.key(),
         binding.nullableType().isPresent(),
-        toJavac(binding.bindingElement().get()).getSimpleName().toString());
+        binding.bindingElement().get());
   }
 
   /**

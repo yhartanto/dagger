@@ -1,0 +1,3 @@
+rootProject.name='Simple Kotlin Dagger'
+include ':app'
+include ':kotlin-library'
