@@ -425,6 +425,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
   @Test
   fun changeActivitySource_addPublicMethod() {
     runFullBuild()
+    val componentTreeDepsFullBuild = genComponentTreeDeps.readText(Charsets.UTF_8)
 
     // Change Activity 1 source
     searchAndReplace(
@@ -470,6 +471,11 @@ class IncrementalProcessorTest(private val incapMode: String) {
     }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
 
+    val componentTreeDepsIncrementalBuild = genComponentTreeDeps.readText(Charsets.UTF_8)
+    expect.withMessage("Full build")
+        .that(componentTreeDepsFullBuild)
+        .isEqualTo(componentTreeDepsIncrementalBuild)
+
     // Check compilation outputs
     // * Gen sources from activity 1 are re-compiled
     val recompiledClassFiles = if (incapMode == ISOLATING_MODE) {
@@ -504,6 +510,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
   @Test
   fun changeActivitySource_addPrivateMethod() {
     runFullBuild()
+    val componentTreeDepsFullBuild = genComponentTreeDeps.readText(Charsets.UTF_8)
 
     // Change Activity 1 source
     searchAndReplace(
@@ -548,6 +555,11 @@ class IncrementalProcessorTest(private val incapMode: String) {
     }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
 
+    val componentTreeDepsIncrementalBuild = genComponentTreeDeps.readText(Charsets.UTF_8)
+    expect.withMessage("Full build")
+        .that(componentTreeDepsFullBuild)
+        .isEqualTo(componentTreeDepsIncrementalBuild)
+
     // Check compilation outputs
     // * Gen sources from activity 1 are re-compiled
     val recompiledClassFiles = if (incapMode == ISOLATING_MODE) {
@@ -578,6 +590,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
   @Test
   fun changeModuleSource() {
     runFullBuild()
+    val componentTreeDepsFullBuild = genComponentTreeDeps.readText(Charsets.UTF_8)
 
     // Change Module 1 source
     searchAndReplace(
@@ -619,6 +632,11 @@ class IncrementalProcessorTest(private val incapMode: String) {
     }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
 
+    val componentTreeDepsIncrementalBuild = genComponentTreeDeps.readText(Charsets.UTF_8)
+    expect.withMessage("Full build")
+        .that(componentTreeDepsFullBuild)
+        .isEqualTo(componentTreeDepsIncrementalBuild)
+
     // Check compilation outputs
     // * Gen sources from module 1 are re-compiled
     val recompiledClassFiles = if (incapMode == ISOLATING_MODE) {
@@ -649,6 +667,7 @@ class IncrementalProcessorTest(private val incapMode: String) {
   @Test
   fun changeAppSource() {
     runFullBuild()
+    val componentTreeDepsFullBuild = genComponentTreeDeps.readText(Charsets.UTF_8)
 
     // Change Application source
     searchAndReplace(
@@ -689,6 +708,11 @@ class IncrementalProcessorTest(private val incapMode: String) {
       )
     }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
+
+    val componentTreeDepsIncrementalBuild = genComponentTreeDeps.readText(Charsets.UTF_8)
+    expect.withMessage("Full build")
+        .that(componentTreeDepsFullBuild)
+        .isEqualTo(componentTreeDepsIncrementalBuild)
 
     // Check compilation outputs
     val recompiledClassFiles = if (incapMode == ISOLATING_MODE) {
@@ -939,6 +963,8 @@ class IncrementalProcessorTest(private val incapMode: String) {
   @Test
   fun changeTestSource_addPublicMethod() {
     runFullTestBuild()
+    val test1ComponentTreeDepsFullBuild = genTest1ComponentTreeDeps.readText(Charsets.UTF_8)
+    val test2ComponentTreeDepsFullBuild = genTest2ComponentTreeDeps.readText(Charsets.UTF_8)
 
     // Change Test 1 source
     searchAndReplace(
@@ -972,6 +998,15 @@ class IncrementalProcessorTest(private val incapMode: String) {
     }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
 
+    val test1ComponentTreeDepsIncrementalBuild = genTest1ComponentTreeDeps.readText(Charsets.UTF_8)
+    val test2ComponentTreeDepsIncrementalBuild = genTest2ComponentTreeDeps.readText(Charsets.UTF_8)
+    expect.withMessage("Full build")
+        .that(test1ComponentTreeDepsFullBuild)
+        .isEqualTo(test1ComponentTreeDepsIncrementalBuild)
+    expect.withMessage("Full build")
+        .that(test2ComponentTreeDepsFullBuild)
+        .isEqualTo(test2ComponentTreeDepsIncrementalBuild)
+
     val recompiledClassFiles = if (incapMode == ISOLATING_MODE) {
       listOf(
         classSrcTest1,
@@ -996,6 +1031,8 @@ class IncrementalProcessorTest(private val incapMode: String) {
   @Test
   fun changeTestSource_addPrivateMethod() {
     runFullTestBuild()
+    val test1ComponentTreeDepsFullBuild = genTest1ComponentTreeDeps.readText(Charsets.UTF_8)
+    val test2ComponentTreeDepsFullBuild = genTest2ComponentTreeDeps.readText(Charsets.UTF_8)
 
     // Change Test 1 source
     searchAndReplace(
@@ -1030,6 +1067,15 @@ class IncrementalProcessorTest(private val incapMode: String) {
       )
     }
     assertChangedFiles(FileType.JAVA, regeneratedSourceFiles)
+
+    val test1ComponentTreeDepsIncrementalBuild = genTest1ComponentTreeDeps.readText(Charsets.UTF_8)
+    val test2ComponentTreeDepsIncrementalBuild = genTest2ComponentTreeDeps.readText(Charsets.UTF_8)
+    expect.withMessage("Full build")
+        .that(test1ComponentTreeDepsFullBuild)
+        .isEqualTo(test1ComponentTreeDepsIncrementalBuild)
+    expect.withMessage("Full build")
+        .that(test2ComponentTreeDepsFullBuild)
+        .isEqualTo(test2ComponentTreeDepsIncrementalBuild)
 
     val recompiledClassFiles = if (incapMode == ISOLATING_MODE) {
       listOf(classSrcTest1)

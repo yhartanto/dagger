@@ -236,12 +236,14 @@ class ComponentTreeDepsIrCreator private constructor(
       aggregatedEarlyEntryPointDeps: Set<AggregatedEarlyEntryPointIr>,
     ) = ComponentTreeDepsIrCreator(
       isSharedTestComponentsEnabled,
-      aggregatedRoots,
-      defineComponentDeps,
-      aliasOfDeps,
-      aggregatedDeps,
-      aggregatedUninstallModulesDeps,
-      aggregatedEarlyEntryPointDeps
+      // TODO(bcorso): Consider creating a common interface for fqName so that we can sort these
+      // using a shared method rather than repeating the sorting logic.
+      aggregatedRoots.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
+      defineComponentDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
+      aliasOfDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
+      aggregatedDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
+      aggregatedUninstallModulesDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
+      aggregatedEarlyEntryPointDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet()
     ).let { producer ->
       if (isTest) {
         producer.testComponents()
