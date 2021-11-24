@@ -22,6 +22,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedFactoryMethod;
 import static dagger.internal.codegen.writing.AssistedInjectionParameters.assistedFactoryParameterSpecs;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
@@ -92,7 +93,7 @@ final class AssistedFactoryRequestRepresentation extends RequestRepresentation {
     TypeSpec.Builder builder =
         TypeSpec.anonymousClassBuilder("")
             .addMethod(
-                MethodSpec.methodBuilder(factoryMethod.getName())
+                MethodSpec.methodBuilder(getSimpleName(factoryMethod))
                     .addModifiers(factoryOverride.modifiers)
                     .addTypeVariables(factoryOverride.typeVariables)
                     .returns(factoryOverride.returnType)

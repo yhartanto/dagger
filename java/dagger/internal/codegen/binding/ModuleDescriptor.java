@@ -30,6 +30,7 @@ import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerElements.checkTypePresent;
 import static dagger.internal.codegen.langmodel.DaggerElements.getMethodDescriptor;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static javax.lang.model.util.ElementFilter.methodsIn;
 
@@ -270,7 +271,8 @@ public abstract class ModuleDescriptor {
           module.getPackageName(),
           String.format(
               "%s_%s",
-              classFileName(module.getClassName()), LOWER_CAMEL.to(UPPER_CAMEL, method.getName())));
+              classFileName(module.getClassName()),
+              LOWER_CAMEL.to(UPPER_CAMEL, getSimpleName(method))));
     }
 
     @Override

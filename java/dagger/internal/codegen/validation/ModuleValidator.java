@@ -26,7 +26,9 @@ import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.getCrea
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getSubcomponentCreator;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
 import static dagger.internal.codegen.xprocessing.XElements.getAnnotatedAnnotations;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 import static dagger.internal.codegen.xprocessing.XTypeElements.hasTypeParameters;
 import static dagger.internal.codegen.xprocessing.XTypeElements.isEffectivelyPrivate;
@@ -58,6 +60,7 @@ import dagger.internal.codegen.binding.ComponentDescriptorFactory;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.binding.ModuleKind;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.xprocessing.XElements;
 import dagger.spi.model.BindingGraph;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -195,14 +198,14 @@ public final class ModuleValidator {
     validateModuleVisibility(module, moduleKind, builder);
 
     ImmutableListMultimap<String, XMethodElement> bindingMethodsByName =
-        Multimaps.index(bindingMethods, XMethodElement::getName);
+        Multimaps.index(bindingMethods, XElements::getSimpleName);
 
     validateMethodsWithSameName(builder, bindingMethodsByName);
     if (!module.isInterface()) {
       validateBindingMethodOverrides(
           module,
           builder,
-          Multimaps.index(moduleMethods, XMethodElement::getName),
+          Multimaps.index(moduleMethods, XElements::getSimpleName),
           bindingMethodsByName);
     }
     validateModifiers(module, builder);
@@ -292,7 +295,7 @@ public final class ModuleValidator {
             + "@%3$s.subcomponents",
         subcomponent.getQualifiedName(),
         subcomponentAnnotation(subcomponent).get().simpleName(),
-        moduleAnnotation.getName());
+        getClassName(moduleAnnotation).simpleName());
   }
 
   enum ModuleMethodKind {
@@ -465,7 +468,7 @@ public final class ModuleValidator {
       currentClass = currentClass.getSuperType().getTypeElement();
       List<XMethodElement> superclassMethods = currentClass.getDeclaredMethods();
       for (XMethodElement superclassMethod : superclassMethods) {
-        String name = superclassMethod.getName();
+        String name = getSimpleName(superclassMethod);
         // For each method in the superclass, confirm our binding methods don't override it
         for (XMethodElement bindingMethod : bindingMethodsByName.get(name)) {
           if (visitedMethods.add(bindingMethod)
@@ -490,7 +493,7 @@ public final class ModuleValidator {
           }
         }
         // TODO(b/202521399): Add a test for cases that add to this map.
-        allMethodsByName.put(superclassMethod.getName(), superclassMethod);
+        allMethodsByName.put(getSimpleName(superclassMethod), superclassMethod);
       }
     }
   }
@@ -603,7 +606,7 @@ public final class ModuleValidator {
     }
 
     ImmutableListMultimap<String, XMethodElement> bindingMethodsByName =
-        Multimaps.index(companionBindingMethods, XMethodElement::getName);
+        Multimaps.index(companionBindingMethods, XElements::getSimpleName);
     validateMethodsWithSameName(builder, bindingMethodsByName);
 
     // If there are provision methods, then check the visibility. Companion objects are composed by

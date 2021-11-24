@@ -24,6 +24,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static javax.lang.model.util.ElementFilter.constructorsIn;
 import static kotlin.streams.jdk8.StreamsKt.asStream;
 
@@ -117,7 +118,7 @@ public final class AssistedInjectionAnnotations {
       XType paramType = paramTypes.get(i);
       if (isAssistedParameter(paramElement)) {
         assistedParameterSpecs.add(
-            ParameterSpec.builder(paramType.getTypeName(), paramElement.getName()).build());
+            ParameterSpec.builder(paramType.getTypeName(), getSimpleName(paramElement)).build());
       }
     }
     return assistedParameterSpecs.build();

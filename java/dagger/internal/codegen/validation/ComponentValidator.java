@@ -38,6 +38,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getAnyAnnotation;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypeElements.getAllUnimplementedMethods;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static java.util.Comparator.comparing;
@@ -452,7 +453,8 @@ public final class ComponentValidator implements ClearableCache {
       methodsIn(elements.getAllMembers(toJavac(component))).stream()
           .map(method -> asMethod(toXProcessing(method, processingEnv)))
           .filter(method -> isEntryPoint(method, method.asMemberOf(component.getType())))
-          .forEach(method -> addMethodUnlessOverridden(method, entryPoints.get(method.getName())));
+          .forEach(
+              method -> addMethodUnlessOverridden(method, entryPoints.get(getSimpleName(method))));
 
       asMap(entryPoints).values().stream()
           .filter(methods -> distinctKeys(methods).size() > 1)

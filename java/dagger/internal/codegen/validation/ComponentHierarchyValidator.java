@@ -25,6 +25,7 @@ import static com.google.common.base.Predicates.not;
 import static dagger.internal.codegen.base.Scopes.getReadableSource;
 import static dagger.internal.codegen.base.Scopes.uniqueScopeOf;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
@@ -127,7 +128,8 @@ final class ComponentHierarchyValidator {
             String.format(
                 "%s is present in %s. A subcomponent cannot use an instance of a "
                     + "module that differs from its parent.",
-                moduleType.getName(), existingModuleToOwners.get(moduleType).getQualifiedName()),
+                getSimpleName(moduleType),
+                existingModuleToOwners.get(moduleType).getQualifiedName()),
             factoryMethodParameter);
       }
     }

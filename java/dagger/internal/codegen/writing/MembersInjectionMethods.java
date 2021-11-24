@@ -21,6 +21,7 @@ import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.MEMBERS_INJECTION_METHOD;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.google.common.collect.ImmutableSet;
@@ -106,7 +107,7 @@ final class MembersInjectionMethods {
             ? keyType
             : elements.getTypeElement(TypeName.OBJECT).asType();
     TypeName membersInjectedTypeName = TypeName.get(membersInjectedType);
-    String bindingTypeName = binding.bindingTypeElement().get().getName();
+    String bindingTypeName = getSimpleName(binding.bindingTypeElement().get());
     // TODO(ronshapiro): include type parameters in this name e.g. injectFooOfT, and outer class
     // simple names Foo.Builder -> injectFooBuilder
     String methodName = shardImplementation.getUniqueMethodName("inject" + bindingTypeName);

@@ -34,7 +34,6 @@ import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
-import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -53,6 +52,7 @@ import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.ComponentRequirement.NullPolicy;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.xprocessing.MethodSpecs;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -397,7 +397,7 @@ final class ComponentCreatorImplementationFactory {
     @Override
     protected ImmutableMap<ComponentRequirement, String> factoryMethodParameters() {
       return ImmutableMap.copyOf(
-          Maps.transformValues(creatorDescriptor.factoryParameters(), XVariableElement::getName));
+          Maps.transformValues(creatorDescriptor.factoryParameters(), XElements::getSimpleName));
     }
 
     private XType creatorType() {

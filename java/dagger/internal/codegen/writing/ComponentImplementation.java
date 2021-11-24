@@ -35,6 +35,7 @@ import static dagger.internal.codegen.javapoet.AnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.javapoet.CodeBlocks.parameterNames;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.COMPONENT_METHOD;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.producers.CancellationPolicy.Propagation.PROPAGATE;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -727,7 +728,7 @@ public final class ComponentImplementation {
         ComponentCreatorDescriptor descriptor = creatorDescriptor.get();
         creatorKind = descriptor.kind();
         creatorType = descriptor.typeElement().getClassName();
-        factoryMethodName = descriptor.factoryMethod().getName();
+        factoryMethodName = getSimpleName(descriptor.factoryMethod());
         noArgFactoryMethod = descriptor.factoryParameters().isEmpty();
       } else {
         creatorKind = BUILDER;

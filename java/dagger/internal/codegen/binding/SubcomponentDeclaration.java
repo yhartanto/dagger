@@ -18,6 +18,7 @@ package dagger.internal.codegen.binding;
 
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getSubcomponentCreator;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XTypeElement;
@@ -71,7 +72,7 @@ public abstract class SubcomponentDeclaration extends BindingDeclaration {
       ModuleAnnotation moduleAnnotation = ModuleAnnotation.moduleAnnotation(module).get();
       XElement subcomponentAttribute =
           moduleAnnotation.annotation().getType().getTypeElement().getDeclaredMethods().stream()
-              .filter(method -> method.getName().contentEquals("subcomponents"))
+              .filter(method -> getSimpleName(method).contentEquals("subcomponents"))
               .collect(toOptional())
               .get();
 

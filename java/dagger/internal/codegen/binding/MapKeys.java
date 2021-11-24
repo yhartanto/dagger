@@ -27,6 +27,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.base.MapKeyAccessibility.isMapKeyPubliclyAccessible;
 import static dagger.internal.codegen.binding.SourceFiles.elementBasedClassName;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -135,7 +136,10 @@ public final class MapKeys {
     XType annotationValueType = annotationValueMethod.getReturnType();
     if (isArray(annotationValueType)) {
       throw new IllegalArgumentException(
-          mapKeyAnnotationType + "." + annotationValueMethod.getName() + " cannot be an array");
+          mapKeyAnnotationType
+              + "."
+              + getSimpleName(annotationValueMethod)
+              + " cannot be an array");
     }
     return isPrimitive(annotationValueType) ? annotationValueType.boxed() : annotationValueType;
   }

@@ -90,7 +90,7 @@ public abstract class TypeCheckingProcessingStep<E extends XElement> implements 
     checkState(
         annotationClassNames.keySet().containsAll(elementsByAnnotation.keySet()),
         "Unexpected annotations for %s: %s",
-        this.getClass().getName(),
+        this.getClass().getCanonicalName(),
         difference(elementsByAnnotation.keySet(), annotationClassNames.keySet()));
 
     ImmutableSetMultimap.Builder<XElement, ClassName> builder = ImmutableSetMultimap.builder();

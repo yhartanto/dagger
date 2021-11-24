@@ -34,6 +34,7 @@ import static dagger.internal.codegen.javapoet.AnnotationSpecs.suppressWarnings;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.factoryOf;
 import static dagger.internal.codegen.writing.GwtCompatibility.gwtIncompatibleAnnotation;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.spi.model.BindingKind.INJECTION;
 import static dagger.spi.model.BindingKind.PROVISION;
 import static javax.lang.model.element.Modifier.FINAL;
@@ -240,7 +241,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
                     element ->
                         ParameterSpec.builder(
                                 element.getType().getTypeName(),
-                                uniqueFieldNames.getUniqueName(element.getName()))
+                                uniqueFieldNames.getUniqueName(getSimpleName(element)))
                             .build()));
     TypeName providedTypeName = providedTypeName(binding);
     MethodSpec.Builder getMethod =

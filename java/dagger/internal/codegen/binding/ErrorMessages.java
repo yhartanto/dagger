@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen.binding;
 
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
@@ -209,7 +211,7 @@ public final class ErrorMessages {
               + "order to provide type-safe access to these methods, override %2$s() to return "
               + "%4$s",
           componentBuilder.getQualifiedName(),
-          buildMethod.getName(),
+          getSimpleName(buildMethod),
           returnType.getTypeName(),
           component.getQualifiedName(),
           Joiner.on(", ").join(additionalMethods));

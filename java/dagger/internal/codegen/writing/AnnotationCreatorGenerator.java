@@ -22,6 +22,7 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.binding.AnnotationExpression.createMethodName;
 import static dagger.internal.codegen.binding.AnnotationExpression.getAnnotationCreatorClassName;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -114,7 +115,7 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<XTypeElement
 
     ImmutableList.Builder<CodeBlock> parameters = ImmutableList.builder();
     for (XMethodElement annotationMember : annotationElement.getDeclaredMethods()) {
-      String parameterName = annotationMember.getName();
+      String parameterName = getSimpleName(annotationMember);
       TypeName parameterType = annotationMember.getReturnType().getTypeName();
       createMethod.addParameter(parameterType, parameterName);
       parameters.add(CodeBlock.of("$L", parameterName));

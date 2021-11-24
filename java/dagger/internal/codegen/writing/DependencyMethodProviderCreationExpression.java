@@ -25,6 +25,7 @@ import static com.squareup.javapoet.TypeSpec.classBuilder;
 import static dagger.internal.codegen.javapoet.TypeNames.providerOf;
 import static dagger.internal.codegen.writing.ComponentImplementation.TypeSpecKind.COMPONENT_PROVISION_FACTORY;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -90,7 +91,7 @@ final class DependencyMethodProviderCreationExpression
         ComponentProvisionRequestRepresentation.maybeCheckForNull(
             binding,
             compilerOptions,
-            CodeBlock.of("$N.$N()", dependency().variableName(), provisionMethod.getName()));
+            CodeBlock.of("$N.$N()", dependency().variableName(), getSimpleName(provisionMethod)));
     ClassName dependencyClassName = dependency().typeElement().getClassName();
     TypeName keyType = binding.key().type().xprocessing().getTypeName();
     MethodSpec.Builder getMethod =
@@ -113,7 +114,7 @@ final class DependencyMethodProviderCreationExpression
             .nestedClass(
                 dependency().typeElement().getQualifiedName().replace('.', '_')
                     + "_"
-                    + provisionMethod.getName());
+                    + getSimpleName(provisionMethod));
     componentShard.addType(
         COMPONENT_PROVISION_FACTORY,
         classBuilder(factoryClassName)

@@ -22,6 +22,7 @@ import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assis
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedFactoryType;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
@@ -110,7 +111,7 @@ final class AssistedProcessingStep extends TypeCheckingProcessingStep<XExecutabl
     // an @Assisted annotation that has no affect, which is already true for many of Dagger's other
     // annotations.
     return isMethod(executableElement)
-        && asMethod(executableElement).getName().contentEquals("copy")
+        && getSimpleName(asMethod(executableElement)).contentEquals("copy")
         && closestEnclosingTypeElement(executableElement.getEnclosingElement()).isDataClass();
   }
 }

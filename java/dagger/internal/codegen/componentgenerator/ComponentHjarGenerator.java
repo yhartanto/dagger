@@ -26,6 +26,7 @@ import static dagger.internal.codegen.binding.ComponentCreatorKind.BUILDER;
 import static dagger.internal.codegen.javapoet.TypeSpecs.addSupertype;
 import static dagger.internal.codegen.langmodel.Accessibility.isElementAccessibleFrom;
 import static dagger.internal.codegen.writing.ComponentNames.getRootComponentClassName;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypeElements.getAllUnimplementedMethods;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -212,7 +213,7 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
 
   private static MethodSpec builderSetterMethod(
       XTypeElement componentRequirement, ClassName builderClass) {
-    String simpleName = UPPER_CAMEL.to(LOWER_CAMEL, componentRequirement.getName());
+    String simpleName = UPPER_CAMEL.to(LOWER_CAMEL, getSimpleName(componentRequirement));
     return MethodSpec.methodBuilder(simpleName)
         .addModifiers(PUBLIC)
         .addParameter(componentRequirement.getClassName(), simpleName)

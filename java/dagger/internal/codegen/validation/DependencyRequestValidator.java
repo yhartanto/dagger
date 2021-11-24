@@ -25,6 +25,7 @@ import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAss
 import static dagger.internal.codegen.binding.SourceFiles.membersInjectorNameForType;
 import static dagger.internal.codegen.xprocessing.XElements.asField;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
@@ -191,7 +192,7 @@ final class DependencyRequestValidator {
       report.addError(
           String.format(
               "%s may only be injected in @Produces methods",
-              requestType.getTypeElement().getName()),
+              getSimpleName(requestType.getTypeElement())),
           requestElement);
     }
   }

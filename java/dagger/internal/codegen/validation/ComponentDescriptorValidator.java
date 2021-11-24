@@ -32,6 +32,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSetMultimap;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static dagger.internal.codegen.xprocessing.XElements.asMethodParameter;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static javax.tools.Diagnostic.Kind.ERROR;
@@ -376,7 +377,7 @@ public final class ComponentDescriptorValidator {
       XType parameterType = resolveParameterType(parameter, container);
       return joiner
           .add(stripCommonTypePrefixes(parameterType.getTypeName().toString()))
-          .add(parameter.getName())
+          .add(getSimpleName(parameter))
           .toString();
     }
 

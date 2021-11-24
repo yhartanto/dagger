@@ -22,6 +22,7 @@ import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnot
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.getTypeListValue;
 import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.subcomponentCreatorAnnotations;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XAnnotations.getClassName;
 import static dagger.internal.codegen.xprocessing.XElements.hasAnyAnnotation;
 
 import androidx.room.compiler.processing.XAnnotation;
@@ -67,7 +68,7 @@ public final class ConfigurationAnnotations {
   /** Returns the first type that specifies this' nullability, or empty if none. */
   public static Optional<XAnnotation> getNullableAnnotation(XElement element) {
     return element.getAllAnnotations().stream()
-        .filter(annotation -> annotation.getName().contentEquals("Nullable"))
+        .filter(annotation -> getClassName(annotation).simpleName().contentEquals("Nullable"))
         .findFirst();
   }
 
