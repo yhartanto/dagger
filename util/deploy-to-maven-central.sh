@@ -10,15 +10,7 @@ readonly KEY=$1
 readonly VERSION_NAME=$2
 shift 2
 
-if [[ ! "$VERSION_NAME" =~ ^2\. ]]; then
-  echo 'Version name must begin with "2."'
-  exit 2
-fi
-
-if [[ "$VERSION_NAME" =~ " " ]]; then
-  echo "Version name must not have any spaces"
-  exit 3
-fi
+$(dirname $0)/validate-dagger-version.sh "$VERSION_NAME"
 
 BAZEL_VERSION=$(bazel --version)
 if [[ $BAZEL_VERSION != *"4.2.1"* ]]; then
