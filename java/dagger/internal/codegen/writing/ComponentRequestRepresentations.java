@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
@@ -184,7 +185,7 @@ public final class ComponentRequestRepresentations {
     BindingRequest request = bindingRequest(componentMethod.dependencyRequest().get());
     return MethodSpec.overriding(
             componentMethod.methodElement(),
-            MoreTypes.asDeclared(graph.componentTypeElement().asType()),
+            MoreTypes.asDeclared(toJavac(graph.componentTypeElement()).asType()),
             types)
         .addCode(
             getRequestRepresentation(request)

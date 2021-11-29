@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreTypes.asDeclared;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
@@ -284,7 +285,7 @@ public final class ComponentImplementation {
 
     // Claim the method names for all local and inherited methods on the component type.
     elements
-        .getLocalAndInheritedMethods(graph.componentTypeElement())
+        .getLocalAndInheritedMethods(toJavac(graph.componentTypeElement()))
         .forEach(method -> componentShard.componentMethodNames.claim(method.getSimpleName()));
 
     // Create the shards for this component, indexed by binding.
@@ -680,7 +681,7 @@ public final class ComponentImplementation {
       } else if (isNested()) {
         return ImmutableSet.of(PRIVATE, STATIC, FINAL);
       }
-      return graph.componentTypeElement().getModifiers().contains(PUBLIC)
+      return graph.componentTypeElement().isPublic()
           // TODO(ronshapiro): perhaps all generated components should be non-public?
           ? ImmutableSet.of(PUBLIC, FINAL)
           : ImmutableSet.of(FINAL);
@@ -749,7 +750,7 @@ public final class ComponentImplementation {
         addMethod(
             MethodSpecKind.BUILDER_METHOD,
             methodBuilder("create")
-                .returns(ClassName.get(graph.componentTypeElement()))
+                .returns(graph.componentTypeElement().getClassName())
                 .addModifiers(PUBLIC, STATIC)
                 .addStatement("return new $L().$L()", creatorKind.typeName(), factoryMethodName)
                 .build());
@@ -758,7 +759,7 @@ public final class ComponentImplementation {
 
     private void validateMethodNameDoesNotOverrideGeneratedCreator(String creatorName) {
       // Check if there is any client added method has the same signature as generated creatorName.
-      MoreElements.getAllMethods(graph.componentTypeElement(), types, elements).stream()
+      MoreElements.getAllMethods(toJavac(graph.componentTypeElement()), types, elements).stream()
           .filter(method -> method.getSimpleName().contentEquals(creatorName))
           .filter(method -> method.getParameters().isEmpty())
           .filter(method -> !method.getModifiers().contains(Modifier.STATIC))
@@ -780,8 +781,12 @@ public final class ComponentImplementation {
     private void createSubcomponentFactoryMethod(ExecutableElement factoryMethod) {
       checkState(parent.isPresent());
       Collection<ParameterSpec> params =
-          Maps.transformValues(graph.factoryMethodParameters(), ParameterSpec::get).values();
-      DeclaredType parentType = asDeclared(parent.get().graph().componentTypeElement().asType());
+          Maps.transformValues(
+                  graph.factoryMethodParameters(),
+                  parameter -> ParameterSpec.get(toJavac(parameter)))
+              .values();
+      DeclaredType parentType =
+          asDeclared(toJavac(parent.get().graph().componentTypeElement()).asType());
       MethodSpec.Builder method = MethodSpec.overriding(factoryMethod, parentType, types);
       params.forEach(
           param -> method.addStatement("$T.checkNotNull($N)", Preconditions.class, param));
@@ -803,7 +808,7 @@ public final class ComponentImplementation {
     private void addInterfaceMethods() {
       // Each component method may have been declared by several supertypes. We want to implement
       // only one method for each distinct signature.
-      DeclaredType componentType = asDeclared(graph.componentTypeElement().asType());
+      DeclaredType componentType = asDeclared(toJavac(graph.componentTypeElement()).asType());
       Set<MethodSignature> signatures = Sets.newHashSet();
       for (ComponentMethodDescriptor method : graph.componentDescriptor().entryPointMethods()) {
         if (signatures.add(MethodSignature.forComponentMethod(method, componentType, types))) {

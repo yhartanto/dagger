@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Iterables.transform;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
@@ -27,7 +26,8 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import androidx.room.compiler.processing.XExecutableElement;
-import androidx.room.compiler.processing.compat.XConverters;
+import androidx.room.compiler.processing.XExecutableParameterElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.ImmutableList;
@@ -57,9 +57,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 
 /**
  * A graph that represents a single component or subcomponent within a fully validated top-level
@@ -250,7 +247,7 @@ public abstract class BindingGraph {
         contributionBindings.values().stream()
             .map(BindingNode::contributingModule)
             .flatMap(presentValues())
-            .map(DaggerTypeElement::java)
+            .map(DaggerTypeElement::xprocessing)
             .collect(toImmutableSet());
 
     return bindingGraph;
@@ -260,7 +257,7 @@ public abstract class BindingGraph {
   private ImmutableMap<Key, BindingNode> membersInjectionBindings;
   private ImmutableSet<ModuleDescriptor> inheritedModules;
   private ImmutableSet<ModuleDescriptor> ownedModules;
-  private ImmutableSet<TypeElement> bindingModules;
+  private ImmutableSet<XTypeElement> bindingModules;
 
   BindingGraph() {}
 
@@ -319,9 +316,9 @@ public abstract class BindingGraph {
         : Optional.empty();
   }
 
-  /** Returns the {@link TypeElement} for the component this graph represents. */
-  public final TypeElement componentTypeElement() {
-    return componentPath().currentComponent().java();
+  /** Returns the {@link XTypeElement} for the component this graph represents. */
+  public final XTypeElement componentTypeElement() {
+    return componentPath().currentComponent().xprocessing();
   }
 
   /**
@@ -332,10 +329,9 @@ public abstract class BindingGraph {
    * subcomponents}, this set will be the transitive modules that are not owned by any of their
    * ancestors.
    */
-  public final ImmutableSet<TypeElement> ownedModuleTypes() {
+  public final ImmutableSet<XTypeElement> ownedModuleTypes() {
     return ownedModules.stream()
         .map(ModuleDescriptor::moduleElement)
-        .map(XConverters::toJavac)
         .collect(toImmutableSet());
   }
 
@@ -345,7 +341,7 @@ public abstract class BindingGraph {
    * <p>This factory method is the one defined in the parent component's interface.
    *
    * <p>In the example below, the {@link BindingGraph#factoryMethod} for {@code ChildComponent}
-   * would return the {@link ExecutableElement}: {@code childComponent(ChildModule1)} .
+   * would return the {@link XExecutableElement}: {@code childComponent(ChildModule1)} .
    *
    * <pre><code>
    *   {@literal @Component}
@@ -364,16 +360,17 @@ public abstract class BindingGraph {
 
   /**
    * Returns a map between the {@linkplain ComponentRequirement component requirement} and the
-   * corresponding {@link VariableElement} for each module parameter in the {@linkplain
+   * corresponding {@link XExecutableParameterElement} for each module parameter in the {@linkplain
    * BindingGraph#factoryMethod factory method}.
    */
   // TODO(dpb): Consider disallowing modules if none of their bindings are used.
-  public final ImmutableMap<ComponentRequirement, VariableElement> factoryMethodParameters() {
+  public final ImmutableMap<ComponentRequirement, XExecutableParameterElement>
+      factoryMethodParameters() {
     return factoryMethod().get().getParameters().stream()
         .collect(
             toImmutableMap(
                 parameter -> ComponentRequirement.forModule(parameter.getType()),
-                XConverters::toJavac));
+                parameter -> parameter));
   }
 
   /**
@@ -387,7 +384,7 @@ public abstract class BindingGraph {
    */
   @Memoized
   public ImmutableSet<ComponentRequirement> componentRequirements() {
-    ImmutableSet<TypeElement> requiredModules =
+    ImmutableSet<XTypeElement> requiredModules =
         stream(Traverser.forTree(BindingGraph::subgraphs).depthFirstPostOrder(this))
             .flatMap(graph -> graph.bindingModules.stream())
             .filter(ownedModuleTypes()::contains)
@@ -397,7 +394,7 @@ public abstract class BindingGraph {
         .filter(
             requirement ->
                 !requirement.kind().isModule()
-                    || requiredModules.contains(toJavac(requirement.typeElement())))
+                    || requiredModules.contains(requirement.typeElement()))
         .forEach(requirements::add);
     if (factoryMethod().isPresent()) {
       requirements.addAll(factoryMethodParameters().keySet());

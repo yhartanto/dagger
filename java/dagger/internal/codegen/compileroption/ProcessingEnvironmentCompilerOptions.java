@@ -52,6 +52,7 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Stream.concat;
 
 import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -208,11 +209,10 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
-  public int keysPerComponentShard(TypeElement component) {
+  public int keysPerComponentShard(XTypeElement component) {
     if (options.containsKey(KEYS_PER_COMPONENT_SHARD)) {
       checkArgument(
-          com.google.auto.common.MoreElements.getPackage(component)
-              .getQualifiedName().toString().startsWith("dagger."),
+          component.getClassName().packageName().startsWith("dagger."),
           "Cannot set %s. It is only meant for internal testing.", KEYS_PER_COMPONENT_SHARD);
       return Integer.parseInt(options.get(KEYS_PER_COMPONENT_SHARD));
     }

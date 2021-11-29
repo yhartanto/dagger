@@ -22,6 +22,7 @@ package dagger.internal.codegen.kythe;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnyAnnotationPresent;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.service.AutoService;
@@ -143,7 +144,7 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
   private void addModuleEdges(dagger.internal.codegen.binding.BindingGraph graph) {
     Optional<VName> componentNode = jvmNode(graph.componentTypeElement(), "component");
     for (ModuleDescriptor module : graph.componentDescriptor().modules()) {
-      Optional<VName> moduleNode = jvmNode(toJavac(module.moduleElement()), "module");
+      Optional<VName> moduleNode = jvmNode(module.moduleElement(), "module");
       emitEdge(componentNode, "/inject/installsmodule", moduleNode);
     }
     graph.subgraphs().forEach(this::addModuleEdges);
@@ -157,6 +158,10 @@ public class DaggerKythePlugin extends Plugin.Scanner<Void, Void> {
       emitEdge(componentNode, "/inject/childcomponent", subcomponentNode);
     }
     graph.subgraphs().forEach(this::addChildComponentEdges);
+  }
+
+  private Optional<VName> jvmNode(XElement element, String name) {
+    return jvmNode(toJavac(element), name);
   }
 
   private Optional<VName> jvmNode(Element element, String name) {

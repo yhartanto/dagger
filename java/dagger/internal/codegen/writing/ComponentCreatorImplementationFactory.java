@@ -17,7 +17,6 @@
 package dagger.internal.codegen.writing;
 
 import static androidx.room.compiler.processing.XTypeKt.isVoid;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -432,10 +431,7 @@ final class ComponentCreatorImplementationFactory {
      * Returns whether the given {@code requirement} is for a module type owned by the component.
      */
     private boolean isOwnedModule(ComponentRequirement requirement) {
-      return componentImplementation
-          .graph()
-          .ownedModuleTypes()
-          .contains(toJavac(requirement.typeElement()));
+      return componentImplementation.graph().ownedModuleTypes().contains(requirement.typeElement());
     }
 
     @Override
