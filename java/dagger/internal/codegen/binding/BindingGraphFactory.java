@@ -18,7 +18,6 @@ package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
-import static com.google.auto.common.MoreTypes.asTypeElement;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.auto.common.MoreTypes.isTypeOf;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -30,6 +29,7 @@ import static dagger.internal.codegen.binding.ComponentDescriptor.isComponentCon
 import static dagger.internal.codegen.binding.SourceFiles.generatedMonitoringModuleName;
 import static dagger.internal.codegen.langmodel.DaggerElements.checkTypePresent;
 import static dagger.internal.codegen.xprocessing.XElements.asMethod;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 import static dagger.spi.model.BindingKind.ASSISTED_INJECTION;
 import static dagger.spi.model.BindingKind.DELEGATE;
 import static dagger.spi.model.BindingKind.INJECTION;
@@ -78,7 +78,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeKind;
 
 /** A factory for {@link BindingGraph} objects. */
 @Singleton
@@ -429,8 +428,8 @@ public final class BindingGraphFactory implements ClearableCache {
 
       // Add Assisted Factory binding
       if (isType(requestKey.type().java())
-          && requestKey.type().java().getKind() == TypeKind.DECLARED
-          && isAssistedFactoryType(asTypeElement(requestKey.type().java()))) {
+          && isDeclared(requestKey.type().xprocessing())
+          && isAssistedFactoryType(requestKey.type().xprocessing().getTypeElement())) {
         bindings.add(
             bindingFactory.assistedFactoryBinding(
                 requestKey.type().xprocessing().getTypeElement(),

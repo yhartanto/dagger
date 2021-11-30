@@ -25,7 +25,6 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
-import static javax.lang.model.util.ElementFilter.constructorsIn;
 import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XConstructorElement;
@@ -53,9 +52,6 @@ import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.BindingKind;
 import java.util.List;
 import java.util.Optional;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
@@ -76,24 +72,13 @@ public final class AssistedInjectionAnnotations {
 
   /** Returns {@code true} if the element uses assisted injection. */
   public static boolean isAssistedInjectionType(XTypeElement typeElement) {
-    return isAssistedInjectionType(toJavac(typeElement));
-  }
-
-  /** Returns {@code true} if the element uses assisted injection. */
-  public static boolean isAssistedInjectionType(TypeElement typeElement) {
-    ImmutableSet<ExecutableElement> injectConstructors = assistedInjectedConstructors(typeElement);
-    return !injectConstructors.isEmpty()
-        && isAnnotationPresent(getOnlyElement(injectConstructors), AssistedInject.class);
+    return assistedInjectedConstructors(typeElement).stream()
+        .anyMatch(constructor -> constructor.hasAnnotation(TypeNames.ASSISTED_INJECT));
   }
 
   /** Returns {@code true} if this binding is an assisted factory. */
   public static boolean isAssistedFactoryType(XElement element) {
-    return isAssistedFactoryType(toJavac(element));
-  }
-
-  /** Returns {@code true} if this binding is an assisted factory. */
-  public static boolean isAssistedFactoryType(Element element) {
-    return isAnnotationPresent(element, AssistedFactory.class);
+    return element.hasAnnotation(TypeNames.ASSISTED_FACTORY);
   }
 
   /**
@@ -151,13 +136,6 @@ public final class AssistedInjectionAnnotations {
   public static ImmutableSet<XConstructorElement> assistedInjectedConstructors(XTypeElement type) {
     return type.getConstructors().stream()
         .filter(constructor -> constructor.hasAnnotation(TypeNames.ASSISTED_INJECT))
-        .collect(toImmutableSet());
-  }
-
-  /** Returns the constructors in {@code type} that are annotated with {@link AssistedInject}. */
-  public static ImmutableSet<ExecutableElement> assistedInjectedConstructors(TypeElement type) {
-    return constructorsIn(type.getEnclosedElements()).stream()
-        .filter(constructor -> isAnnotationPresent(constructor, AssistedInject.class))
         .collect(toImmutableSet());
   }
 

@@ -24,6 +24,7 @@ import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
+import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedParameter;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.binding.SourceFiles.generatedClassNameForBinding;
 import static dagger.internal.codegen.binding.SourceFiles.memberInjectedFieldSignatureForVariable;
@@ -38,11 +39,15 @@ import static dagger.internal.codegen.langmodel.Accessibility.isElementAccessibl
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypePubliclyAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
+import static dagger.internal.codegen.xprocessing.XElements.asExecutable;
+import static dagger.internal.codegen.xprocessing.XElements.asMethodParameter;
 import static java.util.stream.Collectors.toList;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.lang.model.type.TypeKind.VOID;
 
+import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XExecutableParameterElement;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -56,7 +61,6 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeVariableName;
 import dagger.internal.Preconditions;
 import dagger.internal.codegen.base.UniqueNameSet;
-import dagger.internal.codegen.binding.AssistedInjectionAnnotations;
 import dagger.internal.codegen.binding.MembersInjectionBinding.InjectionSite;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.compileroption.CompilerOptions;
@@ -160,18 +164,18 @@ final class InjectionMethods {
         ProvisionBinding binding,
         Function<DependencyRequest, CodeBlock> dependencyUsage,
         Function<VariableElement, String> uniqueAssistedParameterName) {
-      ImmutableMap<VariableElement, DependencyRequest> dependencyRequestMap =
+      ImmutableMap<XExecutableParameterElement, DependencyRequest> dependencyRequestMap =
           binding.provisionDependencies().stream()
               .collect(
                   toImmutableMap(
-                      request -> MoreElements.asVariable(request.requestElement().get().java()),
+                      request -> asMethodParameter(request.requestElement().get().xprocessing()),
                       request -> request));
 
       ImmutableList.Builder<CodeBlock> arguments = ImmutableList.builder();
-      ExecutableElement method = asExecutable(toJavac(binding.bindingElement().get()));
-      for (VariableElement parameter : method.getParameters()) {
-        if (AssistedInjectionAnnotations.isAssistedParameter(parameter)) {
-          arguments.add(CodeBlock.of("$L", uniqueAssistedParameterName.apply(parameter)));
+      XExecutableElement method = asExecutable(binding.bindingElement().get());
+      for (XExecutableParameterElement parameter : method.getParameters()) {
+        if (isAssistedParameter(parameter)) {
+          arguments.add(CodeBlock.of("$L", uniqueAssistedParameterName.apply(toJavac(parameter))));
         } else if (dependencyRequestMap.containsKey(parameter)) {
           DependencyRequest request = dependencyRequestMap.get(parameter);
           arguments.add(dependencyUsage.apply(request));

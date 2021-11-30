@@ -25,6 +25,7 @@ import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.base.RequestKinds.frameworkClassName;
 import static dagger.internal.codegen.base.RequestKinds.getRequestKind;
+import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.isAssistedParameter;
 import static dagger.internal.codegen.binding.ConfigurationAnnotations.getNullableType;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.langmodel.DaggerTypes.unwrapType;
@@ -161,7 +162,7 @@ public final class DependencyRequestFactory {
     checkNotNull(variableElement);
     checkNotNull(resolvedType);
     // Ban @Assisted parameters, they are not considered dependency requests.
-    checkArgument(!AssistedInjectionAnnotations.isAssistedParameter(variableElement));
+    checkArgument(!isAssistedParameter(toXProcessing(variableElement, processingEnv)));
     Optional<AnnotationMirror> qualifier = injectionAnnotations.getQualifier(variableElement);
     return newDependencyRequest(variableElement, resolvedType, qualifier);
   }
