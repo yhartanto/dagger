@@ -18,6 +18,7 @@ package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.Scopes.scopesOf;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
 import static dagger.internal.codegen.binding.AssistedInjectionAnnotations.assistedInjectedConstructors;
@@ -50,7 +51,6 @@ import dagger.spi.model.Scope;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.tools.Diagnostic;
@@ -70,7 +70,7 @@ public final class InjectValidator implements ClearableCache {
   private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
   private final InjectionAnnotations injectionAnnotations;
   private final KotlinMetadataUtil metadataUtil;
-  private final Map<XConstructorElement, ValidationReport> reports = new HashMap<>();
+  private final Map<XTypeElement, ValidationReport> reports = new HashMap<>();
 
   @Inject
   InjectValidator(
@@ -135,11 +135,34 @@ public final class InjectValidator implements ClearableCache {
             metadataUtil);
   }
 
-  public ValidationReport validateConstructor(XConstructorElement constructorElement) {
-    return reentrantComputeIfAbsent(reports, constructorElement, this::validateConstructorUncached);
+  public ValidationReport validate(XTypeElement typeElement) {
+    return reentrantComputeIfAbsent(reports, typeElement, this::validateUncached);
   }
 
-  private ValidationReport validateConstructorUncached(XConstructorElement constructorElement) {
+  private ValidationReport validateUncached(XTypeElement typeElement) {
+    ValidationReport.Builder builder = ValidationReport.about(typeElement);
+    builder.addSubreport(validateMembersInjectionType(typeElement));
+
+    ImmutableSet<XConstructorElement> injectConstructors =
+        ImmutableSet.<XConstructorElement>builder()
+            .addAll(injectedConstructors(typeElement))
+            .addAll(assistedInjectedConstructors(typeElement))
+            .build();
+
+    switch (injectConstructors.size()) {
+      case 0:
+        break; // Nothing to validate.
+      case 1:
+        builder.addSubreport(validateConstructor(getOnlyElement(injectConstructors)));
+        break;
+      default:
+        builder.addError("Types may only contain one injected constructor", typeElement);
+    }
+
+    return builder.build();
+  }
+
+  private ValidationReport validateConstructor(XConstructorElement constructorElement) {
     ValidationReport.Builder builder =
         ValidationReport.about(constructorElement.getEnclosingElement());
 
@@ -214,17 +237,6 @@ public final class InjectValidator implements ClearableCache {
                   + "Did you mean to make the class static?",
               injectAnnotation.simpleName()),
           constructorElement);
-    }
-
-    // This is computationally expensive, but probably preferable to a giant index
-    ImmutableSet<XConstructorElement> injectConstructors =
-        ImmutableSet.<XConstructorElement>builder()
-            .addAll(injectedConstructors(enclosingElement))
-            .addAll(assistedInjectedConstructors(enclosingElement))
-            .build();
-
-    if (injectConstructors.size() > 1) {
-      builder.addError("Types may only contain one injected constructor", constructorElement);
     }
 
     ImmutableSet<Scope> scopes = scopesOf(enclosingElement);
@@ -314,7 +326,7 @@ public final class InjectValidator implements ClearableCache {
     dependencyRequestValidator.checkNotProducer(builder, parameter);
   }
 
-  public ValidationReport validateMembersInjectionType(XTypeElement typeElement) {
+  private ValidationReport validateMembersInjectionType(XTypeElement typeElement) {
     // TODO(beder): This element might not be currently compiled, so this error message could be
     // left in limbo. Find an appropriate way to display the error message in that case.
     ValidationReport.Builder builder = ValidationReport.about(typeElement);
@@ -343,26 +355,11 @@ public final class InjectValidator implements ClearableCache {
       checkInjectIntoKotlinObject(typeElement, builder);
     }
     if (typeElement.getSuperType() != null) {
-      ValidationReport report = validateType(typeElement.getSuperType().getTypeElement());
+      ValidationReport report = validate(typeElement.getSuperType().getTypeElement());
       if (!report.isClean()) {
         builder.addSubreport(report);
       }
     }
-    return builder.build();
-  }
-
-  public ValidationReport validateType(XTypeElement typeElement) {
-    ValidationReport.Builder builder = ValidationReport.about(typeElement);
-    ValidationReport membersInjectionReport = validateMembersInjectionType(typeElement);
-    if (!membersInjectionReport.isClean()) {
-      builder.addSubreport(membersInjectionReport);
-    }
-    Stream.concat(
-            injectedConstructors(typeElement).stream(),
-            assistedInjectedConstructors(typeElement).stream())
-        .map(this::validateConstructor)
-        .filter(report -> !report.isClean())
-        .forEach(builder::addSubreport);
     return builder.build();
   }
 

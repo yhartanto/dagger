@@ -106,7 +106,7 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
         TypeMirror type = binding.key().type().java();
         if (!type.getKind().equals(DECLARED)
             || injectValidatorWhenGeneratingCode
-                .validateType(toXProcessing(asTypeElement(type), processingEnv))
+                .validate(toXProcessing(asTypeElement(type), processingEnv))
                 .isClean()) {
           generator.generate(binding);
         }
@@ -259,17 +259,19 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
       Optional<XType> resolvedType,
       boolean warnIfNotAlreadyGenerated) {
     XTypeElement typeElement = constructorElement.getEnclosingElement();
+
+    // Validating here shouldn't have a performance penalty because the validator caches its reports
+    ValidationReport report = injectValidator.validate(typeElement);
+    report.printMessagesTo(messager);
+    if (!report.isClean()) {
+      return Optional.empty();
+    }
+
     XType type = typeElement.getType();
     Key key = keyFactory.forInjectConstructorWithResolvedType(type);
     ProvisionBinding cachedBinding = provisionBindings.getBinding(key);
     if (cachedBinding != null) {
       return Optional.of(cachedBinding);
-    }
-
-    ValidationReport report = injectValidator.validateConstructor(constructorElement);
-    report.printMessagesTo(messager);
-    if (!report.isClean()) {
-      return Optional.empty();
     }
 
     ProvisionBinding binding = bindingFactory.injectionBinding(constructorElement, resolvedType);
@@ -311,17 +313,18 @@ final class InjectBindingRegistryImpl implements InjectBindingRegistry {
   @CanIgnoreReturnValue
   private Optional<MembersInjectionBinding> tryRegisterMembersInjectedType(
       XTypeElement typeElement, Optional<XType> resolvedType, boolean warnIfNotAlreadyGenerated) {
+    // Validating here shouldn't have a performance penalty because the validator caches its reports
+    ValidationReport report = injectValidator.validate(typeElement);
+    report.printMessagesTo(messager);
+    if (!report.isClean()) {
+      return Optional.empty();
+    }
+
     XType type = typeElement.getType();
     Key key = keyFactory.forInjectConstructorWithResolvedType(type);
     MembersInjectionBinding cachedBinding = membersInjectionBindings.getBinding(key);
     if (cachedBinding != null) {
       return Optional.of(cachedBinding);
-    }
-
-    ValidationReport report = injectValidator.validateMembersInjectionType(typeElement);
-    report.printMessagesTo(messager);
-    if (!report.isClean()) {
-      return Optional.empty();
     }
 
     MembersInjectionBinding binding = bindingFactory.membersInjectionBinding(type, resolvedType);

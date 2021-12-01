@@ -547,14 +547,11 @@ public final class InjectConstructorFactoryGeneratorTest {
         "}");
     Compilation compilation = daggerCompiler().compile(file);
     assertThat(compilation).failed();
+    assertThat(compilation).hadErrorCount(1);
     assertThat(compilation)
         .hadErrorContaining("Types may only contain one injected constructor")
         .inFile(file)
-        .onLine(6);
-    assertThat(compilation)
-        .hadErrorContaining("Types may only contain one injected constructor")
-        .inFile(file)
-        .onLine(8);
+        .onLine(5);
   }
 
   @Test public void multipleQualifiersOnInjectConstructorParameter() {
