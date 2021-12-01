@@ -23,20 +23,8 @@ jobs:
     name: 'Validate Dagger version'
     runs-on: ubuntu-latest
     steps:
-      # Cancel previous runs on the same branch to avoid unnecessary parallel
-      # runs of the same job. See https://github.com/google/go-github/pull/1821
-      - name: Cancel previous
-        uses: styfle/cancel-workflow-action@0.8.0
-        with:
-          access_token: ${{ github.token }}
-      - name: 'Check out gh-pages repository'
-        uses: actions/checkout@v2
-        with:
-          ref: 'refs/heads/gh-pages'
-          path: gh-pages
-      - name: 'Validate latest Dagger version'
-        run: ./gh-pages/.github/scripts/validate-latest-dagger-version.sh gh-pages/_config.yml
-        shell: bash
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/prechecks
   bazel-build:
     name: 'Bazel build'
     needs: validate-latest-dagger-version
@@ -56,25 +44,8 @@ jobs:
     needs: bazel-build
     runs-on: ubuntu-latest
     steps:
-    - name: 'Check out repository'
-      uses: actions/checkout@v2
-    - name: 'Cache Gradle files'
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    - name: 'Download local snapshot for tests'
-      uses: actions/download-artifact@v2
-      with:
-        name: local-snapshot
-        path: ~/.m2/repository/com/google/dagger
-    - name: 'Gradle Java local tests'
-      run: ./util/run-local-gradle-tests.sh
-      shell: bash
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/artifact-java-local-tests
   artifact-android-local-tests:
     name: 'Artifact Android local tests (AGP ${{ matrix.agp }})'
     needs: bazel-build
@@ -83,31 +54,10 @@ jobs:
       matrix:
         agp: ['4.1.0', '4.2.0', '7.0.0']
     steps:
-      - name: 'Check out repository'
-        uses: actions/checkout@v2
-      - name: 'Cache Gradle files'
-        uses: actions/cache@v2
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/artifact-android-local-tests
         with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-      - name: 'Download local snapshot for tests'
-        uses: actions/download-artifact@v2
-        with:
-          name: local-snapshot
-          path: ~/.m2/repository/com/google/dagger
-      - name: 'Gradle Android local tests (AGP ${{ matrix.agp }})'
-        run: ./util/run-local-gradle-android-tests.sh "${{ matrix.agp }}"
-        shell: bash
-      - name: 'Upload test reports (AGP ${{ matrix.agp }})'
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: tests-reports-agp-${{ matrix.agp }}
-          path: ${{ github.workspace }}/**/build/reports/tests/*
+          agp: '${{ matrix.agp }}'
   publish-artifacts:
     name: 'Publish Artifact'
     needs: [bazel-test, artifact-java-local-tests, artifact-android-local-tests]
