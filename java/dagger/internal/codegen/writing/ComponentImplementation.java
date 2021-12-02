@@ -45,6 +45,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
 import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Function;
@@ -808,10 +809,10 @@ public final class ComponentImplementation {
     private void addInterfaceMethods() {
       // Each component method may have been declared by several supertypes. We want to implement
       // only one method for each distinct signature.
-      DeclaredType componentType = asDeclared(toJavac(graph.componentTypeElement()).asType());
+      XType componentType = graph.componentTypeElement().getType();
       Set<MethodSignature> signatures = Sets.newHashSet();
       for (ComponentMethodDescriptor method : graph.componentDescriptor().entryPointMethods()) {
-        if (signatures.add(MethodSignature.forComponentMethod(method, componentType, types))) {
+        if (signatures.add(MethodSignature.forComponentMethod(method, componentType))) {
           addMethod(COMPONENT_METHOD, bindingExpressionsProvider.get().getComponentMethod(method));
         }
       }

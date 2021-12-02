@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
@@ -25,7 +24,6 @@ import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBloc
 import static dagger.internal.codegen.langmodel.Accessibility.isRawTypeAccessible;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
 
-import com.google.auto.common.MoreTypes;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -43,6 +41,7 @@ import dagger.internal.codegen.binding.ProductionBinding;
 import dagger.internal.codegen.binding.ProvisionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.xprocessing.MethodSpecs;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.RequestKind;
 import java.util.HashMap;
@@ -183,10 +182,8 @@ public final class ComponentRequestRepresentations {
   public MethodSpec getComponentMethod(ComponentMethodDescriptor componentMethod) {
     checkArgument(componentMethod.dependencyRequest().isPresent());
     BindingRequest request = bindingRequest(componentMethod.dependencyRequest().get());
-    return MethodSpec.overriding(
-            componentMethod.methodElement(),
-            MoreTypes.asDeclared(toJavac(graph.componentTypeElement()).asType()),
-            types)
+    return MethodSpecs.overriding(
+            componentMethod.methodElement(), graph.componentTypeElement().getType())
         .addCode(
             getRequestRepresentation(request)
                 .getComponentMethodImplementation(componentMethod, componentImplementation))

@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.componentgenerator;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.Preconditions.checkArgument;
@@ -36,8 +35,8 @@ import static javax.lang.model.element.Modifier.STATIC;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.auto.common.MoreTypes;
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
@@ -53,14 +52,11 @@ import dagger.internal.codegen.binding.ComponentRequirement;
 import dagger.internal.codegen.binding.MethodSignature;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.langmodel.DaggerElements;
-import dagger.internal.codegen.langmodel.DaggerTypes;
+import dagger.internal.codegen.xprocessing.MethodSpecs;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
 
 /**
  * A component generator that emits only API, without any actual implementation.
@@ -76,16 +72,9 @@ import javax.lang.model.type.DeclaredType;
  * normal step. Method bodies are omitted as Turbine ignores them entirely.
  */
 final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescriptor> {
-  private final DaggerTypes types;
-
   @Inject
-  ComponentHjarGenerator(
-      XFiler filer,
-      DaggerElements elements,
-      DaggerTypes types,
-      SourceVersion sourceVersion) {
+  ComponentHjarGenerator(XFiler filer, DaggerElements elements, SourceVersion sourceVersion) {
     super(filer, elements, sourceVersion);
-    this.types = types;
   }
 
   @Override
@@ -144,20 +133,18 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
       generatedComponent.addMethod(createMethod(componentDescriptor));
     }
 
-    DeclaredType componentType = MoreTypes.asDeclared(toJavac(componentElement).asType());
+    XType componentType = componentElement.getType();
     // TODO(ronshapiro): unify with ComponentImplementationBuilder
     Set<MethodSignature> methodSignatures =
         Sets.newHashSetWithExpectedSize(componentDescriptor.componentMethods().size());
     componentDescriptor.componentMethods().stream()
         .filter(
-            method -> {
-              return methodSignatures.add(
-                  MethodSignature.forComponentMethod(method, componentType, types));
-            })
+            method ->
+                methodSignatures.add(MethodSignature.forComponentMethod(method, componentType)))
         .forEach(
             method ->
                 generatedComponent.addMethod(
-                    emptyComponentMethod(toJavac(componentElement), method.methodElement())));
+                    emptyComponentMethod(componentElement, method.methodElement())));
 
     if (componentDescriptor.isProduction()) {
       generatedComponent
@@ -168,9 +155,8 @@ final class ComponentHjarGenerator extends SourceFileGenerator<ComponentDescript
     return ImmutableList.of(generatedComponent);
   }
 
-  private MethodSpec emptyComponentMethod(TypeElement typeElement, ExecutableElement baseMethod) {
-    return MethodSpec.overriding(baseMethod, MoreTypes.asDeclared(typeElement.asType()), types)
-        .build();
+  private MethodSpec emptyComponentMethod(XTypeElement typeElement, XMethodElement baseMethod) {
+    return MethodSpecs.overriding(baseMethod, typeElement.getType()).build();
   }
 
   private static MethodSpec privateConstructor() {

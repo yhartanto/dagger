@@ -17,6 +17,7 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.XElementKt.isMethod;
+import static androidx.room.compiler.processing.XTypeKt.isVoid;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -25,10 +26,12 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isFutureType;
 import static dagger.internal.codegen.langmodel.DaggerTypes.isTypeOf;
+import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 import static javax.lang.model.type.TypeKind.VOID;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -337,7 +340,7 @@ public abstract class ComponentDescriptor {
   @AutoValue
   public abstract static class ComponentMethodDescriptor {
     /** The method itself. Note that this may be declared on a supertype of the component. */
-    public abstract ExecutableElement methodElement();
+    public abstract XMethodElement methodElement();
 
     /**
      * The dependency request for production, provision, and subcomponent creator methods. Absent
@@ -356,9 +359,9 @@ public abstract class ComponentDescriptor {
     public TypeMirror resolvedReturnType(DaggerTypes types) {
       checkState(dependencyRequest().isPresent());
 
-      TypeMirror returnType = methodElement().getReturnType();
-      if (returnType.getKind().isPrimitive() || returnType.getKind().equals(VOID)) {
-        return returnType;
+      XType returnType = methodElement().getReturnType();
+      if (isPrimitive(returnType) || isVoid(returnType)) {
+        return toJavac(returnType);
       }
       return BindingRequest.bindingRequest(dependencyRequest().get())
           .requestedType(dependencyRequest().get().key().type().java(), types);
@@ -367,7 +370,7 @@ public abstract class ComponentDescriptor {
     /** A {@link ComponentMethodDescriptor}builder for a method. */
     public static Builder builder(XMethodElement method) {
       return new AutoValue_ComponentDescriptor_ComponentMethodDescriptor.Builder()
-          .methodElement(toJavac(method));
+          .methodElement(method);
     }
 
     /** A builder of {@link ComponentMethodDescriptor}s. */
@@ -375,7 +378,7 @@ public abstract class ComponentDescriptor {
     @CanIgnoreReturnValue
     public interface Builder {
       /** @see ComponentMethodDescriptor#methodElement() */
-      Builder methodElement(ExecutableElement methodElement);
+      Builder methodElement(XMethodElement methodElement);
 
       /** @see ComponentMethodDescriptor#dependencyRequest() */
       Builder dependencyRequest(DependencyRequest dependencyRequest);

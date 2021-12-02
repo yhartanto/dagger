@@ -16,9 +16,11 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.XTypeKt.isVoid;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static javax.lang.model.type.TypeKind.VOID;
 
+import androidx.room.compiler.processing.XMethodElement;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterSpec;
@@ -28,7 +30,6 @@ import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ComponentDescriptor.ComponentMethodDescriptor;
 import dagger.internal.codegen.binding.MembersInjectionBinding;
 import dagger.internal.codegen.javapoet.Expression;
-import javax.lang.model.element.ExecutableElement;
 
 /**
  * A binding expression for members injection component methods. See {@link
@@ -56,16 +57,17 @@ final class MembersInjectionRequestRepresentation extends RequestRepresentation 
   @Override
   protected CodeBlock getComponentMethodImplementation(
       ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
-    ExecutableElement methodElement = componentMethod.methodElement();
-    ParameterSpec parameter = ParameterSpec.get(getOnlyElement(methodElement.getParameters()));
+    XMethodElement methodElement = componentMethod.methodElement();
+    ParameterSpec parameter =
+        ParameterSpec.get(toJavac(getOnlyElement(methodElement.getParameters())));
 
     if (binding.injectionSites().isEmpty()) {
-      return methodElement.getReturnType().getKind().equals(VOID)
+      return isVoid(methodElement.getReturnType())
           ? CodeBlock.of("")
           : CodeBlock.of("return $N;", parameter);
     } else {
       ClassName requestingClass = component.name();
-      return methodElement.getReturnType().getKind().equals(VOID)
+      return isVoid(methodElement.getReturnType())
           ? CodeBlock.of("$L;", membersInjectionInvocation(parameter, requestingClass).codeBlock())
           : CodeBlock.of(
               "return $L;", membersInjectionInvocation(parameter, requestingClass).codeBlock());

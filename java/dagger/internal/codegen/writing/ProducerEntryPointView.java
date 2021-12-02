@@ -17,6 +17,7 @@
 package dagger.internal.codegen.writing;
 
 import static dagger.internal.codegen.writing.ComponentImplementation.FieldSpecKind.FRAMEWORK_FIELD;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
 import com.squareup.javapoet.ClassName;
@@ -83,7 +84,7 @@ final class ProducerEntryPointView {
     // TODO(cgdecker): Use a FrameworkFieldInitializer for this?
     // Though I don't think we need the once-only behavior of that, since I think
     // getComponentMethodImplementation will only be called once anyway
-    String methodName = componentMethod.methodElement().getSimpleName().toString();
+    String methodName = getSimpleName(componentMethod.methodElement());
     FieldSpec field =
         FieldSpec.builder(
                 TypeName.get(fieldType(componentMethod)),
