@@ -66,7 +66,6 @@ public final class InjectValidator implements ClearableCache {
   private final DaggerTypes types;
   private final DaggerElements elements;
   private final CompilerOptions compilerOptions;
-  private final SuperficialValidator superficialValidator;
   private final DependencyRequestValidator dependencyRequestValidator;
   private final Optional<Diagnostic.Kind> privateAndStaticInjectionDiagnosticKind;
   private final InjectionAnnotations injectionAnnotations;
@@ -78,7 +77,6 @@ public final class InjectValidator implements ClearableCache {
       XProcessingEnv processingEnv,
       DaggerTypes types,
       DaggerElements elements,
-      SuperficialValidator superficialValidator,
       DependencyRequestValidator dependencyRequestValidator,
       CompilerOptions compilerOptions,
       InjectionAnnotations injectionAnnotations,
@@ -88,7 +86,6 @@ public final class InjectValidator implements ClearableCache {
         types,
         elements,
         compilerOptions,
-        superficialValidator,
         dependencyRequestValidator,
         Optional.empty(),
         injectionAnnotations,
@@ -100,7 +97,6 @@ public final class InjectValidator implements ClearableCache {
       DaggerTypes types,
       DaggerElements elements,
       CompilerOptions compilerOptions,
-      SuperficialValidator superficialValidator,
       DependencyRequestValidator dependencyRequestValidator,
       Optional<Kind> privateAndStaticInjectionDiagnosticKind,
       InjectionAnnotations injectionAnnotations,
@@ -109,7 +105,6 @@ public final class InjectValidator implements ClearableCache {
     this.types = types;
     this.elements = elements;
     this.compilerOptions = compilerOptions;
-    this.superficialValidator = superficialValidator;
     this.dependencyRequestValidator = dependencyRequestValidator;
     this.privateAndStaticInjectionDiagnosticKind = privateAndStaticInjectionDiagnosticKind;
     this.injectionAnnotations = injectionAnnotations;
@@ -134,7 +129,6 @@ public final class InjectValidator implements ClearableCache {
             types,
             elements,
             compilerOptions,
-            superficialValidator,
             dependencyRequestValidator,
             Optional.of(Diagnostic.Kind.ERROR),
             injectionAnnotations,
@@ -146,7 +140,6 @@ public final class InjectValidator implements ClearableCache {
   }
 
   private ValidationReport validateUncached(XTypeElement typeElement) {
-    superficialValidator.throwIfNearestEnclosingTypeNotValid(typeElement);
     ValidationReport.Builder builder = ValidationReport.about(typeElement);
     builder.addSubreport(validateMembersInjectionType(typeElement));
 
