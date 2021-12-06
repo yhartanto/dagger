@@ -120,36 +120,41 @@ robolectric_repositories()
 # Load Kotlin repository
 #############################
 
-RULES_KOTLIN_COMMIT = "2c283821911439e244285b5bfec39148e7d90e21"
+RULES_KOTLIN_COMMIT = "686f0f1cf3e1cc8c750688bb082316b3eadb3cb6"
 
-RULES_KOTLIN_SHA = "b04cd539e7e3571745179da95069586b6fa76a64306b24bb286154e652010608"
+RULES_KOTLIN_SHA = "1d8758bbf27400a5f9d40f01e4337f6834d2b7864df34e9aa5cf0a9ab6cc9241"
 
 http_archive(
-    name = "io_bazel_rules_kotlin",
+    name = "io_bazel_rules_kotlin_head",
     sha256 = RULES_KOTLIN_SHA,
     strip_prefix = "rules_kotlin-%s" % RULES_KOTLIN_COMMIT,
     type = "zip",
     urls = ["https://github.com/bazelbuild/rules_kotlin/archive/%s.zip" % RULES_KOTLIN_COMMIT],
 )
 
-load("@io_bazel_rules_kotlin//kotlin:dependencies.bzl", "kt_download_local_dev_dependencies")
+load("@io_bazel_rules_kotlin_head//src/main/starlark/release_archive:repository.bzl", "archive_repository")
 
-kt_download_local_dev_dependencies()
+archive_repository(
+    name = "io_bazel_rules_kotlin",
+    source_repository_name = "io_bazel_rules_kotlin_head",
+)
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
+load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", "kotlinc_version")
 
-KOTLIN_VERSION = "1.4.20"
+KOTLIN_VERSION = "1.5.32"
 
-KOTLINC_RELEASE_SHA = "11db93a4d6789e3406c7f60b9f267eba26d6483dcd771eff9f85bb7e9837011f"
+KOTLINC_RELEASE_SHA = "2e728c43ee0bf819eae06630a4cbbc28ba2ed5b19a55ee0af96d2c0ab6b6c2a5"
 
-KOTLINC_RELEASE = {
-    "sha256": KOTLINC_RELEASE_SHA,
-    "urls": ["https://github.com/JetBrains/kotlin/releases/download/v{v}/kotlin-compiler-{v}.zip".format(v = KOTLIN_VERSION)],
-}
+kotlin_repositories(
+    compiler_release = kotlinc_version(
+        release = KOTLIN_VERSION,
+        sha256 = KOTLINC_RELEASE_SHA,
+    ),
+)
 
-kotlin_repositories(compiler_release = KOTLINC_RELEASE)
+load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
 
-register_toolchains("//:kotlin_toolchain")
+kt_register_toolchains()
 
 #############################
 # Load Maven dependencies

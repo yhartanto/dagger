@@ -21,7 +21,7 @@ genrule(
     name = "import-shared-lib",
     srcs = ["//java/dagger/hilt/processor/internal/root/ir"],
     outs = ["processor-shared-lib.jar"],
-    cmd = "cp $< $@",
+    cmd = "find $(SRCS)  -type f -name '*.jar' -exec cp {} $@ \\;",
     local = True,
 )
 
