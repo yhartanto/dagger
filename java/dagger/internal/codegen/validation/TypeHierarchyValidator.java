@@ -40,27 +40,17 @@ final class TypeHierarchyValidator {
    * @throws TypeNotPresentException if an type in the hierarchy is not valid.
    */
   public static void validateTypeHierarchy(XType type, DaggerTypes types) {
-    validateTypeHierarchy(toJavac(type), types);
-  }
-
-  /**
-   * Validate the type hierarchy of the given type including all super classes, interfaces, and
-   * type parameters.
-   *
-   * @throws TypeNotPresentException if an type in the hierarchy is not valid.
-   */
-  public static void validateTypeHierarchy(TypeMirror type, DaggerTypes types) {
-    Queue<TypeMirror> queue = new ArrayDeque<>();
+    Queue<XType> queue = new ArrayDeque<>();
     Set<Equivalence.Wrapper<TypeMirror>> queued = new HashSet<>();
     queue.add(type);
-    queued.add(MoreTypes.equivalence().wrap(type));
+    queued.add(MoreTypes.equivalence().wrap(toJavac(type)));
     while (!queue.isEmpty()) {
-      TypeMirror currType = queue.remove();
-      if (!SuperficialValidation.validateType(currType)) {
+      XType currType = queue.remove();
+      if (!SuperficialValidation.validateType(toJavac(currType))) {
         throw new TypeNotPresentException(currType.toString(), null);
       }
-      for (TypeMirror superType : types.directSupertypes(currType)) {
-        if (queued.add(MoreTypes.equivalence().wrap(superType))) {
+      for (XType superType : currType.getSuperTypes()) {
+        if (queued.add(MoreTypes.equivalence().wrap(toJavac(superType)))) {
           queue.add(superType);
         }
       }
