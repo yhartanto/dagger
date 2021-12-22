@@ -16,15 +16,14 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.unwrapOptionalEquivalence;
+import static dagger.internal.codegen.xprocessing.XElements.asMethod;
 import static java.util.Arrays.asList;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XElementKt;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
-import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
@@ -32,13 +31,12 @@ import dagger.internal.codegen.base.ContributionType;
 import dagger.internal.codegen.base.ContributionType.HasContributionType;
 import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.SetType;
+import dagger.internal.codegen.xprocessing.XTypes;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import java.util.Optional;
 import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * An abstract class for a value object representing the mechanism by which a {@link Key} can be
@@ -56,12 +54,11 @@ public abstract class ContributionBinding extends Binding implements HasContribu
   }
 
   /** If {@link #bindingElement()} is a method that returns a primitive type, returns that type. */
-  public final Optional<TypeMirror> contributedPrimitiveType() {
+  public final Optional<XType> contributedPrimitiveType() {
     return bindingElement()
-        .map(XConverters::toJavac)
-        .filter(bindingElement -> bindingElement.getKind() == ElementKind.METHOD)
-        .map(bindingElement -> MoreElements.asExecutable(bindingElement).getReturnType())
-        .filter(type -> type.getKind().isPrimitive());
+        .filter(XElementKt::isMethod)
+        .map(bindingElement -> asMethod(bindingElement).getReturnType())
+        .filter(XTypes::isPrimitive);
   }
 
   @Override
@@ -85,19 +82,19 @@ public abstract class ContributionBinding extends Binding implements HasContribu
   }
 
   /**
-   * The {@link TypeMirror type} for the {@code Factory<T>} or {@code Producer<T>} which is created
-   * for this binding. Uses the binding's key, V in the case of {@code Map<K, FrameworkClass<V>>>},
-   * and E {@code Set<E>} for {@link dagger.multibindings.IntoSet @IntoSet} methods.
+   * The {@link XType type} for the {@code Factory<T>} or {@code Producer<T>} which is created for
+   * this binding. Uses the binding's key, V in the case of {@code Map<K, FrameworkClass<V>>>}, and
+   * E {@code Set<E>} for {@link dagger.multibindings.IntoSet @IntoSet} methods.
    */
-  public final TypeMirror contributedType() {
+  public final XType contributedType() {
     switch (contributionType()) {
       case MAP:
-        return toJavac(MapType.from(key()).unwrappedFrameworkValueType());
+        return MapType.from(key()).unwrappedFrameworkValueType();
       case SET:
-        return toJavac(SetType.from(key()).elementType());
+        return SetType.from(key()).elementType();
       case SET_VALUES:
       case UNIQUE:
-        return key().type().java();
+        return key().type().xprocessing();
     }
     throw new AssertionError();
   }

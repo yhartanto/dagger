@@ -33,7 +33,6 @@ import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import dagger.spi.model.Scope;
 import java.util.Optional;
-import javax.lang.model.element.Element;
 
 /**
  * An implementation of {@link dagger.spi.model.Binding} that also exposes {@link
@@ -73,8 +72,8 @@ public abstract class BindingNode implements dagger.spi.model.Binding {
   public abstract ImmutableSet<SubcomponentDeclaration> subcomponentDeclarations();
 
   /**
-   * The {@link Element}s (other than the binding's {@link #bindingElement()}) that are associated
-   * with the binding.
+   * The elements (other than the binding's {@link #bindingElement()}) that are associated with the
+   * binding.
    *
    * <ul>
    *   <li>{@linkplain BindsOptionalOf optional binding} declarations

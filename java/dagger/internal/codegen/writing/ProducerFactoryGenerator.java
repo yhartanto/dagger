@@ -116,7 +116,7 @@ public final class ProducerFactoryGenerator extends SourceFileGenerator<Producti
     checkArgument(!binding.unresolved().isPresent());
     checkArgument(binding.bindingElement().isPresent());
 
-    TypeName providedTypeName = TypeName.get(binding.contributedType());
+    TypeName providedTypeName = binding.contributedType().getTypeName();
     TypeName futureTypeName = listenableFutureOf(providedTypeName);
 
     ClassName generatedTypeName = generatedClassNameForBinding(binding);

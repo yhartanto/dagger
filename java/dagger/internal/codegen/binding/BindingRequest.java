@@ -16,8 +16,10 @@
 
 package dagger.internal.codegen.binding;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.base.RequestKinds.requestType;
 
+import androidx.room.compiler.processing.XType;
 import com.google.auto.value.AutoValue;
 import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.DependencyRequest;
@@ -76,6 +78,10 @@ public abstract class BindingRequest {
   /** Returns whether this request is of the given kind. */
   public final boolean isRequestKind(RequestKind requestKind) {
     return requestKind.equals(requestKind());
+  }
+
+  public final TypeMirror requestedType(XType contributedType, DaggerTypes types) {
+    return requestedType(toJavac(contributedType), types);
   }
 
   public final TypeMirror requestedType(TypeMirror contributedType, DaggerTypes types) {

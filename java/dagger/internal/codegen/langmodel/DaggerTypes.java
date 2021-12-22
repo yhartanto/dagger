@@ -231,6 +231,16 @@ public final class DaggerTypes implements Types {
    * <p>For example, if {@code type} is {@code List<Number>} and {@code wrappingClass} is {@code
    * Set.class}, this will return {@code Set<List<Number>>}.
    */
+  public DeclaredType wrapType(XType type, ClassName wrappingClassName) {
+    return wrapType(toJavac(type), wrappingClassName);
+  }
+
+  /**
+   * Returns {@code type} wrapped in {@code wrappingClass}.
+   *
+   * <p>For example, if {@code type} is {@code List<Number>} and {@code wrappingClass} is {@code
+   * Set.class}, this will return {@code Set<List<Number>>}.
+   */
   public DeclaredType wrapType(TypeMirror type, ClassName wrappingClassName) {
     return types.getDeclaredType(elements.getTypeElement(wrappingClassName.canonicalName()), type);
   }
@@ -271,6 +281,19 @@ public final class DaggerTypes implements Types {
   public TypeMirror publiclyAccessibleType(TypeMirror type) {
     return accessibleType(
         type, Accessibility::isTypePubliclyAccessible, Accessibility::isRawTypePubliclyAccessible);
+  }
+
+  /**
+   * Returns an accessible type in {@code requestingClass}'s package based on {@code type}:
+   *
+   * <ul>
+   *   <li>If {@code type} is accessible from the package, returns it.
+   *   <li>If not, but {@code type}'s raw type is accessible from the package, returns the raw type.
+   *   <li>Otherwise returns {@link Object}.
+   * </ul>
+   */
+  public TypeMirror accessibleType(XType type, ClassName requestingClass) {
+    return accessibleType(toJavac(type), requestingClass);
   }
 
   /**

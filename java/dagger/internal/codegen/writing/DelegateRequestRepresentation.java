@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -82,7 +83,7 @@ final class DelegateRequestRepresentation extends RequestRepresentation {
             bindingRequest(getOnlyElement(binding.dependencies()).key(), requestKind),
             requestingClass);
 
-    TypeMirror contributedType = binding.contributedType();
+    TypeMirror contributedType = toJavac(binding.contributedType());
     switch (requestKind) {
       case INSTANCE:
         return instanceRequiresCast(binding, delegateExpression, requestingClass, bindsTypeChecker)
@@ -101,9 +102,10 @@ final class DelegateRequestRepresentation extends RequestRepresentation {
       BindsTypeChecker bindsTypeChecker) {
     // delegateExpression.type() could be Object if expression is satisfied with a raw
     // Provider's get() method.
+    TypeMirror contributedType = toJavac(binding.contributedType());
     return !bindsTypeChecker.isAssignable(
-            delegateExpression.type(), binding.contributedType(), binding.contributionType())
-        && isTypeAccessibleFrom(binding.contributedType(), requestingClass.packageName());
+            delegateExpression.type(), contributedType, binding.contributionType())
+        && isTypeAccessibleFrom(contributedType, requestingClass.packageName());
   }
 
   /**

@@ -293,7 +293,7 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
   }
 
   private static TypeName providedTypeName(ProvisionBinding binding) {
-    return TypeName.get(binding.contributedType());
+    return binding.contributedType().getTypeName();
   }
 
   private static Optional<TypeName> factoryTypeName(ProvisionBinding binding) {

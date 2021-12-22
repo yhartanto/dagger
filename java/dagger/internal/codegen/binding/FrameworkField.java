@@ -19,6 +19,7 @@ package dagger.internal.codegen.binding;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.spi.model.BindingKind.MEMBERS_INJECTOR;
 
+import androidx.room.compiler.processing.XType;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.CaseFormat;
 import com.squareup.javapoet.ClassName;
@@ -30,7 +31,6 @@ import javax.lang.model.element.ElementVisitor;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementKindVisitor8;
 
 /**
@@ -73,14 +73,14 @@ public abstract class FrameworkField {
       ContributionBinding binding, Optional<ClassName> frameworkClassName) {
     return create(
         frameworkClassName.orElse(binding.frameworkType().frameworkClassName()),
-        TypeName.get(fieldValueType(binding)),
+        fieldValueType(binding).getTypeName(),
         frameworkFieldName(binding));
   }
 
-  private static TypeMirror fieldValueType(ContributionBinding binding) {
+  private static XType fieldValueType(ContributionBinding binding) {
     return binding.contributionType().isMultibinding()
         ? binding.contributedType()
-        : binding.key().type().java();
+        : binding.key().type().xprocessing();
   }
 
   private static String frameworkFieldName(ContributionBinding binding) {

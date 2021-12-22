@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.PRIVATE_METHOD;
@@ -74,7 +75,7 @@ final class PrivateMethodRequestRepresentation extends MethodRequestRepresentati
   protected TypeMirror returnType() {
     if (request.isRequestKind(RequestKind.INSTANCE)
         && binding.contributedPrimitiveType().isPresent()) {
-      return binding.contributedPrimitiveType().get();
+      return toJavac(binding.contributedPrimitiveType().get());
     }
 
     TypeMirror requestedType = request.requestedType(binding.contributedType(), types);
