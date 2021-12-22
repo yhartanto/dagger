@@ -77,6 +77,7 @@ public final class BindsTypeChecker {
         DeclaredType parameterizedSetType = types.getDeclaredType(setElement(), leftHandSide);
         return methodParameterType(parameterizedSetType, "add");
       case SET_VALUES:
+        // TODO(b/211774331): The left hand side type should be limited to Set types.
         return methodParameterType(MoreTypes.asDeclared(leftHandSide), "addAll");
       case MAP:
         DeclaredType parameterizedMapType =

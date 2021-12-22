@@ -142,13 +142,17 @@ final class SetRequestRepresentation extends RequestRepresentation {
     RequestRepresentation bindingExpression =
         componentRequestRepresentations.getRequestRepresentation(bindingRequest(dependency));
     CodeBlock expression = bindingExpression.getDependencyExpression(requestingClass).codeBlock();
-
-    // Add a cast to "(Set)" when the contribution is a raw "Provider" type because the "addAll()"
-    // method expects a collection. For example, ".addAll((Set) provideInaccessibleSetOfFoo.get())"
-    return !isSingleValue(dependency)
-            && bindingExpression instanceof DerivedFromFrameworkInstanceRequestRepresentation
+    // TODO(b/211774331): Type casting should be Set after contributions to Set multibinding are
+    // limited to be Set.
+    // Add a cast to "(Collection)" when the contribution is a raw "Provider" type because the
+    // "addAll()" method expects a collection. For example, ".addAll((Collection)
+    // provideInaccessibleSetOfFoo.get())"
+    return (!isSingleValue(dependency)
             && !isTypeAccessibleFrom(binding.key().type().java(), requestingClass.packageName())
-        ? CodeBlocks.cast(expression, TypeNames.SET)
+            // TODO(wanyingd): Replace instanceof checks with validation on the binding.
+            && (bindingExpression instanceof DerivedFromFrameworkInstanceRequestRepresentation
+                || bindingExpression instanceof DelegateRequestRepresentation))
+        ? CodeBlocks.cast(expression, TypeNames.COLLECTION)
         : expression;
   }
 
