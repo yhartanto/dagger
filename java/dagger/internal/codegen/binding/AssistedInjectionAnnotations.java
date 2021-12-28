@@ -16,11 +16,11 @@
 
 package dagger.internal.codegen.binding;
 
-import static com.google.auto.common.MoreElements.isAnnotationPresent;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
 import static dagger.internal.codegen.xprocessing.XElements.asConstructor;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
@@ -45,7 +45,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
-import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.spi.model.BindingKind;
 import java.util.List;
@@ -151,7 +150,7 @@ public final class AssistedInjectionAnnotations {
 
   /** Returns {@code true} if this binding is uses assisted injection. */
   public static boolean isAssistedParameter(VariableElement param) {
-    return isAnnotationPresent(MoreElements.asVariable(param), Assisted.class);
+    return isAnnotationPresent(MoreElements.asVariable(param), TypeNames.ASSISTED);
   }
 
   /** Metadata about an {@link dagger.assisted.AssistedFactory} annotated type. */
