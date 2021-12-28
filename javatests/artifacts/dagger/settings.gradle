@@ -1,0 +1,4 @@
+rootProject.name = 'Dagger Apps'
+include ':java-app'
+include ':kotlin-app'
+include ':kotlin-app:kotlin-library'
