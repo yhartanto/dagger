@@ -1,4 +1,5 @@
 rootProject.name = 'Dagger Apps'
+include ':build-tests'
 include ':java-app'
 include ':kotlin-app'
 include ':kotlin-app:kotlin-library'
