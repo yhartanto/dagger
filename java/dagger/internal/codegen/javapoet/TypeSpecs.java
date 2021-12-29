@@ -49,9 +49,13 @@ public final class TypeSpecs {
   public static TypeSpec.Builder addSupertype(TypeSpec.Builder typeBuilder, TypeElement supertype) {
     switch (supertype.getKind()) {
       case CLASS:
-        return typeBuilder.superclass(ClassName.get(supertype));
+        return typeBuilder
+            .superclass(ClassName.get(supertype))
+            .avoidClashesWithNestedClasses(supertype);
       case INTERFACE:
-        return typeBuilder.addSuperinterface(ClassName.get(supertype));
+        return typeBuilder
+            .addSuperinterface(ClassName.get(supertype))
+            .avoidClashesWithNestedClasses(supertype);
       default:
         throw new AssertionError(supertype + " is neither a class nor an interface.");
     }
