@@ -78,8 +78,9 @@ final class DependencyRequestValidator {
     }
     if (missingQualifierMetadata(requestElement)) {
       report.addError(
-          "Unable to read annotations on an injected Kotlin property. The Dagger compiler must"
-              + " also be applied to any project containing @Inject properties.",
+          "Unable to read annotations on an injected Kotlin property. "
+          + "The Dagger compiler must also be applied to any project containing @Inject "
+          + "properties.",
           requestElement);
 
       // Skip any further validation if we don't have valid metadata for a type that needs it.
