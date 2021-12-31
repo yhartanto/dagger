@@ -39,6 +39,23 @@ android_library(
     ],
 )
 
+android_library(
+    name = "custom_inject",
+    srcs = [
+        "CustomInject.java",
+        "CustomInjection.java",
+    ],
+    exports = [
+        "//java/dagger/hilt/android/internal/migration:has_custom_inject",
+    ],
+    deps = [
+        ":package_info",
+        "//java/dagger/hilt/android/internal/migration:has_custom_inject",
+        "//java/dagger/hilt/internal:preconditions",
+        "@maven//:androidx_annotation_annotation",
+    ],
+)
+
 java_library(
     name = "package_info",
     srcs = ["package-info.java"],

@@ -114,6 +114,34 @@ android_local_test(
     ],
 )
 
+android_library(
+    name = "custom_inject_classes",
+    srcs = ["CustomInjectClasses.java"],
+    deps = [
+        "//:dagger_with_compiler",
+        "//java/dagger/hilt:install_in",
+        "//java/dagger/hilt/android:hilt_android_app",
+        "//java/dagger/hilt/android:package_info",
+        "//java/dagger/hilt/android/migration:custom_inject",
+        "//third_party/java/jsr330_inject",
+    ],
+)
+
+android_local_test(
+    name = "CustomInjectTest",
+    size = "small",
+    srcs = ["CustomInjectTest.java"],
+    manifest_values = {
+        "minSdkVersion": "14",
+    },
+    deps = [
+        ":custom_inject_classes",
+        "//:android_local_test_exports",
+        "//java/dagger/hilt/android:package_info",
+        "//third_party/java/truth",
+    ],
+)
+
 android_local_test(
     name = "EarlyEntryPointHiltAndroidAppRuntimeTest",
     size = "small",

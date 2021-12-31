@@ -58,6 +58,10 @@ public final class AndroidClassNames {
       get("dagger.hilt.android", "WithFragmentBindings");
   public static final ClassName HILT_ANDROID_APP =
       get("dagger.hilt.android", "HiltAndroidApp");
+  public static final ClassName CUSTOM_INJECT =
+      get("dagger.hilt.android.migration", "CustomInject");
+  public static final ClassName CUSTOM_INJECTION =
+      get("dagger.hilt.android.migration", "CustomInjection");
   public static final ClassName OPTIONAL_INJECT =
       get("dagger.hilt.android.migration", "OptionalInject");
 
@@ -96,6 +100,8 @@ public final class AndroidClassNames {
   public static final ClassName VIEW_COMPONENT_MANAGER =
       get("dagger.hilt.android.internal.managers", "ViewComponentManager");
 
+  public static final ClassName HAS_CUSTOM_INJECT =
+      get("dagger.hilt.android.internal.migration", "HasCustomInject");
   public static final ClassName INJECTED_BY_HILT =
       get("dagger.hilt.android.internal.migration", "InjectedByHilt");
 
