@@ -1908,4 +1908,223 @@ public class MembersInjectionTest {
         .generatedSourceFile("test.B_MembersInjector")
         .hasSourceEquivalentTo(expectedBMembersInjector);
   }
+
+  // Regression test for https://github.com/google/dagger/issues/3143
+  @Test
+  public void testMembersInjectionBindingExistsInParentComponent() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.MyComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = MyComponentModule.class)",
+            "public interface MyComponent {",
+            "  void inject(Bar bar);",
+            "",
+            "  MySubcomponent subcomponent();",
+            "}");
+
+    JavaFileObject subcomponent =
+        JavaFileObjects.forSourceLines(
+            "test.MySubcomponent",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = MySubcomponentModule.class)",
+            "interface MySubcomponent {",
+            "  Foo foo();",
+            "}");
+
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Foo {",
+            "  @Inject Foo(Bar bar) {}",
+            "}");
+
+    JavaFileObject bar =
+        JavaFileObjects.forSourceLines(
+            "test.Bar",
+            "package test;",
+            "",
+            "import java.util.Set;",
+            "import javax.inject.Inject;",
+            "",
+            "class Bar {",
+            "  @Inject Set<String> multibindingStrings;",
+            "  @Inject Bar() {}",
+            "}");
+
+    JavaFileObject componentModule =
+        JavaFileObjects.forSourceLines(
+            "test.MyComponentModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "",
+            "@Module",
+            "interface MyComponentModule {",
+            "  @Provides",
+            "  @IntoSet",
+            "  static String provideString() {",
+            "    return \"\";",
+            "  }",
+            "}");
+
+    JavaFileObject subcomponentModule =
+        JavaFileObjects.forSourceLines(
+            "test.MySubcomponentModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "import dagger.multibindings.IntoSet;",
+            "",
+            "@Module",
+            "interface MySubcomponentModule {",
+            "  @Provides",
+            "  @IntoSet",
+            "  static String provideString() {",
+            "    return \"\";",
+            "  }",
+            "}");
+
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts())
+            .compile(component, subcomponent, foo, bar, componentModule, subcomponentModule);
+    assertThat(compilation).succeeded();
+
+    // Check that the injectBar() method is not shared across components.
+    // We avoid sharing them in general because they may be different (e.g. in this case we inject
+    // multibindings that are different across components).
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerMyComponent")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.DaggerMyComponent",
+                "package test;",
+                "",
+                GeneratedLines.generatedAnnotations(),
+                "public final class DaggerMyComponent implements MyComponent {",
+                "  private Set<String> setOfString() {",
+                "    return ImmutableSet.<String>of(",
+                "        MyComponentModule_ProvideStringFactory.provideString());",
+                "  }",
+                "",
+                "  @Override",
+                "  public void inject(Bar bar) {",
+                "    injectBar(bar);",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private Bar injectBar(Bar instance) {",
+                "    Bar_MembersInjector.injectMultibindingStrings(instance, setOfString());",
+                "    return instance;",
+                "  }",
+                "",
+                "  private static final class MySubcomponentImpl implements MySubcomponent {",
+                "    private Set<String> setOfString() {",
+                "      return ImmutableSet.<String>of(",
+                "          MyComponentModule_ProvideStringFactory.provideString(),",
+                "          MySubcomponentModule_ProvideStringFactory.provideString());",
+                "    }",
+                "",
+                "    private Bar bar() {",
+                "      return injectBar(Bar_Factory.newInstance());",
+                "    }",
+                "",
+                "    @Override",
+                "    public Foo foo() {",
+                "      return new Foo(bar());",
+                "    }",
+                "",
+                "    @CanIgnoreReturnValue",
+                "    private Bar injectBar(Bar instance) {",
+                "      Bar_MembersInjector.injectMultibindingStrings(instance, setOfString());",
+                "      return instance;",
+                "    }",
+                "  }",
+                "}"));
+  }
+
+  // Test that if both a MembersInjectionBinding and ProvisionBinding both exist in the same
+  // component they share the same inject methods rather than generating their own.
+  @Test
+  public void testMembersInjectionBindingSharesInjectMethodsWithProvisionBinding() {
+    JavaFileObject component =
+        JavaFileObjects.forSourceLines(
+            "test.MyComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "public interface MyComponent {",
+            "  Foo foo();",
+            "",
+            "  void inject(Foo foo);",
+            "}");
+
+    JavaFileObject foo =
+        JavaFileObjects.forSourceLines(
+            "test.Foo",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Foo {",
+            "  @Inject Bar bar;",
+            "  @Inject Foo() {}",
+            "}");
+
+    JavaFileObject bar =
+        JavaFileObjects.forSourceLines(
+            "test.Bar",
+            "package test;",
+            "",
+            "import javax.inject.Inject;",
+            "",
+            "class Bar {",
+            "  @Inject Bar() {}",
+            "}");
+
+    Compilation compilation =
+        compilerWithOptions(compilerMode.javacopts()).compile(component, foo, bar);
+    assertThat(compilation).succeeded();
+
+    assertThat(compilation)
+        .generatedSourceFile("test.DaggerMyComponent")
+        .containsElementsIn(
+            JavaFileObjects.forSourceLines(
+                "test.DaggerMyComponent",
+                "package test;",
+                "",
+                GeneratedLines.generatedAnnotations(),
+                "public final class DaggerMyComponent implements MyComponent {",
+                "  @Override",
+                "  public Foo foo() {",
+                "    return injectFoo(Foo_Factory.newInstance());",
+                "  }",
+                "",
+                "  @Override",
+                "  public void inject(Foo foo) {",
+                "    injectFoo(foo);",
+                "  }",
+                "",
+                "  @CanIgnoreReturnValue",
+                "  private Foo injectFoo(Foo instance) {",
+                "    Foo_MembersInjector.injectBar(instance, new Bar());",
+                "    return instance;",
+                "  }",
+                "}"));
+  }
 }

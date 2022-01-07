@@ -81,9 +81,9 @@ final class MembersInjectionMethods {
    */
   Expression getInjectExpression(Key key, CodeBlock instance, ClassName requestingClass) {
     Binding binding =
-        graph.membersInjectionBinding(key).isPresent()
-            ? graph.membersInjectionBinding(key).get()
-            : graph.contributionBinding(key);
+        graph.localMembersInjectionBinding(key).isPresent()
+            ? graph.localMembersInjectionBinding(key).get()
+            : graph.localContributionBinding(key).get();
     Expression expression =
         reentrantComputeIfAbsent(
             injectMethodExpressions, key, k -> injectMethodExpression(binding));
