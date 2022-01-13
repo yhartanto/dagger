@@ -34,6 +34,7 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkField;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.writing.ComponentImplementation.CompilerMode;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.spi.model.BindingKind;
 import java.util.Optional;
@@ -61,10 +62,10 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     }
   }
 
-  private final boolean isFastInit;
   private final ShardImplementation shardImplementation;
   private final ContributionBinding binding;
   private final FrameworkInstanceCreationExpression frameworkInstanceCreationExpression;
+  private final CompilerMode compilerMode;
   private FieldSpec fieldSpec;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
 
@@ -73,7 +74,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       ContributionBinding binding,
       FrameworkInstanceCreationExpression frameworkInstanceCreationExpression) {
     this.binding = checkNotNull(binding);
-    this.isFastInit = componentImplementation.isFastInit();
+    this.compilerMode = componentImplementation.compilerMode();
     this.shardImplementation = checkNotNull(componentImplementation).shardImplementation(binding);
     this.frameworkInstanceCreationExpression = checkNotNull(frameworkInstanceCreationExpression);
   }
@@ -114,7 +115,8 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
         // We were recursively invoked, so create a delegate factory instead to break the loop.
         // However, because SwitchingProvider takes no dependencies, even if they are recursively
         // invoked, we don't need to delegate it since there is no dependency cycle.
-        if (ProvisionBindingRepresentation.usesSwitchingProvider(binding, isFastInit)) {
+        if (FrameworkInstanceKind.from(binding, compilerMode)
+            .equals(FrameworkInstanceKind.SWITCHING_PROVIDER)) {
           break;
         }
 
