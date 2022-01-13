@@ -87,7 +87,6 @@ public class TransitiveProvidesScopeTest {
             "",
             "allprojects {",
             "  repositories {",
-            "    jcenter()",
             "    mavenCentral()",
             "    mavenLocal()",
             "  }",

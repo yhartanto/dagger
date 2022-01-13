@@ -117,7 +117,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
         buildscript {
           repositories {
             google()
-            jcenter()
+            mavenCentral()
           }
           dependencies {
             classpath 'com.android.tools.build:gradle:4.2.0'
@@ -150,7 +150,7 @@ class GradleTestRunner(val tempFolder: TemporaryFolder) {
           repositories {
             mavenLocal()
             google()
-            jcenter()
+            mavenCentral()
           }
         }
 
