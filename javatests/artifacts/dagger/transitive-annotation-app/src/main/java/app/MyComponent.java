@@ -20,9 +20,35 @@ import dagger.Component;
 import javax.inject.Singleton;
 import library1.Foo;
 import library1.MyComponentModule;
+import library1.MyQualifier;
 
 @Singleton
 @Component(modules = MyComponentModule.class)
 interface MyComponent {
   Foo foo();
+
+  @MyQualifier
+  MyComponentModule.ScopedQualifiedBindsType scopedQualifiedBindsType();
+
+  MyComponentModule.ScopedUnqualifiedBindsType scopedUnqualifiedBindsType();
+
+  @MyQualifier
+  MyComponentModule.UnscopedQualifiedBindsType unscopedQualifiedBindsType();
+
+  MyComponentModule.UnscopedUnqualifiedBindsType unscopedUnqualifiedBindsType();
+
+  @MyQualifier
+  MyComponentModule.ScopedQualifiedProvidesType scopedQualifiedProvidesType();
+
+  MyComponentModule.ScopedUnqualifiedProvidesType scopedUnqualifiedProvidesType();
+
+  @MyQualifier
+  MyComponentModule.UnscopedQualifiedProvidesType unscopedQualifiedProvidesType();
+
+  MyComponentModule.UnscopedUnqualifiedProvidesType unscopedUnqualifiedProvidesType();
+
+  @Component.Factory
+  interface Factory {
+    MyComponent create(MyComponentModule myComponentModule);
+  }
 }

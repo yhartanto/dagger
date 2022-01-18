@@ -32,7 +32,9 @@ public class FooBase {
 
   @MySimpleTransitiveBaseAnnotation
   @MyTransitiveBaseAnnotation(VALUE)
-  @Inject int baseDaggerField;
+  @Inject
+  @MyQualifier
+  Dep baseDaggerField;
 
   @MySimpleTransitiveBaseAnnotation
   @MyTransitiveBaseAnnotation(VALUE)
@@ -41,7 +43,8 @@ public class FooBase {
   @MySimpleTransitiveBaseAnnotation
   @MyTransitiveBaseAnnotation(VALUE)
   @Inject
-  FooBase(@MySimpleTransitiveBaseAnnotation @MyTransitiveBaseAnnotation(VALUE) int i) {}
+  FooBase(
+      @MySimpleTransitiveBaseAnnotation @MyTransitiveBaseAnnotation(VALUE) @MyQualifier Dep dep) {}
 
   @MySimpleTransitiveBaseAnnotation
   @MyTransitiveBaseAnnotation(VALUE)
@@ -52,5 +55,5 @@ public class FooBase {
   @MyTransitiveBaseAnnotation(VALUE)
   @Inject
   void baseDaggerMethod(
-      @MySimpleTransitiveBaseAnnotation @MyTransitiveBaseAnnotation(VALUE) int i) {}
+      @MySimpleTransitiveBaseAnnotation @MyTransitiveBaseAnnotation(VALUE) @MyQualifier Dep dep) {}
 }

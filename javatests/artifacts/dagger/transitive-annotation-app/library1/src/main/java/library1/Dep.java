@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Dagger Authors.
+ * Copyright (C) 2022 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,6 @@
  * limitations under the License.
  */
 
-plugins {
-  id 'java'
-  id 'application'
-}
+package library1;
 
-java {
-    // Make sure the generated source is compatible with Java 7.
-    sourceCompatibility = JavaVersion.VERSION_1_7
-}
-
-dependencies {
-  implementation project(":transitive-annotation-app:library1")
-  implementation "com.google.dagger:dagger:$dagger_version"
-  annotationProcessor "com.google.dagger:dagger-compiler:$dagger_version"
-
-  testImplementation "junit:junit:$junit_version"
-  testImplementation "com.google.truth:truth:$truth_version"
-}
+public final class Dep {}

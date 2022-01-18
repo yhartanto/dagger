@@ -21,7 +21,7 @@ import static library2.MyTransitiveAnnotation.VALUE;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
-import javax.inject.Inject;
+import javax.inject.Singleton;
 import library2.MySimpleTransitiveAnnotation;
 import library2.MyTransitiveAnnotation;
 
@@ -38,42 +38,137 @@ import library2.MyTransitiveAnnotation;
   MyComponentModule.MyAbstractModule.class
 })
 public final class MyComponentModule {
-  public static final class Dep {
-    @Inject Dep() {}
+  // Define bindings for each configuration: Scoped/Unscoped, Qualified/UnQualified, Provides/Binds
+  public static class ScopedQualifiedBindsType {}
+  public static final class ScopedQualifiedProvidesType extends ScopedQualifiedBindsType {}
+  public static class ScopedUnqualifiedBindsType {}
+  public static final class ScopedUnqualifiedProvidesType extends ScopedUnqualifiedBindsType {}
+  public static class UnscopedQualifiedBindsType {}
+  public static final class UnscopedQualifiedProvidesType extends UnscopedQualifiedBindsType {}
+  public static class UnscopedUnqualifiedBindsType {}
+  public static final class UnscopedUnqualifiedProvidesType extends UnscopedUnqualifiedBindsType {}
+
+  @MySimpleTransitiveAnnotation
+  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  @Provides
+  @Singleton
+  @MyQualifier
+  ScopedQualifiedProvidesType scopedQualifiedProvidesType(
+      @MyQualifier
+      @MySimpleTransitiveAnnotation
+      // @MyTransitiveAnnotation(VALUE): Not yet supported
+      Dep dep) {
+    return new ScopedQualifiedProvidesType();
   }
 
   @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
+  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  @Provides
+  @Singleton
+  ScopedUnqualifiedProvidesType scopedUnqualifiedProvidesType(
+      @MyQualifier
+      @MySimpleTransitiveAnnotation
+      // @MyTransitiveAnnotation(VALUE): Not yet supported
+      Dep dep) {
+    return new ScopedUnqualifiedProvidesType();
+  }
+
+  @MySimpleTransitiveAnnotation
+  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  @Provides
+  @MyQualifier
+  UnscopedQualifiedProvidesType unscopedQualifiedProvidesType(
+      @MyQualifier
+      @MySimpleTransitiveAnnotation
+      // @MyTransitiveAnnotation(VALUE): Not yet supported
+      Dep dep) {
+    return new UnscopedQualifiedProvidesType();
+  }
+
+  @MySimpleTransitiveAnnotation
+  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  @Provides
+  UnscopedUnqualifiedProvidesType unscopedUnqualifiedProvidesType(
+      @MyQualifier
+      @MySimpleTransitiveAnnotation
+      // @MyTransitiveAnnotation(VALUE): Not yet supported
+      Dep dep) {
+    return new UnscopedUnqualifiedProvidesType();
+  }
+
+  @MySimpleTransitiveAnnotation
+  // @MyTransitiveAnnotation(VALUE): Not yet supported
   @Module
   interface MyAbstractModule {
     @MySimpleTransitiveAnnotation
     // @MyTransitiveAnnotation(VALUE): Not yet supported
     @Binds
-    Number bindNumber(
+    @Singleton
+    @MyQualifier
+    ScopedQualifiedBindsType scopedQualifiedBindsType(
+        @MyQualifier
         @MySimpleTransitiveAnnotation
         // @MyTransitiveAnnotation(VALUE): Not yet supported
-        int i);
+        ScopedQualifiedProvidesType scopedQualifiedProvidesType);
+
+    @MySimpleTransitiveAnnotation
+    // @MyTransitiveAnnotation(VALUE): Not yet supported
+    @Binds
+    @Singleton
+    ScopedUnqualifiedBindsType scopedUnqualifiedBindsType(
+        @MySimpleTransitiveAnnotation
+        // @MyTransitiveAnnotation(VALUE): Not yet supported
+        ScopedUnqualifiedProvidesType scopedUnqualifiedProvidesType);
+
+    @MySimpleTransitiveAnnotation
+    // @MyTransitiveAnnotation(VALUE): Not yet supported
+    @Binds
+    @MyQualifier
+    UnscopedQualifiedBindsType unscopedQualifiedBindsType(
+        @MyQualifier
+        @MySimpleTransitiveAnnotation
+        // @MyTransitiveAnnotation(VALUE): Not yet supported
+        UnscopedQualifiedProvidesType unscopedQualifiedProvidesType);
+
+    @MySimpleTransitiveAnnotation
+    // @MyTransitiveAnnotation(VALUE): Not yet supported
+    @Binds
+    UnscopedUnqualifiedBindsType unscopedUnqualifiedBindsType(
+        @MySimpleTransitiveAnnotation
+        // @MyTransitiveAnnotation(VALUE): Not yet supported
+        UnscopedUnqualifiedProvidesType unscopedUnqualifiedProvidesType);
   }
-
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
-  private final String nonDaggerField = "";
-
-  @MySimpleTransitiveAnnotation
-  @MyTransitiveAnnotation(VALUE)
-  MyComponentModule(
-      @MySimpleTransitiveAnnotation
-      @MyTransitiveAnnotation(VALUE)
-      Dep dep) {}
 
   @MySimpleTransitiveAnnotation
   // @MyTransitiveAnnotation(VALUE): Not yet supported
   @Provides
-  int provideInt(
+  @MyQualifier
+  Dep provideQualifiedDep() {
+    return dep;
+  }
+
+  // Provide an unqualified Dep to ensure that if we accidentally drop the qualifier
+  // we'll get a runtime exception.
+  @MySimpleTransitiveAnnotation
+  // @MyTransitiveAnnotation(VALUE): Not yet supported
+  @Provides
+  Dep provideDep() {
+    throw new UnsupportedOperationException();
+  }
+
+  // Non-Dagger elements
+
+  @MySimpleTransitiveAnnotation
+  @MyTransitiveAnnotation(VALUE)
+  private Dep dep;
+
+  @MySimpleTransitiveAnnotation
+  @MyTransitiveAnnotation(VALUE)
+  public MyComponentModule(
       @MySimpleTransitiveAnnotation
-      // @MyTransitiveAnnotation(VALUE): Not yet supported
+      @MyTransitiveAnnotation(VALUE)
       Dep dep) {
-    return 1;
+    this.dep = dep;
   }
 
   @MySimpleTransitiveAnnotation

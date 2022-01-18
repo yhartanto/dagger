@@ -40,7 +40,9 @@ public final class Foo extends FooBase {
 
   @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
-  @Inject int daggerField;
+  @Inject
+  @MyQualifier
+  Dep daggerField;
 
   @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
@@ -51,8 +53,8 @@ public final class Foo extends FooBase {
   @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
   @Inject
-  Foo(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) int i) {
-    super(i);
+  Foo(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) @MyQualifier Dep dep) {
+    super(dep);
   }
 
   @MySimpleTransitiveAnnotation
@@ -62,5 +64,6 @@ public final class Foo extends FooBase {
   @MySimpleTransitiveAnnotation
   @MyTransitiveAnnotation(VALUE)
   @Inject
-  void daggerMethod(@MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) int i) {}
+  void daggerMethod(
+      @MySimpleTransitiveAnnotation @MyTransitiveAnnotation(VALUE) @MyQualifier Dep dep) {}
 }
