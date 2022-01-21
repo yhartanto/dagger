@@ -789,6 +789,7 @@ public final class ComponentImplementation {
         noArgFactoryMethod = true;
       }
       validateMethodNameDoesNotOverrideGeneratedCreator(creatorKind.methodName());
+      claimMethodName(creatorKind.methodName());
       MethodSpec creatorFactoryMethod =
           methodBuilder(creatorKind.methodName())
               .addModifiers(PUBLIC, STATIC)
@@ -798,6 +799,7 @@ public final class ComponentImplementation {
       addMethod(MethodSpecKind.BUILDER_METHOD, creatorFactoryMethod);
       if (noArgFactoryMethod && canInstantiateAllRequirements()) {
         validateMethodNameDoesNotOverrideGeneratedCreator("create");
+        claimMethodName("create");
         addMethod(
             MethodSpecKind.BUILDER_METHOD,
             methodBuilder("create")
