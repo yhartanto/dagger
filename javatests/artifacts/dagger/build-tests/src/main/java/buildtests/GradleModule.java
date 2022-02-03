@@ -58,6 +58,13 @@ public final class GradleModule {
     return this;
   }
 
+  public GradleModule addSrcFiles(GradleFile... gradleFiles) throws IOException {
+    for (GradleFile gradleFile : gradleFiles) {
+      addSrcFile(gradleFile.fileName(), gradleFile.fileContent());
+    }
+    return this;
+  }
+
   public GradleModule addSrcFile(GradleFile gradleFile) throws IOException {
     return addSrcFile(gradleFile.fileName(), gradleFile.fileContent());
   }

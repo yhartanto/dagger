@@ -22,6 +22,8 @@ import library1.AssistedFoo;
 import library1.Foo;
 import library1.MyComponentModule;
 import library1.MyQualifier;
+import library1.MySubcomponentWithBuilder;
+import library1.MySubcomponentWithFactory;
 
 @Singleton
 @Component(modules = MyComponentModule.class)
@@ -49,6 +51,10 @@ interface MyComponent {
   MyComponentModule.UnscopedQualifiedProvidesType unscopedQualifiedProvidesType();
 
   MyComponentModule.UnscopedUnqualifiedProvidesType unscopedUnqualifiedProvidesType();
+
+  MySubcomponentWithFactory.Factory mySubcomponentWithFactory();
+
+  MySubcomponentWithBuilder.Builder mySubcomponentWithBuilder();
 
   @Component.Factory
   interface Factory {
