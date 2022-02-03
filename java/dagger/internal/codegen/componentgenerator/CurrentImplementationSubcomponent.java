@@ -48,13 +48,13 @@ public interface CurrentImplementationSubcomponent {
     @Provides
     static ChildComponentImplementationFactory provideChildComponentImplementationFactory(
         CurrentImplementationSubcomponent.Builder currentImplementationSubcomponentBuilder,
-        Provider<ComponentImplementation> componentImplementatation,
+        Provider<ComponentImplementation> componentImplementation,
         Provider<ComponentRequestRepresentations> componentRequestRepresentations,
         Provider<ComponentRequirementExpressions> componentRequirementExpressions) {
       return childGraph ->
           currentImplementationSubcomponentBuilder
               .bindingGraph(childGraph)
-              .parentImplementation(Optional.of(componentImplementatation.get()))
+              .parentImplementation(Optional.of(componentImplementation.get()))
               .parentRequestRepresentations(Optional.of(componentRequestRepresentations.get()))
               .parentRequirementExpressions(Optional.of(componentRequirementExpressions.get()))
               .build()
