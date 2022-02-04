@@ -46,6 +46,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/artifact-java-local-tests
+  test-gradle-plugin:
+    name: 'Test Hilt Gradle plugin'
+    needs: bazel-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-gradle-plugin
   artifact-android-local-tests:
     name: 'Artifact Android local tests (AGP ${{ matrix.agp }})'
     needs: bazel-build
@@ -60,7 +67,7 @@ jobs:
           agp: '${{ matrix.agp }}'
   publish-artifacts:
     name: 'Publish Artifact'
-    needs: [bazel-test, artifact-java-local-tests, artifact-android-local-tests]
+    needs: [bazel-test, artifact-java-local-tests, artifact-android-local-tests, test-gradle-plugin]
     runs-on: ubuntu-latest
     steps:
       - name: 'Install Java ${{ env.USE_JAVA_VERSION }}'

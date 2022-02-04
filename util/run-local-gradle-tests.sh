@@ -3,7 +3,6 @@
 set -ex
 
 readonly GRADLE_PROJECTS=(
-    "java/dagger/hilt/android/plugin"
     "javatests/artifacts/dagger"
     "javatests/artifacts/hilt-android/pluginMarker"
 )

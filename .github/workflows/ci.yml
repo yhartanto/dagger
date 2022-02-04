@@ -44,6 +44,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/artifact-java-local-tests
+  test-gradle-plugin:
+    name: 'Test Hilt Gradle plugin'
+    needs: bazel-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-gradle-plugin
   artifact-android-local-tests:
     name: 'Artifact Android local tests (AGP ${{ matrix.agp }})'
     needs: bazel-build
@@ -90,7 +97,7 @@ jobs:
     name: 'Publish snapshot'
     # TODO(bcorso): Consider also waiting on artifact-android-emulator-tests
     # and artifact-android-emulator-legacy-api-tests after checking flakiness.
-    needs: [bazel-test, artifact-java-local-tests, artifact-android-local-tests]
+    needs: [bazel-test, artifact-java-local-tests, artifact-android-local-tests, test-gradle-plugin]
     if: github.event_name == 'push' && github.repository == 'google/dagger' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
