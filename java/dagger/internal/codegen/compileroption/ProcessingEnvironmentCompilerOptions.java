@@ -233,9 +233,6 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
 
   @SuppressWarnings("CheckReturnValue")
   private ProcessingEnvironmentCompilerOptions checkValid() {
-    for (KeyOnlyOption keyOnlyOption : KeyOnlyOption.values()) {
-      isEnabled(keyOnlyOption);
-    }
     for (Feature feature : Feature.values()) {
       parseOption(feature);
     }
