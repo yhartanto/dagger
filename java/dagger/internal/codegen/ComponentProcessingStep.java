@@ -20,7 +20,7 @@ import static com.google.common.collect.Sets.union;
 import static dagger.internal.codegen.base.ComponentAnnotation.allComponentAnnotations;
 import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnnotations;
 import static dagger.internal.codegen.base.ComponentAnnotation.subcomponentAnnotations;
-import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.allCreatorAnnotations;
+import static dagger.internal.codegen.base.ComponentCreatorAnnotation.allCreatorAnnotations;
 import static java.util.Collections.disjoint;
 
 import androidx.room.compiler.processing.XMessager;

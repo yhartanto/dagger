@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen.binding;
+package dagger.internal.codegen.base;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.langmodel.DaggerElements.isAnnotationPresent;
@@ -28,7 +27,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.kotlin.KotlinMetadataUtil;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
@@ -85,16 +83,6 @@ public enum ModuleKind {
     // type is a module.
     if (moduleElement.isCompanionObject()) {
       checkArgument(forAnnotatedElement(moduleElement.getEnclosingTypeElement()).isPresent());
-    } else {
-      checkArgument(forAnnotatedElement(moduleElement).isPresent());
-    }
-  }
-
-  public static void checkIsModule(TypeElement moduleElement, KotlinMetadataUtil metadataUtil) {
-    // If the type element is a Kotlin companion object, then assert it is a module if its enclosing
-    // type is a module.
-    if (metadataUtil.isCompanionObjectClass(moduleElement)) {
-      checkArgument(forAnnotatedElement(asType(moduleElement.getEnclosingElement())).isPresent());
     } else {
       checkArgument(forAnnotatedElement(moduleElement).isPresent());
     }

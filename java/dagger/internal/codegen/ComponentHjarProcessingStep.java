@@ -18,7 +18,7 @@ package dagger.internal.codegen;
 
 import static com.google.common.collect.Sets.union;
 import static dagger.internal.codegen.base.ComponentAnnotation.rootComponentAnnotations;
-import static dagger.internal.codegen.binding.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
+import static dagger.internal.codegen.base.ComponentCreatorAnnotation.rootComponentCreatorAnnotations;
 import static java.util.Collections.disjoint;
 
 import androidx.room.compiler.processing.XMessager;

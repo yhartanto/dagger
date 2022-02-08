@@ -24,6 +24,8 @@ import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import dagger.internal.codegen.base.ComponentAnnotation;
+import dagger.internal.codegen.base.ComponentCreatorAnnotation;
+import dagger.internal.codegen.base.ComponentKind;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;

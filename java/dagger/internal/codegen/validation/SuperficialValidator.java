@@ -21,8 +21,8 @@ import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingType
 
 import androidx.room.compiler.processing.XElement;
 import dagger.internal.codegen.base.ClearableCache;
-import dagger.internal.codegen.binding.DaggerSuperficialValidation;
-import dagger.internal.codegen.binding.DaggerSuperficialValidation.ValidationException;
+import dagger.internal.codegen.base.DaggerSuperficialValidation;
+import dagger.internal.codegen.base.DaggerSuperficialValidation.ValidationException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;

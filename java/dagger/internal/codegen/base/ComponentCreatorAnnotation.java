@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.internal.codegen.binding;
+package dagger.internal.codegen.base;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Ascii.toUpperCase;
@@ -26,7 +26,6 @@ import static java.util.stream.Collectors.mapping;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
-import dagger.internal.codegen.base.ComponentAnnotation;
 import dagger.internal.codegen.javapoet.TypeNames;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
