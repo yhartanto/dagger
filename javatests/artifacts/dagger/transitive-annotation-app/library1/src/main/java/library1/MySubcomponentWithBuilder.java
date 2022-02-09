@@ -29,28 +29,28 @@ import library2.MyTransitiveType;
  * the classpath. In most cases, Dagger shouldn't care that the annotation isn't on the classpath
  */
 // @MyTransitiveAnnotation: Not yet supported
-// @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+@MyAnnotation(MyTransitiveType.VALUE)
 @MySubcomponentScope
 @Subcomponent(modules = MySubcomponentModule.class)
 public abstract class MySubcomponentWithBuilder {
   @MyQualifier
   // @MyTransitiveAnnotation: Not yet supported
-  // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+  @MyAnnotation(MyTransitiveType.VALUE)
   public abstract MySubcomponentBinding qualifiedMySubcomponentBinding();
 
   // @MyTransitiveAnnotation: Not yet supported
-  // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+  @MyAnnotation(MyTransitiveType.VALUE)
   public abstract MySubcomponentBinding unqualifiedMySubcomponentBinding();
 
   // @MyTransitiveAnnotation: Not yet supported
-  // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+  @MyAnnotation(MyTransitiveType.VALUE)
   public abstract void injectFoo(
       // @MyTransitiveAnnotation: Not yet supported
-      // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+      @MyAnnotation(MyTransitiveType.VALUE)
       Foo foo);
 
   // @MyTransitiveAnnotation: Not yet supported
-  // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+  @MyAnnotation(MyTransitiveType.VALUE)
   @Subcomponent.Builder
   public abstract static class Builder {
     @MyTransitiveAnnotation
@@ -66,7 +66,7 @@ public abstract class MySubcomponentWithBuilder {
     public abstract Builder qualifiedMySubcomponentBinding(
         @MyQualifier
         // @MyTransitiveAnnotation: Not yet supported
-        // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+        @MyAnnotation(MyTransitiveType.VALUE)
         MySubcomponentBinding subcomponentBinding);
 
     @BindsInstance
@@ -74,7 +74,7 @@ public abstract class MySubcomponentWithBuilder {
     @MyAnnotation(MyTransitiveType.VALUE)
     public abstract Builder unqualifiedMySubcomponentBinding(
         // @MyTransitiveAnnotation: Not yet supported
-        // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+        @MyAnnotation(MyTransitiveType.VALUE)
         MySubcomponentBinding subcomponentBinding);
 
     @MyTransitiveAnnotation

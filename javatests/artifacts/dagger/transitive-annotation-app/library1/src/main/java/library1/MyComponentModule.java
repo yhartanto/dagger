@@ -87,41 +87,41 @@ public final class MyComponentModule {
   @Module
   interface MyAbstractModule {
     // @MyTransitiveAnnotation: Not yet supported
-    // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+    @MyAnnotation(MyTransitiveType.VALUE)
     @Binds
     @Singleton
     @MyQualifier
     ScopedQualifiedBindsType scopedQualifiedBindsType(
-        @MyQualifier
         // @MyTransitiveAnnotation: Not yet supported
-        // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+        @MyQualifier
+        @MyAnnotation(MyTransitiveType.VALUE)
         ScopedQualifiedProvidesType scopedQualifiedProvidesType);
 
     // @MyTransitiveAnnotation: Not yet supported
-    // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+    @MyAnnotation(MyTransitiveType.VALUE)
     @Binds
     @Singleton
     ScopedUnqualifiedBindsType scopedUnqualifiedBindsType(
         // @MyTransitiveAnnotation: Not yet supported
-        // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+        @MyAnnotation(MyTransitiveType.VALUE)
         ScopedUnqualifiedProvidesType scopedUnqualifiedProvidesType);
 
     // @MyTransitiveAnnotation: Not yet supported
-    // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+    @MyAnnotation(MyTransitiveType.VALUE)
     @Binds
     @MyQualifier
     UnscopedQualifiedBindsType unscopedQualifiedBindsType(
-        @MyQualifier
         // @MyTransitiveAnnotation: Not yet supported
-        // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+        @MyQualifier
+        @MyAnnotation(MyTransitiveType.VALUE)
         UnscopedQualifiedProvidesType unscopedQualifiedProvidesType);
 
     // @MyTransitiveAnnotation: Not yet supported
-    // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+    @MyAnnotation(MyTransitiveType.VALUE)
     @Binds
     UnscopedUnqualifiedBindsType unscopedUnqualifiedBindsType(
         // @MyTransitiveAnnotation: Not yet supported
-        // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+        @MyAnnotation(MyTransitiveType.VALUE)
         UnscopedUnqualifiedProvidesType unscopedUnqualifiedProvidesType);
   }
 

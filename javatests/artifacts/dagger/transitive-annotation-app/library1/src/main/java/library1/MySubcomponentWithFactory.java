@@ -30,28 +30,28 @@ import library2.MyTransitiveType;
  * the classpath. In most cases, Dagger shouldn't care that the annotation isn't on the classpath
  */
 // @MyTransitiveAnnotation: Not yet supported
-// @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+@MyAnnotation(MyTransitiveType.VALUE)
 @MySubcomponentScope
 @Subcomponent(modules = MySubcomponentModule.class)
 public abstract class MySubcomponentWithFactory {
-  @MyQualifier
   // @MyTransitiveAnnotation: Not yet supported
-  // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+  @MyQualifier
+  @MyAnnotation(MyTransitiveType.VALUE)
   public abstract MySubcomponentBinding qualifiedMySubcomponentBinding();
 
   // @MyTransitiveAnnotation: Not yet supported
-  // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+  @MyAnnotation(MyTransitiveType.VALUE)
   public abstract MySubcomponentBinding unqualifiedMySubcomponentBinding();
 
   // @MyTransitiveAnnotation: Not yet supported
-  // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+  @MyAnnotation(MyTransitiveType.VALUE)
   public abstract void injectFoo(
       // @MyTransitiveAnnotation: Not yet supported
-      // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+      @MyAnnotation(MyTransitiveType.VALUE)
       Foo foo);
 
   // @MyTransitiveAnnotation: Not yet supported
-  // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+  @MyAnnotation(MyTransitiveType.VALUE)
   @Subcomponent.Factory
   public abstract static class Factory {
     public abstract MySubcomponentWithFactory create(
@@ -61,11 +61,11 @@ public abstract class MySubcomponentWithFactory {
         @BindsInstance
         @MyQualifier
         // @MyTransitiveAnnotation: Not yet supported
-        // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+        @MyAnnotation(MyTransitiveType.VALUE)
         MySubcomponentBinding qualifiedSubcomponentBinding,
         @BindsInstance
         // @MyTransitiveAnnotation: Not yet supported
-        // @MyAnnotation(MyTransitiveType.VALUE): Not yet supported
+        @MyAnnotation(MyTransitiveType.VALUE)
         MySubcomponentBinding unqualifiedSubcomponentBinding);
 
     // Non-dagger code
