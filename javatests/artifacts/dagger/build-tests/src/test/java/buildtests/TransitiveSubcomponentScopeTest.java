@@ -55,8 +55,6 @@ public class TransitiveSubcomponentScopeTest {
       case "implementation":
         result = setupRunner().buildAndFail();
         assertThat(result.getOutput()).contains("Task :app:compileJava FAILED");
-        // TODO(bcorso): Give more context about what couldn't be resolved once we've fixed the
-        // issue described in https://github.com/google/dagger/issues/2208.
         assertThat(result.getOutput())
             .contains(
                 "error: ComponentProcessingStep was unable to process 'app.MyComponent' because "
