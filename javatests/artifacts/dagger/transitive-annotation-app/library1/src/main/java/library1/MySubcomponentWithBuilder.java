@@ -127,28 +127,32 @@ public abstract class MySubcomponentWithBuilder {
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
-  public String nonDaggerField = "";
+  public MyTransitiveType nonDaggerField = null;
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
-  public static String nonDaggerStaticField = "";
+  public static MyTransitiveType nonDaggerStaticField = null;
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
-  public void nonDaggerMethod(
+  public MyTransitiveType nonDaggerMethod(
       @MyTransitiveAnnotation
           @MyAnnotation(MyTransitiveType.VALUE)
           @MyOtherAnnotation(MyTransitiveType.class)
-          String str) {}
+          MyTransitiveType nonDaggerParameter) {
+    return nonDaggerParameter;
+  }
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
-  public static void nonDaggerStaticMethod(
+  public static MyTransitiveType nonDaggerStaticMethod(
       @MyTransitiveAnnotation
           @MyAnnotation(MyTransitiveType.VALUE)
           @MyOtherAnnotation(MyTransitiveType.class)
-          String str) {}
+          MyTransitiveType nonDaggerParameter) {
+    return nonDaggerParameter;
+  }
 }

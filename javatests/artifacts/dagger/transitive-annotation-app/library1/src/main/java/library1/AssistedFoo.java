@@ -37,7 +37,7 @@ public final class AssistedFoo extends FooBase {
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
-  int nonDaggerField;
+  MyTransitiveType nonDaggerField;
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
@@ -53,8 +53,8 @@ public final class AssistedFoo extends FooBase {
       @MyTransitiveAnnotation
           @MyAnnotation(MyTransitiveType.VALUE)
           @MyOtherAnnotation(MyTransitiveType.class)
-          String str) {
-    super(str);
+          MyTransitiveType nonDaggerParameter) {
+    super(nonDaggerParameter);
   }
 
   @MyTransitiveAnnotation
@@ -78,11 +78,13 @@ public final class AssistedFoo extends FooBase {
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
-  void nonDaggerMethod(
+  MyTransitiveType nonDaggerMethod(
       @MyTransitiveAnnotation
           @MyAnnotation(MyTransitiveType.VALUE)
           @MyOtherAnnotation(MyTransitiveType.class)
-          int i) {}
+          MyTransitiveType nonDaggerParameter) {
+    return nonDaggerParameter;
+  }
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)

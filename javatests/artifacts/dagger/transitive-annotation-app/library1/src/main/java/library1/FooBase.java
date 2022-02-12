@@ -44,7 +44,7 @@ public class FooBase {
       @MyTransitiveBaseAnnotation
           @MyAnnotation(MyTransitiveType.VALUE)
           @MyOtherAnnotation(MyTransitiveType.class)
-          String str) {}
+          MyTransitiveType nonDaggerParameter) {}
 
   @MyTransitiveBaseAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)

@@ -157,7 +157,7 @@ public final class MyComponentModule {
   @Provides
   @MyQualifier
   Dep provideQualifiedDep() {
-    return dep;
+    return new Dep();
   }
 
   // Provide an unqualified Dep to ensure that if we accidentally drop the qualifier
@@ -180,33 +180,39 @@ public final class MyComponentModule {
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
+  private MyTransitiveType nonDaggerField;
+
+  @MyTransitiveAnnotation
+  @MyAnnotation(MyTransitiveType.VALUE)
+  @MyOtherAnnotation(MyTransitiveType.class)
   public MyComponentModule(
       @MyTransitiveAnnotation
           @MyAnnotation(MyTransitiveType.VALUE)
           @MyOtherAnnotation(MyTransitiveType.class)
           Dep dep) {
     this.dep = dep;
+    this.nonDaggerField = new MyTransitiveType();
   }
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
-  String nonDaggerMethod(
+  MyTransitiveType nonDaggerMethod(
       @MyTransitiveAnnotation
           @MyAnnotation(MyTransitiveType.VALUE)
           @MyOtherAnnotation(MyTransitiveType.class)
-          String str) {
-    return str;
+          MyTransitiveType nonDaggerParameter) {
+    return nonDaggerParameter;
   }
 
   @MyTransitiveAnnotation
   @MyAnnotation(MyTransitiveType.VALUE)
   @MyOtherAnnotation(MyTransitiveType.class)
-  static String nonDaggerStaticMethod(
+  static MyTransitiveType nonDaggerStaticMethod(
       @MyTransitiveAnnotation
           @MyAnnotation(MyTransitiveType.VALUE)
           @MyOtherAnnotation(MyTransitiveType.class)
-          String str) {
-    return str;
+          MyTransitiveType nonDaggerParameter) {
+    return nonDaggerParameter;
   }
 }
