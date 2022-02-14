@@ -27,17 +27,12 @@ import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XAnnotationValue;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMessager;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.graph.Traverser;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.CheckReturnValue;
 import java.util.Optional;
-import javax.annotation.processing.Messager;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 
@@ -46,14 +41,14 @@ public final class ValidationReport {
   private static final Traverser<ValidationReport> SUBREPORTS =
       Traverser.forTree(report -> report.subreports);
 
-  private final Element subject;
+  private final XElement subject;
   private final ImmutableSet<Item> items;
   private final ImmutableSet<ValidationReport> subreports;
   private final boolean markedDirty;
   private boolean hasPrintedErrors;
 
   private ValidationReport(
-      Element subject,
+      XElement subject,
       ImmutableSet<Item> items,
       ImmutableSet<ValidationReport> subreports,
       boolean markedDirty) {
@@ -103,17 +98,6 @@ public final class ValidationReport {
    * subject itself and prepends a reference to the item's element.
    */
   public void printMessagesTo(XMessager messager) {
-    printMessagesTo(XConverters.toJavac(messager));
-  }
-
-  /**
-   * Prints all messages to {@code messager} (and recurs for subreports). If a
-   * message's {@linkplain Item#element() element} is contained within the report's subject,
-   * associates the message with the message's element. Otherwise, since {@link Diagnostic}
-   * reporting is expected to be associated with elements that are currently being compiled,
-   * associates the message with the subject itself and prepends a reference to the item's element.
-   */
-  public void printMessagesTo(Messager messager) {
     if (hasPrintedErrors) {
       // Avoid printing the errors from this validation report more than once.
       return;
@@ -151,28 +135,24 @@ public final class ValidationReport {
   public abstract static class Item {
     public abstract String message();
     public abstract Kind kind();
-    public abstract Element element();
-    public abstract Optional<AnnotationMirror> annotation();
-    abstract Optional<AnnotationValue> annotationValue();
-  }
-
-  public static Builder about(Element subject) {
-    return new Builder(subject);
+    public abstract XElement element();
+    public abstract Optional<XAnnotation> annotation();
+    abstract Optional<XAnnotationValue> annotationValue();
   }
 
   public static Builder about(XElement subject) {
-    return new Builder(XConverters.toJavac(subject));
+    return new Builder(subject);
   }
 
   /** A {@link ValidationReport} builder. */
   @CanIgnoreReturnValue
   public static final class Builder {
-    private final Element subject;
+    private final XElement subject;
     private final ImmutableSet.Builder<Item> items = ImmutableSet.builder();
     private final ImmutableSet.Builder<ValidationReport> subreports = ImmutableSet.builder();
     private boolean markedDirty;
 
-    private Builder(Element subject) {
+    private Builder(XElement subject) {
       this.subject = subject;
     }
 
@@ -183,22 +163,6 @@ public final class ValidationReport {
 
     public Builder addError(String message) {
       return addError(message, subject);
-    }
-
-    public Builder addError(String message, Element element) {
-      return addItem(message, ERROR, element);
-    }
-
-    public Builder addError(String message, Element element, AnnotationMirror annotation) {
-      return addItem(message, ERROR, element, annotation);
-    }
-
-    public Builder addError(
-        String message,
-        Element element,
-        AnnotationMirror annotation,
-        AnnotationValue annotationValue) {
-      return addItem(message, ERROR, element, annotation, annotationValue);
     }
 
     public Builder addError(String message, XElement element) {
@@ -221,22 +185,6 @@ public final class ValidationReport {
       return addWarning(message, subject);
     }
 
-    Builder addWarning(String message, Element element) {
-      return addItem(message, WARNING, element);
-    }
-
-    Builder addWarning(String message, Element element, AnnotationMirror annotation) {
-      return addItem(message, WARNING, element, annotation);
-    }
-
-    Builder addWarning(
-        String message,
-        Element element,
-        AnnotationMirror annotation,
-        AnnotationValue annotationValue) {
-      return addItem(message, WARNING, element, annotation, annotationValue);
-    }
-
     Builder addWarning(String message, XElement element) {
       return addItem(message, WARNING, element);
     }
@@ -257,22 +205,6 @@ public final class ValidationReport {
       return addNote(message, subject);
     }
 
-    Builder addNote(String message, Element element) {
-      return addItem(message, NOTE, element);
-    }
-
-    Builder addNote(String message, Element element, AnnotationMirror annotation) {
-      return addItem(message, NOTE, element, annotation);
-    }
-
-    Builder addNote(
-        String message,
-        Element element,
-        AnnotationMirror annotation,
-        AnnotationValue annotationValue) {
-      return addItem(message, NOTE, element, annotation, annotationValue);
-    }
-
     Builder addNote(String message, XElement element) {
       return addItem(message, NOTE, element);
     }
@@ -287,34 +219,6 @@ public final class ValidationReport {
         XAnnotation annotation,
         XAnnotationValue annotationValue) {
       return addItem(message, NOTE, element, annotation, annotationValue);
-    }
-
-    Builder addItem(String message, Kind kind, Element element) {
-      return addItem(message, kind, element, Optional.empty(), Optional.empty());
-    }
-
-    Builder addItem(String message, Kind kind, Element element, AnnotationMirror annotation) {
-      return addItem(message, kind, element, Optional.of(annotation), Optional.empty());
-    }
-
-    Builder addItem(
-        String message,
-        Kind kind,
-        Element element,
-        AnnotationMirror annotation,
-        AnnotationValue annotationValue) {
-      return addItem(message, kind, element, Optional.of(annotation), Optional.of(annotationValue));
-    }
-
-    private Builder addItem(
-        String message,
-        Kind kind,
-        Element element,
-        Optional<AnnotationMirror> annotation,
-        Optional<AnnotationValue> annotationValue) {
-      items.add(
-          new AutoValue_ValidationReport_Item(message, kind, element, annotation, annotationValue));
-      return this;
     }
 
     Builder addItem(String message, Kind kind, XElement element) {
@@ -344,9 +248,9 @@ public final class ValidationReport {
           new AutoValue_ValidationReport_Item(
               message,
               kind,
-              XConverters.toJavac(element),
-              annotation.map(XConverters::toJavac),
-              annotationValue.map(XConverters::toJavac)));
+              element,
+              annotation,
+              annotationValue));
       return this;
     }
 

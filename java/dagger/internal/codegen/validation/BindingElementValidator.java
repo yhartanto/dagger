@@ -18,7 +18,6 @@ package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.XTypeKt.isArray;
 import static androidx.room.compiler.processing.XTypeKt.isVoid;
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Verify.verifyNotNull;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.base.Util.reentrantComputeIfAbsent;
@@ -358,7 +357,7 @@ public abstract class BindingElementValidator<E extends XElement> {
       }
       verifyNotNull(error);
       for (Scope scope : scopes) {
-        report.addError(error, toJavac(element), scope.scopeAnnotation().java());
+        report.addError(error, element, scope.scopeAnnotation().xprocessing());
       }
     }
 

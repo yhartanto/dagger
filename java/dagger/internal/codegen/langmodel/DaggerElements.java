@@ -23,6 +23,7 @@ import static com.google.common.collect.Lists.asList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static java.util.Comparator.comparing;
 
+import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableMap;
@@ -72,6 +73,13 @@ public final class DaggerElements implements Elements, ClearableCache {
   public DaggerElements(Elements elements, Types types) {
     this.elements = checkNotNull(elements);
     this.types = checkNotNull(types);
+  }
+
+  /**
+   * Returns {@code true} if {@code encloser} is equal to or recursively encloses {@code enclosed}.
+   */
+  public static boolean transitivelyEncloses(XElement encloser, XElement enclosed) {
+    return transitivelyEncloses(toJavac(encloser), toJavac(enclosed));
   }
 
   /**
