@@ -31,6 +31,7 @@ import static javax.lang.model.type.TypeKind.VOID;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
@@ -48,7 +49,6 @@ import dagger.Component;
 import dagger.Module;
 import dagger.Subcomponent;
 import dagger.internal.codegen.base.ComponentAnnotation;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.producers.CancellationPolicy;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Scope;
@@ -58,7 +58,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * A component declaration.
@@ -355,15 +354,15 @@ public abstract class ComponentDescriptor {
      * ComponentDescriptor#typeElement() component type}. If there are no type variables in the
      * return type, this is the equivalent of {@code methodElement().getReturnType()}.
      */
-    public TypeMirror resolvedReturnType(DaggerTypes types) {
+    public XType resolvedReturnType(XProcessingEnv processingEnv) {
       checkState(dependencyRequest().isPresent());
 
       XType returnType = methodElement().getReturnType();
       if (isPrimitive(returnType) || isVoid(returnType)) {
-        return toJavac(returnType);
+        return returnType;
       }
       return BindingRequest.bindingRequest(dependencyRequest().get())
-          .requestedType(dependencyRequest().get().key().type().java(), types);
+          .requestedType(dependencyRequest().get().key().type().xprocessing(), processingEnv);
     }
 
     /** A {@link ComponentMethodDescriptor}builder for a method. */

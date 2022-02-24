@@ -22,6 +22,8 @@ import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static dagger.internal.codegen.writing.ComponentImplementation.MethodSpecKind.PRIVATE_METHOD;
 import static javax.lang.model.element.Modifier.PRIVATE;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import dagger.assisted.Assisted;
@@ -46,6 +48,7 @@ final class PrivateMethodRequestRepresentation extends MethodRequestRepresentati
   private final BindingRequest request;
   private final RequestRepresentation wrappedRequestRepresentation;
   private final CompilerOptions compilerOptions;
+  private final XProcessingEnv processingEnv;
   private final DaggerTypes types;
   private String methodName;
 
@@ -55,6 +58,7 @@ final class PrivateMethodRequestRepresentation extends MethodRequestRepresentati
       @Assisted ContributionBinding binding,
       @Assisted RequestRepresentation wrappedRequestRepresentation,
       ComponentImplementation componentImplementation,
+      XProcessingEnv processingEnv,
       DaggerTypes types,
       CompilerOptions compilerOptions) {
     super(componentImplementation.shardImplementation(binding), types);
@@ -63,6 +67,7 @@ final class PrivateMethodRequestRepresentation extends MethodRequestRepresentati
     this.wrappedRequestRepresentation = checkNotNull(wrappedRequestRepresentation);
     this.shardImplementation = componentImplementation.shardImplementation(binding);
     this.compilerOptions = compilerOptions;
+    this.processingEnv = processingEnv;
     this.types = types;
   }
 
@@ -78,7 +83,7 @@ final class PrivateMethodRequestRepresentation extends MethodRequestRepresentati
       return toJavac(binding.contributedPrimitiveType().get());
     }
 
-    TypeMirror requestedType = request.requestedType(binding.contributedType(), types);
+    XType requestedType = request.requestedType(binding.contributedType(), processingEnv);
     return types.accessibleType(requestedType, shardImplementation.name());
   }
 

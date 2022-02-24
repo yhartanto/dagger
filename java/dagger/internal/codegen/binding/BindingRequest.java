@@ -16,17 +16,15 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.base.RequestKinds.requestType;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import com.google.auto.value.AutoValue;
-import dagger.internal.codegen.langmodel.DaggerTypes;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import dagger.spi.model.RequestKind;
 import java.util.Optional;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * A request for a binding, which may be in the form of a request for a dependency to pass to a
@@ -80,12 +78,8 @@ public abstract class BindingRequest {
     return requestKind.equals(requestKind());
   }
 
-  public final TypeMirror requestedType(XType contributedType, DaggerTypes types) {
-    return requestedType(toJavac(contributedType), types);
-  }
-
-  public final TypeMirror requestedType(TypeMirror contributedType, DaggerTypes types) {
-    return requestType(requestKind(), contributedType, types);
+  public final XType requestedType(XType contributedType, XProcessingEnv processingEnv) {
+    return requestType(requestKind(), contributedType, processingEnv);
   }
 
   /** Returns a name that can be used for the kind of request this is. */
