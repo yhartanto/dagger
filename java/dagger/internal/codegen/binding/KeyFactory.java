@@ -63,8 +63,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.type.TypeMirror;
 
 /** A factory for {@link Key}s. */
 public final class KeyFactory {
@@ -254,18 +252,8 @@ public final class KeyFactory {
     return Key.builder(DaggerType.from(type)).build();
   }
 
-  public Key forMembersInjectedType(TypeMirror type) {
-    return forMembersInjectedType(toXProcessing(type, processingEnv));
-  }
-
   public Key forMembersInjectedType(XType type) {
     return Key.builder(DaggerType.from(type)).build();
-  }
-
-  Key forQualifiedType(Optional<AnnotationMirror> qualifier, TypeMirror type) {
-    return forQualifiedType(
-        qualifier.map(annotation -> toXProcessing(annotation, processingEnv)),
-        toXProcessing(type, processingEnv));
   }
 
   Key forQualifiedType(Optional<XAnnotation> qualifier, XType type) {
@@ -439,7 +427,7 @@ public final class KeyFactory {
 
   /**
    * If {@code key}'s type is {@code Optional<T>} for some {@code T}, returns a key with the same
-   * qualifier whose type is {@linkplain RequestKinds#extractKeyType(RequestKind, TypeMirror)}
+   * qualifier whose type is {@linkplain RequestKinds#extractKeyType(RequestKind, XType)}
    * extracted} from {@code T}.
    */
   Optional<Key> unwrapOptional(Key key) {
