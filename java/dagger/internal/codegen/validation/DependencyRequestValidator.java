@@ -96,7 +96,8 @@ final class DependencyRequestValidator {
       XFieldElement fieldElement = asField(requestElement);
       // static/top-level injected fields are not supported,
       // so no need to get qualifier from kotlin metadata
-      if ((!fieldElement.isStatic() || !isTypeElement(fieldElement.getEnclosingElement()))
+      if (!fieldElement.isStatic()
+          && isTypeElement(fieldElement.getEnclosingElement())
           && metadataUtil.hasMetadata(toJavac(fieldElement))
           && metadataUtil.isMissingSyntheticPropertyForAnnotations(toJavac(fieldElement))) {
         Optional<XTypeElement> membersInjector =
