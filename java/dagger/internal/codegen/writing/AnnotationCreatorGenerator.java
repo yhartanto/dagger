@@ -32,7 +32,6 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
@@ -90,8 +89,7 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<XTypeElement
 
   @Override
   public ImmutableList<TypeSpec.Builder> topLevelTypes(XTypeElement annotationType) {
-    ClassName generatedTypeName =
-        getAnnotationCreatorClassName(XConverters.toJavac(annotationType));
+    ClassName generatedTypeName = getAnnotationCreatorClassName(annotationType);
     TypeSpec.Builder annotationCreatorBuilder =
         classBuilder(generatedTypeName)
             .addModifiers(PUBLIC, FINAL)
@@ -106,7 +104,7 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<XTypeElement
 
   private MethodSpec buildCreateMethod(
       ClassName generatedTypeName, XTypeElement annotationElement) {
-    String createMethodName = createMethodName(XConverters.toJavac(annotationElement));
+    String createMethodName = createMethodName(annotationElement);
     MethodSpec.Builder createMethod =
         methodBuilder(createMethodName)
             .addAnnotation(AUTO_ANNOTATION)

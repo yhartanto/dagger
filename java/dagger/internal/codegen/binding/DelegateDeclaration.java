@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.binding;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static dagger.internal.codegen.base.MoreAnnotationMirrors.wrapOptionalInEquivalence;
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
@@ -25,6 +24,7 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Equivalence;
@@ -79,7 +79,7 @@ public abstract class DelegateDeclaration extends BindingDeclaration
           Optional.<XElement>of(bindsMethod),
           Optional.of(contributingModule),
           delegateRequest,
-          wrapOptionalInEquivalence(getMapKey(toJavac(bindsMethod))));
+          wrapOptionalInEquivalence(getMapKey(bindsMethod).map(XConverters::toJavac)));
     }
   }
 }

@@ -57,6 +57,7 @@ import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -243,7 +244,8 @@ public final class BindingFactory {
         .dependencies(
             dependencyRequestFactory.forRequiredResolvedVariables(
                 method.getParameters(), methodType.getParameterTypes()))
-        .wrappedMapKeyAnnotation(wrapOptionalInEquivalence(getMapKey(method)));
+        .wrappedMapKeyAnnotation(
+            wrapOptionalInEquivalence(getMapKey(method).map(XConverters::toJavac)));
   }
 
   /**

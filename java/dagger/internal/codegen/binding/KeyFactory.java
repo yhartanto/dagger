@@ -17,7 +17,6 @@
 package dagger.internal.codegen.binding;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreTypes.isType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -26,7 +25,6 @@ import static dagger.internal.codegen.base.ProducerAnnotations.productionImpleme
 import static dagger.internal.codegen.base.ProducerAnnotations.productionQualifier;
 import static dagger.internal.codegen.base.RequestKinds.extractKeyType;
 import static dagger.internal.codegen.binding.MapKeys.getMapKey;
-import static dagger.internal.codegen.binding.MapKeys.mapKeyType;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.extension.Optionals.firstPresent;
@@ -194,10 +192,7 @@ public final class KeyFactory {
       case SET:
         return setOf(returnType);
       case MAP:
-        Optional<XType> mapKeyType =
-            getMapKey(method)
-                .map(annotation -> toXProcessing(annotation, processingEnv))
-                .map(annotation -> toXProcessing(mapKeyType(annotation), processingEnv));
+        Optional<XType> mapKeyType = getMapKey(method).map(MapKeys::mapKeyType);
         // TODO(bcorso): We've added a special checkState here since a number of people have run
         // into this particular case, but technically it shouldn't be necessary if we are properly
         // doing superficial validation and deferring on unresolvable types. We should revisit
