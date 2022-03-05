@@ -22,7 +22,6 @@ package(default_visibility = ["//:src"])
 SHARED_SOURCES = [
     "ClearableCache.java",
     "MoreAnnotationMirrors.java",
-    "MoreAnnotationValues.java",
 ]
 
 java_library(
@@ -58,9 +57,7 @@ java_library(
     srcs = SHARED_SOURCES,
     tags = ["maven:merged"],
     deps = [
-        "//java/dagger/internal/codegen/extension",
         "//third_party/java/auto:common",
         "//third_party/java/guava/base",
-        "//third_party/java/guava/collect",
     ],
 )

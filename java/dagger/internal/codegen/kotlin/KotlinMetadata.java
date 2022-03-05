@@ -16,18 +16,16 @@
 
 package dagger.internal.codegen.kotlin;
 
-import static dagger.internal.codegen.base.MoreAnnotationValues.getIntArrayValue;
-import static dagger.internal.codegen.base.MoreAnnotationValues.getIntValue;
-import static dagger.internal.codegen.base.MoreAnnotationValues.getOptionalIntValue;
-import static dagger.internal.codegen.base.MoreAnnotationValues.getOptionalStringValue;
-import static dagger.internal.codegen.base.MoreAnnotationValues.getStringArrayValue;
-import static dagger.internal.codegen.base.MoreAnnotationValues.getStringValue;
+import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
+import static com.google.auto.common.AnnotationMirrors.getAnnotationValuesWithDefaults;
+import static com.google.auto.common.AnnotationValues.getAnnotationValues;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.langmodel.DaggerElements.getAnnotationMirror;
 import static dagger.internal.codegen.langmodel.DaggerElements.getFieldDescriptor;
 import static dagger.internal.codegen.langmodel.DaggerElements.getMethodDescriptor;
 import static kotlinx.metadata.Flag.ValueParameter.DECLARES_DEFAULT_VALUE;
 
+import com.google.auto.common.AnnotationValues;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Preconditions;
@@ -469,5 +467,44 @@ abstract class KotlinMetadata {
 
     @Nullable
     abstract ExecutableElement method();
+  }
+
+  private static int getIntValue(AnnotationMirror annotation, String valueName) {
+    return AnnotationValues.getInt(getAnnotationValue(annotation, valueName));
+  }
+
+  private static Optional<Integer> getOptionalIntValue(
+      AnnotationMirror annotation, String valueName) {
+    return isValuePresent(annotation, valueName)
+        ? Optional.of(getIntValue(annotation, valueName))
+        : Optional.empty();
+  }
+
+  private static int[] getIntArrayValue(AnnotationMirror annotation, String valueName) {
+    return getAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
+        .mapToInt(AnnotationValues::getInt)
+        .toArray();
+  }
+
+  private static String getStringValue(AnnotationMirror annotation, String valueName) {
+    return AnnotationValues.getString(getAnnotationValue(annotation, valueName));
+  }
+
+  private static Optional<String> getOptionalStringValue(
+      AnnotationMirror annotation, String valueName) {
+    return isValuePresent(annotation, valueName)
+        ? Optional.of(getStringValue(annotation, valueName))
+        : Optional.empty();
+  }
+
+  private static String[] getStringArrayValue(AnnotationMirror annotation, String valueName) {
+    return getAnnotationValues(getAnnotationValue(annotation, valueName)).stream()
+        .map(AnnotationValues::getString)
+        .toArray(String[]::new);
+  }
+
+  private static boolean isValuePresent(AnnotationMirror annotation, String valueName) {
+    return getAnnotationValuesWithDefaults(annotation).keySet().stream()
+        .anyMatch(member -> member.getSimpleName().contentEquals(valueName));
   }
 }
