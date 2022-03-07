@@ -18,9 +18,9 @@ package dagger.hilt.android.internal.lifecycle;
 
 import android.app.Application;
 import android.os.Bundle;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.activity.ComponentActivity;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.SavedStateViewModelFactory;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.savedstate.SavedStateRegistryOwner;
