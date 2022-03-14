@@ -16,6 +16,8 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import static com.google.auto.common.MoreTypes.asTypeElement;
+
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.Visibility;
 import com.squareup.javapoet.AnnotationSpec;
@@ -29,7 +31,6 @@ import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
@@ -117,6 +118,11 @@ public final class ViewGenerator {
     MethodSpec.Builder constructor =
         Generators.copyConstructor(constructorElement).toBuilder();
 
+    // TODO(b/210544481): Once this bug is fixed we should require that the user adds this
+    // annotation to their constructor and we'll propagate it from there rather than trying to
+    // guess whether this needs @TargetApi from the signature. This check is a bit flawed. For
+    // example, the user could write a 5 parameter constructor that calls the restricted 4 parameter
+    // constructor and we would miss adding @TargetApi to it.
     if (isRestrictedApiConstructor(constructorElement)) {
       // 4 parameter constructors are only available on @TargetApi(21).
       constructor.addAnnotation(
@@ -136,15 +142,14 @@ public final class ViewGenerator {
     List<? extends VariableElement> constructorParams = constructor.getParameters();
     for (int i = 0; i < constructorParams.size(); i++) {
       TypeMirror type = constructorParams.get(i).asType();
-      Element element = env.getTypeUtils().asElement(type);
       switch (i) {
         case 0:
-          if (!isFirstRestrictedParameter(element)) {
+          if (!isFirstRestrictedParameter(type)) {
             return false;
           }
           break;
         case 1:
-          if (!isSecondRestrictedParameter(element)) {
+          if (!isSecondRestrictedParameter(type)) {
             return false;
           }
           break;
@@ -176,15 +181,14 @@ public final class ViewGenerator {
         && Processors.getPrimitiveType(type).getKind() == TypeKind.INT;
   }
 
-  private static boolean isSecondRestrictedParameter(Element element) {
-    return MoreElements.isType(element)
-        && Processors.isAssignableFrom(
-            MoreElements.asType(element), AndroidClassNames.ATTRIBUTE_SET);
+  private static boolean isSecondRestrictedParameter(TypeMirror type) {
+    return type.getKind() == TypeKind.DECLARED
+        && Processors.isAssignableFrom(asTypeElement(type), AndroidClassNames.ATTRIBUTE_SET);
   }
 
-  private static boolean isFirstRestrictedParameter(Element element) {
-    return MoreElements.isType(element)
-        && Processors.isAssignableFrom(MoreElements.asType(element), AndroidClassNames.CONTEXT);
+  private static boolean isFirstRestrictedParameter(TypeMirror type) {
+    return type.getKind() == TypeKind.DECLARED
+        && Processors.isAssignableFrom(asTypeElement(type), AndroidClassNames.CONTEXT);
   }
 
   private boolean isInOurPackage(ExecutableElement constructorElement) {

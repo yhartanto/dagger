@@ -125,6 +125,117 @@ public final class GeneratorsTest {
                 "}"));
   }
 
+  // This is a regression test for https://github.com/google/dagger/issues/3296
+  @Test
+  public void isRestrictedApiConstructorWithPrimitiveParameterTest() {
+    JavaFileObject baseView =
+        JavaFileObjects.forSourceLines(
+            "test.BaseView",
+            "package test;",
+            "",
+            "import android.content.Context;",
+            "import android.util.AttributeSet;",
+            "import android.view.View;",
+            "",
+            "public class BaseView extends View {",
+            "  public BaseView(int i, int j, Context context, AttributeSet attrs) {",
+            "    super(context, attrs);",
+            "  }",
+            "}");
+    JavaFileObject myView =
+        JavaFileObjects.forSourceLines(
+            "test.MyView",
+            "package test;",
+            "",
+            "import android.content.Context;",
+            "import android.util.AttributeSet;",
+            "import android.view.View;",
+            "import dagger.hilt.android.AndroidEntryPoint;",
+            "",
+            "@AndroidEntryPoint(BaseView.class)",
+            "public class MyView extends Hilt_MyView {",
+            "  public MyView(int i, int j, Context context, AttributeSet attrs) {",
+            "    super(i, j, context, attrs);",
+            "  }",
+            "}");
+    Compilation compilation = compiler().compile(baseView, myView);
+    assertThat(compilation).succeeded();
+  }
+
+  // This is a regression test for https://github.com/google/dagger/issues/3296
+  @Test
+  public void isRestrictedApiConstructorWithArrayParameterTest() {
+    JavaFileObject baseView =
+        JavaFileObjects.forSourceLines(
+            "test.BaseView",
+            "package test;",
+            "",
+            "import android.content.Context;",
+            "import android.util.AttributeSet;",
+            "import android.view.View;",
+            "",
+            "public class BaseView extends View {",
+            "  public BaseView(String[] strs, int i, Context context, AttributeSet attrs) {",
+            "    super(context, attrs);",
+            "  }",
+            "}");
+    JavaFileObject myView =
+        JavaFileObjects.forSourceLines(
+            "test.MyView",
+            "package test;",
+            "",
+            "import android.content.Context;",
+            "import android.util.AttributeSet;",
+            "import android.view.View;",
+            "import dagger.hilt.android.AndroidEntryPoint;",
+            "",
+            "@AndroidEntryPoint(BaseView.class)",
+            "public class MyView extends Hilt_MyView {",
+            "  public MyView(String[] strs, int i, Context context, AttributeSet attrs) {",
+            "    super(strs, i, context, attrs);",
+            "  }",
+            "}");
+    Compilation compilation = compiler().compile(baseView, myView);
+    assertThat(compilation).succeeded();
+  }
+
+  // This is a regression test for https://github.com/google/dagger/issues/3296
+  @Test
+  public void isRestrictedApiConstructorWithTypeParameterTest() {
+    JavaFileObject baseView =
+        JavaFileObjects.forSourceLines(
+            "test.BaseView",
+            "package test;",
+            "",
+            "import android.content.Context;",
+            "import android.util.AttributeSet;",
+            "import android.view.View;",
+            "",
+            "public class BaseView<T> extends View {",
+            "  public BaseView(T t, int i, Context context, AttributeSet attrs) {",
+            "    super(context, attrs);",
+            "  }",
+            "}");
+    JavaFileObject myView =
+        JavaFileObjects.forSourceLines(
+            "test.MyView",
+            "package test;",
+            "",
+            "import android.content.Context;",
+            "import android.util.AttributeSet;",
+            "import android.view.View;",
+            "import dagger.hilt.android.AndroidEntryPoint;",
+            "",
+            "@AndroidEntryPoint(BaseView.class)",
+            "public class MyView extends Hilt_MyView<String> {",
+            "  public MyView(String str, int i, Context context, AttributeSet attrs) {",
+            "    super(str, i, context, attrs);",
+            "  }",
+            "}");
+    Compilation compilation = compiler().compile(baseView, myView);
+    assertThat(compilation).succeeded();
+  }
+
   @Test
   public void copyTargetApiAnnotationActivity() {
     JavaFileObject myActivity =
