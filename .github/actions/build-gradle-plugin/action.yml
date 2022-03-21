@@ -33,14 +33,7 @@ runs:
         restore-keys: |
           ${{ runner.os }}-bazel-build-
     - name: 'Cache Gradle files'
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
+      uses: gradle/gradle-build-action@v2
     - name: 'Build and install Hilt Gradle plugin local snapshot'
       run: ./util/deploy-hilt-gradle-plugin.sh "install:install-file" "LOCAL-SNAPSHOT"
       shell: bash
