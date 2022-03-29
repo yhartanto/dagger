@@ -19,5 +19,6 @@ package dagger.testing.compile;
 import dagger.hilt.android.multiprocess.PerProcessRoot;
 
 /** Process root for the main process. */
-@PerProcessRoot("dagger.hilt.android.multiprocess:{process_name}")
+@PerProcessRoot(
+  processName="dagger.hilt.android.multiprocess:{process_name}")
 final class {class_name} {}
