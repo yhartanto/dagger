@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.internal.codegen.Compilers.compilerWithOptions;
 
+import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
 import dagger.testing.golden.GoldenFileRule;
@@ -265,7 +266,11 @@ public class MapRequestRepresentationWithGuavaTest {
         "}");
 
     Compilation compilation =
-        compilerWithOptions(compilerMode , CompilerMode.JAVA7)
+        compilerWithOptions(
+                ImmutableList.<String>builder()
+                    .add("-source", "7", "-target", "7")
+                    .addAll(compilerMode.javacopts())
+                    .build())
             .compile(mapModuleFile, componentFile);
     assertThat(compilation).succeeded();
     assertThat(compilation)

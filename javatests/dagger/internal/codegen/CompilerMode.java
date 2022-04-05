@@ -20,10 +20,12 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 
 /** The configuration options for compiler modes. */
+// TODO(bcorso): Consider moving the java version into its own separate enum.
 enum CompilerMode {
   DEFAULT_MODE,
+  DEFAULT_JAVA7_MODE("-source", "7", "-target", "7"),
   FAST_INIT_MODE("-Adagger.fastInit=enabled"),
-  JAVA7("-source", "7", "-target", "7"),
+  FAST_INIT_JAVA7_MODE("-Adagger.fastInit=enabled", "-source", "7", "-target", "7"),
   ;
 
   /** Returns the compiler modes as a list of parameters for parameterized tests */
