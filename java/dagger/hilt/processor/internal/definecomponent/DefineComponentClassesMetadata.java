@@ -47,7 +47,7 @@ public abstract class DefineComponentClassesMetadata {
    * Returns the element annotated with {@code dagger.hilt.internal.definecomponent.DefineComponent}
    * or {@code dagger.hilt.internal.definecomponent.DefineComponent.Builder}.
    */
-  abstract TypeElement element();
+  public abstract TypeElement element();
 
   /** Returns {@code true} if this element represents a component. */
   abstract boolean isComponent();
