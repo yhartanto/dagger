@@ -16,8 +16,9 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.MethodSpecHelper.overriding;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreTypes.asDeclared;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.CaseFormat.LOWER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
 import static com.google.common.base.CaseFormat.UPPER_UNDERSCORE;
@@ -43,12 +44,14 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 import static javax.tools.Diagnostic.Kind.ERROR;
+import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
-import com.google.auto.common.MoreElements;
+import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
@@ -98,11 +101,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
 
 /** The implementation of a component type. */
 @PerComponentImplementation
@@ -288,6 +287,7 @@ public final class ComponentImplementation implements GeneratedImplementation {
   private final ImmutableMap<ComponentRequirement, ParameterSpec> constructorParameters;
   private final XMessager messager;
   private final CompilerMode compilerMode;
+  private final XProcessingEnv processingEnv;
 
   @Inject
   ComponentImplementation(
@@ -302,7 +302,8 @@ public final class ComponentImplementation implements GeneratedImplementation {
       CompilerOptions compilerOptions,
       DaggerElements elements,
       DaggerTypes types,
-      XMessager messager) {
+      XMessager messager,
+      XProcessingEnv processingEnv) {
     this.parent = parent;
     this.childComponentImplementationFactory = childComponentImplementationFactory;
     this.topLevelImplementationProvider = topLevelImplementationProvider;
@@ -314,6 +315,7 @@ public final class ComponentImplementation implements GeneratedImplementation {
     this.compilerOptions = compilerOptions;
     this.elements = elements;
     this.types = types;
+    this.processingEnv = processingEnv;
     this.name = componentNames.get(graph.componentPath());
 
     // Build the map of constructor parameters for this component and claim the field names to
@@ -560,10 +562,7 @@ public final class ComponentImplementation implements GeneratedImplementation {
 
   private void addFactoryMethods() {
     if (parent.isPresent()) {
-      graph
-          .factoryMethod()
-          .map(XConverters::toJavac)
-          .ifPresent(this::createSubcomponentFactoryMethod);
+      graph.factoryMethod().ifPresent(this::createSubcomponentFactoryMethod);
     } else {
       createRootComponentFactoryMethod();
     }
@@ -623,17 +622,18 @@ public final class ComponentImplementation implements GeneratedImplementation {
   // TODO(bcorso): This can be removed once we delete generatedClassExtendsComponent flag.
   private void validateMethodNameDoesNotOverrideGeneratedCreator(String creatorName) {
     // Check if there is any client added method has the same signature as generated creatorName.
-    MoreElements.getAllMethods(toJavac(graph.componentTypeElement()), types, elements).stream()
-        .filter(method -> method.getSimpleName().contentEquals(creatorName))
+    asStream(graph.componentTypeElement().getAllMethods())
+        .filter(method -> getSimpleName(method).contentEquals(creatorName))
         .filter(method -> method.getParameters().isEmpty())
-        .filter(method -> !method.getModifiers().contains(Modifier.STATIC))
+        .filter(method -> !method.isStatic())
         .forEach(
-            (ExecutableElement method) ->
+            (XMethodElement method) ->
                 messager.printMessage(
                     ERROR,
                     String.format(
                         "Cannot override generated method: %s.%s()",
-                        method.getEnclosingElement().getSimpleName(), method.getSimpleName())));
+                        getSimpleName(method.getEnclosingElement()),
+                        getSimpleName(method))));
   }
 
   /** {@code true} if all of the graph's required dependencies can be automatically constructed */
@@ -642,16 +642,15 @@ public final class ComponentImplementation implements GeneratedImplementation {
         graph.componentRequirements(), ComponentRequirement::requiresAPassedInstance);
   }
 
-  private void createSubcomponentFactoryMethod(ExecutableElement factoryMethod) {
+  private void createSubcomponentFactoryMethod(XMethodElement factoryMethod) {
     checkState(parent.isPresent());
     Collection<ParameterSpec> params =
         Maps.transformValues(
                 graph.factoryMethodParameters(),
                 parameter -> ParameterSpec.get(toJavac(parameter)))
             .values();
-    DeclaredType parentType =
-        asDeclared(toJavac(parent.get().graph().componentTypeElement()).asType());
-    MethodSpec.Builder method = MethodSpec.overriding(factoryMethod, parentType, types);
+    XType parentType = parent.get().graph().componentTypeElement().getType();
+    MethodSpec.Builder method = overriding(factoryMethod, parentType);
     params.forEach(
         param -> method.addStatement("$T.checkNotNull($N)", Preconditions.class, param));
     method.addStatement(
@@ -806,7 +805,7 @@ public final class ComponentImplementation implements GeneratedImplementation {
     private final SwitchingProviders switchingProviders;
     private final ExperimentalSwitchingProviders experimentalSwitchingProviders;
     private final Map<Key, CodeBlock> cancellations = new LinkedHashMap<>();
-    private final Map<VariableElement, String> uniqueAssistedName = new LinkedHashMap<>();
+    private final Map<XVariableElement, String> uniqueAssistedName = new LinkedHashMap<>();
     private final ListMultimap<FieldSpecKind, FieldSpec> fieldSpecsMap =
         MultimapBuilder.enumKeys(FieldSpecKind.class).arrayListValues().build();
     private final ListMultimap<MethodSpecKind, MethodSpec> methodSpecsMap =
@@ -896,8 +895,8 @@ public final class ComponentImplementation implements GeneratedImplementation {
      *
      * <p>This method checks accessibility for public types and package private types.
      */
-    TypeMirror accessibleType(TypeMirror type) {
-      return types.accessibleType(type, name());
+    XType accessibleType(XType type) {
+      return toXProcessing(types.accessibleType(toJavac(type), name()), processingEnv);
     }
 
     /**
@@ -905,7 +904,7 @@ public final class ComponentImplementation implements GeneratedImplementation {
      *
      * <p>This method checks accessibility for public types and package private types.
      */
-    boolean isTypeAccessible(TypeMirror type) {
+    boolean isTypeAccessible(XType type) {
       return isTypeAccessibleFrom(type, name.packageName());
     }
 
@@ -965,11 +964,11 @@ public final class ComponentImplementation implements GeneratedImplementation {
       return assistedParamNames.getUniqueName(name);
     }
 
-    public String getUniqueFieldNameForAssistedParam(VariableElement element) {
+    public String getUniqueFieldNameForAssistedParam(XVariableElement element) {
       if (uniqueAssistedName.containsKey(element)) {
         return uniqueAssistedName.get(element);
       }
-      String name = getUniqueAssistedParamName(element.getSimpleName().toString());
+      String name = getUniqueAssistedParamName(getSimpleName(element));
       uniqueAssistedName.put(element, name);
       return name;
     }

@@ -16,7 +16,6 @@
 
 package dagger.internal.codegen.writing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -31,6 +30,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.squareup.javapoet.ClassName;
@@ -50,7 +50,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.inject.Provider;
-import javax.lang.model.type.TypeMirror;
 
 /**
  * Keeps track of all provider expression requests for a component.
@@ -171,15 +170,14 @@ final class ExperimentalSwitchingProviders {
           throw new IllegalArgumentException("Unexpected binding kind: " + binding.kind());
       }
 
-      TypeMirror castedType =
-          shardImplementation.accessibleType(toJavac(binding.contributedType()));
+      XType castedType = shardImplementation.accessibleType(binding.contributedType());
       return CodeBlock.of(
           "new $T<$L>($L)",
           switchingProviderType,
           // Add the type parameter explicitly when the binding is scoped because Java can't resolve
           // the type when wrapped. For example, the following will error:
           //   fooProvider = DoubleCheck.provider(new SwitchingProvider<>(1));
-          CodeBlock.of("$T", castedType),
+          CodeBlock.of("$T", castedType.getTypeName()),
           switchingProviderDependencies.isEmpty()
               ? CodeBlock.of("$L", switchIds.get(key))
               : CodeBlock.of("$L, $L", switchIds.get(key), switchingProviderDependencies));

@@ -27,6 +27,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
+import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
@@ -351,10 +352,13 @@ public abstract class BindingGraph {
    * </code></pre>
    */
   // TODO(b/73294201): Consider returning the resolved ExecutableType for the factory method.
-  public final Optional<XExecutableElement> factoryMethod() {
+  public final Optional<XMethodElement> factoryMethod() {
     return topLevelBindingGraph().network().inEdges(componentNode()).stream()
         .filter(edge -> edge instanceof ChildFactoryMethodEdge)
         .map(edge -> ((ChildFactoryMethodEdge) edge).factoryMethod().xprocessing())
+        // Factory methods are represented by XMethodElement (rather than XConstructorElement)
+        // TODO(bcorso): consider adding DaggerMethodElement so this cast isn't needed.
+        .map(XMethodElement.class::cast)
         .collect(toOptional());
   }
 

@@ -34,6 +34,7 @@ import androidx.room.compiler.processing.XEnumEntry;
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XFieldElement;
+import androidx.room.compiler.processing.XMemberContainer;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
@@ -46,6 +47,12 @@ import javax.lang.model.element.ElementKind;
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XElement} helper methods. */
 public final class XElements {
+
+  // TODO(bcorso): Replace usages with getJvmName() once it exists.
+  /** Returns the simple name of the member container. */
+  public static String getSimpleName(XMemberContainer memberContainer) {
+    return memberContainer.getClassName().simpleName();
+  }
 
   // TODO(bcorso): Replace usages with getJvmName() once it exists.
   /** Returns the simple name of the element. */

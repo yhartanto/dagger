@@ -49,6 +49,7 @@ import static javax.lang.model.type.TypeKind.VOID;
 
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
+import androidx.room.compiler.processing.XVariableElement;
 import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -146,7 +147,7 @@ final class InjectionMethods {
     static CodeBlock invoke(
         ProvisionBinding binding,
         Function<DependencyRequest, CodeBlock> dependencyUsage,
-        Function<VariableElement, String> uniqueAssistedParameterName,
+        Function<XVariableElement, String> uniqueAssistedParameterName,
         ClassName requestingClass,
         Optional<CodeBlock> moduleReference,
         CompilerOptions compilerOptions,
@@ -164,7 +165,7 @@ final class InjectionMethods {
     static ImmutableList<CodeBlock> invokeArguments(
         ProvisionBinding binding,
         Function<DependencyRequest, CodeBlock> dependencyUsage,
-        Function<VariableElement, String> uniqueAssistedParameterName) {
+        Function<XVariableElement, String> uniqueAssistedParameterName) {
       ImmutableMap<XExecutableParameterElement, DependencyRequest> dependencyRequestMap =
           binding.provisionDependencies().stream()
               .collect(
@@ -176,7 +177,7 @@ final class InjectionMethods {
       XExecutableElement method = asExecutable(binding.bindingElement().get());
       for (XExecutableParameterElement parameter : method.getParameters()) {
         if (isAssistedParameter(parameter)) {
-          arguments.add(CodeBlock.of("$L", uniqueAssistedParameterName.apply(toJavac(parameter))));
+          arguments.add(CodeBlock.of("$L", uniqueAssistedParameterName.apply(parameter)));
         } else if (dependencyRequestMap.containsKey(parameter)) {
           DependencyRequest request = dependencyRequestMap.get(parameter);
           arguments.add(dependencyUsage.apply(request));

@@ -47,7 +47,7 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
+import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -77,12 +77,10 @@ import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.Key;
 import dagger.spi.model.Scope;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.VariableElement;
 
 /**
  * Generates {@link Factory} implementations from {@link ProvisionBinding} instances for {@link
@@ -247,15 +245,15 @@ public final class FactoryGenerator extends SourceFileGenerator<ProvisionBinding
     UniqueNameSet uniqueFieldNames = new UniqueNameSet();
     ImmutableMap<DependencyRequest, FieldSpec> frameworkFields = frameworkFields(binding);
     frameworkFields.values().forEach(field -> uniqueFieldNames.claim(field.name));
-    Map<VariableElement, ParameterSpec> assistedParameters =
+    ImmutableMap<XVariableElement, ParameterSpec> assistedParameters =
         assistedParameters(binding).stream()
             .collect(
                 toImmutableMap(
-                    XConverters::toJavac,
-                    element ->
+                    parameter -> parameter,
+                    parameter ->
                         ParameterSpec.builder(
-                                element.getType().getTypeName(),
-                                uniqueFieldNames.getUniqueName(getSimpleName(element)))
+                                parameter.getType().getTypeName(),
+                                uniqueFieldNames.getUniqueName(getSimpleName(parameter)))
                             .build()));
     TypeName providedTypeName = providedTypeName(binding);
     MethodSpec.Builder getMethod =

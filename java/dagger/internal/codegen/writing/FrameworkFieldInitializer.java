@@ -74,8 +74,8 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       ContributionBinding binding,
       FrameworkInstanceCreationExpression frameworkInstanceCreationExpression) {
     this.binding = checkNotNull(binding);
-    this.compilerMode = componentImplementation.compilerMode();
     this.shardImplementation = checkNotNull(componentImplementation).shardImplementation(binding);
+    this.compilerMode = componentImplementation.compilerMode();
     this.frameworkInstanceCreationExpression = checkNotNull(frameworkInstanceCreationExpression);
   }
 
@@ -139,7 +139,7 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
     if (fieldSpec != null) {
       return fieldSpec;
     }
-    boolean useRawType = !shardImplementation.isTypeAccessible(binding.key().type().java());
+    boolean useRawType = !shardImplementation.isTypeAccessible(binding.key().type().xprocessing());
     FrameworkField contributionBindingField =
         FrameworkField.forBinding(
             binding, frameworkInstanceCreationExpression.alternativeFrameworkClass());
