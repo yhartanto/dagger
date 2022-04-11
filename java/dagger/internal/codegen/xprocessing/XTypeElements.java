@@ -26,6 +26,7 @@ import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.TypeVariableName;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for {@link XTypeElement} helper methods. */
@@ -46,6 +47,14 @@ public final class XTypeElements {
         return Visibility.OTHER;
       }
     }
+  }
+
+  // TODO(bcorso): Consider XParameterizable interface to handle both methods and types.
+  /** Returns the type arguments for the given type as a list of {@link TypeVariableName}. */
+  public static ImmutableList<TypeVariableName> typeVariableNames(XTypeElement typeElement) {
+    return toJavac(typeElement).getTypeParameters().stream()
+        .map(TypeVariableName::get)
+        .collect(toImmutableList());
   }
 
   /** Returns {@code true} if the given element is nested. */
