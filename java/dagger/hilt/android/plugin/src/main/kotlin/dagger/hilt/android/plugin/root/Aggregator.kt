@@ -40,7 +40,8 @@ import org.objectweb.asm.Type
 import org.slf4j.Logger
 
 /** Aggregates Hilt dependencies. */
-internal class Aggregator private constructor(
+internal class Aggregator
+private constructor(
   private val logger: Logger,
   private val asmApiVersion: Int,
 ) {
@@ -137,8 +138,8 @@ internal class Aggregator private constructor(
               aggregatedRoots.add(
                 AggregatedRootIr(
                   fqName = annotatedClassName,
-                  root = rootClass.toClassName(),
-                  originatingRoot = originatingRootClass.toClassName(),
+                  root = ClassName.bestGuess(rootClass),
+                  originatingRoot = ClassName.bestGuess(originatingRootClass),
                   rootAnnotation = rootAnnotationClassName.toClassName()
                 )
               )
@@ -159,10 +160,7 @@ internal class Aggregator private constructor(
 
             override fun visitEnd() {
               processedRoots.add(
-                ProcessedRootSentinelIr(
-                  fqName = annotatedClassName,
-                  roots = rootClasses.map { it.toClassName() }
-                )
+                ProcessedRootSentinelIr(fqName = annotatedClassName, roots = rootClasses)
               )
               super.visitEnd()
             }
@@ -181,10 +179,7 @@ internal class Aggregator private constructor(
 
             override fun visitEnd() {
               defineComponentDeps.add(
-                DefineComponentClassesIr(
-                  fqName = annotatedClassName,
-                  component = componentClass.toClassName()
-                )
+                DefineComponentClassesIr(fqName = annotatedClassName, component = componentClass)
               )
               super.visitEnd()
             }
@@ -239,14 +234,10 @@ internal class Aggregator private constructor(
 
             override fun visitArray(name: String): AnnotationVisitor? {
               return when (name) {
-                "components" ->
-                  visitValue { value -> componentClasses.add(value as String) }
-                "replaces" ->
-                  visitValue { value -> replacesClasses.add(value as String) }
-                "modules" ->
-                  visitValue { value -> moduleClass = value as String }
-                "entryPoints" ->
-                  visitValue { value -> entryPoint = value as String }
+                "components" -> visitValue { value -> componentClasses.add(value as String) }
+                "replaces" -> visitValue { value -> replacesClasses.add(value as String) }
+                "modules" -> visitValue { value -> moduleClass = value as String }
+                "entryPoints" -> visitValue { value -> entryPoint = value as String }
                 "componentEntryPoints" ->
                   visitValue { value -> componentEntryPoint = value as String }
                 else -> super.visitArray(name)
@@ -257,12 +248,12 @@ internal class Aggregator private constructor(
               aggregatedDeps.add(
                 AggregatedDepsIr(
                   fqName = annotatedClassName,
-                  components = componentClasses.map { it.toClassName() },
-                  test = testClass?.toClassName(),
-                  replaces = replacesClasses.map { it.toClassName() },
-                  module = moduleClass?.toClassName(),
-                  entryPoint = entryPoint?.toClassName(),
-                  componentEntryPoint = componentEntryPoint?.toClassName()
+                  components = componentClasses,
+                  test = testClass,
+                  replaces = replacesClasses,
+                  module = moduleClass,
+                  entryPoint = entryPoint,
+                  componentEntryPoint = componentEntryPoint
                 )
               )
               super.visitEnd()
@@ -315,8 +306,8 @@ internal class Aggregator private constructor(
               uninstallModulesDeps.add(
                 AggregatedUninstallModulesIr(
                   fqName = annotatedClassName,
-                  test = testClass.toClassName(),
-                  uninstallModules = uninstallModulesClasses.map { it.toClassName() }
+                  test = testClass,
+                  uninstallModules = uninstallModulesClasses
                 )
               )
               super.visitEnd()
@@ -338,7 +329,7 @@ internal class Aggregator private constructor(
               earlyEntryPointDeps.add(
                 AggregatedEarlyEntryPointIr(
                   fqName = annotatedClassName,
-                  earlyEntryPoint = earlyEntryPointClass.toClassName()
+                  earlyEntryPoint = earlyEntryPointClass
                 )
               )
               super.visitEnd()
@@ -372,29 +363,28 @@ internal class Aggregator private constructor(
 
   private fun visitFile(file: File) {
     when {
-      file.isJarFile() -> ZipInputStream(file.inputStream()).forEachZipEntry { inputStream, entry ->
-        if (entry.isClassFile()) {
-          visitClass(inputStream)
+      file.isJarFile() ->
+        ZipInputStream(file.inputStream()).forEachZipEntry { inputStream, entry ->
+          if (entry.isClassFile()) {
+            visitClass(inputStream)
+          }
         }
-      }
       file.isClassFile() -> file.inputStream().use { visitClass(it) }
       else -> logger.debug("Don't know how to process file: $file")
     }
   }
 
   private fun visitClass(classFileInputStream: InputStream) {
-    ClassReader(classFileInputStream).accept(
-      classVisitor,
-      ClassReader.SKIP_CODE and ClassReader.SKIP_DEBUG and ClassReader.SKIP_FRAMES
-    )
+    ClassReader(classFileInputStream)
+      .accept(
+        classVisitor,
+        ClassReader.SKIP_CODE and ClassReader.SKIP_DEBUG and ClassReader.SKIP_FRAMES
+      )
   }
 
   companion object {
-    fun from(
-      logger: Logger,
-      asmApiVersion: Int,
-      input: Iterable<File>
-    ) = Aggregator(logger, asmApiVersion).apply { process(input) }
+    fun from(logger: Logger, asmApiVersion: Int, input: Iterable<File>) =
+      Aggregator(logger, asmApiVersion).apply { process(input) }
 
     // Converts this Type to a ClassName, used instead of ClassName.bestGuess() because ASM class
     // names are based off descriptors and uses 'reflection' naming, i.e. inner classes are split
@@ -402,18 +392,14 @@ internal class Aggregator private constructor(
     fun Type.toClassName(): ClassName {
       val binaryName = this.className
       val packageNameEndIndex = binaryName.lastIndexOf('.')
-      val packageName = if (packageNameEndIndex != -1) {
-        binaryName.substring(0, packageNameEndIndex)
-      } else {
-        ""
-      }
+      val packageName =
+        if (packageNameEndIndex != -1) {
+          binaryName.substring(0, packageNameEndIndex)
+        } else {
+          ""
+        }
       val shortNames = binaryName.substring(packageNameEndIndex + 1).split('$')
       return ClassName.get(packageName, shortNames.first(), *shortNames.drop(1).toTypedArray())
-    }
-
-    // Converts this String representing the canonical name of a class to a ClassName.
-    fun String.toClassName(): ClassName {
-      return ClassName.bestGuess(this)
     }
   }
 }

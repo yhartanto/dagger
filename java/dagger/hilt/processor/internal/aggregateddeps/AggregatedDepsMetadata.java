@@ -88,21 +88,24 @@ public abstract class AggregatedDepsMetadata {
         ClassName.get(metadata.aggregatingElement()),
         metadata.componentElements().stream()
             .map(ClassName::get)
+            .map(ClassName::canonicalName)
             .collect(Collectors.toList()),
         metadata.testElement()
             .map(ClassName::get)
+            .map(ClassName::canonicalName)
             .orElse(null),
         metadata.replacedDependencies().stream()
             .map(ClassName::get)
+            .map(ClassName::canonicalName)
             .collect(Collectors.toList()),
         metadata.dependencyType() == DependencyType.MODULE
-            ? ClassName.get(metadata.dependency())
+            ? ClassName.get(metadata.dependency()).canonicalName()
             : null,
         metadata.dependencyType() == DependencyType.ENTRY_POINT
-            ? ClassName.get(metadata.dependency())
+            ? ClassName.get(metadata.dependency()).canonicalName()
             : null,
         metadata.dependencyType() == DependencyType.COMPONENT_ENTRY_POINT
-            ? ClassName.get(metadata.dependency())
+            ? ClassName.get(metadata.dependency()).canonicalName()
             : null);
   }
 

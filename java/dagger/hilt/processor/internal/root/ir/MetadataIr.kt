@@ -26,18 +26,18 @@ import com.squareup.javapoet.ClassName
  */
 data class AggregatedDepsIr(
   val fqName: ClassName,
-  val components: List<ClassName>,
-  val test: ClassName?,
-  val replaces: List<ClassName>,
-  val module: ClassName?,
-  val entryPoint: ClassName?,
-  val componentEntryPoint: ClassName?,
+  val components: List<String>,
+  val test: String?,
+  val replaces: List<String>,
+  val module: String?,
+  val entryPoint: String?,
+  val componentEntryPoint: String?,
 )
 
 /** Represents [dagger.hilt.android.internal.earlyentrypoint.AggregatedEarlyEntryPoint] */
 data class AggregatedEarlyEntryPointIr(
   val fqName: ClassName,
-  val earlyEntryPoint: ClassName,
+  val earlyEntryPoint: String,
 )
 
 /** Represents [dagger.hilt.android.internal.legacy.AggregatedElementProxy] */
@@ -70,8 +70,8 @@ data class AggregatedRootIr(
 /** Represents [dagger.hilt.android.internal.uninstallmodules.AggregatedUninstallModules] */
 data class AggregatedUninstallModulesIr(
   val fqName: ClassName,
-  val test: ClassName,
-  val uninstallModules: List<ClassName>
+  val test: String,
+  val uninstallModules: List<String>
 )
 
 /** Represents [dagger.hilt.internal.aliasof.AliasOfPropagatedData] */
@@ -95,8 +95,8 @@ data class ComponentTreeDepsIr(
 /** Represents [dagger.hilt.internal.definecomponent.DefineComponentClasses] */
 data class DefineComponentClassesIr(
   val fqName: ClassName,
-  val component: ClassName,
+  val component: String,
 )
 
 /** Represents [dagger.hilt.internal.processedrootsentinel.ProcessedRootSentinel] */
-data class ProcessedRootSentinelIr(val fqName: ClassName, val roots: List<ClassName>)
+data class ProcessedRootSentinelIr(val fqName: ClassName, val roots: List<String>)

@@ -19,7 +19,8 @@ package dagger.hilt.processor.internal.root.ir
 import com.squareup.javapoet.ClassName
 
 // Produces ComponentTreeDepsIr for a set of aggregated deps and roots to process.
-class ComponentTreeDepsIrCreator private constructor(
+class ComponentTreeDepsIrCreator
+private constructor(
   private val isSharedTestComponentsEnabled: Boolean,
   private val aggregatedRoots: Set<AggregatedRootIr>,
   private val defineComponentDeps: Set<DefineComponentClassesIr>,
@@ -50,11 +51,12 @@ class ComponentTreeDepsIrCreator private constructor(
   private fun testComponents(): Set<ComponentTreeDepsIr> {
     val rootsUsingSharedComponent = rootsUsingSharedComponent(aggregatedRoots)
     val aggregatedRootsByRoot = aggregatedRoots.associateBy { it.root }
-    val aggregatedDepsByRoot = aggregatedDepsByRoot(
-      aggregatedRoots = aggregatedRoots,
-      rootsUsingSharedComponent = rootsUsingSharedComponent,
-      hasEarlyEntryPoints = aggregatedEarlyEntryPointDeps.isNotEmpty()
-    )
+    val aggregatedDepsByRoot =
+      aggregatedDepsByRoot(
+        aggregatedRoots = aggregatedRoots,
+        rootsUsingSharedComponent = rootsUsingSharedComponent,
+        hasEarlyEntryPoints = aggregatedEarlyEntryPointDeps.isNotEmpty()
+      )
     val uninstallModuleDepsByRoot =
       aggregatedUninstallModulesDeps.associate { it.test to it.fqName }
     return mutableSetOf<ComponentTreeDepsIr>().apply {
@@ -62,16 +64,17 @@ class ComponentTreeDepsIrCreator private constructor(
         val isDefaultRoot = root == DEFAULT_ROOT_CLASS_NAME
         val isEarlyEntryPointRoot = isDefaultRoot && aggregatedEarlyEntryPointDeps.isNotEmpty()
         // We want to base the generated name on the user written root rather than a generated root.
-        val rootName = if (isDefaultRoot) {
-          DEFAULT_ROOT_CLASS_NAME
-        } else {
-          aggregatedRootsByRoot.getValue(root).originatingRoot
-        }
+        val rootName =
+          if (isDefaultRoot) {
+            DEFAULT_ROOT_CLASS_NAME
+          } else {
+            aggregatedRootsByRoot.getValue(root).originatingRoot
+          }
         val componentNameGenerator =
           if (isSharedTestComponentsEnabled) {
             ComponentTreeDepsNameGenerator(
               destinationPackage = "dagger.hilt.android.internal.testing.root",
-              otherRootNames = aggregatedDepsByRoot.keys
+              otherRootNames = aggregatedDepsByRoot.keys,
             )
           } else {
             ComponentTreeDepsNameGenerator()
@@ -91,7 +94,8 @@ class ComponentTreeDepsIrCreator private constructor(
             defineComponentDeps = defineComponentDeps.map { it.fqName }.toSet(),
             aliasOfDeps = aliasOfDeps.map { it.fqName }.toSet(),
             aggregatedDeps = aggregatedDepsByRoot.getOrElse(root) { emptySet() },
-            uninstallModulesDeps = uninstallModuleDepsByRoot[root]?.let { setOf(it) } ?: emptySet(),
+            uninstallModulesDeps =
+              uninstallModuleDepsByRoot[root.canonicalName()]?.let { setOf(it) } ?: emptySet(),
             earlyEntryPointDeps =
               if (isEarlyEntryPointRoot) {
                 aggregatedEarlyEntryPointDeps.map { it.fqName }.toSet()
@@ -108,14 +112,15 @@ class ComponentTreeDepsIrCreator private constructor(
     if (!isSharedTestComponentsEnabled) {
       return emptySet()
     }
-    val hasLocalModuleDependencies: Set<ClassName> = mutableSetOf<ClassName>().apply {
-      addAll(aggregatedDeps.filter { it.module != null }.mapNotNull { it.test })
-      addAll(aggregatedUninstallModulesDeps.map { it.test })
-    }
+    val hasLocalModuleDependencies: Set<String> =
+      mutableSetOf<String>().apply {
+        addAll(aggregatedDeps.filter { it.module != null }.mapNotNull { it.test })
+        addAll(aggregatedUninstallModulesDeps.map { it.test })
+      }
     return roots
       .filter { it.isTestRoot && it.allowsSharingComponent }
       .map { it.root }
-      .filter { !hasLocalModuleDependencies.contains(it) }
+      .filter { !hasLocalModuleDependencies.contains(it.canonicalName()) }
       .toSet()
   }
 
@@ -124,22 +129,23 @@ class ComponentTreeDepsIrCreator private constructor(
     rootsUsingSharedComponent: Set<ClassName>,
     hasEarlyEntryPoints: Boolean
   ): Map<ClassName, Set<ClassName>> {
-    val testDepsByRoot = aggregatedDeps
-      .filter { it.test != null }
-      .groupBy(keySelector = { it.test }, valueTransform = { it.fqName })
-    val globalModules = aggregatedDeps
-      .filter { it.test == null && it.module != null }
-      .map { it.fqName }
-    val globalEntryPointsByComponent = aggregatedDeps
-      .filter { it.test == null && it.module == null }
-      .groupBy(keySelector = { it.test }, valueTransform = { it.fqName })
+    val testDepsByRoot =
+      aggregatedDeps
+        .filter { it.test != null }
+        .groupBy(keySelector = { it.test }, valueTransform = { it.fqName })
+    val globalModules =
+      aggregatedDeps.filter { it.test == null && it.module != null }.map { it.fqName }
+    val globalEntryPointsByComponent =
+      aggregatedDeps
+        .filter { it.test == null && it.module == null }
+        .groupBy(keySelector = { it.test }, valueTransform = { it.fqName })
     val result = mutableMapOf<ClassName, LinkedHashSet<ClassName>>()
     aggregatedRoots.forEach { aggregatedRoot ->
       if (!rootsUsingSharedComponent.contains(aggregatedRoot.root)) {
         result.getOrPut(aggregatedRoot.root) { linkedSetOf() }.apply {
           addAll(globalModules)
           addAll(globalEntryPointsByComponent.values.flatten())
-          addAll(testDepsByRoot.getOrElse(aggregatedRoot.root) { emptyList() })
+          addAll(testDepsByRoot.getOrElse(aggregatedRoot.root.canonicalName()) { emptyList() })
         }
       }
     }
@@ -148,14 +154,20 @@ class ComponentTreeDepsIrCreator private constructor(
       result.getOrPut(DEFAULT_ROOT_CLASS_NAME) { linkedSetOf() }.apply {
         addAll(globalModules)
         addAll(globalEntryPointsByComponent.values.flatten())
-        addAll(rootsUsingSharedComponent.flatMap { testDepsByRoot.getOrElse(it) { emptyList() } })
+        addAll(
+          rootsUsingSharedComponent.flatMap {
+            testDepsByRoot.getOrElse(it.canonicalName()) { emptyList() }
+          }
+        )
       }
     } else if (hasEarlyEntryPoints) {
       result.getOrPut(DEFAULT_ROOT_CLASS_NAME) { linkedSetOf() }.apply {
         addAll(globalModules)
         addAll(
           globalEntryPointsByComponent.entries
-            .filterNot { (component, _) -> component == SINGLETON_COMPONENT_CLASS_NAME }
+            .filterNot { (component, _) ->
+              component == SINGLETON_COMPONENT_CLASS_NAME.canonicalName()
+            }
             .flatMap { (_, entryPoints) -> entryPoints }
         )
       }
@@ -183,18 +195,20 @@ class ComponentTreeDepsIrCreator private constructor(
             // Sorted in order to guarantee determinism if this is invoked by different processors.
             val usedNames = mutableSetOf<String>()
             conflictingRootNames.sorted().forEach { rootClassName ->
-              val basePrefix = rootClassName.let { className ->
-                val containerName = className.enclosingClassName()?.enclosedName() ?: ""
-                if (containerName.isNotEmpty() && containerName[0].isUpperCase()) {
-                  // If parent element looks like a class, use its initials as a prefix.
-                  containerName.filterNot { it.isLowerCase() }
-                } else {
-                  // Not in a normally named class. Prefix with the initials of the elements
-                  // leading here.
-                  className.toString().split('.').dropLast(1)
-                    .joinToString(separator = "") { "${it.first()}" }
+              val basePrefix =
+                rootClassName.let { className ->
+                  val containerName = className.enclosingClassName()?.enclosedName() ?: ""
+                  if (containerName.isNotEmpty() && containerName[0].isUpperCase()) {
+                    // If parent element looks like a class, use its initials as a prefix.
+                    containerName.filterNot { it.isLowerCase() }
+                  } else {
+                    // Not in a normally named class. Prefix with the initials of the elements
+                    // leading here.
+                    className.toString().split('.').dropLast(1).joinToString(separator = "") {
+                      "${it.first()}"
+                    }
+                  }
                 }
-              }
               var uniqueName = basePrefix
               var differentiator = 2
               while (!usedNames.add(uniqueName)) {
@@ -209,13 +223,14 @@ class ComponentTreeDepsIrCreator private constructor(
 
     fun generate(rootName: ClassName): ClassName =
       ClassName.get(
-        destinationPackage ?: rootName.packageName(),
-        if (otherRootNames.isEmpty()) {
-          rootName.enclosedName()
-        } else {
-          simpleNameMap.getValue(rootName)
-        }
-      ).append("_ComponentTreeDeps")
+          destinationPackage ?: rootName.packageName(),
+          if (otherRootNames.isEmpty()) {
+            rootName.enclosedName()
+          } else {
+            simpleNameMap.getValue(rootName)
+          }
+        )
+        .append("_ComponentTreeDeps")
 
     private fun ClassName.enclosedName() = simpleNames().joinToString(separator = "_")
 
@@ -234,23 +249,25 @@ class ComponentTreeDepsIrCreator private constructor(
       aggregatedDeps: Set<AggregatedDepsIr>,
       aggregatedUninstallModulesDeps: Set<AggregatedUninstallModulesIr>,
       aggregatedEarlyEntryPointDeps: Set<AggregatedEarlyEntryPointIr>,
-    ) = ComponentTreeDepsIrCreator(
-      isSharedTestComponentsEnabled,
-      // TODO(bcorso): Consider creating a common interface for fqName so that we can sort these
-      // using a shared method rather than repeating the sorting logic.
-      aggregatedRoots.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
-      defineComponentDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
-      aliasOfDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
-      aggregatedDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
-      aggregatedUninstallModulesDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
-      aggregatedEarlyEntryPointDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet()
-    ).let { producer ->
-      if (isTest) {
-        producer.testComponents()
-      } else {
-        producer.prodComponents()
-      }
-    }
+    ) =
+      ComponentTreeDepsIrCreator(
+          isSharedTestComponentsEnabled,
+          // TODO(bcorso): Consider creating a common interface for fqName so that we can sort these
+          // using a shared method rather than repeating the sorting logic.
+          aggregatedRoots.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
+          defineComponentDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
+          aliasOfDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
+          aggregatedDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
+          aggregatedUninstallModulesDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet(),
+          aggregatedEarlyEntryPointDeps.toList().sortedBy { it.fqName.canonicalName() }.toSet()
+        )
+        .let { producer ->
+          if (isTest) {
+            producer.testComponents()
+          } else {
+            producer.prodComponents()
+          }
+        }
 
     val DEFAULT_ROOT_CLASS_NAME: ClassName =
       ClassName.get("dagger.hilt.android.internal.testing.root", "Default")

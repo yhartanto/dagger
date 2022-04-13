@@ -29,8 +29,8 @@ object AggregatedRootIrValidator {
   ): Set<AggregatedRootIr> {
     val processedRootNames = processedRoots.flatMap { it.roots }.toSet()
     val rootsToProcess =
-      aggregatedRoots.filterNot { processedRootNames.contains(it.root) }.sortedBy {
-        it.root.toString()
+      aggregatedRoots.filterNot { processedRootNames.contains(it.root.canonicalName()) }.sortedBy {
+        it.root.canonicalName()
       }
     val testRootsToProcess = rootsToProcess.filter { it.isTestRoot }
     val appRootsToProcess = rootsToProcess - testRootsToProcess
@@ -53,7 +53,9 @@ object AggregatedRootIrValidator {
     // Perform validation across roots previous compilation units.
     if (!isCrossCompilationRootValidationDisabled) {
       val alreadyProcessedTestRoots =
-        aggregatedRoots.filter { it.isTestRoot && processedRootNames.contains(it.root) }
+        aggregatedRoots.filter {
+          it.isTestRoot && processedRootNames.contains(it.root.canonicalName())
+        }
       // TODO(b/185742783): Add an explanation or link to docs to explain why we're forbidding this.
       if (alreadyProcessedTestRoots.isNotEmpty() && rootsToProcess.isNotEmpty()) {
         throw InvalidRootsException(
@@ -67,7 +69,7 @@ object AggregatedRootIrValidator {
 
       val alreadyProcessedAppRoots =
         aggregatedRoots.filter {
-          !it.isTestRoot && processedRootNames.contains(it.root)
+          !it.isTestRoot && processedRootNames.contains(it.root.canonicalName())
         }
       if (alreadyProcessedAppRoots.isNotEmpty() && appRootsToProcess.isNotEmpty()) {
         throw InvalidRootsException(

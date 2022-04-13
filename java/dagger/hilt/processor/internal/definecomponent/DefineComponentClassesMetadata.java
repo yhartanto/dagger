@@ -112,6 +112,6 @@ public abstract class DefineComponentClassesMetadata {
   public static DefineComponentClassesIr toIr(DefineComponentClassesMetadata metadata) {
     return new DefineComponentClassesIr(
         ClassName.get(metadata.aggregatingElement()),
-        ClassName.get(metadata.element()));
+        ClassName.get(metadata.element()).canonicalName());
   }
 }

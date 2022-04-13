@@ -66,7 +66,7 @@ public abstract class AggregatedEarlyEntryPointMetadata {
   public static AggregatedEarlyEntryPointIr toIr(AggregatedEarlyEntryPointMetadata metadata) {
     return new AggregatedEarlyEntryPointIr(
         ClassName.get(metadata.aggregatingElement()),
-        ClassName.get(metadata.earlyEntryPoint()));
+        ClassName.get(metadata.earlyEntryPoint()).canonicalName());
   }
 
   private static AggregatedEarlyEntryPointMetadata create(TypeElement element, Elements elements) {
