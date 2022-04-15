@@ -277,6 +277,14 @@ public final class DaggerTypes implements Types {
    * Throws {@link TypeNotPresentException} if {@code type} is an {@link
    * javax.lang.model.type.ErrorType}.
    */
+  public static void checkTypePresent(XType type) {
+    checkTypePresent(toJavac(type));
+  }
+
+  /**
+   * Throws {@link TypeNotPresentException} if {@code type} is an {@link
+   * javax.lang.model.type.ErrorType}.
+   */
   public static void checkTypePresent(TypeMirror type) {
     type.accept(
         // TODO(ronshapiro): Extract a base class that visits all components of a complex type
