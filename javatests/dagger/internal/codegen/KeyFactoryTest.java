@@ -253,7 +253,7 @@ public class KeyFactoryTest {
         processingEnv.requireTypeElement(BoxedPrimitiveTypes.class.getCanonicalName());
     XMethodElement integerMethod = getOnlyElement(boxedPrimitiveHolder.getDeclaredMethods());
 
-    // TODO(user): Truth subject for TypeMirror and TypeElement
+    // TODO(cgruber): Truth subject for TypeMirror and TypeElement
     XType intType = intMethod.getReturnType();
     assertThat(isPrimitive(intType)).isTrue();
     XType integerType = integerMethod.getReturnType();

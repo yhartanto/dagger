@@ -71,7 +71,7 @@ public final class ConflictingEntryPointsTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "conflicting entry point declarations:",
+                "can only implement the method once. Found:",
                 "    Long test.Base1.foo()",
                 "    Number test.Base2.foo()"))
         .inFile(component)
@@ -119,7 +119,7 @@ public final class ConflictingEntryPointsTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "conflicting entry point declarations:",
+                "can only implement the method once. Found:",
                 "    Long test.Base1.foo()",
                 "    Number test.Base2.foo()"))
         .inFile(component)
@@ -170,7 +170,7 @@ public final class ConflictingEntryPointsTest {
     assertThat(compilation)
         .hadErrorContaining(
             message(
-                "conflicting entry point declarations:",
+                "can only implement the method once. Found:",
                 "    Object test.Base1.foo()",
                 "    @Named(\"foo\") Object test.Base2.foo()"))
         .inFile(component)
