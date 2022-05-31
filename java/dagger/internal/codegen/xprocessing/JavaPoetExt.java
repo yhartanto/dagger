@@ -17,8 +17,10 @@
 package dagger.internal.codegen.xprocessing;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
 import androidx.room.compiler.processing.XExecutableParameterElement;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
@@ -32,12 +34,24 @@ public final class JavaPoetExt {
   }
 
   /**
-   * Marks the given type so that it avoids clashes with nested classes in the given {@link
-   * TypeSpec.Builder}.
+   * Configures the given {@link TypeSpec.Builder} so that it fully qualifies all classes nested in
+   * the given {@link XTypeElement} and all classes nested within any super type of the given {@link
+   * XTypeElement}.
+   *
+   * @see TypeSpec.Builder#avoidClashesWithNestedClasses(Class)
    */
   public static TypeSpec.Builder avoidClashesWithNestedClasses(
-      TypeSpec.Builder typeBuilder, XTypeElement type) {
-    return typeBuilder.avoidClashesWithNestedClasses(toJavac(type));
+      TypeSpec.Builder builder, XTypeElement typeElement) {
+    typeElement
+        .getEnclosedTypeElements()
+        .forEach(nestedTypeElement -> builder.alwaysQualify(getSimpleName(nestedTypeElement)));
+
+    typeElement.getSuperTypes().stream()
+        .filter(XTypes::isDeclared)
+        .map(XType::getTypeElement)
+        .forEach(superType -> avoidClashesWithNestedClasses(builder, superType));
+
+    return builder;
   }
 
   private JavaPoetExt() {}
