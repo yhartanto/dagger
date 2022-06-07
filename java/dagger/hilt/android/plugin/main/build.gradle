@@ -16,29 +16,15 @@
 
 buildscript {
   ext {
-    kotlin_version = "1.5.32"
     agp_version = System.getenv('AGP_VERSION') ?: "7.2.0-alpha06"
-    pluginArtifactId = 'hilt-android-gradle-plugin'
-    pluginId = 'com.google.dagger.hilt.android'
-  }
-  repositories {
-    google()
-    mavenCentral()
   }
 }
 
 plugins {
-  id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
+  id 'org.jetbrains.kotlin.jvm'
   id 'java-gradle-plugin'
   id 'maven-publish'
-  // Use shadow version >= 7.1.1 to get log4j vulnerability patches:
-  //   https://github.com/johnrengelman/shadow/releases/tag/7.1.1
-  id 'com.github.johnrengelman.shadow' version '7.1.1'
-}
-
-repositories {
-  google()
-  mavenCentral()
+  id 'com.github.johnrengelman.shadow'
 }
 
 configurations {
@@ -67,6 +53,7 @@ shadowJar {
 }
 
 dependencies {
+  shadowed project(':agp-wrapper-impl')
   shadowed fileTree(dir: 'libs', include: '*.jar')
   implementation gradleApi()
   compileOnly "com.android.tools.build:gradle:$agp_version"

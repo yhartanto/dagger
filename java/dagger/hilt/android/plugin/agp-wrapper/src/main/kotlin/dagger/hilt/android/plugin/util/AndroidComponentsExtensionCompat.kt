@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-rootProject.name = 'hilt-gradle-plugin'
-include ':main'
-include ':agp-wrapper'
-include ':agp-wrapper-impl'
-include ':agp-wrapper-4-2'
-include ':agp-wrapper-7-0'
-include ':agp-wrapper-7-1'
-include ':agp-wrapper-7-2'
+package dagger.hilt.android.plugin.util
+
+/**
+ * Compatibility version of [com.android.build.api.variant.AndroidComponentsExtension]
+ * - In AGP 4.2 its package is 'com.android.build.api.extension'
+ * - In AGP 7.0 its packages is 'com.android.build.api.variant'
+ */
+interface AndroidComponentsExtensionCompat {
+
+  /**
+   * A combined compatibility function of
+   * [com.android.build.api.variant.AndroidComponentsExtension.onVariants] that includes also
+   * [AndroidTest] and [UnitTest] variants.
+   */
+  fun onAllVariants(block: (ComponentCompat) -> Unit)
+}

@@ -27,11 +27,11 @@ import com.android.build.gradle.api.AndroidBasePlugin
 import dagger.hilt.android.plugin.task.AggregateDepsTask
 import dagger.hilt.android.plugin.task.HiltTransformTestClassesTask
 import dagger.hilt.android.plugin.util.AggregatedPackagesTransform
-import dagger.hilt.android.plugin.util.AndroidComponentsExtensionCompat.Companion.getAndroidComponentsExtension
 import dagger.hilt.android.plugin.util.ComponentCompat
 import dagger.hilt.android.plugin.util.CopyTransform
 import dagger.hilt.android.plugin.util.SimpleAGPVersion
 import dagger.hilt.android.plugin.util.capitalize
+import dagger.hilt.android.plugin.util.getAndroidComponentsExtension
 import dagger.hilt.android.plugin.util.getSdkPath
 import java.io.File
 import javax.inject.Inject
@@ -113,7 +113,7 @@ class HiltGradlePlugin @Inject constructor(
 
   private fun configureCompileClasspath(project: Project, hiltExtension: HiltExtension) {
     val androidExtension = project.extensions.findByType(BaseExtension::class.java)
-      ?: throw error("Android BaseExtension not found.")
+      ?: error("Android BaseExtension not found.")
     androidExtension.forEachRootVariant { variant ->
       configureVariantCompileClasspath(project, hiltExtension, androidExtension, variant)
     }
@@ -258,7 +258,7 @@ class HiltGradlePlugin @Inject constructor(
 
   private fun configureBytecodeTransform(project: Project, hiltExtension: HiltExtension) {
     val androidExtension = project.extensions.findByType(BaseExtension::class.java)
-      ?: throw error("Android BaseExtension not found.")
+      ?: error("Android BaseExtension not found.")
     androidExtension::class.java.getMethod(
       "registerTransform",
       Class.forName("com.android.build.api.transform.Transform"),
@@ -278,7 +278,7 @@ class HiltGradlePlugin @Inject constructor(
 
   private fun configureAggregatingTask(project: Project, hiltExtension: HiltExtension) {
     val androidExtension = project.extensions.findByType(BaseExtension::class.java)
-      ?: throw error("Android BaseExtension not found.")
+      ?: error("Android BaseExtension not found.")
     androidExtension.forEachRootVariant { variant ->
       configureVariantAggregatingTask(project, hiltExtension, androidExtension, variant)
     }
@@ -419,7 +419,7 @@ class HiltGradlePlugin @Inject constructor(
 
   private fun configureProcessorFlags(project: Project, hiltExtension: HiltExtension) {
     val androidExtension = project.extensions.findByType(BaseExtension::class.java)
-      ?: throw error("Android BaseExtension not found.")
+      ?: error("Android BaseExtension not found.")
     androidExtension.defaultConfig.javaCompileOptions.annotationProcessorOptions.apply {
       // Pass annotation processor flag to enable Dagger's fast-init, the best mode for Hilt.
       argument("dagger.fastInit", "enabled")

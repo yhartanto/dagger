@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-rootProject.name = 'hilt-gradle-plugin'
-include ':main'
-include ':agp-wrapper'
-include ':agp-wrapper-impl'
-include ':agp-wrapper-4-2'
-include ':agp-wrapper-7-0'
-include ':agp-wrapper-7-1'
-include ':agp-wrapper-7-2'
+package simple.library;
+
+/** Just some 'Library' code */
+public class LibraryCode {}
