@@ -22,6 +22,7 @@ import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
 import static androidx.room.compiler.processing.XElementKt.isVariableElement;
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
@@ -39,6 +40,7 @@ import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XHasModifiers;
 import androidx.room.compiler.processing.XMemberContainer;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XVariableElement;
 import com.google.auto.common.MoreElements;
@@ -147,8 +149,16 @@ public final class XElements {
     return (XHasModifiers) element;
   }
 
+  // Note: This method always returns `false` but I'd rather not remove it from our codebase since
+  // if XProcessing adds package elements to their model I'd like to catch it here and fail early.
   public static boolean isPackage(XElement element) {
-    return toJavac(element).getKind() == ElementKind.PACKAGE;
+    // Currently, XProcessing doesn't represent package elements so this method always returns
+    // false, but we check the state in Javac just to be sure. There's nothing to check in KSP since
+    // there is no concept of package elements in KSP.
+    if (getProcessingEnv(element).getBackend() == XProcessingEnv.Backend.JAVAC) {
+      checkState(toJavac(element).getKind() != ElementKind.PACKAGE);
+    }
+    return false;
   }
 
   public static boolean isEnumEntry(XElement element) {
