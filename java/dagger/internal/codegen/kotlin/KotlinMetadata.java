@@ -17,8 +17,6 @@
 package dagger.internal.codegen.kotlin;
 
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
-import static dagger.internal.codegen.xprocessing.XAnnotationValues.hasIntValue;
-import static dagger.internal.codegen.xprocessing.XAnnotationValues.hasStringValue;
 import static dagger.internal.codegen.xprocessing.XElements.getFieldDescriptor;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
@@ -177,10 +175,10 @@ abstract class KotlinMetadata {
             metadataAnnotation.getAsStringList("d1").toArray(new String[0]),
             metadataAnnotation.getAsStringList("d2").toArray(new String[0]),
             metadataAnnotation.getAsString("xs"),
-            hasStringValue(metadataAnnotation.getAnnotationValue("pn"))
+            metadataAnnotation.getAnnotationValue("pn").hasStringValue()
                 ? metadataAnnotation.getAsString("pn")
                 : null,
-            hasIntValue(metadataAnnotation.getAnnotationValue("xi"))
+            metadataAnnotation.getAnnotationValue("xi").hasIntValue()
                 ? metadataAnnotation.getAsInt("xi")
                 : null);
     KotlinClassMetadata metadata = KotlinClassMetadata.read(header);

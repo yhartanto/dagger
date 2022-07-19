@@ -12,18 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-android_binary(
-    name = "hilt",
-    srcs = ["CoffeeApp.java"],
-    manifest = "AndroidManifest.xml",
-    resource_files = glob(["res/**"]),
-    deps = [
-        ":heater_module",
-        ":pump_module",
-        "//:hilt-android",
-        "//java/example/common",
-    ],
-)
+# TODO(b/239596898): Reenable once we've fixed this issue.
+# android_binary(
+#     name = "hilt",
+#     srcs = ["CoffeeApp.java"],
+#     manifest = "AndroidManifest.xml",
+#     resource_files = glob(["res/**"]),
+#     deps = [
+#         ":heater_module",
+#         ":pump_module",
+#         "//:hilt-android",
+#         "//java/example/common",
+#     ],
+# )
 
 android_library(
     name = "heater_module",

@@ -17,10 +17,6 @@
 package dagger.internal.codegen.base;
 
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
-import static dagger.internal.codegen.xprocessing.XAnnotationValues.hasAnnotationValue;
-import static dagger.internal.codegen.xprocessing.XAnnotationValues.hasArrayValue;
-import static dagger.internal.codegen.xprocessing.XAnnotationValues.hasEnumValue;
-import static dagger.internal.codegen.xprocessing.XAnnotationValues.hasTypeValue;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XAnnotationValue;
@@ -45,13 +41,13 @@ public final class MapKeyAccessibility {
   }
 
   private static boolean checkValue(XAnnotationValue value, Predicate<XType> accessibilityChecker) {
-    if (hasArrayValue(value)) {
+    if (value.hasListValue()) {
       return checkValues(value.asAnnotationValueList(), accessibilityChecker);
-    } else if (hasAnnotationValue(value)) {
+    } else if (value.hasAnnotationValue()) {
       return checkAnnotation(value.asAnnotation(), accessibilityChecker);
-    } else if (hasEnumValue(value)) {
+    } else if (value.hasEnumValue()) {
       return accessibilityChecker.test(value.asEnum().getEnclosingElement().getType());
-    } else if (hasTypeValue(value)) {
+    } else if (value.hasTypeValue()) {
       return accessibilityChecker.test(value.asType());
     } else {
       return true;
