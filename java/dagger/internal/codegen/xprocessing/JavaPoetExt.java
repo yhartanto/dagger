@@ -16,22 +16,15 @@
 
 package dagger.internal.codegen.xprocessing;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
-import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 /** A utility class for JavaPoet types to interface with XProcessing types. */
 public final class JavaPoetExt {
-  /** Returns the {@link ParameterSpec} for the given parameter. */
-  public static ParameterSpec getParameterSpec(XExecutableParameterElement parameter) {
-    return ParameterSpec.get(toJavac(parameter));
-  }
 
   /**
    * Configures the given {@link TypeSpec.Builder} so that it fully qualifies all classes nested in

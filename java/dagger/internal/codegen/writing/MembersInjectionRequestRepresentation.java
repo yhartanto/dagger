@@ -17,12 +17,12 @@
 package dagger.internal.codegen.writing;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.internal.codegen.xprocessing.JavaPoetExt.getParameterSpec;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 
+import androidx.room.compiler.processing.XExecutableParameterElement;
 import androidx.room.compiler.processing.XMethodElement;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.ParameterSpec;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
@@ -54,9 +54,9 @@ final class MembersInjectionRequestRepresentation extends RequestRepresentation 
   protected Expression getDependencyExpressionForComponentMethod(
       ComponentMethodDescriptor componentMethod, ComponentImplementation component) {
     XMethodElement methodElement = componentMethod.methodElement();
-    ParameterSpec parameter = getParameterSpec(getOnlyElement(methodElement.getParameters()));
+    XExecutableParameterElement parameter = getOnlyElement(methodElement.getParameters());
     return membersInjectionMethods.getInjectExpression(
-        binding.key(), CodeBlock.of("$N", parameter), component.name());
+        binding.key(), CodeBlock.of("$L", getSimpleName(parameter)), component.name());
   }
 
   // TODO(bcorso): Consider making this a method on all RequestRepresentations.
