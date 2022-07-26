@@ -28,12 +28,14 @@ import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 
 import androidx.room.compiler.processing.XArrayType;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import androidx.room.compiler.processing.compat.XConverters;
 import com.google.common.base.Equivalence;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeVariableName;
+import com.squareup.javapoet.WildcardTypeName;
 import java.util.Optional;
 import javax.lang.model.type.TypeKind;
 
@@ -69,9 +71,22 @@ public final class XTypes {
     return XTYPE_EQUIVALENCE;
   }
 
+  // TODO(bcorso): Support XType.getEnclosingType() properly in XProcessing.
   public static XType getEnclosingType(XType type) {
     checkArgument(isDeclared(type));
-    return toXProcessing(asDeclared(toJavac(type)).getEnclosingType(), getProcessingEnv(type));
+    XProcessingEnv.Backend backend = getProcessingEnv(type).getBackend();
+    switch (backend) {
+      case JAVAC:
+        return toXProcessing(asDeclared(toJavac(type)).getEnclosingType(), getProcessingEnv(type));
+      case KSP:
+        // For now, just return the enclosing type of the XTypeElement, which for most cases is good
+        // enough. This may be incorrect in some rare cases (not tested), e.g. if Outer.Inner<T>
+        // inherits its type parameter from Outer<T> then the enclosing type of Outer.Inner<Foo>
+        // should be Outer<Foo> rather than Outer<T>, as we would get from the code below.
+        XTypeElement enclosingTypeElement = type.getTypeElement().getEnclosingTypeElement();
+        return enclosingTypeElement == null ? null : enclosingTypeElement.getType();
+    }
+    throw new AssertionError("Unexpected backend: " + backend);
   }
 
   /** Returns {@code true} if and only if the {@code type1} is assignable to {@code type2}. */
@@ -112,7 +127,14 @@ public final class XTypes {
 
   /** Returns {@code true} if the given type represents the {@code null} type. */
   public static boolean isNullType(XType type) {
-    return toJavac(type).getKind().equals(TypeKind.NULL);
+    XProcessingEnv.Backend backend = getProcessingEnv(type).getBackend();
+    switch (backend) {
+      case JAVAC: return toJavac(type).getKind().equals(TypeKind.NULL);
+      // AFAICT, there's no way to actually get a "null" type in KSP's model
+      case KSP:
+        return false;
+    }
+    throw new AssertionError("Unexpected backend: " + backend);
   }
 
   /** Returns {@code true} if the given type has no actual type. */
@@ -122,7 +144,8 @@ public final class XTypes {
 
   /** Returns {@code true} if the given type is a declared type. */
   public static boolean isWildcard(XType type) {
-    return toJavac(type).getKind().equals(TypeKind.WILDCARD);
+    // TODO(bcorso): Consider representing this as an actual type in XProcessing.
+    return type.getTypeName() instanceof WildcardTypeName;
   }
 
   /** Returns {@code true} if the given type is a declared type. */
@@ -132,7 +155,8 @@ public final class XTypes {
 
   /** Returns {@code true} if the given type is a type variable. */
   public static boolean isTypeVariable(XType type) {
-    return XConverters.toJavac(type).getKind() == TypeKind.TYPEVAR;
+    // TODO(bcorso): Consider representing this as an actual type in XProcessing.
+    return type.getTypeName() instanceof TypeVariableName;
   }
 
   /** Returns {@code true} if {@code type1} is equivalent to {@code type2}. */
@@ -142,7 +166,8 @@ public final class XTypes {
 
   /** Returns {@code true} if the given type is a primitive type. */
   public static boolean isPrimitive(XType type) {
-    return XConverters.toJavac(type).getKind().isPrimitive();
+    // TODO(bcorso): Consider representing this as an actual type in XProcessing.
+    return type.getTypeName().isPrimitive();
   }
 
   /** Returns {@code true} if the given type has type parameters. */
