@@ -74,7 +74,7 @@ public final class ComponentValidationTest {
     Compilation compilation = daggerCompiler().compile(componentFile, moduleFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("Cannot override generated method: TestComponent.builder()");
+        .hadErrorContaining("The method test.TestComponent.builder() conflicts with a method");
   }
 
   @Test
@@ -107,7 +107,7 @@ public final class ComponentValidationTest {
     Compilation compilation = daggerCompiler().compile(componentFile, moduleFile);
     assertThat(compilation).failed();
     assertThat(compilation)
-        .hadErrorContaining("Cannot override generated method: TestComponent.create()");
+        .hadErrorContaining("The method test.TestComponent.create() conflicts with a method");
   }
 
   @Test

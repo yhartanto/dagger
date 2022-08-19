@@ -830,8 +830,11 @@ public final class ComponentImplementation {
                   messager.printMessage(
                       ERROR,
                       String.format(
-                          "Cannot override generated method: %s.%s()",
-                          getSimpleName(method.getEnclosingElement()), getSimpleName(method))));
+                          "The method %s.%s() conflicts with a method of the same name Dagger is "
+                          + "trying to generate as a way to instantiate the component. Please "
+                              + "choose a different name for your method.",
+                          method.getEnclosingElement().getClassName().canonicalName(),
+                          getSimpleName(method))));
     }
 
     /** {@code true} if all of the graph's required dependencies can be automatically constructed */
