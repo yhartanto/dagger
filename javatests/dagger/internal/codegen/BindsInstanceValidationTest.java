@@ -16,22 +16,31 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.util.Source;
+import com.google.common.collect.ImmutableList;
+import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(JUnit4.class)
-public final class BindsInstanceValidationTest {
+@RunWith(Parameterized.class)
+public class BindsInstanceValidationTest {
+  @Parameters(name = "{0}")
+  public static ImmutableList<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public BindsInstanceValidationTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
   @Test
   public void bindsInstanceInModule() {
-    JavaFileObject testModule =
-        JavaFileObjects.forSourceLines(
+    Source testModule =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -42,17 +51,20 @@ public final class BindsInstanceValidationTest {
             "abstract class TestModule {",
             "  @BindsInstance abstract void str(String string);",
             "}");
-    Compilation compilation = daggerCompiler().compile(testModule);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@BindsInstance methods should not be included in @Modules. Did you mean @Binds");
+    CompilerTests.daggerCompiler(testModule)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@BindsInstance methods should not be included in @Modules. Did you mean @Binds");
+            });
   }
 
   @Test
   public void bindsInstanceInComponent() {
-    JavaFileObject testComponent =
-        JavaFileObjects.forSourceLines(
+    Source testComponent =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -63,18 +75,21 @@ public final class BindsInstanceValidationTest {
             "interface TestComponent {",
             "  @BindsInstance String s(String s);",
             "}");
-    Compilation compilation = daggerCompiler().compile(testComponent);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@BindsInstance methods should not be included in @Components. "
-                + "Did you mean to put it in a @Component.Builder?");
+    CompilerTests.daggerCompiler(testComponent)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@BindsInstance methods should not be included in @Components. "
+                      + "Did you mean to put it in a @Component.Builder?");
+            });
   }
 
   @Test
   public void bindsInstanceNotAbstract() {
-    JavaFileObject notAbstract =
-        JavaFileObjects.forSourceLines(
+    Source notAbstract =
+        CompilerTests.javaSource(
             "test.BindsInstanceNotAbstract",
             "package test;",
             "",
@@ -84,18 +99,21 @@ public final class BindsInstanceValidationTest {
             "class BindsInstanceNotAbstract {",
             "  @BindsInstance BindsInstanceNotAbstract bind(int unused) { return this; }",
             "}");
-    Compilation compilation = daggerCompiler().compile(notAbstract);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("@BindsInstance methods must be abstract")
-        .inFile(notAbstract)
-        .onLine(7);
+    CompilerTests.daggerCompiler(notAbstract)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("@BindsInstance methods must be abstract")
+                  .onSource(notAbstract)
+                  .onLine(7);
+            });
   }
 
   @Test
   public void bindsInstanceNoParameters() {
-    JavaFileObject notAbstract =
-        JavaFileObjects.forSourceLines(
+    Source notAbstract =
+        CompilerTests.javaSource(
             "test.BindsInstanceNoParameters",
             "package test;",
             "",
@@ -104,19 +122,22 @@ public final class BindsInstanceValidationTest {
             "interface BindsInstanceNoParameters {",
             "  @BindsInstance void noParams();",
             "}");
-    Compilation compilation = daggerCompiler().compile(notAbstract);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@BindsInstance methods should have exactly one parameter for the bound type")
-        .inFile(notAbstract)
-        .onLine(6);
+    CompilerTests.daggerCompiler(notAbstract)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "@BindsInstance methods should have exactly one parameter for the bound type")
+                  .onSource(notAbstract)
+                  .onLine(6);
+            });
   }
 
   @Test
   public void bindsInstanceManyParameters() {
-    JavaFileObject notAbstract =
-        JavaFileObjects.forSourceLines(
+    Source notAbstract =
+        CompilerTests.javaSource(
             "test.BindsInstanceNoParameter",
             "package test;",
             "",
@@ -125,19 +146,22 @@ public final class BindsInstanceValidationTest {
             "interface BindsInstanceManyParameters {",
             "  @BindsInstance void manyParams(int i, long l);",
             "}");
-    Compilation compilation = daggerCompiler().compile(notAbstract);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@BindsInstance methods should have exactly one parameter for the bound type")
-        .inFile(notAbstract)
-        .onLine(6);
+    CompilerTests.daggerCompiler(notAbstract)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "@BindsInstance methods should have exactly one parameter for the bound type")
+                  .onSource(notAbstract)
+                  .onLine(6);
+            });
   }
 
   @Test
   public void bindsInstanceFrameworkType() {
-    JavaFileObject bindsFrameworkType =
-        JavaFileObjects.forSourceLines(
+    Source bindsFrameworkType =
+        CompilerTests.javaSource(
             "test.BindsInstanceFrameworkType",
             "package test;",
             "",
@@ -149,17 +173,18 @@ public final class BindsInstanceValidationTest {
             "  @BindsInstance void bindsProvider(Provider<Object> objectProvider);",
             "  @BindsInstance void bindsProducer(Producer<Object> objectProducer);",
             "}");
-    Compilation compilation = daggerCompiler().compile(bindsFrameworkType);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("@BindsInstance parameters must not be framework types")
-        .inFile(bindsFrameworkType)
-        .onLine(8);
-
-    assertThat(compilation)
-        .hadErrorContaining("@BindsInstance parameters must not be framework types")
-        .inFile(bindsFrameworkType)
-        .onLine(9);
+    CompilerTests.daggerCompiler(bindsFrameworkType)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining("@BindsInstance parameters must not be framework types")
+                  .onSource(bindsFrameworkType)
+                  .onLine(8);
+              subject.hasErrorContaining("@BindsInstance parameters must not be framework types")
+                  .onSource(bindsFrameworkType)
+                  .onLine(9);
+            });
   }
 
 }

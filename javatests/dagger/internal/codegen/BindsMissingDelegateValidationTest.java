@@ -16,27 +16,35 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
-import static dagger.internal.codegen.TestUtils.message;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.util.Source;
+import com.google.common.collect.ImmutableList;
+import dagger.testing.compile.CompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /**
  * Tests that errors are reported correctly when a {@code @Binds} method's delegate (the type of its
  * parameter) is missing.
  */
-@RunWith(JUnit4.class)
+@RunWith(Parameterized.class)
 public class BindsMissingDelegateValidationTest {
+  @Parameters(name = "{0}")
+  public static ImmutableList<Object[]> parameters() {
+    return CompilerMode.TEST_PARAMETERS;
+  }
+
+  private final CompilerMode compilerMode;
+
+  public BindsMissingDelegateValidationTest(CompilerMode compilerMode) {
+    this.compilerMode = compilerMode;
+  }
+
   @Test
   public void bindsMissingDelegate() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.C",
             "package test;",
             "",
@@ -56,18 +64,21 @@ public class BindsMissingDelegateValidationTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("test.C.NotBound cannot be provided")
-        .inFile(component)
-        .onLineContaining("interface C");
+    CompilerTests.daggerCompiler(component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("test.C.NotBound cannot be provided")
+                  .onSource(component)
+                  .onLineContaining("interface C");
+            });
   }
 
   @Test
   public void bindsMissingDelegate_duplicateBinding() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.C",
             "package test;",
             "",
@@ -89,25 +100,41 @@ public class BindsMissingDelegateValidationTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
-    assertThat(compilation).failed();
-    // Some javacs report only the first error for each source line.
-    // Assert that one of the expected errors is reported.
-    assertThat(compilation)
-        .hadErrorContainingMatch(
-            "\\Qtest.C.NotBound cannot be provided\\E|"
-                + message(
-                    "\\QObject is bound multiple times:",
-                    "    @Binds Object test.C.TestModule.bindObject(test.C.NotBound)",
-                    "    @Provides Object test.C.TestModule.provideObject()\\E"))
-        .inFile(component)
-        .onLineContaining("interface C");
+    CompilerTests.daggerCompiler(component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              // Some versions of javacs report only the first error for each source line so we
+              // allow 1 of the assertions below to fail.
+              // TODO(bcorso): Add CompilationResultSubject#hasErrorContainingMatch() to do this
+              // more elegantly (see CL/469765892).
+              java.util.List<Error> errors = new java.util.ArrayList<>();
+              try {
+                subject.hasErrorContaining("test.C.NotBound cannot be provided")
+                    .onSource(component)
+                    .onLineContaining("interface C");
+              } catch (Error e) {
+                errors.add(e);
+              }
+              try {
+                subject.hasErrorContaining("Object is bound multiple times:")
+                    .onSource(component)
+                    .onLineContaining("interface C");
+                subject.hasErrorContaining(
+                    "@Binds Object test.C.TestModule.bindObject(test.C.NotBound)");
+                subject.hasErrorContaining("@Provides Object test.C.TestModule.provideObject()");
+              } catch (Error e) {
+                errors.add(e);
+              }
+              com.google.common.truth.Truth.assertThat(errors.size()).isAtMost(1);
+            });
   }
 
   @Test
   public void bindsMissingDelegate_setBinding() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.C",
             "package test;",
             "",
@@ -129,18 +156,21 @@ public class BindsMissingDelegateValidationTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("test.C.NotBound cannot be provided")
-        .inFile(component)
-        .onLineContaining("interface C");
+    CompilerTests.daggerCompiler(component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("test.C.NotBound cannot be provided")
+                  .onSource(component)
+                  .onLineContaining("interface C");
+            });
   }
 
   @Test
   public void bindsMissingDelegate_mapBinding() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.C",
             "package test;",
             "",
@@ -164,18 +194,21 @@ public class BindsMissingDelegateValidationTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("test.C.NotBound cannot be provided")
-        .inFile(component)
-        .onLineContaining("interface C");
+    CompilerTests.daggerCompiler(component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("test.C.NotBound cannot be provided")
+                  .onSource(component)
+                  .onLineContaining("interface C");
+            });
   }
 
   @Test
   public void bindsMissingDelegate_mapBinding_sameKey() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.C",
             "package test;",
             "",
@@ -203,14 +236,32 @@ public class BindsMissingDelegateValidationTest {
             "  }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(component);
-    assertThat(compilation).failed();
-    // Some javacs report only the first error for each source line.
-    assertThat(compilation)
-        .hadErrorContainingMatch(
-            "\\Qtest.C.NotBound cannot be provided\\E|"
-                + "\\Qsame map key is bound more than once\\E")
-        .inFile(component)
-        .onLineContaining("interface C");
+
+    CompilerTests.daggerCompiler(component)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              // Some versions of javacs report only the first error for each source line so we
+              // allow 1 of the assertions below to fail.
+              // TODO(bcorso): Add CompilationResultSubject#hasErrorContainingMatch() to do this
+              // more elegantly (see CL/469765892).
+              java.util.List<Error> errors = new java.util.ArrayList<>();
+              try {
+                subject.hasErrorContaining("test.C.NotBound cannot be provided")
+                    .onSource(component)
+                    .onLineContaining("interface C");
+              } catch (Error e) {
+                errors.add(e);
+              }
+              try {
+                subject.hasErrorContaining("same map key is bound more than once")
+                    .onSource(component)
+                    .onLineContaining("interface C");
+              } catch (Error e) {
+                errors.add(e);
+              }
+              com.google.common.truth.Truth.assertThat(errors.size()).isAtMost(1);
+            });
   }
 }
