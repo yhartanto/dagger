@@ -17,23 +17,19 @@
 package dagger.internal.codegen;
 
 import static com.google.common.truth.Truth.assertAbout;
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.daggerCompiler;
 
-import com.google.common.collect.FluentIterable;
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.FailureMetadata;
 import com.google.common.truth.Subject;
 import com.google.common.truth.Truth;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
 import dagger.Module;
 import dagger.producers.ProducerModule;
+import dagger.testing.compile.CompilerTests;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
-import javax.tools.JavaFileObject;
 
 /** A {@link Truth} subject for testing Dagger module methods. */
 final class DaggerModuleMethodSubject extends Subject {
@@ -43,27 +39,23 @@ final class DaggerModuleMethodSubject extends Subject {
 
     /** Starts a clause testing a Dagger {@link Module @Module} method. */
     static DaggerModuleMethodSubject assertThatModuleMethod(String method) {
-      return assertAbout(daggerModuleMethod())
+      return assertAbout(new Factory())
           .that(method)
           .withDeclaration("@Module abstract class %s { %s }");
     }
 
     /** Starts a clause testing a Dagger {@link ProducerModule @ProducerModule} method. */
     static DaggerModuleMethodSubject assertThatProductionModuleMethod(String method) {
-      return assertAbout(daggerModuleMethod())
+      return assertAbout(new Factory())
           .that(method)
           .withDeclaration("@ProducerModule abstract class %s { %s }");
     }
 
     /** Starts a clause testing a method in an unannotated class. */
     static DaggerModuleMethodSubject assertThatMethodInUnannotatedClass(String method) {
-      return assertAbout(daggerModuleMethod())
+      return assertAbout(new Factory())
           .that(method)
           .withDeclaration("abstract class %s { %s }");
-    }
-
-    static Factory daggerModuleMethod() {
-      return new Factory();
     }
 
     private Factory() {}
@@ -86,7 +78,7 @@ final class DaggerModuleMethodSubject extends Subject {
               "import java.util.*;",
               "import javax.inject.*;");
   private String declaration;
-  private ImmutableList<JavaFileObject> additionalSources = ImmutableList.of();
+  private ImmutableList<Source> additionalSources = ImmutableList.of();
 
   private DaggerModuleMethodSubject(FailureMetadata failureMetadata, String subject) {
     super(failureMetadata, subject);
@@ -135,7 +127,7 @@ final class DaggerModuleMethodSubject extends Subject {
   }
 
   /** Additional source files that must be compiled with the module. */
-  DaggerModuleMethodSubject withAdditionalSources(JavaFileObject... sources) {
+  DaggerModuleMethodSubject withAdditionalSources(Source... sources) {
     this.additionalSources = ImmutableList.copyOf(sources);
     return this;
   }
@@ -146,14 +138,15 @@ final class DaggerModuleMethodSubject extends Subject {
    */
   void hasError(String errorSubstring) {
     String source = moduleSource();
-    JavaFileObject module = JavaFileObjects.forSourceLines("test.TestModule", source);
-    Compilation compilation =
-        daggerCompiler().compile(FluentIterable.from(additionalSources).append(module));
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(errorSubstring)
-        .inFile(module)
-        .onLine(methodLine(source));
+    Source module = CompilerTests.javaSource("test.TestModule", source);
+    CompilerTests.daggerCompiler(
+            ImmutableList.<Source>builder().add(module).addAll(additionalSources).build())
+        .compile(
+            subject ->
+                subject
+                    .hasErrorContaining(errorSubstring)
+                    .onSource(module)
+                    .onLine(methodLine(source)));
   }
 
   private int methodLine(String source) {
@@ -180,5 +173,4 @@ final class DaggerModuleMethodSubject extends Subject {
     writer.println();
     return stringWriter.toString();
   }
-
 }

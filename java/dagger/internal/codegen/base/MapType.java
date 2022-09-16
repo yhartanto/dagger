@@ -26,6 +26,7 @@ import com.google.auto.value.AutoValue;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.xprocessing.XTypes;
 import dagger.spi.model.Key;
 
 /** Information about a {@link java.util.Map} type. */
@@ -43,7 +44,7 @@ public abstract class MapType {
 
   /** {@code true} if the map type is the raw {@link java.util.Map} type. */
   public boolean isRawType() {
-    return type().getTypeArguments().isEmpty();
+    return XTypes.isRawParameterizedType(type());
   }
 
   /**

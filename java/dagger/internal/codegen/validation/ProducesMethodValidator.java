@@ -30,6 +30,7 @@ import androidx.room.compiler.processing.XType;
 import com.google.common.util.concurrent.ListenableFuture;
 import dagger.internal.codegen.binding.InjectionAnnotations;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.xprocessing.XTypes;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
@@ -116,7 +117,7 @@ final class ProducesMethodValidator extends BindingMethodValidator {
 
     private Optional<XType> unwrapListenableFuture(XType type) {
       if (isTypeOf(type, TypeNames.LISTENABLE_FUTURE)) {
-        if (type.getTypeArguments().isEmpty()) {
+        if (XTypes.isRawParameterizedType(type)) {
           report.addError("@Produces methods cannot return a raw ListenableFuture");
           return Optional.empty();
         } else {

@@ -23,10 +23,8 @@ import static dagger.internal.codegen.DaggerModuleMethodSubject.Factory.assertTh
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.testing.compile.JavaFileObjects;
 import dagger.testing.compile.CompilerTests;
 import dagger.testing.golden.GoldenFileRule;
-import javax.tools.JavaFileObject;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -119,13 +117,14 @@ public class ModuleFactoryGeneratorTest {
 
   @Test public void modulesWithTypeParamsMustBeAbstract() {
     Source moduleFile =
-        CompilerTests.javaSource("test.TestModule",
-        "package test;",
-        "",
-        "import dagger.Module;",
-        "",
-        "@Module",
-        "final class TestModule<A> {}");
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "final class TestModule<A> {}");
     CompilerTests.daggerCompiler(moduleFile)
         .compile(
             subject -> {
@@ -137,16 +136,18 @@ public class ModuleFactoryGeneratorTest {
   }
 
   @Test public void provideOverriddenByNoProvide() {
-    JavaFileObject parent = JavaFileObjects.forSourceLines("test.Parent",
-        "package test;",
-        "",
-        "import dagger.Module;",
-        "import dagger.Provides;",
-        "",
-        "@Module",
-        "class Parent {",
-        "  @Provides String foo() { return null; }",
-        "}");
+    Source parent =
+        CompilerTests.javaSource(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class Parent {",
+            "  @Provides String foo() { return null; }",
+            "}");
     assertThatModuleMethod("String foo() { return null; }")
         .withDeclaration("@Module class %s extends Parent { %s }")
         .withAdditionalSources(parent)
@@ -156,16 +157,18 @@ public class ModuleFactoryGeneratorTest {
   }
 
   @Test public void provideOverriddenByProvide() {
-    JavaFileObject parent = JavaFileObjects.forSourceLines("test.Parent",
-        "package test;",
-        "",
-        "import dagger.Module;",
-        "import dagger.Provides;",
-        "",
-        "@Module",
-        "class Parent {",
-        "  @Provides String foo() { return null; }",
-        "}");
+    Source parent =
+        CompilerTests.javaSource(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "class Parent {",
+            "  @Provides String foo() { return null; }",
+            "}");
     assertThatModuleMethod("@Provides String foo() { return null; }")
         .withDeclaration("@Module class %s extends Parent { %s }")
         .withAdditionalSources(parent)
@@ -175,15 +178,17 @@ public class ModuleFactoryGeneratorTest {
   }
 
   @Test public void providesOverridesNonProvides() {
-    JavaFileObject parent = JavaFileObjects.forSourceLines("test.Parent",
-        "package test;",
-        "",
-        "import dagger.Module;",
-        "",
-        "@Module",
-        "class Parent {",
-        "  String foo() { return null; }",
-        "}");
+    Source parent =
+        CompilerTests.javaSource(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "",
+            "@Module",
+            "class Parent {",
+            "  String foo() { return null; }",
+            "}");
     assertThatModuleMethod("@Provides String foo() { return null; }")
         .withDeclaration("@Module class %s extends Parent { %s }")
         .withAdditionalSources(parent)
