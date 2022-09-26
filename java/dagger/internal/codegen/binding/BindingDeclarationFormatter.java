@@ -28,6 +28,7 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import dagger.internal.codegen.base.Formatter;
+import dagger.internal.codegen.xprocessing.XTypes;
 import javax.inject.Inject;
 
 /**
@@ -71,7 +72,8 @@ public final class BindingDeclarationFormatter extends Formatter<BindingDeclarat
       if (isMethodParameter(bindingElement)) {
         return elementToString(bindingElement);
       } else if (isTypeElement(bindingElement)) {
-        return stripCommonTypePrefixes(asTypeElement(bindingElement).getType().toString());
+        return stripCommonTypePrefixes(
+            XTypes.toStableString(asTypeElement(bindingElement).getType()));
       } else if (isExecutable(bindingElement)) {
         return methodSignatureFormatter.format(
             asExecutable(bindingElement),

@@ -28,6 +28,7 @@ import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableElement;
+import dagger.internal.codegen.xprocessing.XTypes;
 import javax.inject.Inject;
 
 /**
@@ -58,7 +59,7 @@ public final class ElementFormatter extends Formatter<XElement> {
       return enclosingTypeAndMemberName(element)
           .append(
               asExecutable(element).getParameters().stream()
-                  .map(parameter -> parameter.getType().getTypeName().toString())
+                  .map(parameter -> XTypes.toStableString(parameter.getType()))
                   .collect(joining(", ", "(", ")")))
           .toString();
     } else if (isMethodParameter(element)) {

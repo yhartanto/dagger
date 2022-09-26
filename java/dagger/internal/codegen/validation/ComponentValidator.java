@@ -495,9 +495,11 @@ public final class ComponentValidator implements ClearableCache {
     private void validateComponentDependencies() {
       for (XType type : componentAnnotation().dependencyTypes()) {
         if (!isDeclared(type)) {
-          report.addError(type + " is not a valid component dependency type");
+          report.addError(
+              XTypes.toStableString(type) + " is not a valid component dependency type");
         } else if (type.getTypeElement().hasAnyAnnotation(moduleAnnotations())) {
-          report.addError(type + " is a module, which cannot be a component dependency");
+          report.addError(
+              XTypes.toStableString(type) + " is a module, which cannot be a component dependency");
         }
       }
     }

@@ -16,6 +16,9 @@
 
 package dagger.internal.codegen;
 
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.joining;
+
 import com.google.common.base.Joiner;
 import java.util.regex.Pattern;
 
@@ -33,11 +36,12 @@ final class TestUtils {
   }
 
   /**
-   * Returns a pattern that matches strings that end with the lines joined by {@code "\n  "}. Useful
-   * for passing to {@link
+   * Returns a pattern that matches strings that end with the lines joined by {@code "\n\s*"}.
+   * Useful for passing to {@link
    * com.google.testing.compile.CompilationSubject#hadErrorContainingMatch(Pattern)}, etc.
    */
   static Pattern endsWithMessage(String... lines) {
-    return Pattern.compile(Pattern.quote(message(lines)) + "$");
+    return Pattern.compile(
+        String.format("%s$", stream(lines).map(Pattern::quote).collect(joining("\n\\s*"))));
   }
 }

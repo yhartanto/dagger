@@ -17,12 +17,14 @@
 package dagger.internal.codegen;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.Compilers.daggerCompiler;
 import static dagger.internal.codegen.TestUtils.message;
 
+import androidx.room.compiler.processing.util.Source;
+import com.google.common.collect.ImmutableMap;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.testing.compile.CompilerTests;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,22 +34,27 @@ import org.junit.runners.JUnit4;
 public final class ComponentValidationTest {
   @Test
   public void componentOnConcreteClass() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.NotAComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "@Component",
-        "final class NotAComponent {}");
-    Compilation compilation = daggerCompiler().compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("interface");
+    Source componentFile =
+        CompilerTests.javaSource(
+            "test.NotAComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "final class NotAComponent {}");
+    CompilerTests.daggerCompiler(componentFile)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("interface");
+            });
   }
 
   @Test
   public void componentOnOverridingBuilder_failsWhenMethodNameConflictsWithStaticCreatorName() {
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -57,8 +64,8 @@ public final class ComponentValidationTest {
             "interface TestComponent {",
             "  String builder();",
             "}");
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
+    Source moduleFile =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -71,16 +78,19 @@ public final class ComponentValidationTest {
             "  static String provideString() { return \"test\"; }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(componentFile, moduleFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("The method test.TestComponent.builder() conflicts with a method");
+    CompilerTests.daggerCompiler(componentFile, moduleFile)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "The method test.TestComponent.builder() conflicts with a method");
+            });
   }
 
   @Test
   public void componentOnOverridingCreate_failsWhenGeneratedCreateMethod() {
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -90,8 +100,8 @@ public final class ComponentValidationTest {
             "interface TestComponent {",
             "  String create();",
             "}");
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
+    Source moduleFile =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -104,16 +114,19 @@ public final class ComponentValidationTest {
             "  static String provideString() { return \"test\"; }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(componentFile, moduleFile);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("The method test.TestComponent.create() conflicts with a method");
+    CompilerTests.daggerCompiler(componentFile, moduleFile)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "The method test.TestComponent.create() conflicts with a method");
+            });
   }
 
   @Test
   public void subcomponentMethodNameBuilder_succeeds() {
-    JavaFileObject componentFile =
-        JavaFileObjects.forSourceLines(
+    Source componentFile =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -123,8 +136,8 @@ public final class ComponentValidationTest {
             "interface TestComponent {",
             "  TestSubcomponent.Builder subcomponent();",
             "}");
-    JavaFileObject subcomponentFile =
-        JavaFileObjects.forSourceLines(
+    Source subcomponentFile =
+        CompilerTests.javaSource(
             "test.TestSubcomponent",
             "package test;",
             "",
@@ -138,8 +151,8 @@ public final class ComponentValidationTest {
             "    TestSubcomponent build();",
             "  }",
             "}");
-    JavaFileObject moduleFile =
-        JavaFileObjects.forSourceLines(
+    Source moduleFile =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -152,55 +165,70 @@ public final class ComponentValidationTest {
             "  static String provideString() { return \"test\"; }",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(componentFile, subcomponentFile, moduleFile);
-    assertThat(compilation).succeeded();
+    CompilerTests.daggerCompiler(componentFile, subcomponentFile, moduleFile)
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test public void componentOnEnum() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.NotAComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "@Component",
-        "enum NotAComponent {",
-        "  INSTANCE",
-        "}");
-    Compilation compilation = daggerCompiler().compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("interface");
+    Source componentFile =
+        CompilerTests.javaSource(
+            "test.NotAComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "enum NotAComponent {",
+            "  INSTANCE",
+            "}");
+    CompilerTests.daggerCompiler(componentFile)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("interface");
+            });
   }
 
   @Test public void componentOnAnnotation() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.NotAComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "@Component",
-        "@interface NotAComponent {}");
-    Compilation compilation = daggerCompiler().compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("interface");
+    Source componentFile =
+        CompilerTests.javaSource(
+            "test.NotAComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "@interface NotAComponent {}");
+    CompilerTests.daggerCompiler(componentFile)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("interface");
+            });
   }
 
   @Test public void nonModuleModule() {
-    JavaFileObject componentFile = JavaFileObjects.forSourceLines("test.NotAComponent",
-        "package test;",
-        "",
-        "import dagger.Component;",
-        "",
-        "@Component(modules = Object.class)",
-        "interface NotAComponent {}");
-    Compilation compilation = daggerCompiler().compile(componentFile);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("is not annotated with @Module");
+    Source componentFile =
+        CompilerTests.javaSource(
+            "test.NotAComponent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component(modules = Object.class)",
+            "interface NotAComponent {}");
+    CompilerTests.daggerCompiler(componentFile)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining("is not annotated with @Module");
+            });
   }
 
   @Test
   public void componentWithInvalidModule() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.BadModule",
             "package test;",
             "",
@@ -211,8 +239,8 @@ public final class ComponentValidationTest {
             "abstract class BadModule {",
             "  @Binds abstract Object noParameters();",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.BadComponent",
             "package test;",
             "",
@@ -222,17 +250,25 @@ public final class ComponentValidationTest {
             "interface BadComponent {",
             "  Object object();",
             "}");
-    Compilation compilation = daggerCompiler().compile(module, component);
-    assertThat(compilation)
-        .hadErrorContaining("test.BadModule has errors")
-        .inFile(component)
-        .onLine(5);
+    CompilerTests.daggerCompiler(module, component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining("test.BadModule has errors")
+                  .onSource(component)
+                  .onLine(5);
+              subject.hasErrorContaining(
+                      "@Binds methods must have exactly one parameter, whose type is assignable to "
+                          + "the return type")
+                  .onSource(module)
+                  .onLine(8);
+            });
   }
 
   @Test
   public void attemptToInjectWildcardGenerics() {
-    JavaFileObject testComponent =
-        JavaFileObjects.forSourceLines(
+    Source testComponent =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -245,12 +281,16 @@ public final class ComponentValidationTest {
             "  Lazy<? extends Number> wildcardNumberLazy();",
             "  Provider<? super Number> wildcardNumberProvider();",
             "}");
-    Compilation compilation = daggerCompiler().compile(testComponent);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorContaining("wildcard type").inFile(testComponent).onLine(9);
-    assertThat(compilation).hadErrorContaining("wildcard type").inFile(testComponent).onLine(10);
+    CompilerTests.daggerCompiler(testComponent)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining("wildcard type").onSource(testComponent).onLine(9);
+              subject.hasErrorContaining("wildcard type").onSource(testComponent).onLine(10);
+            });
   }
 
+  // TODO(b/245954367): Migrate test to XProcessing Testing after this bug has been fixed.
   @Test
   public void invalidComponentDependencies() {
     JavaFileObject testComponent =
@@ -267,6 +307,7 @@ public final class ComponentValidationTest {
     assertThat(compilation).hadErrorContaining("int is not a valid component dependency type");
   }
 
+  // TODO(b/245954367): Migrate test to XProcessing Testing after this bug has been fixed.
   @Test
   public void invalidComponentModules() {
     JavaFileObject testComponent =
@@ -285,8 +326,8 @@ public final class ComponentValidationTest {
 
   @Test
   public void moduleInDependencies() {
-    JavaFileObject testModule =
-        JavaFileObjects.forSourceLines(
+    Source testModule =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -297,8 +338,8 @@ public final class ComponentValidationTest {
             "final class TestModule {",
             "  @Provides String s() { return null; }",
             "}");
-    JavaFileObject testComponent =
-        JavaFileObjects.forSourceLines(
+    Source testComponent =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -306,16 +347,19 @@ public final class ComponentValidationTest {
             "",
             "@Component(dependencies = TestModule.class)",
             "interface TestComponent {}");
-    Compilation compilation = daggerCompiler().compile(testModule, testComponent);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("test.TestModule is a module, which cannot be a component dependency");
+    CompilerTests.daggerCompiler(testModule, testComponent)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "test.TestModule is a module, which cannot be a component dependency");
+            });
   }
 
   @Test
   public void componentDependencyMustNotCycle_Direct() {
-    JavaFileObject shortLifetime =
-        JavaFileObjects.forSourceLines(
+    Source shortLifetime =
+        CompilerTests.javaSource(
             "test.ComponentShort",
             "package test;",
             "",
@@ -325,30 +369,32 @@ public final class ComponentValidationTest {
             "interface ComponentShort {",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(shortLifetime);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            message(
-                "test.ComponentShort contains a cycle in its component dependencies:",
-                "    test.ComponentShort"));
+    String errorMessage =
+        message(
+            "test.ComponentShort contains a cycle in its component dependencies:",
+            "    test.ComponentShort");
+    CompilerTests.daggerCompiler(shortLifetime)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(errorMessage);
+            });
 
     // Test that this also fails when transitive validation is disabled.
-    compilation =
-        compilerWithOptions("-Adagger.validateTransitiveComponentDependencies=DISABLED")
-            .compile(shortLifetime);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            message(
-                "test.ComponentShort contains a cycle in its component dependencies:",
-                "    test.ComponentShort"));
+    CompilerTests.daggerCompiler(shortLifetime)
+        .withProcessingOptions(
+            ImmutableMap.of("dagger.validateTransitiveComponentDependencies", "DISABLED"))
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(errorMessage);
+            });
   }
 
   @Test
   public void componentDependencyMustNotCycle_Indirect() {
-    JavaFileObject longLifetime =
-        JavaFileObjects.forSourceLines(
+    Source longLifetime =
+        CompilerTests.javaSource(
             "test.ComponentLong",
             "package test;",
             "",
@@ -357,8 +403,8 @@ public final class ComponentValidationTest {
             "@Component(dependencies = ComponentMedium.class)",
             "interface ComponentLong {",
             "}");
-    JavaFileObject mediumLifetime =
-        JavaFileObjects.forSourceLines(
+    Source mediumLifetime =
+        CompilerTests.javaSource(
             "test.ComponentMedium",
             "package test;",
             "",
@@ -367,8 +413,8 @@ public final class ComponentValidationTest {
             "@Component(dependencies = ComponentLong.class)",
             "interface ComponentMedium {",
             "}");
-    JavaFileObject shortLifetime =
-        JavaFileObjects.forSourceLines(
+    Source shortLifetime =
+        CompilerTests.javaSource(
             "test.ComponentShort",
             "package test;",
             "",
@@ -378,46 +424,46 @@ public final class ComponentValidationTest {
             "interface ComponentShort {",
             "}");
 
-    Compilation compilation = daggerCompiler().compile(longLifetime, mediumLifetime, shortLifetime);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            message(
-                "test.ComponentLong contains a cycle in its component dependencies:",
-                "    test.ComponentLong",
-                "    test.ComponentMedium",
-                "    test.ComponentLong"))
-        .inFile(longLifetime);
-    assertThat(compilation)
-        .hadErrorContaining(
-            message(
-                "test.ComponentMedium contains a cycle in its component dependencies:",
-                "    test.ComponentMedium",
-                "    test.ComponentLong",
-                "    test.ComponentMedium"))
-        .inFile(mediumLifetime);
-    assertThat(compilation)
-        .hadErrorContaining(
-            message(
-                "test.ComponentShort contains a cycle in its component dependencies:",
-                "    test.ComponentMedium",
-                "    test.ComponentLong",
-                "    test.ComponentMedium",
-                "    test.ComponentShort"))
-        .inFile(shortLifetime);
+    CompilerTests.daggerCompiler(longLifetime, mediumLifetime, shortLifetime)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(3);
+              subject.hasErrorContaining(
+                      message(
+                          "test.ComponentLong contains a cycle in its component dependencies:",
+                          "    test.ComponentLong",
+                          "    test.ComponentMedium",
+                          "    test.ComponentLong"))
+                  .onSource(longLifetime);
+              subject.hasErrorContaining(
+                      message(
+                          "test.ComponentMedium contains a cycle in its component dependencies:",
+                          "    test.ComponentMedium",
+                          "    test.ComponentLong",
+                          "    test.ComponentMedium"))
+                  .onSource(mediumLifetime);
+              subject.hasErrorContaining(
+                      message(
+                          "test.ComponentShort contains a cycle in its component dependencies:",
+                          "    test.ComponentMedium",
+                          "    test.ComponentLong",
+                          "    test.ComponentMedium",
+                          "    test.ComponentShort"))
+                  .onSource(shortLifetime);
+            });
 
     // Test that compilation succeeds when transitive validation is disabled because the cycle
     // cannot be detected.
-    compilation =
-        compilerWithOptions("-Adagger.validateTransitiveComponentDependencies=DISABLED")
-            .compile(longLifetime, mediumLifetime, shortLifetime);
-    assertThat(compilation).succeeded();
+    CompilerTests.daggerCompiler(longLifetime, mediumLifetime, shortLifetime)
+        .withProcessingOptions(
+            ImmutableMap.of("dagger.validateTransitiveComponentDependencies", "DISABLED"))
+        .compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
   public void abstractModuleWithInstanceMethod() {
-    JavaFileObject module =
-        JavaFileObjects.forSourceLines(
+    Source module =
+        CompilerTests.javaSource(
             "test.TestModule",
             "package test;",
             "",
@@ -428,8 +474,8 @@ public final class ComponentValidationTest {
             "abstract class TestModule {",
             "  @Provides int i() { return 1; }",
             "}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -439,18 +485,21 @@ public final class ComponentValidationTest {
             "interface TestComponent {",
             "  int i();",
             "}");
-    Compilation compilation = daggerCompiler().compile(module, component);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("TestModule is abstract and has instance @Provides methods")
-        .inFile(component)
-        .onLineContaining("interface TestComponent");
+    CompilerTests.daggerCompiler(module, component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "TestModule is abstract and has instance @Provides methods")
+                  .onSource(component)
+                  .onLineContaining("interface TestComponent");
+            });
   }
 
   @Test
   public void abstractModuleWithInstanceMethod_subclassedIsAllowed() {
-    JavaFileObject abstractModule =
-        JavaFileObjects.forSourceLines(
+    Source abstractModule =
+        CompilerTests.javaSource(
             "test.AbstractModule",
             "package test;",
             "",
@@ -461,8 +510,8 @@ public final class ComponentValidationTest {
             "abstract class AbstractModule {",
             "  @Provides int i() { return 1; }",
             "}");
-    JavaFileObject subclassedModule =
-        JavaFileObjects.forSourceLines(
+    Source subclassedModule =
+        CompilerTests.javaSource(
             "test.SubclassedModule",
             "package test;",
             "",
@@ -470,8 +519,8 @@ public final class ComponentValidationTest {
             "",
             "@Module",
             "class SubclassedModule extends AbstractModule {}");
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        CompilerTests.javaSource(
             "test.TestComponent",
             "package test;",
             "",
@@ -481,7 +530,7 @@ public final class ComponentValidationTest {
             "interface TestComponent {",
             "  int i();",
             "}");
-    Compilation compilation = daggerCompiler().compile(abstractModule, subclassedModule, component);
-    assertThat(compilation).succeeded();
+    CompilerTests.daggerCompiler(abstractModule, subclassedModule, component)
+        .compile(subject -> subject.hasErrorCount(0));
   }
 }
