@@ -28,6 +28,7 @@ import androidx.room.compiler.processing.XProcessingStep;
 import androidx.room.compiler.processing.util.CompilationResultSubject;
 import androidx.room.compiler.processing.util.ProcessorTestExtKt;
 import androidx.room.compiler.processing.util.Source;
+import androidx.room.compiler.processing.util.XTestInvocation;
 import androidx.room.compiler.processing.util.compiler.TestCompilationArguments;
 import androidx.room.compiler.processing.util.compiler.TestCompilationResult;
 import androidx.room.compiler.processing.util.compiler.TestKotlinCompilerKt;
@@ -103,6 +104,39 @@ public final class CompilerTests {
   /** Returns a {@link Compiler} instance with the given sources. */
   public static DaggerCompiler daggerCompiler(ImmutableCollection<Source> sources) {
     return DaggerCompiler.builder().sources(sources).build();
+  }
+
+  /**
+   * Used to compile regular java or kotlin sources and inspect the elements processed in the test
+   * processing environment.
+   */
+  public static InvocationCompiler invocationCompiler(Source... sources) {
+    return new AutoValue_CompilerTests_InvocationCompiler(
+        ImmutableList.copyOf(sources), DEFAULT_PROCESSOR_OPTIONS);
+  }
+
+  /** */
+  @AutoValue
+  public abstract static class InvocationCompiler {
+    /** Returns the sources being compiled */
+    abstract ImmutableList<Source> sources();
+
+    /** Returns the annotation processor options */
+    abstract ImmutableMap<String, String> processorOptions();
+
+    public void compile(Consumer<XTestInvocation> onInvocation) {
+      ProcessorTestExtKt.runProcessorTest(
+          sources(),
+          /* classpath= */ ImmutableList.of(),
+          processorOptions(),
+          /* javacArguments= */ ImmutableList.of(),
+          /* kotlincArguments= */ ImmutableList.of(),
+          /* config= */ PROCESSING_ENV_CONFIG,
+          invocation -> {
+            onInvocation.accept(invocation);
+            return null;
+          });
+    }
   }
 
   /** Used to compile Dagger sources and inspect the compiled results. */

@@ -34,6 +34,9 @@ import static dagger.internal.codegen.xprocessing.XTypes.isNoType;
 import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XArrayType;
+import androidx.room.compiler.processing.XConstructorType;
+import androidx.room.compiler.processing.XExecutableType;
+import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
@@ -278,6 +281,51 @@ public final class XTypes {
   /** Returns {@code true} if the given type has type parameters. */
   public static boolean hasTypeParameters(XType type) {
     return !type.getTypeArguments().isEmpty();
+  }
+
+  public static boolean isExecutable(XType type) {
+    return type instanceof XExecutableType;
+  }
+
+  public static boolean isMethod(XExecutableType type) {
+    return type instanceof XMethodType;
+  }
+
+  public static boolean isConstructor(XExecutableType type) {
+    return type instanceof XConstructorType;
+  }
+
+  public static boolean isFloat(XType type) {
+    return type.getTypeName().equals(TypeName.FLOAT)
+        || type.getTypeName().equals(KnownTypeNames.BOXED_FLOAT);
+  }
+
+  public static boolean isShort(XType type) {
+    return type.getTypeName().equals(TypeName.SHORT)
+        || type.getTypeName().equals(KnownTypeNames.BOXED_SHORT);
+  }
+
+  public static boolean isChar(XType type) {
+    return type.getTypeName().equals(TypeName.CHAR)
+        || type.getTypeName().equals(KnownTypeNames.BOXED_CHAR);
+  }
+
+  public static boolean isDouble(XType type) {
+    return type.getTypeName().equals(TypeName.DOUBLE)
+        || type.getTypeName().equals(KnownTypeNames.BOXED_DOUBLE);
+  }
+
+  public static boolean isBoolean(XType type) {
+    return type.getTypeName().equals(TypeName.BOOLEAN)
+        || type.getTypeName().equals(KnownTypeNames.BOXED_BOOLEAN);
+  }
+
+  private static class KnownTypeNames {
+    static final TypeName BOXED_SHORT = TypeName.SHORT.box();
+    static final TypeName BOXED_DOUBLE = TypeName.DOUBLE.box();
+    static final TypeName BOXED_FLOAT = TypeName.FLOAT.box();
+    static final TypeName BOXED_CHAR = TypeName.CHAR.box();
+    static final TypeName BOXED_BOOLEAN = TypeName.BOOLEAN.box();
   }
 
   /**

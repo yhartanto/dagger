@@ -22,27 +22,47 @@ import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static androidx.room.compiler.processing.XElementKt.isMethodParameter;
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
 import static androidx.room.compiler.processing.XElementKt.isVariableElement;
+import static androidx.room.compiler.processing.XTypeKt.isArray;
+import static androidx.room.compiler.processing.XTypeKt.isByte;
+import static androidx.room.compiler.processing.XTypeKt.isInt;
+import static androidx.room.compiler.processing.XTypeKt.isKotlinUnit;
+import static androidx.room.compiler.processing.XTypeKt.isLong;
+import static androidx.room.compiler.processing.XTypeKt.isVoid;
+import static androidx.room.compiler.processing.XTypeKt.isVoidObject;
 import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XTypeElements.isNested;
+import static dagger.internal.codegen.xprocessing.XTypes.isBoolean;
+import static dagger.internal.codegen.xprocessing.XTypes.isChar;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
+import static dagger.internal.codegen.xprocessing.XTypes.isDouble;
+import static dagger.internal.codegen.xprocessing.XTypes.isFloat;
+import static dagger.internal.codegen.xprocessing.XTypes.isShort;
+import static dagger.internal.codegen.xprocessing.XTypes.isTypeVariable;
+import static dagger.internal.codegen.xprocessing.XTypes.isWildcard;
 import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XAnnotated;
 import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XArrayType;
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XEnumEntry;
 import androidx.room.compiler.processing.XEnumTypeElement;
 import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XExecutableParameterElement;
+import androidx.room.compiler.processing.XExecutableType;
 import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XHasModifiers;
 import androidx.room.compiler.processing.XMemberContainer;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XMethodType;
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import androidx.room.compiler.processing.XTypeParameterElement;
 import androidx.room.compiler.processing.XVariableElement;
@@ -53,10 +73,8 @@ import java.util.Collection;
 import java.util.Optional;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.QualifiedNameable;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ErrorType;
@@ -295,20 +313,7 @@ public final class XElements {
    * specification, section 4.3.2</a>.
    */
   public static String getFieldDescriptor(XFieldElement element) {
-    return getFieldDescriptor(toJavac(element));
-  }
-
-  /**
-   * Returns the field descriptor of the given {@code element}.
-   *
-   * <p>This is useful for matching Kotlin Metadata JVM Signatures with elements from the AST.
-   *
-   * <p>For reference, see the <a
-   * href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.3.2">JVM
-   * specification, section 4.3.2</a>.
-   */
-  public static String getFieldDescriptor(VariableElement element) {
-    return element.getSimpleName() + ":" + getDescriptor(element.asType());
+    return getSimpleName(element) + ":" + getDescriptor(element.getType());
   }
 
   /**
@@ -322,23 +327,78 @@ public final class XElements {
    */
   // TODO(bcorso): Expose getMethodDescriptor() method in XProcessing instead.
   public static String getMethodDescriptor(XMethodElement element) {
-    return getMethodDescriptor(toJavac(element));
+    return getSimpleName(element) + getDescriptor(element.getExecutableType());
+  }
+
+  private static String getDescriptor(XExecutableType type) {
+    String parameterDescriptors =
+        type.getParameterTypes().stream().map(XElements::getDescriptor).collect(joining());
+    String returnDescriptor =
+        XTypes.isMethod(type) ? getDescriptor(((XMethodType) type).getReturnType()) : "V";
+    return "(" + parameterDescriptors + ")" + returnDescriptor;
+  }
+
+  private static String getDescriptor(XType type) {
+    XProcessingEnv processingEnv = getProcessingEnv(type);
+    switch (processingEnv.getBackend()) {
+      case JAVAC:
+        return javacGetDescriptor(toJavac(type));
+      case KSP:
+        return kspGetDescriptor(type);
+    }
+    throw new AssertionError("Unexpected backend: " + processingEnv.getBackend());
+  }
+
+  private static String kspGetDescriptor(XType type) {
+    if (isKotlinUnit(type) || type.isNone() || isVoid(type) || isVoidObject(type)) {
+      return "V";
+    } else if (isArray(type)) {
+      XArrayType arrayType = (XArrayType) type;
+      return "[" + getDescriptor(arrayType.getComponentType());
+    } else if (isDeclared(type) || type.isError()) {
+      return "L" + getInternalName(type.getTypeElement()) + ";";
+    } else if (XTypes.isExecutable(type)) {
+      return getDescriptor((XExecutableType) type);
+    } else if (isTypeVariable(type)) {
+      // TODO(b/231169600) Expose bounds for type argument from XProcessing to obtain descriptor.
+      throw new AssertionError("Generic type is currently unsupported: " + type);
+    } else if (isInt(type)) {
+      return "I";
+    } else if (isLong(type)) {
+      return "J";
+    } else if (isByte(type)) {
+      return "B";
+    } else if (isShort(type)) {
+      return "S";
+    } else if (isDouble(type)) {
+      return "D";
+    } else if (isFloat(type)) {
+      return "F";
+    } else if (isBoolean(type)) {
+      return "Z";
+    } else if (isChar(type)) {
+      return "C";
+    } else if (isWildcard(type)) {
+      return "";
+    }
+    throw new AssertionError("Unexpected type: " + type);
   }
 
   /**
-   * Returns the method descriptor of the given {@code element}.
-   *
-   * <p>This is useful for matching Kotlin Metadata JVM Signatures with elements from the AST.
+   * Returns the name of this element in its "internal form".
    *
    * <p>For reference, see the <a
-   * href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.3.3">JVM
-   * specification, section 4.3.3</a>.
+   * href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.2">JVM
+   * specification, section 4.2</a>.
    */
-  public static String getMethodDescriptor(ExecutableElement element) {
-    return element.getSimpleName() + getDescriptor(element.asType());
+  private static String getInternalName(XTypeElement element) {
+    if (isNested(element)) {
+      return getInternalName(element.getEnclosingTypeElement()) + "$" + getSimpleName(element);
+    }
+    return element.getQualifiedName().replace('.', '/');
   }
 
-  private static String getDescriptor(TypeMirror type) {
+  private static String javacGetDescriptor(TypeMirror type) {
     return type.accept(JVM_DESCRIPTOR_TYPE_VISITOR, null);
   }
 
@@ -347,7 +407,7 @@ public final class XElements {
 
         @Override
         public String visitArray(ArrayType arrayType, Void v) {
-          return "[" + getDescriptor(arrayType.getComponentType());
+          return "[" + javacGetDescriptor(arrayType.getComponentType());
         }
 
         @Override
@@ -366,9 +426,9 @@ public final class XElements {
         public String visitExecutable(ExecutableType executableType, Void v) {
           String parameterDescriptors =
               executableType.getParameterTypes().stream()
-                  .map(XElements::getDescriptor)
+                  .map(XElements::javacGetDescriptor)
                   .collect(joining());
-          String returnDescriptor = getDescriptor(executableType.getReturnType());
+          String returnDescriptor = javacGetDescriptor(executableType.getReturnType());
           return "(" + parameterDescriptors + ")" + returnDescriptor;
         }
 
@@ -376,7 +436,7 @@ public final class XElements {
         public String visitIntersection(IntersectionType intersectionType, Void v) {
           // For a type variable with multiple bounds: "the erasure of a type variable is determined
           // by the first type in its bound" - JVM Spec Sec 4.4
-          return getDescriptor(intersectionType.getBounds().get(0));
+          return javacGetDescriptor(intersectionType.getBounds().get(0));
         }
 
         @Override
@@ -411,7 +471,7 @@ public final class XElements {
         @Override
         public String visitTypeVariable(TypeVariable typeVariable, Void v) {
           // The erasure of a type variable is the erasure of its leftmost bound. - JVM Spec Sec 4.6
-          return getDescriptor(typeVariable.getUpperBound());
+          return javacGetDescriptor(typeVariable.getUpperBound());
         }
 
         @Override
