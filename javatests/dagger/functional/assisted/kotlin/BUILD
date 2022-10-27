@@ -14,37 +14,26 @@
 # Description:
 #   Tests for internal code for implementing Hilt processors.
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library")
 load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX", "JAVA_RELEASE_MIN")
 load("//:test_defs.bzl", "GenJavaTests")
 
 package(default_visibility = ["//:src"])
 
-kt_jvm_library(
-    name = "KotlinAssistedInjectionClasses",
-    srcs = ["KotlinAssistedInjectionClasses.kt"],
-    deps = [
-        "//:dagger_with_compiler",
-        "//third_party/java/auto:factory",
-    ],
-)
-
 GenJavaTests(
-    name = "kotlin",
-    srcs = glob(
-        ["*.java"],
-        exclude = ["*.kt"],
-    ),
+    name = "KotlinAssistedInjectionTest",
+    srcs = [
+        "KotlinAssistedInjectionClasses.kt",
+        "KotlinAssistedInjectionTest.java",
+    ],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
-        "//:dagger_with_compiler",
+        
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],
-    # NOTE: This should not depend on Guava or jsr305 to ensure that Dagger can be
-    # used without Guava and jsr305 deps.
     deps = [
-        ":KotlinAssistedInjectionClasses",
+        "//third_party/java/auto:factory",
+        "//:dagger_with_compiler",
     ],
 )

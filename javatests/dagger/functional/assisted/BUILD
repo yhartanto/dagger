@@ -21,25 +21,122 @@ load("//:test_defs.bzl", "GenJavaTests")
 package(default_visibility = ["//:src"])
 
 GenJavaTests(
-    name = "assisted",
-    srcs = glob(["*.java"]),
+    name = "AssistedFactoryAsQualifiedBindingTest",
+    srcs = ["AssistedFactoryAsQualifiedBindingTest.java"],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     lib_javacopts = JAVA_RELEASE_MIN,
     test_only_deps = [
-        "//third_party/java/guava/base",
-        "//third_party/java/guava/collect",
-        "//third_party/java/guava/util/concurrent",
-        "//third_party/java/guava:testlib",
+        "//:dagger_with_compiler",
+        "//third_party/java/truth",
+        "//third_party/java/junit",
+    ],
+)
+
+GenJavaTests(
+    name = "AssistedFactoryBindsTest",
+    srcs = ["AssistedFactoryBindsTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    lib_javacopts = JAVA_RELEASE_MIN,
+    test_only_deps = [
+        "//:dagger_with_compiler",
+        "//third_party/java/truth",
+        "//third_party/java/junit",
+    ],
+)
+
+GenJavaTests(
+    name = "AssistedFactoryDuplicatedParamNamesTest",
+    srcs = ["AssistedFactoryDuplicatedParamNamesTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    lib_javacopts = JAVA_RELEASE_MIN,
+    test_only_deps = [
+        "//:dagger_with_compiler",
+        "//third_party/java/truth",
+        "//third_party/java/junit",
+    ],
+)
+
+GenJavaTests(
+    name = "AssistedFactoryInaccessibleTest",
+    srcs = ["AssistedFactoryInaccessibleTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    lib_javacopts = JAVA_RELEASE_MIN,
+    test_only_deps = [
+        "//:dagger_with_compiler",
         "//third_party/java/truth",
         "//third_party/java/junit",
         "//javatests/dagger/functional/assisted/subpackage",
     ],
-    # NOTE: This should not depend on Guava or jsr305 to ensure that Dagger can be
-    # used without Guava and jsr305 deps.
-    deps = [
+)
+
+GenJavaTests(
+    name = "AssistedFactoryParameterizedTest",
+    srcs = ["AssistedFactoryParameterizedTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    lib_javacopts = JAVA_RELEASE_MIN,
+    test_only_deps = [
         "//:dagger_with_compiler",
-        "//third_party/java/auto:factory",
-        "//third_party/java/auto:value",
-        "//third_party/java/jsr330_inject",
+        "//third_party/java/truth",
+        "//third_party/java/junit",
+    ],
+)
+
+GenJavaTests(
+    name = "AssistedFactoryTest",
+    srcs = ["AssistedFactoryTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    lib_javacopts = JAVA_RELEASE_MIN,
+    test_only_deps = [
+        "//:dagger_with_compiler",
+        "//third_party/java/truth",
+        "//third_party/java/junit",
+    ],
+)
+
+GenJavaTests(
+    name = "AssistedFactoryWithArrayTypesTest",
+    srcs = ["AssistedFactoryWithArrayTypesTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    lib_javacopts = JAVA_RELEASE_MIN,
+    test_only_deps = [
+        "//:dagger_with_compiler",
+        "//third_party/java/truth",
+        "//third_party/java/junit",
+    ],
+)
+
+GenJavaTests(
+    name = "AssistedFactoryWithAssistedInjectParamTest",
+    srcs = ["AssistedFactoryWithAssistedInjectParamTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    lib_javacopts = JAVA_RELEASE_MIN,
+    test_only_deps = [
+        "//:dagger_with_compiler",
+        "//third_party/java/truth",
+        "//third_party/java/junit",
+    ],
+)
+
+GenJavaTests(
+    name = "AssistedFactoryWithMultibindingsTest",
+    srcs = ["AssistedFactoryWithMultibindingsTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    lib_javacopts = JAVA_RELEASE_MIN,
+    test_only_deps = [
+        "//:dagger_with_compiler",
+        "//third_party/java/truth",
+        "//third_party/java/junit",
+    ],
+)
+
+GenJavaTests(
+    name = "AssistedFactoryWithQualifiedTypesTest",
+    srcs = ["AssistedFactoryWithQualifiedTypesTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX,
+    lib_javacopts = JAVA_RELEASE_MIN,
+    test_only_deps = [
+        "//:dagger_with_compiler",
+        "//third_party/java/truth",
+        "//third_party/java/junit",
     ],
 )

@@ -15,6 +15,7 @@
 """This file defines constants useful across the Dagger tests."""
 
 load("@rules_java//java:defs.bzl", "java_library", "java_test")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kt_jvm_library", "kt_jvm_test")
 
 # Defines a set of build variants and the list of extra javacopts to build with.
 # The key will be appended to the generated test names to ensure uniqueness.
@@ -30,15 +31,20 @@ BUILD_VARIANTS = {
 def GenJavaTests(
         name,
         srcs,
-        deps,
+        deps = None,
         test_only_deps = None,
         plugins = None,
         javacopts = None,
         lib_javacopts = None,
         test_javacopts = None,
         functional = True):
+    has_kotlin_sources = any([
+        src
+        for src in srcs
+        if src.endswith(".kt") and not src.endswith("Test.kt")
+    ])
     _GenTests(
-        java_library,
+        kt_jvm_library if has_kotlin_sources else java_library,
         java_test,
         name,
         srcs,
@@ -54,7 +60,7 @@ def GenJavaTests(
 def GenRobolectricTests(
         name,
         srcs,
-        deps,
+        deps = None,
         test_only_deps = None,
         plugins = None,
         javacopts = None,
@@ -84,12 +90,12 @@ def _GenTests(
         name,
         srcs,
         deps,
-        test_only_deps = None,
-        plugins = None,
-        javacopts = None,
-        lib_javacopts = None,
-        test_javacopts = None,
-        functional = True,
+        test_only_deps,
+        plugins,
+        javacopts,
+        lib_javacopts,
+        test_javacopts,
+        functional,
         test_kwargs = None):
     _gen_tests(
         library_rule_type,
@@ -163,6 +169,9 @@ def _gen_tests(
     if not test_kwargs:
         test_kwargs = {}
 
+    if not deps:
+        deps = []
+
     if not test_only_deps:
         test_only_deps = []
 
@@ -170,16 +179,19 @@ def _gen_tests(
     if supporting_files:
         supporting_files_name = name + suffix + "_lib"
         test_deps.append(":" + supporting_files_name)
+        javacopts_kwargs = {"javacopts": ((javacopts or []) + (lib_javacopts or []))}
+        if library_rule_type == kt_jvm_library:
+            javacopts_kwargs = {}
         library_rule_type(
             name = supporting_files_name,
             testonly = 1,
             srcs = supporting_files,
-            javacopts = (javacopts or []) + (lib_javacopts or []),
             plugins = plugins,
             tags = tags,
             deps = deps,
+            **javacopts_kwargs
         )
-        if functional:
+        if (functional and library_rule_type != kt_jvm_library):
             _hjar_test(supporting_files_name, tags)
 
     should_add_goldens = not functional and (test_rule_type == java_test)
