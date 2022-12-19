@@ -16,13 +16,10 @@
 
 package dagger.internal.codegen;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.internal.codegen.Compilers.compilerWithOptions;
 import static dagger.internal.codegen.TestUtils.endsWithMessage;
 
 import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableMap;
-import com.google.testing.compile.Compilation;
 import dagger.testing.compile.CompilerTests;
 import java.util.regex.Pattern;
 import org.junit.Test;
@@ -101,21 +98,18 @@ public final class FullBindingGraphValidationTest {
             });
   }
 
-  // TODO(b/247113233): Convert this test to XProcessing Testing once this bug is fixed.
   @Test
   public void moduleWithErrors_validationTypeWarning() {
-    Compilation compilation =
-        compilerWithOptions("-Adagger.fullBindingGraphValidation=WARNING")
-            .compile(MODULE_WITH_ERRORS.toJFO());
-
-    assertThat(compilation).succeeded();
-
-    assertThat(compilation)
-        .hadWarningContainingMatch(MODULE_WITH_ERRORS_MESSAGE)
-        .inFile(MODULE_WITH_ERRORS.toJFO())
-        .onLineContaining("interface ModuleWithErrors");
-
-    assertThat(compilation).hadWarningCount(1);
+    CompilerTests.daggerCompiler(MODULE_WITH_ERRORS)
+        .withProcessingOptions(ImmutableMap.of("dagger.fullBindingGraphValidation", "WARNING"))
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(1);
+              subject.hasWarningContainingMatch(MODULE_WITH_ERRORS_MESSAGE.pattern())
+                  .onSource(MODULE_WITH_ERRORS)
+                  .onLineContaining("interface ModuleWithErrors");
+            });
   }
 
   private static final Source INCLUDES_MODULE_WITH_ERRORS =
@@ -155,27 +149,23 @@ public final class FullBindingGraphValidationTest {
             });
   }
 
-  // TODO(b/247113233): Convert this test to XProcessing Testing once this bug is fixed.
   @Test
   public void includesModuleWithErrors_validationTypeWarning() {
-    Compilation compilation =
-        compilerWithOptions("-Adagger.fullBindingGraphValidation=WARNING")
-            .compile(MODULE_WITH_ERRORS.toJFO(), INCLUDES_MODULE_WITH_ERRORS.toJFO());
+    CompilerTests.daggerCompiler(MODULE_WITH_ERRORS, INCLUDES_MODULE_WITH_ERRORS)
+        .withProcessingOptions(ImmutableMap.of("dagger.fullBindingGraphValidation", "WARNING"))
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(2);
 
-    assertThat(compilation).succeeded();
+              subject.hasWarningContainingMatch(MODULE_WITH_ERRORS_MESSAGE.pattern())
+                  .onSource(MODULE_WITH_ERRORS)
+                  .onLineContaining("interface ModuleWithErrors");
 
-    assertThat(compilation)
-        .hadWarningContainingMatch(MODULE_WITH_ERRORS_MESSAGE)
-        .inFile(MODULE_WITH_ERRORS.toJFO())
-        .onLineContaining("interface ModuleWithErrors");
-
-    // TODO(b/130284666)
-    assertThat(compilation)
-        .hadWarningContainingMatch(INCLUDES_MODULE_WITH_ERRORS_MESSAGE)
-        .inFile(INCLUDES_MODULE_WITH_ERRORS.toJFO())
-        .onLineContaining("interface IncludesModuleWithErrors");
-
-    assertThat(compilation).hadWarningCount(2);
+              subject.hasWarningContainingMatch(INCLUDES_MODULE_WITH_ERRORS_MESSAGE.pattern())
+                  .onSource(INCLUDES_MODULE_WITH_ERRORS)
+                  .onLineContaining("interface IncludesModuleWithErrors");
+            });
   }
 
   private static final Source A_MODULE =
@@ -244,21 +234,18 @@ public final class FullBindingGraphValidationTest {
             });
   }
 
-  // TODO(b/247113233): Convert this test to XProcessing Testing once this bug is fixed.
   @Test
   public void moduleIncludingModuleWithCombinedErrors_validationTypeWarning() {
-    Compilation compilation =
-        compilerWithOptions("-Adagger.fullBindingGraphValidation=WARNING")
-            .compile(A_MODULE.toJFO(), COMBINED_WITH_A_MODULE_HAS_ERRORS.toJFO());
-
-    assertThat(compilation).succeeded();
-
-    assertThat(compilation)
-        .hadWarningContainingMatch(COMBINED_WITH_A_MODULE_HAS_ERRORS_MESSAGE)
-        .inFile(COMBINED_WITH_A_MODULE_HAS_ERRORS.toJFO())
-        .onLineContaining("interface CombinedWithAModuleHasErrors");
-
-    assertThat(compilation).hadWarningCount(1);
+    CompilerTests.daggerCompiler(A_MODULE, COMBINED_WITH_A_MODULE_HAS_ERRORS)
+        .withProcessingOptions(ImmutableMap.of("dagger.fullBindingGraphValidation", "WARNING"))
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(1);
+              subject.hasWarningContainingMatch(COMBINED_WITH_A_MODULE_HAS_ERRORS_MESSAGE.pattern())
+                  .onSource(COMBINED_WITH_A_MODULE_HAS_ERRORS)
+                  .onLineContaining("interface CombinedWithAModuleHasErrors");
+            });
   }
 
   private static final Source SUBCOMPONENT_WITH_ERRORS =
@@ -337,21 +324,18 @@ public final class FullBindingGraphValidationTest {
             });
   }
 
-  // TODO(b/247113233): Convert this test to XProcessing Testing once this bug is fixed.
   @Test
   public void subcomponentWithErrors_validationTypeWarning() {
-    Compilation compilation =
-        compilerWithOptions("-Adagger.fullBindingGraphValidation=WARNING")
-            .compile(SUBCOMPONENT_WITH_ERRORS.toJFO(), A_MODULE.toJFO());
-
-    assertThat(compilation).succeeded();
-
-    assertThat(compilation)
-        .hadWarningContainingMatch(SUBCOMPONENT_WITH_ERRORS_MESSAGE)
-        .inFile(SUBCOMPONENT_WITH_ERRORS.toJFO())
-        .onLineContaining("interface SubcomponentWithErrors");
-
-    assertThat(compilation).hadWarningCount(1);
+    CompilerTests.daggerCompiler(SUBCOMPONENT_WITH_ERRORS, A_MODULE)
+        .withProcessingOptions(ImmutableMap.of("dagger.fullBindingGraphValidation", "WARNING"))
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(1);
+              subject.hasWarningContainingMatch(SUBCOMPONENT_WITH_ERRORS_MESSAGE.pattern())
+                  .onSource(SUBCOMPONENT_WITH_ERRORS)
+                  .onLineContaining("interface SubcomponentWithErrors");
+            });
   }
 
   private static final Source MODULE_WITH_SUBCOMPONENT_WITH_ERRORS =
@@ -395,30 +379,26 @@ public final class FullBindingGraphValidationTest {
             });
   }
 
-  // TODO(b/247113233): Convert this test to XProcessing Testing once this bug is fixed.
   @Test
   public void moduleWithSubcomponentWithErrors_validationTypeWarning() {
-    Compilation compilation =
-        compilerWithOptions("-Adagger.fullBindingGraphValidation=WARNING")
-            .compile(
-                MODULE_WITH_SUBCOMPONENT_WITH_ERRORS.toJFO(),
-                SUBCOMPONENT_WITH_ERRORS.toJFO(),
-                A_MODULE.toJFO());
+    CompilerTests.daggerCompiler(
+            MODULE_WITH_SUBCOMPONENT_WITH_ERRORS, SUBCOMPONENT_WITH_ERRORS, A_MODULE)
+        .withProcessingOptions(ImmutableMap.of("dagger.fullBindingGraphValidation", "WARNING"))
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(2);
 
-    assertThat(compilation).succeeded();
+              subject.hasWarningContainingMatch(
+                      MODULE_WITH_SUBCOMPONENT_WITH_ERRORS_MESSAGE.pattern())
+                  .onSource(MODULE_WITH_SUBCOMPONENT_WITH_ERRORS)
+                  .onLineContaining("interface ModuleWithSubcomponentWithErrors");
 
-    assertThat(compilation)
-        .hadWarningContainingMatch(MODULE_WITH_SUBCOMPONENT_WITH_ERRORS_MESSAGE)
-        .inFile(MODULE_WITH_SUBCOMPONENT_WITH_ERRORS.toJFO())
-        .onLineContaining("interface ModuleWithSubcomponentWithErrors");
-
-    // TODO(b/130283677)
-    assertThat(compilation)
-        .hadWarningContainingMatch(SUBCOMPONENT_WITH_ERRORS_MESSAGE)
-        .inFile(SUBCOMPONENT_WITH_ERRORS.toJFO())
-        .onLineContaining("interface SubcomponentWithErrors");
-
-    assertThat(compilation).hadWarningCount(2);
+              // TODO(b/130283677): Don't repeat error.
+              subject.hasWarningContainingMatch(SUBCOMPONENT_WITH_ERRORS_MESSAGE.pattern())
+                  .onSource(SUBCOMPONENT_WITH_ERRORS)
+                  .onLineContaining("interface SubcomponentWithErrors");
+            });
   }
 
   private static final Source A_SUBCOMPONENT =
@@ -492,24 +472,19 @@ public final class FullBindingGraphValidationTest {
             });
   }
 
-  // TODO(b/247113233): Convert this test to XProcessing Testing once this bug is fixed.
   @Test
   public void moduleWithSubcomponentWithCombinedErrors_validationTypeWarning() {
-    Compilation compilation =
-        compilerWithOptions("-Adagger.fullBindingGraphValidation=WARNING")
-            .compile(
-                COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS.toJFO(),
-                A_SUBCOMPONENT.toJFO(),
-                A_MODULE.toJFO());
-
-    assertThat(compilation).succeeded();
-
-    assertThat(compilation)
-        .hadWarningContainingMatch(COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS_MESSAGE)
-        .inFile(COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS.toJFO())
-        .onLineContaining("interface CombinedWithASubcomponentHasErrors");
-
-    assertThat(compilation).hadWarningCount(1);
+    CompilerTests.daggerCompiler(COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS, A_SUBCOMPONENT, A_MODULE)
+        .withProcessingOptions(ImmutableMap.of("dagger.fullBindingGraphValidation", "WARNING"))
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.hasWarningCount(1);
+              subject.hasWarningContainingMatch(
+                      COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS_MESSAGE.pattern())
+                  .onSource(COMBINED_WITH_A_SUBCOMPONENT_HAS_ERRORS)
+                  .onLineContaining("interface CombinedWithASubcomponentHasErrors");
+            });
   }
 
   @Test
