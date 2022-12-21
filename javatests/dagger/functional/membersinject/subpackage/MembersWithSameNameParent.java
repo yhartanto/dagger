@@ -16,30 +16,37 @@
 
 package dagger.functional.membersinject.subpackage;
 
-import dagger.functional.membersinject.MembersWithSameName;
 import javax.inject.Inject;
 
 // https://github.com/google/dagger/issues/755
-public class ExtendsMembersWithSameName extends MembersWithSameName {
+public class MembersWithSameNameParent {
+  // Note: This field is purposely non-public so that MembersWithSameNameChild#sameName hides
+  // this field rather than overrides it.
   @Inject String sameName;
   private boolean sameNameStringWasInvoked;
   private boolean sameNameObjectWasInvoked;
 
+  // Note: This method is purposely non-public so that MembersWithSameNameChild#sameName(String)
+  // hides this method rather than overrides it.
   @Inject void sameName(String sameName) {
     sameNameStringWasInvoked = true;
   }
 
+  // Note: This method is purposely non-public so that MembersWithSameNameChild#sameName(Object)
+  // hides this method rather than overrides it.
   @Inject void sameName(Object sameName) {
     sameNameObjectWasInvoked = true;
   }
 
-  public String sameName() {
+  public String parentSameName() {
     return sameName;
   }
-  public boolean sameNameStringWasInvoked() {
+
+  public boolean parentSameNameStringWasInvoked() {
     return sameNameStringWasInvoked;
   }
-  public boolean sameNameObjectWasInvoked() {
+
+  public boolean parentSameNameObjectWasInvoked() {
     return sameNameObjectWasInvoked;
   }
 }

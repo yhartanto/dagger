@@ -16,13 +16,14 @@
 
 package dagger.functional.membersinject;
 
+import dagger.functional.membersinject.subpackage.MembersWithSameNameParent;
 import javax.inject.Inject;
 
 // https://github.com/google/dagger/issues/755
-public class MembersWithSameName {
+public class MembersWithSameNameChild extends MembersWithSameNameParent {
   @Inject String sameName;
-  boolean sameNameStringWasInvoked;
-  boolean sameNameObjectWasInvoked;
+  private boolean sameNameStringWasInvoked;
+  private boolean sameNameObjectWasInvoked;
 
   @Inject void sameName(String sameName) {
     sameNameStringWasInvoked = true;
@@ -30,5 +31,15 @@ public class MembersWithSameName {
 
   @Inject void sameName(Object sameName) {
     sameNameObjectWasInvoked = true;
+  }
+
+  public String childSameName() {
+    return sameName;
+  }
+  public boolean childSameNameStringWasInvoked() {
+    return sameNameStringWasInvoked;
+  }
+  public boolean childSameNameObjectWasInvoked() {
+    return sameNameObjectWasInvoked;
   }
 }
