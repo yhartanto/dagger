@@ -24,6 +24,7 @@ import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.TestExtension
 import com.android.build.gradle.TestedExtension
 import com.android.build.gradle.api.AndroidBasePlugin
+import com.android.build.gradle.tasks.JdkImageInput
 import dagger.hilt.android.plugin.task.AggregateDepsTask
 import dagger.hilt.android.plugin.task.HiltTransformTestClassesTask
 import dagger.hilt.android.plugin.util.AggregatedPackagesTransform
@@ -44,6 +45,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.provider.ProviderFactory
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.process.CommandLineArgumentProvider
 import org.gradle.util.GradleVersion
@@ -382,9 +384,13 @@ class HiltGradlePlugin @Inject constructor(
           getInputClasspath(DAGGER_ARTIFACT_TYPE_VALUE).plus(mainBootstrapClasspath)
         //  Copies argument providers from original task, which should contain the JdkImageInput
         variant.javaCompileProvider.get().let { originalCompileTask ->
-          originalCompileTask.options.compilerArgumentProviders.forEach {
-            compileTask.options.compilerArgumentProviders.add(it)
-          }
+          originalCompileTask.options.compilerArgumentProviders
+            .filter { 
+              it is HiltCommandLineArgumentProvider || it is JdkImageInput
+            }
+            .forEach {
+              compileTask.options.compilerArgumentProviders.add(it)
+            }
         }
         compileTask.options.compilerArgs.add("-XDstringConcat=inline")
       } else {
@@ -439,43 +445,45 @@ class HiltGradlePlugin @Inject constructor(
 
   private fun configureProcessorFlags(project: Project, hiltExtension: HiltExtension) {
     val androidExtension = project.baseExtension() ?: error("Android BaseExtension not found.")
-    androidExtension.defaultConfig.javaCompileOptions.annotationProcessorOptions.apply {
-      // Pass annotation processor flag to enable Dagger's fast-init, the best mode for Hilt.
-      argument("dagger.fastInit", "enabled")
-      // Pass annotation processor flag to disable @AndroidEntryPoint superclass validation.
-      argument("dagger.hilt.android.internal.disableAndroidSuperclassValidation", "true")
 
-      val projectType = when (androidExtension) {
-        is AppExtension -> GradleProjectType.APP
-        is LibraryExtension -> GradleProjectType.LIBRARY
-        is TestExtension -> GradleProjectType.TEST
-        else -> error("Hilt plugin does not know how to configure '$this'")
-      }
-      argument("dagger.hilt.android.internal.projectType", projectType.toString())
-
-      // Pass certain annotation processor flags via a CommandLineArgumentProvider so that plugin
-      // options defined in the extension are populated from the user's build file. Checking the
-      // option too early would make it seem like it is never set.
-      compilerArgumentProvider(
-        // Suppress due to https://docs.gradle.org/7.2/userguide/validation_problems.html#implementation_unknown
-        @Suppress("ObjectLiteralToLambda")
-        object : CommandLineArgumentProvider {
-          override fun asArguments() = mutableListOf<String>().apply {
-            // Pass annotation processor flag to disable the aggregating processor if aggregating
-            // task is enabled.
-            if (hiltExtension.enableAggregatingTask) {
-              add("-Adagger.hilt.internal.useAggregatingRootProcessor=false")
-            }
-            // Pass annotation processor flag to disable cross compilation root validation.
-            // The plugin option duplicates the processor flag because it is an input of the
-            // aggregating task.
-            if (hiltExtension.disableCrossCompilationRootValidation) {
-              add("-Adagger.hilt.disableCrossCompilationRootValidation=true")
-            }
-          }
-        }
-      )
+    val projectType = when (androidExtension) {
+      is AppExtension -> GradleProjectType.APP
+      is LibraryExtension -> GradleProjectType.LIBRARY
+      is TestExtension -> GradleProjectType.TEST
+      else -> error("Hilt plugin does not know how to configure '$this'")
     }
+
+    // Pass annotation processor flags via a CommandLineArgumentProvider so that plugin
+    // options defined in the extension are populated from the user's build file. Checking the
+    // option too early would make it seem like it is never set.
+    androidExtension.defaultConfig.javaCompileOptions.annotationProcessorOptions
+        .compilerArgumentProvider(HiltCommandLineArgumentProvider(hiltExtension, projectType))
+  }
+
+  private class HiltCommandLineArgumentProvider(
+      private val hiltExtension: HiltExtension,
+      private val projectType: GradleProjectType
+  ): CommandLineArgumentProvider {
+    override fun asArguments() = mutableListOf<Pair<String, String>>().apply {
+      // Pass annotation processor flag to enable Dagger's fast-init, the best mode for Hilt.
+      add("dagger.fastInit" to "enabled")
+      // Pass annotation processor flag to disable @AndroidEntryPoint superclass validation.
+      add("dagger.hilt.android.internal.disableAndroidSuperclassValidation" to "true")
+
+      add("dagger.hilt.android.internal.projectType" to projectType.toString())
+
+      // Pass annotation processor flag to disable the aggregating processor if aggregating
+      // task is enabled.
+      if (hiltExtension.enableAggregatingTask) {
+        add("dagger.hilt.internal.useAggregatingRootProcessor" to "false")
+      }
+      // Pass annotation processor flag to disable cross compilation root validation.
+      // The plugin option duplicates the processor flag because it is an input of the
+      // aggregating task.
+      if (hiltExtension.disableCrossCompilationRootValidation) {
+        add("dagger.hilt.disableCrossCompilationRootValidation" to "true")
+      }
+    }.map { (key, value) -> "-A$key=$value" }
   }
 
   private fun verifyDependencies(project: Project) {
