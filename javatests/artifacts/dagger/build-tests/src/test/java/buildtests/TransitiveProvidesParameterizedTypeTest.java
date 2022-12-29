@@ -58,7 +58,7 @@ public class TransitiveProvidesParameterizedTypeTest {
         assertThat(result.getOutput())
             .contains(
                 "error: ComponentProcessingStep was unable to process 'app.MyComponent' because"
-                    + " 'library2.TransitiveType' could not be resolved."
+                    + " 'library2.TransitiveType<java.lang.String>' could not be resolved."
                     + "\n  "
                     + "\n  Dependency trace:"
                     + "\n      => element (INTERFACE): library1.MyModule"

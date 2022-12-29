@@ -64,7 +64,8 @@ public class TransitiveProvidesQualifierTest {
                     + "\n      => element (INTERFACE): library1.MyModule"
                     + "\n      => element (METHOD): provideString(int)"
                     + "\n      => element (PARAMETER): i"
-                    + "\n      => annotation: @library2.MyQualifier");
+                    + "\n      => annotation: @MyQualifier"
+                    + "\n      => type (ERROR annotation type): library2.MyQualifier");
         break;
       case "api":
         result = setupRunner().build();

@@ -63,7 +63,8 @@ public class TransitiveProvidesScopeTest {
                     + "\n  Dependency trace:"
                     + "\n      => element (INTERFACE): library1.MyModule"
                     + "\n      => element (METHOD): provideString()"
-                    + "\n      => annotation: @library2.MyScope");
+                    + "\n      => annotation: @MyScope"
+                    + "\n      => type (ERROR annotation type): library2.MyScope");
         break;
       case "api":
         result = setupRunner().build();

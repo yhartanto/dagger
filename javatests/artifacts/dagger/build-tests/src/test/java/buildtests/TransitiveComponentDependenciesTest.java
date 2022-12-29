@@ -61,14 +61,10 @@ public class TransitiveComponentDependenciesTest {
                 + "\n  "
                 + "\n  Dependency trace:"
                 + "\n      => element (CLASS): libraryB.ComponentB"
-                + "\n      => annotation:"
-                + " @dagger.Component(dependencies = libraryA.ComponentA.class)"
-                + "\n      => annotation method: java.lang.Class<?>[] dependencies()"
-                + "\n      => annotation value (ARRAY):"
-                + " value 'libraryA.ComponentA.class' with expected type java.lang.Class<?>[]"
-                + "\n      => annotation value (TYPE):"
-                + " value 'libraryA.ComponentA' with expected type java.lang.Class<?>"
-                + "\n      => type (ERROR annotation value type): libraryA.ComponentA";
+                + "\n      => annotation: @dagger.Component("
+                + "modules={}, dependencies={libraryA.ComponentA})"
+                + "\n      => annotation value (TYPE_ARRAY): dependencies={libraryA.ComponentA}"
+                + "\n      => annotation value (TYPE): dependencies=libraryA.ComponentA";
         assertThat(result.getOutput()).contains(expectedErrorMsg);
         break;
       case "api":

@@ -63,7 +63,8 @@ public class TransitiveSubcomponentScopeTest {
                     + "\n  Dependency trace:"
                     + "\n      => element (INTERFACE): library1.MySubcomponent.MySubcomponentModule"
                     + "\n      => element (METHOD): provideScopedInt()"
-                    + "\n      => annotation: @library2.MySubcomponentScope");
+                    + "\n      => annotation: @MySubcomponentScope"
+                    + "\n      => type (ERROR annotation type): library2.MySubcomponentScope");
         break;
       case "api":
         result = setupRunner().build();

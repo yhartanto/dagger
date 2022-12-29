@@ -74,14 +74,9 @@ public class TransitiveSubcomponentModulesTest {
                 + "\n  "
                 + "\n  Dependency trace:"
                 + "\n      => element (CLASS): library1.MySubcomponent"
-                + "\n      => annotation:"
-                + " @dagger.Subcomponent(modules = library2.TransitiveModule.class)"
-                + "\n      => annotation method: java.lang.Class<?>[] modules()"
-                + "\n      => annotation value (ARRAY):"
-                + " value 'library2.TransitiveModule.class' with expected type java.lang.Class<?>[]"
-                + "\n      => annotation value (TYPE):"
-                + " value 'library2.TransitiveModule' with expected type java.lang.Class<?>"
-                + "\n      => type (ERROR annotation value type): library2.TransitiveModule";
+                + "\n      => annotation: @dagger.Subcomponent(modules={library2.TransitiveModule})"
+                + "\n      => annotation value (TYPE_ARRAY): modules={library2.TransitiveModule}"
+                + "\n      => annotation value (TYPE): modules=library2.TransitiveModule";
         assertThat(result.getOutput()).contains(expectedErrorMsg);
         break;
       case "api":
@@ -117,13 +112,10 @@ public class TransitiveSubcomponentModulesTest {
                 + "\n  "
                 + "\n  Dependency trace:"
                 + "\n      => element (INTERFACE): library1.IncludesTransitiveModule"
-                + "\n      => annotation:"
-                + " @dagger.Module(includes = library2.TransitiveModule.class)"
-                + "\n      => annotation method: java.lang.Class<?>[] includes()"
-                + "\n      => annotation value (ARRAY):"
-                + " value 'library2.TransitiveModule.class' with expected type java.lang.Class<?>[]"
-                + "\n      => annotation value (TYPE):"
-                + " value 'library2.TransitiveModule' with expected type java.lang.Class<?>";
+                + "\n      => annotation: "
+                + "@dagger.Module(includes={library2.TransitiveModule}, subcomponents={})"
+                + "\n      => annotation value (TYPE_ARRAY): includes={library2.TransitiveModule}"
+                + "\n      => annotation value (TYPE): includes=library2.TransitiveModule";
         assertThat(result.getOutput()).contains(expectedErrorMsg);
         break;
       case "api":
