@@ -22,7 +22,9 @@ import javax.inject.Provider;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 public final class TestModule_ProvideObjectsFactory implements Factory<List<Object>> {
   private final TestModule module;

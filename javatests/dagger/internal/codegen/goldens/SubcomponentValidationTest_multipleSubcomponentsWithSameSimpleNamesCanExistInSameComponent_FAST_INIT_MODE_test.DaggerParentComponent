@@ -11,7 +11,9 @@ import test.subpackage.Sub;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 final class DaggerParentComponent {
   private DaggerParentComponent() {

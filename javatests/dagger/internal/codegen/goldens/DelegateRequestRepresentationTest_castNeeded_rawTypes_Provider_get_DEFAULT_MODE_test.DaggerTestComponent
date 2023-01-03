@@ -14,7 +14,9 @@ import other.Supertype;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 final class DaggerTestComponent {
   private DaggerTestComponent() {

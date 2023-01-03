@@ -16,7 +16,9 @@ import javax.inject.Provider;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 public final class GenericClass_Factory<A, B> implements Factory<GenericClass<A, B>> {
   private final Provider<A> aProvider;

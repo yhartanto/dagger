@@ -16,7 +16,9 @@ import javax.inject.Provider;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 public final class InjectConstructor_Factory implements Factory<InjectConstructor> {
   private final Provider<other.pkg.Factory> factoryProvider;

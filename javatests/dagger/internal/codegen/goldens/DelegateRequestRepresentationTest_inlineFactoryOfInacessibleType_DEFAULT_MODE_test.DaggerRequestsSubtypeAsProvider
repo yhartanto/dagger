@@ -13,7 +13,9 @@ import other.Supertype;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 final class DaggerRequestsSubtypeAsProvider {
   private DaggerRequestsSubtypeAsProvider() {

@@ -15,7 +15,9 @@ import javax.inject.Provider;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 public final class OuterType_B_MembersInjector implements MembersInjector<OuterType.B> {
   private final Provider<OuterType.A> aProvider;

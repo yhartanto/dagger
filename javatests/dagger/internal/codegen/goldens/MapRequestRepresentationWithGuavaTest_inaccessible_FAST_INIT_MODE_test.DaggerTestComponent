@@ -14,7 +14,9 @@ import other.UsesInaccessible_Factory;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 final class DaggerTestComponent {
   private DaggerTestComponent() {

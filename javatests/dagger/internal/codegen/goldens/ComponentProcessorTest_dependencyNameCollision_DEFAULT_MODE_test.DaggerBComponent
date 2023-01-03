@@ -14,7 +14,9 @@ import pkg1.AComponent;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 final class DaggerBComponent {
   private DaggerBComponent() {

@@ -17,7 +17,9 @@ import other.pkg.Outer;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 public final class InjectConstructor_Factory implements Factory<InjectConstructor> {
   private final Provider<Outer.Factory> factoryProvider;

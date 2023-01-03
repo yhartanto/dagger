@@ -15,7 +15,9 @@ import javax.annotation.processing.Generated;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 public final class ScopedBinding_Factory implements Factory<ScopedBinding> {
   @Override

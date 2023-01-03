@@ -18,6 +18,7 @@ package dagger.internal.codegen.javapoet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.squareup.javapoet.AnnotationSpec;
@@ -29,12 +30,13 @@ public final class AnnotationSpecs {
     RAWTYPES("rawtypes"),
     UNCHECKED("unchecked"),
     FUTURE_RETURN_VALUE_IGNORED("FutureReturnValueIgnored"),
+    KOTLIN_INTERNAL("KotlinInternal", "KotlinInternalInJava")
     ;
 
-    private final String value;
+    private final ImmutableList<String> values;
 
-    Suppression(String value) {
-      this.value = value;
+    Suppression(String... values) {
+      this.values = ImmutableList.copyOf(values);
     }
   }
 
@@ -47,7 +49,9 @@ public final class AnnotationSpecs {
   public static AnnotationSpec suppressWarnings(ImmutableSet<Suppression> suppressions) {
     checkArgument(!suppressions.isEmpty());
     AnnotationSpec.Builder builder = AnnotationSpec.builder(SuppressWarnings.class);
-    suppressions.forEach(suppression -> builder.addMember("value", "$S", suppression.value));
+    suppressions.stream()
+        .flatMap(suppression -> suppression.values.stream())
+        .forEach(value -> builder.addMember("value", "$S", value));
     return builder.build();
   }
 

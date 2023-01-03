@@ -14,7 +14,9 @@ import test.sub.TestComponentBase_ProtectedType_Factory;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 public final class DaggerTestComponent {
   private DaggerTestComponent() {

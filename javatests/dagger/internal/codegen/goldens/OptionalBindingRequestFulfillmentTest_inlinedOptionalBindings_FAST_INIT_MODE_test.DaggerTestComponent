@@ -18,7 +18,9 @@ import other.Maybe_MaybeModule_ProvideMaybeFactory;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 final class DaggerTestComponent {
   private DaggerTestComponent() {

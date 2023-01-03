@@ -16,7 +16,9 @@ import javax.annotation.processing.Generated;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 public final class ChildIntegerModule_ProvideIntegerFactory implements Factory<Integer> {
   private final ChildIntegerModule module;

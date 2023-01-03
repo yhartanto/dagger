@@ -11,7 +11,9 @@ import top1.a.b.c.d.E;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 final class DaggerParentComponent {
   private DaggerParentComponent() {

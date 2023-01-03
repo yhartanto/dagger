@@ -16,7 +16,9 @@ import javax.annotation.processing.Generated;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 public final class MyModule_ProvideStringFactory implements Factory<String> {
   private final MyModule module;

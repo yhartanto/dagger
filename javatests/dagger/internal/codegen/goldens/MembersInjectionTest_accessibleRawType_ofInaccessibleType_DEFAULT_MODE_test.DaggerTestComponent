@@ -20,7 +20,9 @@ import other.UsesInaccessibles_MembersInjector;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 final class DaggerTestComponent {
   private DaggerTestComponent() {

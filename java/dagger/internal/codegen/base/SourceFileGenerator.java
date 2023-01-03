@@ -18,6 +18,7 @@ package dagger.internal.codegen.base;
 
 import static androidx.room.compiler.processing.JavaPoetExtKt.addOriginatingElement;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.KOTLIN_INTERNAL;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.RAWTYPES;
 import static dagger.internal.codegen.javapoet.AnnotationSpecs.Suppression.UNCHECKED;
 import static dagger.internal.codegen.xprocessing.XElements.closestEnclosingTypeElement;
@@ -76,7 +77,7 @@ public abstract class SourceFileGenerator<T> {
     for (TypeSpec.Builder type : topLevelTypes(input)) {
       try {
         filer.write(buildJavaFile(input, type), XFiler.Mode.Isolating);
-      } catch (Exception e) {
+      } catch (RuntimeException e) {
         // if the code above threw a SFGE, use that
         Throwables.propagateIfPossible(e, SourceFileGenerationException.class);
         // otherwise, throw a new one
@@ -99,12 +100,13 @@ public abstract class SourceFileGenerator<T> {
                         .build());
     generatedAnnotation.ifPresent(typeSpecBuilder::addAnnotation);
 
-    // TODO(b/134590785): remove this and only suppress annotations locally, if necessary
+    // TODO(b/134590785): Remove UNCHECKED/RAWTYPES and suppress locally where necessary.
+    // TODO(b/263891456): Remove KOTLIN_INTERNAL and use Object/raw types where necessary.
     typeSpecBuilder.addAnnotation(
         AnnotationSpecs.suppressWarnings(
             ImmutableSet.<Suppression>builder()
                 .addAll(warningSuppressions())
-                .add(UNCHECKED, RAWTYPES)
+                .add(UNCHECKED, RAWTYPES, KOTLIN_INTERNAL)
                 .build()));
 
     String packageName = closestEnclosingTypeElement(originatingElement).getPackageName();

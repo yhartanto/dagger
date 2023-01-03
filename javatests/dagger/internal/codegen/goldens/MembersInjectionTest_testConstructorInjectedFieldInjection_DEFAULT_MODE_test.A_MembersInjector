@@ -14,7 +14,9 @@ import javax.inject.Provider;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 public final class A_MembersInjector implements MembersInjector<A> {
   private final Provider<String> valueBProvider;

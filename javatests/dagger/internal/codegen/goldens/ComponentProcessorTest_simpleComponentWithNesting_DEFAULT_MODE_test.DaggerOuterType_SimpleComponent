@@ -11,7 +11,9 @@ import javax.annotation.processing.Generated;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 final class DaggerOuterType_SimpleComponent {
   private DaggerOuterType_SimpleComponent() {

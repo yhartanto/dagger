@@ -15,7 +15,9 @@ import javax.inject.Provider;
 )
 @SuppressWarnings({
     "unchecked",
-    "rawtypes"
+    "rawtypes",
+    "KotlinInternal",
+    "KotlinInternalInJava"
 })
 public final class InjectedType_MembersInjector implements MembersInjector<InjectedType> {
   private final Provider<Integer> primitiveIntProvider;
