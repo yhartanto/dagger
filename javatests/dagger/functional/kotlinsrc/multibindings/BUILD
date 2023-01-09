@@ -20,21 +20,20 @@ load(
     "DOCLINT_HTML_AND_SYNTAX",
     "DOCLINT_REFERENCES",
 )
-load("//:test_defs.bzl", "GenJavaTests")
+load("//:test_defs.bzl", "GenKtTests")
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
+GenKtTests(
     name = "multibindings",
-    srcs = glob(["*.java"]),
+    srcs = glob(["*.kt"]),
     gen_library_deps = [
-        "//javatests/dagger/functional/multibindings/subpackage",
+        "//javatests/dagger/functional/kotlinsrc/multibindings/subpackage",
     ],
     javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
     deps = [
         "//:dagger_with_compiler",
         "//third_party/java/auto:value",
-        "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],

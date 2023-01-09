@@ -16,6 +16,8 @@
 
 package dagger.internal.codegen.writing;
 
+import static androidx.room.compiler.processing.XTypeKt.isArray;
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static com.squareup.javapoet.MethodSpec.constructorBuilder;
 import static com.squareup.javapoet.MethodSpec.methodBuilder;
 import static com.squareup.javapoet.TypeSpec.classBuilder;
@@ -23,6 +25,9 @@ import static dagger.internal.codegen.binding.AnnotationExpression.createMethodN
 import static dagger.internal.codegen.binding.AnnotationExpression.getAnnotationCreatorClassName;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
+import static dagger.internal.codegen.xprocessing.XTypes.asArray;
+import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
+import static dagger.internal.codegen.xprocessing.XTypes.rewrapType;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
@@ -32,6 +37,7 @@ import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFiler;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -41,6 +47,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import dagger.internal.codegen.base.SourceFileGenerator;
+import dagger.internal.codegen.javapoet.TypeNames;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.inject.Inject;
@@ -113,7 +120,7 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<XTypeElement
     ImmutableList.Builder<CodeBlock> parameters = ImmutableList.builder();
     for (XMethodElement annotationMember : annotationElement.getDeclaredMethods()) {
       String parameterName = getSimpleName(annotationMember);
-      TypeName parameterType = annotationMember.getReturnType().getTypeName();
+      TypeName parameterType = maybeRewrapKClass(annotationMember.getReturnType()).getTypeName();
       createMethod.addParameter(parameterType, parameterName);
       parameters.add(CodeBlock.of("$L", parameterName));
     }
@@ -148,5 +155,12 @@ public class AnnotationCreatorGenerator extends SourceFileGenerator<XTypeElement
       }
     }
     return annotationElements;
+  }
+
+  // TODO(b/264464791): This KClass -> Class replacement can be removed once this bug is fixed.
+  private XType maybeRewrapKClass(XType type) {
+    return isArray(type)
+        ? getProcessingEnv(type).getArrayType(maybeRewrapKClass(asArray(type).getComponentType()))
+        : isTypeOf(type, TypeNames.KCLASS) ? rewrapType(type, TypeNames.CLASS) : type;
   }
 }

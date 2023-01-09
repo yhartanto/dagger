@@ -19,22 +19,20 @@ package dagger.internal.codegen.binding;
 import static androidx.room.compiler.processing.XTypeKt.isArray;
 import static dagger.internal.codegen.binding.SourceFiles.classFileName;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 import static dagger.internal.codegen.xprocessing.XAnnotationValues.characterLiteralWithSingleQuotes;
 import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.asArray;
+import static dagger.internal.codegen.xprocessing.XTypes.isTypeOf;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XAnnotationValue;
-import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import dagger.internal.codegen.xprocessing.XElements;
+import dagger.internal.codegen.javapoet.TypeNames;
 
 /**
  * Returns an expression creating an instance of the visited annotation type. Its parameter must be
@@ -65,22 +63,13 @@ public final class AnnotationExpression {
   }
 
   private CodeBlock getAnnotationInstanceExpression(XAnnotation annotation) {
-    ImmutableMap<String, XType> valueTypesByName =
-        annotation.getType().getTypeElement().getDeclaredMethods().stream()
-            .filter(method -> method.getParameters().isEmpty())
-            .collect(toImmutableMap(XElements::getSimpleName, XMethodElement::getReturnType));
     return CodeBlock.of(
         "$T.$L($L)",
         creatorClass,
         createMethodName(annotation.getType().getTypeElement()),
         makeParametersCodeBlock(
             annotation.getAnnotationValues().stream()
-                .map(
-                    value -> {
-                      String name =
-                          value.getName(); // SUPPRESS_GET_NAME_CHECK: This is not XElement
-                      return getValueExpression(value, valueTypesByName.get(name));
-                    })
+                .map(this::getValueExpression)
                 .collect(toImmutableList())));
   }
 
@@ -103,17 +92,19 @@ public final class AnnotationExpression {
    * Returns an expression that evaluates to a {@code value} of a given type on an {@code
    * annotation}.
    */
-  CodeBlock getValueExpression(XAnnotationValue value, XType valueType) {
-    return isArray(valueType)
-        ? CodeBlock.of(
-            "new $T[] $L",
-            asArray(valueType).getComponentType().getRawType().getTypeName(),
-            visit(value))
-        : visit(value);
-  }
-
-  private CodeBlock visit(XAnnotationValue value) {
-    if (value.hasEnumValue()) {
+  CodeBlock getValueExpression(XAnnotationValue value) {
+    if (isArray(value.getValueType())) {
+      XType componentType = asArray(value.getValueType()).getComponentType();
+      return CodeBlock.of(
+          "new $T[] {$L}",
+          // TODO(b/264464791): The KClass -> Class swap can be removed once this bug is fixed.
+          isTypeOf(componentType, TypeNames.KCLASS)
+              ? TypeNames.CLASS
+              : componentType.getRawType().getTypeName(),
+          value.asAnnotationValueList().stream()
+              .map(this::getValueExpression)
+              .collect(toParametersCodeBlock()));
+    } else if (value.hasEnumValue()) {
       return CodeBlock.of(
           "$T.$L",
           value.asEnum().getEnclosingElement().getClassName(),
@@ -137,10 +128,6 @@ public final class AnnotationExpression {
       return CodeBlock.of("$LL", value.asLong());
     } else if (value.hasShortValue()) {
       return CodeBlock.of("(short) $L", value.asShort());
-    } else if (value.hasListValue()) {
-      return CodeBlock.of(
-          "{$L}",
-          value.asAnnotationValueList().stream().map(this::visit).collect(toParametersCodeBlock()));
     } else {
       return CodeBlock.of("$L", value.getValue());
     }

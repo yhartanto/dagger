@@ -165,15 +165,10 @@ public final class MapKeys {
           ClassName.get("dagger.android.internal", "AndroidInjectionKeys"),
           unwrappedType.getClassName().reflectionName());
     }
-
     AnnotationExpression annotationExpression = new AnnotationExpression(mapKey);
-    if (unwrappedValue.isPresent()) {
-      XType unwrappedValueType =
-          getOnlyElement(mapKey.getType().getTypeElement().getDeclaredMethods()).getReturnType();
-      return annotationExpression.getValueExpression(unwrappedValue.get(), unwrappedValueType);
-    } else {
-      return annotationExpression.getAnnotationInstanceExpression();
-    }
+    return unwrappedValue.isPresent()
+        ? annotationExpression.getValueExpression(unwrappedValue.get())
+        : annotationExpression.getAnnotationInstanceExpression();
   }
 
   /**
