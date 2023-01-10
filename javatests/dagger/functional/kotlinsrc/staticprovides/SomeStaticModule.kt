@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Dagger Authors.
+ * Copyright (C) 2023 The Dagger Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-package dagger.functional.staticprovides;
+package dagger.functional.kotlinsrc.staticprovides
 
-import dagger.Module;
-import dagger.Provides;
-import dagger.multibindings.IntoSet;
+import dagger.Module
+import dagger.Provides
+import dagger.multibindings.IntoSet
 
 @Module
-final class SomeStaticModule {
+class SomeStaticModule {
   @Provides
   @IntoSet
-  static String contributeStringFromAStaticMethod() {
-    return SomeStaticModule.class + ".contributeStringFromAStaticMethod";
+  fun contributeStringFromAnInstanceMethod(): String {
+    return "${SomeStaticModule::class.java}.contributeStringFromAnInstanceMethod"
   }
 
-  @SuppressWarnings("StaticModuleMethods") // Purposely non-static for tests
-  @Provides
-  @IntoSet
-  String contributeStringFromAnInstanceMethod() {
-    return SomeStaticModule.class + ".contributeStringFromAnInstanceMethod";
+  companion object {
+    @Provides
+    @IntoSet
+    fun contributeStringFromAStaticMethod(): String {
+      return "${SomeStaticModule::class.java}.contributeStringFromAStaticMethod"
+    }
   }
 }
