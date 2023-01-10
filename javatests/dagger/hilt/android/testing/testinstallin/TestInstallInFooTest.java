@@ -18,14 +18,24 @@ package dagger.hilt.android.testing.testinstallin;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import dagger.hilt.android.AndroidEntryPoint;
 import dagger.hilt.android.testing.HiltAndroidRule;
 import dagger.hilt.android.testing.HiltAndroidTest;
 import dagger.hilt.android.testing.HiltTestApplication;
+import dagger.hilt.android.testing.testinstallin.TestInstallInModules.ActivityBarModule;
+import dagger.hilt.android.testing.testinstallin.TestInstallInModules.ActivityFooTestModule;
+import dagger.hilt.android.testing.testinstallin.TestInstallInModules.ActivityLevel;
 import dagger.hilt.android.testing.testinstallin.TestInstallInModules.Bar;
 import dagger.hilt.android.testing.testinstallin.TestInstallInModules.Foo;
-import dagger.hilt.android.testing.testinstallin.TestInstallInModules.GlobalBarModule;
-import dagger.hilt.android.testing.testinstallin.TestInstallInModules.GlobalFooTestModule;
+import dagger.hilt.android.testing.testinstallin.TestInstallInModules.FragmentBarModule;
+import dagger.hilt.android.testing.testinstallin.TestInstallInModules.FragmentFooTestModule;
+import dagger.hilt.android.testing.testinstallin.TestInstallInModules.FragmentLevel;
+import dagger.hilt.android.testing.testinstallin.TestInstallInModules.SingletonBarModule;
+import dagger.hilt.android.testing.testinstallin.TestInstallInModules.SingletonFooTestModule;
 import javax.inject.Inject;
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,15 +53,71 @@ public final class TestInstallInFooTest {
   @Inject Foo foo;
   @Inject Bar bar;
 
-  @Test
-  public void testFoo() {
-    hiltRule.inject();
-    assertThat(foo.moduleClass).isEqualTo(GlobalFooTestModule.class);
+  @AndroidEntryPoint(FragmentActivity.class)
+  public static final class TestActivity extends Hilt_TestInstallInFooTest_TestActivity {
+    @Inject @ActivityLevel Foo foo;
+    @Inject @ActivityLevel Bar bar;
+  }
+
+  @AndroidEntryPoint(Fragment.class)
+  public static final class TestFragment extends Hilt_TestInstallInFooTest_TestFragment {
+    @Inject @FragmentLevel Foo foo;
+    @Inject @FragmentLevel Bar bar;
   }
 
   @Test
-  public void testBar() {
+  public void testSingletonFooUsesTestInstallIn() {
     hiltRule.inject();
-    assertThat(bar.moduleClass).isEqualTo(GlobalBarModule.class);
+    assertThat(foo.moduleClass).isEqualTo(SingletonFooTestModule.class);
+  }
+
+  @Test
+  public void testSingletonBarUsesInstallIn() {
+    hiltRule.inject();
+    assertThat(bar.moduleClass).isEqualTo(SingletonBarModule.class);
+  }
+
+  @Test
+  public void testActivityFooUsesTestInstallIn() {
+    try (ActivityScenario<TestActivity> scenario = ActivityScenario.launch(TestActivity.class)) {
+      scenario.onActivity(
+          activity -> assertThat(activity.foo.moduleClass).isEqualTo(ActivityFooTestModule.class));
+    }
+  }
+
+  @Test
+  public void testActivityBarUsesInstallIn() {
+    try (ActivityScenario<TestActivity> scenario = ActivityScenario.launch(TestActivity.class)) {
+      scenario.onActivity(
+          activity -> assertThat(activity.bar.moduleClass).isEqualTo(ActivityBarModule.class));
+    }
+  }
+
+  @Test
+  public void testFragmentFooUsesTestInstallIn() {
+    try (ActivityScenario<TestActivity> scenario = ActivityScenario.launch(TestActivity.class)) {
+      scenario.onActivity(
+          activity -> assertThat(getTestFragment(activity).foo.moduleClass)
+              .isEqualTo(FragmentFooTestModule.class));
+    }
+  }
+
+  @Test
+  public void testFragmentBarUsesInstallIn() {
+    try (ActivityScenario<TestActivity> scenario = ActivityScenario.launch(TestActivity.class)) {
+      scenario.onActivity(
+          activity -> assertThat(getTestFragment(activity).bar.moduleClass)
+              .isEqualTo(FragmentBarModule.class));
+    }
+  }
+
+  private TestFragment getTestFragment(FragmentActivity activity) {
+    TestFragment fragment = new TestFragment();
+    activity
+        .getSupportFragmentManager()
+        .beginTransaction()
+        .add(fragment, null)
+        .commitNow();
+    return fragment;
   }
 }

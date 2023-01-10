@@ -28,8 +28,8 @@ import dagger.hilt.android.testing.HiltTestApplication;
 import dagger.hilt.android.testing.UninstallModules;
 import dagger.hilt.android.testing.testinstallin.TestInstallInModules.Bar;
 import dagger.hilt.android.testing.testinstallin.TestInstallInModules.Foo;
-import dagger.hilt.android.testing.testinstallin.TestInstallInModules.GlobalBarModule;
-import dagger.hilt.android.testing.testinstallin.TestInstallInModules.GlobalFooTestModule;
+import dagger.hilt.android.testing.testinstallin.TestInstallInModules.SingletonBarModule;
+import dagger.hilt.android.testing.testinstallin.TestInstallInModules.SingletonFooTestModule;
 import dagger.hilt.components.SingletonComponent;
 import javax.inject.Inject;
 import org.junit.Rule;
@@ -41,7 +41,7 @@ import org.robolectric.annotation.Config;
  * Tests that Foo uses the global {@linkplain TestInstallIn} module and that Bar uses the local
  * {@linkplain InstallIn} module due to {@linkplain UninstallModules}.
  */
-@UninstallModules(GlobalBarModule.class)
+@UninstallModules(SingletonBarModule.class)
 @HiltAndroidTest
 @RunWith(AndroidJUnit4.class)
 @Config(application = HiltTestApplication.class)
@@ -51,7 +51,7 @@ public final class TestInstallInBarTest {
 
   @Module
   @InstallIn(SingletonComponent.class)
-  public interface LocalBarTestModule {
+  interface LocalBarTestModule {
     @Provides
     static Bar provideBar() {
       return new Bar(LocalBarTestModule.class);
@@ -64,7 +64,7 @@ public final class TestInstallInBarTest {
   @Test
   public void testFoo() {
     hiltRule.inject();
-    assertThat(foo.moduleClass).isEqualTo(GlobalFooTestModule.class);
+    assertThat(foo.moduleClass).isEqualTo(SingletonFooTestModule.class);
   }
 
   @Test
