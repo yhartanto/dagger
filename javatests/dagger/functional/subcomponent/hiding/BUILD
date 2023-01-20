@@ -1,4 +1,4 @@
-# Copyright (C) 2022 The Dagger Authors.
+# Copyright (C) 2023 The Dagger Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,12 +21,15 @@ load("//:test_defs.bzl", "GenJavaTests")
 package(default_visibility = ["//:src"])
 
 GenJavaTests(
-    name = "subcomponent",
+    name = "hiding",
     srcs = glob(["*.java"]),
+    gen_library_deps = [
+        "//javatests/dagger/functional/subcomponent/hiding/a",
+        "//javatests/dagger/functional/subcomponent/hiding/b",
+    ],
     javacopts = DOCLINT_HTML_AND_SYNTAX,
     deps = [
         "//:dagger_with_compiler",
-        "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],

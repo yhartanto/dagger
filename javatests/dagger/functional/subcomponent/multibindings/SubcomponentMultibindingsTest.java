@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-package dagger.functional.subcomponent;
+package dagger.functional.subcomponent.multibindings;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import dagger.functional.subcomponent.MultibindingSubcomponents.BoundInChild;
-import dagger.functional.subcomponent.MultibindingSubcomponents.BoundInParent;
-import dagger.functional.subcomponent.MultibindingSubcomponents.BoundInParentAndChild;
-import dagger.functional.subcomponent.MultibindingSubcomponents.ParentWithProvisionHasChildWithProvision;
-import dagger.functional.subcomponent.MultibindingSubcomponents.ParentWithProvisionHasChildWithoutProvision;
-import dagger.functional.subcomponent.MultibindingSubcomponents.ParentWithoutProvisionHasChildWithProvision;
-import dagger.functional.subcomponent.MultibindingSubcomponents.ParentWithoutProvisionHasChildWithoutProvision;
-import dagger.functional.subcomponent.MultibindingSubcomponents.RequiresMultibindings;
+import dagger.functional.subcomponent.multibindings.MultibindingSubcomponents.BoundInChild;
+import dagger.functional.subcomponent.multibindings.MultibindingSubcomponents.BoundInParent;
+import dagger.functional.subcomponent.multibindings.MultibindingSubcomponents.BoundInParentAndChild;
+import dagger.functional.subcomponent.multibindings.MultibindingSubcomponents.ParentWithProvisionHasChildWithProvision;
+import dagger.functional.subcomponent.multibindings.MultibindingSubcomponents.ParentWithProvisionHasChildWithoutProvision;
+import dagger.functional.subcomponent.multibindings.MultibindingSubcomponents.ParentWithoutProvisionHasChildWithProvision;
+import dagger.functional.subcomponent.multibindings.MultibindingSubcomponents.ParentWithoutProvisionHasChildWithoutProvision;
+import dagger.functional.subcomponent.multibindings.MultibindingSubcomponents.RequiresMultibindings;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

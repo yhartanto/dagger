@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.functional.subcomponent;
+package dagger.functional.subcomponent.module;
 
 import dagger.Component;
 import dagger.Module;

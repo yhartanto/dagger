@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package dagger.functional.subcomponent;
+package dagger.functional.subcomponent.multibindings;
 
 import static com.google.common.truth.Truth.assertThat;
 

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package dagger.functional.subcomponent;
+package dagger.functional.subcomponent.module;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import dagger.Module;
-import dagger.functional.subcomponent.UsesModuleSubcomponents.ParentIncludesSubcomponentTransitively;
+import dagger.functional.subcomponent.module.UsesModuleSubcomponents.ParentIncludesSubcomponentTransitively;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -27,6 +27,14 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link Module#subcomponents()}. */
 @RunWith(JUnit4.class)
 public class ModuleWithSubcomponentsTest {
+
+  @Test
+  public void subcomponentFromModuleAndFactoryMethod() {
+    SubcomponentFromModuleAndFactoryMethod.ExposesBuilder parent =
+        DaggerSubcomponentFromModuleAndFactoryMethod_ExposesBuilder.create();
+    SubcomponentFromModuleAndFactoryMethod.Sub sub = parent.subcomponentBuilder().sub();
+    assertThat(sub).isNotNull();
+  }
 
   @Test
   public void subcomponentFromModules() {
