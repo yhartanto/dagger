@@ -30,10 +30,10 @@ import dagger.internal.codegen.base.Scopes;
 import dagger.internal.codegen.binding.MethodSignatureFormatter;
 import dagger.internal.codegen.compileroption.CompilerOptions;
 import dagger.internal.codegen.validation.DiagnosticMessageGenerator;
+import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraph.ComponentNode;
-import dagger.spi.model.BindingGraphPlugin;
 import dagger.spi.model.DiagnosticReporter;
 import java.util.Optional;
 import java.util.Set;
@@ -44,7 +44,7 @@ import javax.tools.Diagnostic;
  * Reports an error for any component that uses bindings with scopes that are not assigned to the
  * component.
  */
-final class IncompatiblyScopedBindingsValidator implements BindingGraphPlugin {
+final class IncompatiblyScopedBindingsValidator extends ValidationBindingGraphPlugin {
 
   private final MethodSignatureFormatter methodSignatureFormatter;
   private final CompilerOptions compilerOptions;

@@ -44,10 +44,10 @@ import dagger.internal.codegen.binding.BindingDeclarationFormatter;
 import dagger.internal.codegen.binding.BindingNode;
 import dagger.internal.codegen.binding.MultibindingDeclaration;
 import dagger.internal.codegen.compileroption.CompilerOptions;
+import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraph.ComponentNode;
-import dagger.spi.model.BindingGraphPlugin;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.ComponentPath;
 import dagger.spi.model.DaggerElement;
@@ -63,7 +63,7 @@ import javax.inject.Inject;
 import javax.tools.Diagnostic.Kind;
 
 /** Reports errors for conflicting bindings with the same key. */
-final class DuplicateBindingsValidator implements BindingGraphPlugin {
+final class DuplicateBindingsValidator extends ValidationBindingGraphPlugin {
 
   private static final Comparator<Binding> BY_LENGTH_OF_COMPONENT_PATH =
       comparing(binding -> binding.componentPath().components().size());

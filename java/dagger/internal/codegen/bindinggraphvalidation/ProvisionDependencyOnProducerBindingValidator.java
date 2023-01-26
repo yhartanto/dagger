@@ -22,11 +22,11 @@ import static dagger.internal.codegen.base.RequestKinds.canBeSatisfiedByProducti
 import static dagger.internal.codegen.extension.DaggerStreams.instancesOf;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
+import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraph.DependencyEdge;
 import dagger.spi.model.BindingGraph.Node;
-import dagger.spi.model.BindingGraphPlugin;
 import dagger.spi.model.DiagnosticReporter;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -36,7 +36,7 @@ import javax.inject.Inject;
  * binding.
  */
 // TODO(b/29509141): Clarify the error.
-final class ProvisionDependencyOnProducerBindingValidator implements BindingGraphPlugin {
+final class ProvisionDependencyOnProducerBindingValidator extends ValidationBindingGraphPlugin {
 
   @Inject
   ProvisionDependencyOnProducerBindingValidator() {}

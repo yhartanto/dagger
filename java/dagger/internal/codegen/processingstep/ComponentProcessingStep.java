@@ -26,8 +26,9 @@ import static java.util.Collections.disjoint;
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.BasicAnnotationProcessor.ProcessingStep;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableSet;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.squareup.javapoet.ClassName;
 import dagger.internal.codegen.base.SourceFileGenerator;
 import dagger.internal.codegen.binding.BindingGraph;
@@ -103,11 +104,19 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElem
     if (!isValid(componentDescriptor)) {
       return;
     }
-    if (!validateFullBindingGraph(componentDescriptor)) {
-      return;
+
+    Supplier<dagger.spi.model.BindingGraph> fullBindingGraphSupplier =
+        Suppliers.memoize(
+            () -> bindingGraphFactory.create(componentDescriptor, true).topLevelBindingGraph());
+    if (bindingGraphValidator.shouldDoFullBindingGraphValidation(component)) {
+      if (!bindingGraphValidator.isValid(fullBindingGraphSupplier.get())) {
+        return;
+      }
     }
+
     BindingGraph bindingGraph = bindingGraphFactory.create(componentDescriptor, false);
-    if (bindingGraphValidator.isValid(bindingGraph.topLevelBindingGraph())) {
+    if (bindingGraphValidator.isValid(
+        bindingGraph.topLevelBindingGraph(), fullBindingGraphSupplier)) {
       generateComponent(bindingGraph);
     }
   }
@@ -116,10 +125,14 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElem
     if (!isComponentValid(subcomponent)) {
       return;
     }
+    // TODO(dpb): ComponentDescriptorValidator for subcomponents, as we do for root components.
     ComponentDescriptor subcomponentDescriptor =
         componentDescriptorFactory.subcomponentDescriptor(subcomponent);
-    // TODO(dpb): ComponentDescriptorValidator for subcomponents, as we do for root components.
-    validateFullBindingGraph(subcomponentDescriptor);
+    if (!bindingGraphValidator.shouldDoFullBindingGraphValidation(subcomponent)) {
+      return;
+    }
+    BindingGraph fullBindingGraph = bindingGraphFactory.create(subcomponentDescriptor, true);
+    boolean isValid = bindingGraphValidator.isValid(fullBindingGraph.topLevelBindingGraph());
   }
 
   private void generateComponent(BindingGraph bindingGraph) {
@@ -134,16 +147,6 @@ final class ComponentProcessingStep extends TypeCheckingProcessingStep<XTypeElem
     ValidationReport report = componentValidator.validate(component);
     report.printMessagesTo(messager);
     return report.isClean();
-  }
-
-  @CanIgnoreReturnValue
-  private boolean validateFullBindingGraph(ComponentDescriptor componentDescriptor) {
-    if (!bindingGraphValidator.shouldDoFullBindingGraphValidation(
-        componentDescriptor.typeElement())) {
-      return true;
-    }
-    BindingGraph fullBindingGraph = bindingGraphFactory.create(componentDescriptor, true);
-    return bindingGraphValidator.isValid(fullBindingGraph.topLevelBindingGraph());
   }
 
   private boolean isValid(ComponentDescriptor componentDescriptor) {

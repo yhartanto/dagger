@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableSet;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
 import dagger.internal.codegen.binding.InjectBindingRegistry;
 import dagger.internal.codegen.validation.DiagnosticMessageGenerator;
+import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraph.ComponentNode;
@@ -38,7 +39,6 @@ import dagger.spi.model.BindingGraph.DependencyEdge;
 import dagger.spi.model.BindingGraph.Edge;
 import dagger.spi.model.BindingGraph.MissingBinding;
 import dagger.spi.model.BindingGraph.Node;
-import dagger.spi.model.BindingGraphPlugin;
 import dagger.spi.model.ComponentPath;
 import dagger.spi.model.DiagnosticReporter;
 import dagger.spi.model.Key;
@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 /** Reports errors for missing bindings. */
-final class MissingBindingValidator implements BindingGraphPlugin {
+final class MissingBindingValidator extends ValidationBindingGraphPlugin {
 
   private final InjectBindingRegistry injectBindingRegistry;
   private final DependencyRequestFormatter dependencyRequestFormatter;

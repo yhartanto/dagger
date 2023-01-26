@@ -19,16 +19,16 @@ package dagger.internal.codegen.bindinggraphvalidation;
 import static dagger.spi.model.BindingKind.INJECTION;
 
 import dagger.internal.codegen.validation.InjectValidator;
+import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
 import dagger.internal.codegen.validation.ValidationReport;
 import dagger.internal.codegen.validation.ValidationReport.Item;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
-import dagger.spi.model.BindingGraphPlugin;
 import dagger.spi.model.DiagnosticReporter;
 import javax.inject.Inject;
 
 /** Validates bindings from {@code @Inject}-annotated constructors. */
-final class InjectBindingValidator implements BindingGraphPlugin {
+final class InjectBindingValidator extends ValidationBindingGraphPlugin {
   private final InjectValidator injectValidator;
 
   @Inject

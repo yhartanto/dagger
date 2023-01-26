@@ -44,12 +44,12 @@ import dagger.internal.codegen.base.MapType;
 import dagger.internal.codegen.base.OptionalType;
 import dagger.internal.codegen.binding.DependencyRequestFormatter;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraph.ComponentNode;
 import dagger.spi.model.BindingGraph.DependencyEdge;
 import dagger.spi.model.BindingGraph.Node;
-import dagger.spi.model.BindingGraphPlugin;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.DependencyRequest;
 import dagger.spi.model.DiagnosticReporter;
@@ -61,7 +61,7 @@ import java.util.stream.Stream;
 import javax.inject.Inject;
 
 /** Reports errors for dependency cycles. */
-final class DependencyCycleValidator implements BindingGraphPlugin {
+final class DependencyCycleValidator extends ValidationBindingGraphPlugin {
 
   private final DependencyRequestFormatter dependencyRequestFormatter;
 

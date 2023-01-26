@@ -30,6 +30,7 @@ import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.validation.DiagnosticMessageGenerator;
+import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraph.ChildFactoryMethodEdge;
 import dagger.spi.model.BindingGraph.ComponentNode;
@@ -38,27 +39,29 @@ import dagger.spi.model.BindingGraph.MaybeBinding;
 import dagger.spi.model.BindingGraphPlugin;
 import dagger.spi.model.DaggerProcessingEnv;
 import dagger.spi.model.DiagnosticReporter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.tools.Diagnostic;
 
 /**
- * Combines many {@link BindingGraphPlugin} implementations. This helps reduce spam by combining
- * all of the messages that are reported on the root component.
+ * Combines many {@link BindingGraphPlugin} implementations. This helps reduce spam by combining all
+ * of the messages that are reported on the root component.
  */
-final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
+final class CompositeBindingGraphPlugin extends ValidationBindingGraphPlugin {
   @AssistedFactory
   interface Factory {
-    CompositeBindingGraphPlugin create(ImmutableSet<BindingGraphPlugin> plugins);
+    CompositeBindingGraphPlugin create(ImmutableSet<ValidationBindingGraphPlugin> plugins);
   }
 
-  private final ImmutableSet<BindingGraphPlugin> plugins;
+  private final ImmutableSet<ValidationBindingGraphPlugin> plugins;
   private final DiagnosticMessageGenerator.Factory messageGeneratorFactory;
+  private final Map<ComponentNode, String> errorMessages = new HashMap<>();
 
   @AssistedInject
   CompositeBindingGraphPlugin(
-      @Assisted ImmutableSet<BindingGraphPlugin> plugins,
+      @Assisted ImmutableSet<ValidationBindingGraphPlugin> plugins,
       DiagnosticMessageGenerator.Factory messageGeneratorFactory) {
     this.plugins = plugins;
     this.messageGeneratorFactory = messageGeneratorFactory;
@@ -68,10 +71,38 @@ final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
   public void visitGraph(BindingGraph bindingGraph, DiagnosticReporter diagnosticReporter) {
     AggregatingDiagnosticReporter aggregatingDiagnosticReporter = new AggregatingDiagnosticReporter(
         bindingGraph, diagnosticReporter, messageGeneratorFactory.create(bindingGraph));
-    plugins.forEach(plugin -> {
-      aggregatingDiagnosticReporter.setCurrentPlugin(plugin.pluginName());
-      plugin.visitGraph(bindingGraph, aggregatingDiagnosticReporter);
-    });
+    plugins.forEach(
+        plugin -> {
+          aggregatingDiagnosticReporter.setCurrentPlugin(plugin.pluginName());
+          plugin.visitGraph(bindingGraph, aggregatingDiagnosticReporter);
+          if (plugin.visitFullGraphRequested(bindingGraph)) {
+            requestVisitFullGraph(bindingGraph);
+          }
+        });
+    if (visitFullGraphRequested(bindingGraph)) {
+      errorMessages.put(
+          bindingGraph.rootComponentNode(), aggregatingDiagnosticReporter.getMessage());
+    } else {
+      aggregatingDiagnosticReporter.report();
+    }
+  }
+
+  @Override
+  public void revisitFullGraph(
+      BindingGraph prunedGraph, BindingGraph fullGraph, DiagnosticReporter diagnosticReporter) {
+    AggregatingDiagnosticReporter aggregatingDiagnosticReporter =
+        new AggregatingDiagnosticReporter(
+            fullGraph,
+            diagnosticReporter,
+            errorMessages.get(prunedGraph.rootComponentNode()),
+            messageGeneratorFactory.create(fullGraph));
+    plugins.stream()
+        .filter(plugin -> plugin.visitFullGraphRequested(prunedGraph))
+        .forEach(
+            plugin -> {
+              aggregatingDiagnosticReporter.setCurrentPlugin(plugin.pluginName());
+              plugin.revisitFullGraph(prunedGraph, fullGraph, aggregatingDiagnosticReporter);
+            });
     aggregatingDiagnosticReporter.report();
   }
 
@@ -118,6 +149,17 @@ final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
       this.messageGenerator = messageGenerator;
     }
 
+    AggregatingDiagnosticReporter(
+        BindingGraph graph,
+        DiagnosticReporter delegate,
+        String baseMessage,
+        DiagnosticMessageGenerator messageGenerator) {
+      this.graph = graph;
+      this.delegate = delegate;
+      this.messageGenerator = messageGenerator;
+      this.messageBuilder.append(baseMessage);
+    }
+
     /** Sets the currently running aggregated plugin. Used to add a diagnostic prefix. */
     void setCurrentPlugin(String pluginName) {
       currentPluginName = pluginName;
@@ -131,6 +173,10 @@ final class CompositeBindingGraphPlugin implements BindingGraphPlugin {
             graph.rootComponentNode(),
             PackageNameCompressor.compressPackagesInMessage(messageBuilder.toString()));
       }
+    }
+
+    String getMessage() {
+      return messageBuilder.toString();
     }
 
     @Override

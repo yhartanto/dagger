@@ -34,6 +34,7 @@ java_library(
         "//java/dagger/internal/codegen/validation",
         "//java/dagger/internal/codegen/writing",
         "//java/dagger/internal/codegen/xprocessing",
+        "//java/dagger/spi",
         "//third_party/java/auto:common",
         "//third_party/java/error_prone:annotations",
         "//third_party/java/guava/base",

@@ -25,15 +25,15 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
+import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
-import dagger.spi.model.BindingGraphPlugin;
 import dagger.spi.model.DiagnosticReporter;
 import dagger.spi.model.Key;
 import javax.inject.Inject;
 
 /** Validates that there are not multiple set binding contributions to the same binding. */
-final class SetMultibindingValidator implements BindingGraphPlugin {
+final class SetMultibindingValidator extends ValidationBindingGraphPlugin {
 
   @Inject
   SetMultibindingValidator() {

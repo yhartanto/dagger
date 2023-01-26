@@ -37,9 +37,9 @@ import dagger.internal.codegen.binding.BindingNode;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.KeyFactory;
 import dagger.internal.codegen.javapoet.TypeNames;
+import dagger.internal.codegen.validation.ValidationBindingGraphPlugin;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
-import dagger.spi.model.BindingGraphPlugin;
 import dagger.spi.model.DiagnosticReporter;
 import dagger.spi.model.Key;
 import java.util.Set;
@@ -49,7 +49,7 @@ import javax.inject.Inject;
  * Reports an error for any map binding with either more than one contribution with the same map key
  * or contributions with inconsistent map key annotation types.
  */
-final class MapMultibindingValidator implements BindingGraphPlugin {
+final class MapMultibindingValidator extends ValidationBindingGraphPlugin {
 
   private final BindingDeclarationFormatter bindingDeclarationFormatter;
   private final KeyFactory keyFactory;
