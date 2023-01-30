@@ -999,6 +999,70 @@ public class MissingBindingValidationTest {
   }
 
   @Test
+  public void requestUnusedBindingInDifferentComponent() {
+    Source parent =
+        CompilerTests.javaSource(
+            "test.Parent",
+            "package test;",
+            "",
+            "import dagger.Component;",
+            "",
+            "@Component",
+            "interface Parent {",
+            "  Child1 getChild1();",
+            "  Child2 getChild2();",
+            "}");
+    Source child1 =
+        CompilerTests.javaSource(
+            "test.Child1",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent",
+            "interface Child1 {",
+            "  Object getObject();",
+            "}");
+    Source child2 =
+        CompilerTests.javaSource(
+            "test.Child2",
+            "package test;",
+            "",
+            "import dagger.Subcomponent;",
+            "",
+            "@Subcomponent(modules = Child2Module.class)",
+            "interface Child2 {}");
+    Source child2Module =
+        CompilerTests.javaSource(
+            "test.Child2Module",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "interface Child2Module {",
+            "  @Provides",
+            "  static Object provideObject() {",
+            "    return new Object();",
+            "  }",
+            "}");
+
+    CompilerTests.daggerCompiler(parent, child1, child2, child2Module)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  String.join(
+                      "\n",
+                      "A binding for Object exists in Child2:",
+                      "Object is requested at",
+                      "[Child1] Child1.getObject() [Parent → Child1]"));
+            });
+  }
+
+  @Test
   public void sameSubcomponentUsedInDifferentHierarchiesMissingBindingFromOneSide() {
     Source parent =
         CompilerTests.javaSource(

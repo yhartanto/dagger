@@ -75,29 +75,51 @@ final class MissingBindingValidator extends ValidationBindingGraphPlugin {
     if (graph.isFullBindingGraph() || graph.rootComponentNode().isSubcomponent()) {
       return;
     }
-    graph
+    // A missing binding might exist in a different component as unused binding, thus getting
+    // stripped. Therefore, full graph needs to be traversed to capture the stripped bindings.
+    if (!graph.missingBindings().isEmpty()) {
+      requestVisitFullGraph(graph);
+    }
+  }
+
+  @Override
+  public void revisitFullGraph(
+      BindingGraph prunedGraph, BindingGraph fullGraph, DiagnosticReporter diagnosticReporter) {
+    prunedGraph
         .missingBindings()
-        .forEach(missingBinding -> reportMissingBinding(missingBinding, graph, diagnosticReporter));
+        .forEach(
+            missingBinding ->
+                reportMissingBinding(missingBinding, prunedGraph, fullGraph, diagnosticReporter));
   }
 
   private void reportMissingBinding(
-      MissingBinding missingBinding, BindingGraph graph, DiagnosticReporter diagnosticReporter) {
+      MissingBinding missingBinding,
+      BindingGraph prunedGraph,
+      BindingGraph fullGraph,
+      DiagnosticReporter diagnosticReporter) {
     List<ComponentPath> alternativeComponents =
-        graph.bindings(missingBinding.key()).stream()
+        fullGraph.bindings(missingBinding.key()).stream()
             .map(Binding::componentPath)
             .distinct()
             .collect(Collectors.toList());
     // Print component name for each binding along the dependency path if the missing binding
     // exists in a different component than expected
     if (alternativeComponents.isEmpty()) {
-      diagnosticReporter.reportBinding(
-          ERROR, missingBinding, missingBindingErrorMessage(missingBinding, graph));
+      // TODO(b/266993189): the passed in diagnostic reporter is constructed with full graph, so it
+      // doesn't print out full dependency path for a binding when invoking reportBinding on it.
+      // Therefore, we manually constructed the binding dependency path and passed into
+      // reportComponent.
+      diagnosticReporter.reportComponent(
+          ERROR,
+          fullGraph.componentNode(missingBinding.componentPath()).get(),
+          missingBindingErrorMessage(missingBinding, fullGraph)
+              + diagnosticMessageGeneratorFactory.create(prunedGraph).getMessage(missingBinding));
     } else {
       diagnosticReporter.reportComponent(
           ERROR,
-          graph.componentNode(missingBinding.componentPath()).get(),
-          missingBindingErrorMessage(missingBinding, graph)
-              + wrongComponentErrorMessage(missingBinding, alternativeComponents, graph));
+          fullGraph.componentNode(missingBinding.componentPath()).get(),
+          missingBindingErrorMessage(missingBinding, fullGraph)
+              + wrongComponentErrorMessage(missingBinding, alternativeComponents, prunedGraph));
     }
   }
 
