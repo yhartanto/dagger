@@ -25,7 +25,7 @@ import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XMethodElement;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
-import dagger.internal.codegen.javapoet.TypeNames;;
+import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.validation.BindsInstanceMethodValidator;
 import dagger.internal.codegen.validation.BindsInstanceParameterValidator;
 import javax.inject.Inject;
