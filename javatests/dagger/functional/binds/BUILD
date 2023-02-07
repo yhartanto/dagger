@@ -25,8 +25,19 @@ load("//:test_defs.bzl", "GenJavaTests")
 package(default_visibility = ["//:src"])
 
 GenJavaTests(
-    name = "binds",
-    srcs = glob(["*.java"]),
+    name = "BindsTest",
+    srcs = [
+        "AccessesExposedComponent.java",
+        "BindsTest.java",
+        "Foo.java",
+        "FooOfObjects.java",
+        "FooOfStrings.java",
+        "InterfaceModule.java",
+        "NeedsFactory.java",
+        "SimpleBindingModule.java",
+        "SomeQualifier.java",
+        "TestComponent.java",
+    ],
     gen_library_deps = [
         "//javatests/dagger/functional/binds/subpackage",
     ],
@@ -34,11 +45,39 @@ GenJavaTests(
     deps = [
         "//:dagger_with_compiler",
         "//third_party/java/auto:factory",
-        "//third_party/java/guava/base",
-        "//third_party/java/guava/collect",
-        "//third_party/java/guava/util/concurrent",
-        "//third_party/java/jsr305_annotations",
-        "//third_party/java/jsr330_inject",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)
+
+GenJavaTests(
+    name = "BindsCollectionsWithoutMultibindingsTest",
+    srcs = ["BindsCollectionsWithoutMultibindingsTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    deps = [
+        "//:dagger_with_compiler",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)
+
+GenJavaTests(
+    name = "ScopedBindsTest",
+    srcs = ["ScopedBindsTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    deps = [
+        "//:dagger_with_compiler",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)
+
+GenJavaTests(
+    name = "RecursiveBindsTest",
+    srcs = ["RecursiveBindsTest.java"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    deps = [
+        "//:dagger_with_compiler",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],

@@ -34,7 +34,6 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.binding.FrameworkField;
 import dagger.internal.codegen.javapoet.AnnotationSpecs;
 import dagger.internal.codegen.javapoet.TypeNames;
-import dagger.internal.codegen.writing.ComponentImplementation.CompilerMode;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.spi.model.BindingKind;
 import java.util.Optional;
@@ -65,7 +64,6 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
   private final ShardImplementation shardImplementation;
   private final ContributionBinding binding;
   private final FrameworkInstanceCreationExpression frameworkInstanceCreationExpression;
-  private final CompilerMode compilerMode;
   private FieldSpec fieldSpec;
   private InitializationState fieldInitializationState = InitializationState.UNINITIALIZED;
 
@@ -75,7 +73,6 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       FrameworkInstanceCreationExpression frameworkInstanceCreationExpression) {
     this.binding = checkNotNull(binding);
     this.shardImplementation = checkNotNull(componentImplementation).shardImplementation(binding);
-    this.compilerMode = componentImplementation.compilerMode();
     this.frameworkInstanceCreationExpression = checkNotNull(frameworkInstanceCreationExpression);
   }
 
@@ -113,12 +110,13 @@ class FrameworkFieldInitializer implements FrameworkInstanceSupplier {
       case INITIALIZING:
         fieldSpec = getOrCreateField();
         // We were recursively invoked, so create a delegate factory instead to break the loop.
-        // However, because SwitchingProvider takes no dependencies, even if they are recursively
-        // invoked, we don't need to delegate it since there is no dependency cycle.
-        if (FrameworkInstanceKind.from(binding, compilerMode)
-            .equals(FrameworkInstanceKind.SWITCHING_PROVIDER)) {
-          break;
-        }
+
+        // TODO(erichang): For the most part SwitchingProvider takes no dependencies so even if they
+        // are recursively invoked, we don't need to delegate it since there is no dependency cycle.
+        // However, there is a case with a scoped @Binds where we reference the impl binding when
+        // passing it into DoubleCheck. For this case, we do need to delegate it. There might be
+        // a way to only do delegates in this situation, but we'd need to keep track of what other
+        // bindings use this.
 
         fieldInitializationState = InitializationState.DELEGATED;
         shardImplementation.addInitialization(

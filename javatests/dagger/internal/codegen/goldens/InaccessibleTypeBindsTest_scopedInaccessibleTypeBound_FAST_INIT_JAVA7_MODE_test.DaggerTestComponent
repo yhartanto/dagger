@@ -1,10 +1,10 @@
 package test;
 
 import dagger.internal.DaggerGenerated;
-import dagger.internal.DelegateFactory;
-import dagger.internal.SingleCheck;
-import javax.annotation.processing.Generated;
+import dagger.internal.DoubleCheck;
+import javax.annotation.Generated;
 import javax.inject.Provider;
+import other.FooImpl_Factory;
 
 @DaggerGenerated
 @Generated(
@@ -41,7 +41,10 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<FooFactory> fooFactoryProvider;
+    @SuppressWarnings("rawtypes")
+    private Provider fooImplProvider;
+
+    private Provider<Foo> bindProvider;
 
     private TestComponentImpl() {
 
@@ -49,19 +52,15 @@ final class DaggerTestComponent {
 
     }
 
-    private Bar bar() {
-      return new Bar(fooFactoryProvider.get());
-    }
-
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.fooFactoryProvider = new DelegateFactory<>();
-      DelegateFactory.setDelegate(fooFactoryProvider, SingleCheck.provider(new SwitchingProvider<FooFactory>(testComponentImpl, 0)));
+      this.fooImplProvider = new SwitchingProvider<Object>(testComponentImpl, 0);
+      this.bindProvider = DoubleCheck.provider((Provider) fooImplProvider);
     }
 
     @Override
-    public FooFactory fooFactory() {
-      return fooFactoryProvider.get();
+    public Foo getFoo() {
+      return bindProvider.get();
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -78,13 +77,8 @@ final class DaggerTestComponent {
       @Override
       public T get() {
         switch (id) {
-          case 0: // test.FooFactory 
-          return (T) new FooFactory() {
-            @Override
-            public Foo create(String str) {
-              return new Foo(str, testComponentImpl.bar());
-            }
-          };
+          case 0: // other.FooImpl 
+          return (T) FooImpl_Factory.newInstance();
 
           default: throw new AssertionError(id);
         }
@@ -92,4 +86,3 @@ final class DaggerTestComponent {
     }
   }
 }
-

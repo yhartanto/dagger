@@ -480,7 +480,7 @@ public final class ComponentImplementation {
 
     private ShardImplementation(ClassName name) {
       this.name = name;
-      this.switchingProviders = new SwitchingProviders(this);
+      this.switchingProviders = new SwitchingProviders(this, processingEnv);
       this.experimentalSwitchingProviders =
           new ExperimentalSwitchingProviders(this, componentRequestRepresentationsProvider);
 

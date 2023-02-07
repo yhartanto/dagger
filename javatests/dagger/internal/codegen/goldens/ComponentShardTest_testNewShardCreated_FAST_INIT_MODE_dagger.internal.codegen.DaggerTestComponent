@@ -1,6 +1,7 @@
 package dagger.internal.codegen;
 
 import dagger.internal.DaggerGenerated;
+import dagger.internal.DelegateFactory;
 import dagger.internal.DoubleCheck;
 import javax.annotation.processing.Generated;
 import javax.inject.Provider;
@@ -176,9 +177,10 @@ final class DaggerTestComponent {
     @SuppressWarnings("unchecked")
     private void initialize() {
       this.binding5Provider = DoubleCheck.provider(new SwitchingProvider<Binding5>(testComponentImpl, 3));
+      this.binding2Provider = new DelegateFactory<>();
       this.binding4Provider = DoubleCheck.provider(new SwitchingProvider<Binding4>(testComponentImpl, 2));
       this.binding3Provider = DoubleCheck.provider(new SwitchingProvider<Binding3>(testComponentImpl, 1));
-      this.binding2Provider = DoubleCheck.provider(new SwitchingProvider<Binding2>(testComponentImpl, 0));
+      DelegateFactory.setDelegate(binding2Provider, DoubleCheck.provider(new SwitchingProvider<Binding2>(testComponentImpl, 0)));
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -251,4 +253,3 @@ final class DaggerTestComponent {
     }
   }
 }
-

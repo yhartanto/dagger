@@ -65,7 +65,7 @@ final class DaggerTestComponent {
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.provideMaybeProvider = new SwitchingProvider<>(testComponentImpl, 0);
+      this.provideMaybeProvider = new SwitchingProvider<Maybe>(testComponentImpl, 0);
     }
 
     @Override

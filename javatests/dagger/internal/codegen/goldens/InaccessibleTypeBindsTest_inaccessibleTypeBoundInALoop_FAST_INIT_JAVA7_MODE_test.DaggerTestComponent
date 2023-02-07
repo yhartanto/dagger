@@ -2,9 +2,11 @@ package test;
 
 import dagger.internal.DaggerGenerated;
 import dagger.internal.DelegateFactory;
-import dagger.internal.SingleCheck;
-import javax.annotation.processing.Generated;
+import javax.annotation.Generated;
 import javax.inject.Provider;
+import other.FooImpl_Factory;
+import other.OtherEntryPoint;
+import other.OtherEntryPoint_Factory;
 
 @DaggerGenerated
 @Generated(
@@ -41,7 +43,8 @@ final class DaggerTestComponent {
   private static final class TestComponentImpl implements TestComponent {
     private final TestComponentImpl testComponentImpl = this;
 
-    private Provider<FooFactory> fooFactoryProvider;
+    @SuppressWarnings("rawtypes")
+    private Provider fooImplProvider;
 
     private TestComponentImpl() {
 
@@ -49,19 +52,19 @@ final class DaggerTestComponent {
 
     }
 
-    private Bar bar() {
-      return new Bar(fooFactoryProvider.get());
+    private Object fooImpl() {
+      return FooImpl_Factory.newInstance(fooImplProvider);
     }
 
     @SuppressWarnings("unchecked")
     private void initialize() {
-      this.fooFactoryProvider = new DelegateFactory<>();
-      DelegateFactory.setDelegate(fooFactoryProvider, SingleCheck.provider(new SwitchingProvider<FooFactory>(testComponentImpl, 0)));
+      this.fooImplProvider = new DelegateFactory<>();
+      DelegateFactory.setDelegate(fooImplProvider, new SwitchingProvider<Object>(testComponentImpl, 0));
     }
 
     @Override
-    public FooFactory fooFactory() {
-      return fooFactoryProvider.get();
+    public OtherEntryPoint getOtherEntryPoint() {
+      return OtherEntryPoint_Factory.newInstance(fooImpl());
     }
 
     private static final class SwitchingProvider<T> implements Provider<T> {
@@ -78,13 +81,8 @@ final class DaggerTestComponent {
       @Override
       public T get() {
         switch (id) {
-          case 0: // test.FooFactory 
-          return (T) new FooFactory() {
-            @Override
-            public Foo create(String str) {
-              return new Foo(str, testComponentImpl.bar());
-            }
-          };
+          case 0: // other.FooImpl 
+          return (T) FooImpl_Factory.newInstance(testComponentImpl.fooImplProvider);
 
           default: throw new AssertionError(id);
         }
@@ -92,4 +90,3 @@ final class DaggerTestComponent {
     }
   }
 }
-

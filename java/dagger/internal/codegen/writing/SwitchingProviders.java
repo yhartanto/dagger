@@ -30,6 +30,7 @@ import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.squareup.javapoet.ClassName;
@@ -42,6 +43,7 @@ import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.CodeBlocks;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
 import dagger.internal.codegen.writing.FrameworkFieldInitializer.FrameworkInstanceCreationExpression;
+import dagger.internal.codegen.xprocessing.XProcessingEnvs;
 import dagger.spi.model.BindingKind;
 import dagger.spi.model.Key;
 import java.util.HashMap;
@@ -77,9 +79,11 @@ final class SwitchingProviders {
       new LinkedHashMap<>();
 
   private final ShardImplementation shardImplementation;
+  private final XProcessingEnv processingEnv;
 
-  SwitchingProviders(ShardImplementation shardImplementation) {
+  SwitchingProviders(ShardImplementation shardImplementation, XProcessingEnv processingEnv) {
     this.shardImplementation = checkNotNull(shardImplementation);
+    this.processingEnv = checkNotNull(processingEnv);
   }
 
   /** Returns the framework instance creation expression for an inner switching provider class. */
@@ -133,7 +137,9 @@ final class SwitchingProviders {
           // Add the type parameter explicitly when the binding is scoped because Java can't resolve
           // the type when wrapped. For example, the following will error:
           //   fooProvider = DoubleCheck.provider(new SwitchingProvider<>(1));
-          (binding.scope().isPresent() || binding.kind().equals(BindingKind.ASSISTED_FACTORY))
+          (binding.scope().isPresent()
+              || binding.kind().equals(BindingKind.ASSISTED_FACTORY)
+              || XProcessingEnvs.isPreJava8SourceVersion(processingEnv))
               ? CodeBlock.of(
                   "$T", shardImplementation.accessibleTypeName(binding.contributedType()))
               : "",

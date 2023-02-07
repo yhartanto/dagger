@@ -25,8 +25,19 @@ load("//:test_defs.bzl", "GenKtTests")
 package(default_visibility = ["//:src"])
 
 GenKtTests(
-    name = "binds",
-    srcs = glob(["*.kt"]),
+    name = "BindsTest",
+    srcs = [
+        "AccessesExposedComponent.kt",
+        "BindsTest.kt",
+        "Foo.kt",
+        "FooOfObjects.kt",
+        "FooOfStrings.kt",
+        "InterfaceModule.kt",
+        "NeedsFactory.kt",
+        "SimpleBindingModule.kt",
+        "SomeQualifier.kt",
+        "TestComponent.kt",
+    ],
     gen_library_deps = [
         "//javatests/dagger/functional/kotlinsrc/binds/subpackage",
     ],
@@ -34,11 +45,28 @@ GenKtTests(
     deps = [
         "//:dagger_with_compiler",
         "//third_party/java/auto:factory",
-        "//third_party/java/guava/base",
-        "//third_party/java/guava/collect",
-        "//third_party/java/guava/util/concurrent",
-        "//third_party/java/jsr305_annotations",
-        "//third_party/java/jsr330_inject",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)
+
+GenKtTests(
+    name = "BindsCollectionsWithoutMultibindingsTest",
+    srcs = ["BindsCollectionsWithoutMultibindingsTest.kt"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    deps = [
+        "//:dagger_with_compiler",
+        "//third_party/java/junit",
+        "//third_party/java/truth",
+    ],
+)
+
+GenKtTests(
+    name = "ScopedBindsTest",
+    srcs = ["ScopedBindsTest.kt"],
+    javacopts = DOCLINT_HTML_AND_SYNTAX + DOCLINT_REFERENCES,
+    deps = [
+        "//:dagger_with_compiler",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],
