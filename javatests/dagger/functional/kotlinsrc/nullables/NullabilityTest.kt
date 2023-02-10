@@ -29,10 +29,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
+internal annotation class Nullable
+
 @RunWith(JUnit4::class)
 class NullabilityTest {
-  internal annotation class Nullable
-
   @Component(dependencies = [NullComponent::class])
   internal interface NullComponentWithDependency {
     @Nullable fun string(): String?
