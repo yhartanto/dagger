@@ -20,38 +20,35 @@ import dagger.Component
 import dagger.Module
 import dagger.Provides
 import javax.inject.Inject
+import javax.inject.Provider
 import javax.inject.Singleton
 import library.MySubcomponent
 
 /** A simple, skeletal application that defines a simple component. */
-class SimpleApplication {
+class SimpleComponentClasses {
   class Foo @Inject constructor()
+  @Singleton class ScopedFoo @Inject constructor()
+  class ProvidedFoo
+  class ScopedProvidedFoo
 
   @Module
   object SimpleModule {
-    @Provides
-    fun provideFoo(): Foo {
-      return Foo()
-    }
+    @Provides fun provideFoo(): ProvidedFoo = ProvidedFoo()
+
+    @Provides @Singleton fun provideScopedFoo(): ScopedProvidedFoo = ScopedProvidedFoo()
   }
 
   @Singleton
   @Component(modules = [SimpleModule::class])
   interface SimpleComponent {
     fun foo(): Foo
+    fun scopedFoo(): ScopedFoo
+    fun providedFoo(): ProvidedFoo
+    fun scopedProvidedFoo(): ScopedProvidedFoo
+    fun scopedFooProvider(): Provider<ScopedFoo>
+    fun scopedProvidedFooProvider(): Provider<ScopedProvidedFoo>
 
     // Reproduces a regression in https://github.com/google/dagger/issues/2997.
     fun mySubcomponentFactory(): MySubcomponent.Factory
   }
-
-  companion object {
-    fun main() {
-      val foo: Foo = DaggerSimpleApplication_SimpleComponent.create().foo()
-    }
-  }
-}
-
-fun main() {
-  SimpleApplication.main()
-  AssistedInjects.main()
 }

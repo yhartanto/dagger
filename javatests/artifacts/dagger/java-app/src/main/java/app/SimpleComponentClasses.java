@@ -20,32 +20,57 @@ import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 /** A simple, skeletal application that defines a simple component. */
-public class SimpleApplication {
+public class SimpleComponentClasses {
   static final class Foo {
-    @Inject Foo() {}
+    @Inject
+    Foo() {}
+  }
+
+  @Singleton
+  static final class ScopedFoo {
+    @Inject
+    ScopedFoo() {}
+  }
+
+  static final class ProvidedFoo {
+    ProvidedFoo() {}
+  }
+
+  static final class ScopedProvidedFoo {
+    ScopedProvidedFoo() {}
   }
 
   @Module
   static final class SimpleModule {
     @Provides
-    static Foo provideFoo() {
-      return new Foo();
+    static ProvidedFoo provideFoo() {
+      return new ProvidedFoo();
+    }
+
+    @Provides
+    @Singleton
+    static ScopedProvidedFoo provideScopedFoo() {
+      return new ScopedProvidedFoo();
     }
   }
 
   @Singleton
-  @Component(modules = { SimpleModule.class })
+  @Component(modules = SimpleModule.class)
   interface SimpleComponent {
     Foo foo();
-  }
 
-  public static void main(String[] args) {
-    Foo foo = DaggerSimpleApplication_SimpleComponent.create().foo();
+    ScopedFoo scopedFoo();
 
-    // Execute other classes
-    AssistedInjects.main(args);
+    ProvidedFoo providedFoo();
+
+    ScopedProvidedFoo scopedProvidedFoo();
+
+    Provider<ScopedFoo> scopedFooProvider();
+
+    Provider<ScopedProvidedFoo> scopedProvidedFooProvider();
   }
 }

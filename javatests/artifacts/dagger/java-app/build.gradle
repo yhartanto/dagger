@@ -27,6 +27,9 @@ java {
 dependencies {
   implementation "com.google.dagger:dagger:$dagger_version"
   annotationProcessor "com.google.dagger:dagger-compiler:$dagger_version"
+
+  testImplementation 'com.google.truth:truth:1.0.1'
+  testImplementation 'junit:junit:4.13'
 }
 
 mainClassName = 'app.SimpleApplication'

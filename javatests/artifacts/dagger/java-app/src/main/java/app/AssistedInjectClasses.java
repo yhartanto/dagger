@@ -14,47 +14,58 @@
  * limitations under the License.
  */
 
-package app
+package app;
 
-import dagger.Component
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
-import javax.inject.Inject
+import dagger.Component;
+import dagger.assisted.Assisted;
+import dagger.assisted.AssistedFactory;
+import dagger.assisted.AssistedInject;
+import javax.inject.Inject;
 
 // This is a regression test for https://github.com/google/dagger/issues/2309
 /** A simple, skeletal application that defines an assisted inject binding. */
-class AssistedInjects {
+public class AssistedInjectClasses {
   @Component
   interface MyComponent {
-    fun fooFactory(): FooFactory
+    FooFactory fooFactory();
 
-    fun parameterizedFooFactory(): ParameterizedFooFactory<Bar, String>
+    ParameterizedFooFactory<Bar, String> parameterizedFooFactory();
   }
 
-  class Bar @Inject constructor()
+  static final class Bar {
+    @Inject
+    Bar() {}
+  }
 
-  class Foo @AssistedInject constructor(val bar: Bar, @Assisted val str: String)
+  static class Foo {
+    String assistedStr;
+    Bar bar;
+
+    @AssistedInject
+    Foo(Bar bar, @Assisted String assistedStr) {
+      this.assistedStr = assistedStr;
+      this.bar = bar;
+    }
+  }
 
   @AssistedFactory
   interface FooFactory {
-    fun create(str: String): Foo
+    Foo create(String str);
   }
 
-  class ParameterizedFoo<T1, T2> @AssistedInject constructor(val t1: T1, @Assisted val t2: T2)
+  static class ParameterizedFoo<T1, T2> {
+    T1 t1;
+    T2 assistedT2;
+
+    @AssistedInject
+    ParameterizedFoo(T1 t1, @Assisted T2 assistedT2) {
+      this.t1 = t1;
+      this.assistedT2 = assistedT2;
+    }
+  }
 
   @AssistedFactory
   interface ParameterizedFooFactory<T1, T2> {
-    fun create(t2: T2): ParameterizedFoo<T1, T2>
-  }
-
-  companion object {
-    // Called from SimpleApplication.main()
-    fun main() {
-        val foo: Foo = DaggerAssistedInjects_MyComponent.create().fooFactory().create("")
-
-        val parameterizedFoo: ParameterizedFoo<Bar, String> =
-            DaggerAssistedInjects_MyComponent.create().parameterizedFooFactory().create("")
-    }
+    ParameterizedFoo<T1, T2> create(T2 t2);
   }
 }

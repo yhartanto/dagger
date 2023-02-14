@@ -14,53 +14,39 @@
  * limitations under the License.
  */
 
-package app;
+package app
 
-import dagger.Component;
-import dagger.assisted.Assisted;
-import dagger.assisted.AssistedFactory;
-import dagger.assisted.AssistedInject;
-import javax.inject.Inject;
+import dagger.Component
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import javax.inject.Inject
 
 // This is a regression test for https://github.com/google/dagger/issues/2309
 /** A simple, skeletal application that defines an assisted inject binding. */
-public class AssistedInjects {
+class AssistedInjectClasses {
   @Component
   interface MyComponent {
-    FooFactory fooFactory();
+    fun fooFactory(): FooFactory
 
-    ParameterizedFooFactory<Bar, String> parameterizedFooFactory();
+    fun parameterizedFooFactory(): ParameterizedFooFactory<Bar, String>
   }
 
-  static final class Bar {
-    @Inject
-    Bar() {}
-  }
+  class Bar @Inject constructor()
 
-  static class Foo {
-    @AssistedInject
-    Foo(Bar bar, @Assisted String str) {}
-  }
+  class Foo @AssistedInject constructor(val bar: Bar, @Assisted val assistedStr: String)
 
   @AssistedFactory
   interface FooFactory {
-    Foo create(String str);
+    fun create(str: String): Foo
   }
 
-  static class ParameterizedFoo<T1, T2> {
-    @AssistedInject
-    ParameterizedFoo(T1 t1, @Assisted T2 t2) {}
-  }
+  class ParameterizedFoo<T1, T2>
+  @AssistedInject
+  constructor(val t1: T1, @Assisted val assistedT2: T2)
 
   @AssistedFactory
   interface ParameterizedFooFactory<T1, T2> {
-    ParameterizedFoo<T1, T2> create(T2 t2);
-  }
-
-  public static void main(String[] args) {
-    Foo foo = DaggerAssistedInjects_MyComponent.create().fooFactory().create("");
-
-    ParameterizedFoo<Bar, String> parameterizedFoo =
-        DaggerAssistedInjects_MyComponent.create().parameterizedFooFactory().create("");
+    fun create(t2: T2): ParameterizedFoo<T1, T2>
   }
 }
