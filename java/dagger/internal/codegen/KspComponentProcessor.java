@@ -20,6 +20,7 @@ import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingStep;
 import androidx.room.compiler.processing.XRoundEnv;
 import androidx.room.compiler.processing.ksp.KspBasicAnnotationProcessor;
+import com.google.auto.service.AutoService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.ksp.processing.SymbolProcessor;
@@ -63,6 +64,7 @@ public final class KspComponentProcessor extends KspBasicAnnotationProcessor {
   }
 
   /** Provides the {@link KspComponentProcessor}. */
+  @AutoService(SymbolProcessorProvider.class)
   public static final class Provider implements SymbolProcessorProvider {
     /**
      * Creates a component processor that uses given {@link BindingGraphPlugin}s instead of loading
