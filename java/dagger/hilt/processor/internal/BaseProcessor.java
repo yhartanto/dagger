@@ -16,10 +16,20 @@
 
 package dagger.hilt.processor.internal;
 
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkState;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 
-import com.google.auto.common.MoreElements;
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XProcessingEnvConfig;
+import androidx.room.compiler.processing.XRoundEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.SetMultimap;
@@ -29,14 +39,11 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 
 /**
  * Implements default configurations for Processors, and provides structure for exception handling.
@@ -49,7 +56,6 @@ import javax.lang.model.util.Types;
  *     <ul><li> #processEach()</ul>
  *   </li>
  *   <li> #postRoundProcess()
- *   <li> #claimAnnotation()
  * </ol>
  *
  * <p>#processEach() allows each element to be processed, even if exceptions are thrown. Due to the
@@ -57,21 +63,23 @@ import javax.lang.model.util.Types;
  * of exceptions are thrown with each build.
  */
 public abstract class BaseProcessor extends AbstractProcessor {
+  private static final XProcessingEnvConfig PROCESSING_ENV_CONFIG =
+      new XProcessingEnvConfig.Builder().disableAnnotatedElementValidation(true).build();
+
   /** Stores the state of processing for a given annotation and element. */
   @AutoValue
   abstract static class ProcessingState {
-    private static ProcessingState of(TypeElement annotation, Element element) {
+    private static ProcessingState of(XTypeElement annotation, XElement element) {
       // We currently only support TypeElements directly annotated with the annotation.
       // TODO(bcorso): Switch to using BasicAnnotationProcessor if we need more than this.
       // Note: Switching to BasicAnnotationProcessor is currently not possible because of cyclic
       // references to generated types in our API. For example, an @AndroidEntryPoint annotated
       // element will indefinitely defer its own processing because it extends a generated type
       // that it's responsible for generating.
-      checkState(MoreElements.isType(element));
-      checkState(Processors.hasAnnotation(element, ClassName.get(annotation)));
+      checkState(isTypeElement(element));
+      checkState(element.hasAnnotation(annotation.getClassName()));
       return new AutoValue_BaseProcessor_ProcessingState(
-          ClassName.get(annotation),
-          ClassName.get(MoreElements.asType(element)));
+          annotation.getClassName(), asTypeElement(element).getClassName());
     }
 
     /** Returns the class name of the annotation. */
@@ -81,24 +89,22 @@ public abstract class BaseProcessor extends AbstractProcessor {
     abstract ClassName elementClassName();
 
     /** Returns the annotation that triggered the processing. */
-    TypeElement annotation(Elements elements) {
-      return elements.getTypeElement(elementClassName().toString());
+    XTypeElement annotation(XProcessingEnv processingEnv) {
+      return processingEnv.requireTypeElement(annotationClassName());
     }
 
     /** Returns the annotated element to process. */
-    TypeElement element(Elements elements) {
-      return elements.getTypeElement(annotationClassName().toString());
+    XTypeElement element(XProcessingEnv processingEnv) {
+      return processingEnv.requireTypeElement(elementClassName());
     }
   }
 
   private final Set<ProcessingState> stateToReprocess = new LinkedHashSet<>();
-  private Elements elements;
-  private Types types;
-  private Messager messager;
+  private XProcessingEnv env;
   private ProcessorErrorHandler errorHandler;
 
   @Override
-  public final Set<String> getSupportedOptions() {
+  public final ImmutableSet<String> getSupportedOptions() {
     // This is declared here rather than in the actual processors because KAPT will issue a
     // warning if any used option is not unsupported. This can happen when there is a module
     // which uses Hilt but lacks any @AndroidEntryPoint annotations.
@@ -115,17 +121,17 @@ public abstract class BaseProcessor extends AbstractProcessor {
   }
 
   /** Used to perform initialization before each round of processing. */
-  protected void preRoundProcess(RoundEnvironment roundEnv) {};
+  protected void preRoundProcess(XRoundEnv roundEnv) {}
 
   /**
    * Called for each element in a round that uses a supported annotation.
    *
-   * Note that an exception can be thrown for each element in the round. This is usually preferred
-   * over throwing only the first exception in a round. Only throwing the first exception in the
-   * round can lead to flaky errors that are dependent on the non-deterministic ordering that the
-   * elements are processed in.
+   * <p>Note that an exception can be thrown for each element in the round. This is usually
+   * preferred over throwing only the first exception in a round. Only throwing the first exception
+   * in the round can lead to flaky errors that are dependent on the non-deterministic ordering that
+   * the elements are processed in.
    */
-  protected void processEach(TypeElement annotation, Element element) throws Exception {};
+  protected void processEach(XTypeElement annotation, XElement element) throws Exception {}
 
   /**
    * Used to perform post processing at the end of a round. This is especially useful for handling
@@ -135,12 +141,7 @@ public abstract class BaseProcessor extends AbstractProcessor {
    * already detected errors on an annotated element, performing post processing on an aggregate
    * will just produce more (perhaps non-deterministic) errors.
    */
-  protected void postRoundProcess(RoundEnvironment roundEnv) throws Exception {};
-
-  /** @return true if you want to claim annotations after processing each round. Default false. */
-  protected boolean claimAnnotations() {
-    return false;
-  }
+  protected void postRoundProcess(XRoundEnv roundEnv) throws Exception {}
 
   /**
    * @return true if you want to delay errors to the last round. Useful if the processor
@@ -151,15 +152,12 @@ public abstract class BaseProcessor extends AbstractProcessor {
     return false;
   }
 
-
   @Override
   public synchronized void init(ProcessingEnvironment processingEnvironment) {
     super.init(processingEnvironment);
-    this.messager = processingEnv.getMessager();
-    this.elements = processingEnv.getElementUtils();
-    this.types = processingEnv.getTypeUtils();
-    this.errorHandler = new ProcessorErrorHandler(processingEnvironment);
-    HiltCompilerOptions.checkWrongAndDeprecatedOptions(processingEnvironment);
+    this.env = XProcessingEnv.create(processingEnvironment, PROCESSING_ENV_CONFIG);
+    this.errorHandler = new ProcessorErrorHandler(env);
+    HiltCompilerOptions.checkWrongAndDeprecatedOptions(env);
   }
 
   @Override
@@ -167,34 +165,42 @@ public abstract class BaseProcessor extends AbstractProcessor {
     return SourceVersion.latestSupported();
   }
 
-  /**
-   * This should not be overridden, as it defines the order of the processing.
-   */
+  /** This should not be overridden, as it defines the order of the processing. */
   @Override
   public final boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    process(
+        annotations.stream()
+            .map(annotation -> toXProcessing(annotation, env))
+            .collect(toImmutableList()),
+        XRoundEnv.create(env, roundEnv, roundEnv.processingOver()));
+    return false;  // Don't claim annotations
+  }
+
+  private void process(ImmutableList<XTypeElement> annotations, XRoundEnv roundEnv) {
     preRoundProcess(roundEnv);
 
     boolean roundError = false;
 
     // Gather the set of new and deferred elements to process, grouped by annotation.
-    SetMultimap<TypeElement, Element> elementMultiMap = LinkedHashMultimap.create();
+    SetMultimap<XTypeElement, XElement> elementMultiMap = LinkedHashMultimap.create();
     for (ProcessingState processingState : stateToReprocess) {
-      elementMultiMap.put(processingState.annotation(elements), processingState.element(elements));
+      elementMultiMap.put(processingState.annotation(env), processingState.element(env));
     }
-    for (TypeElement annotation : annotations) {
-      elementMultiMap.putAll(annotation, roundEnv.getElementsAnnotatedWith(annotation));
+    for (XTypeElement annotation : annotations) {
+      elementMultiMap.putAll(
+          annotation, roundEnv.getElementsAnnotatedWith(annotation.getQualifiedName()));
     }
 
     // Clear the processing state before reprocessing.
     stateToReprocess.clear();
 
-    for (Map.Entry<TypeElement, Collection<Element>> entry : elementMultiMap.asMap().entrySet()) {
-      TypeElement annotation = entry.getKey();
-      for (Element element : entry.getValue()) {
+    for (Map.Entry<XTypeElement, Collection<XElement>> entry : elementMultiMap.asMap().entrySet()) {
+      XTypeElement annotation = entry.getKey();
+      for (XElement element : entry.getValue()) {
         try {
           processEach(annotation, element);
         } catch (Exception e) {
-          if (e instanceof ErrorTypeException && !roundEnv.processingOver()) {
+          if (e instanceof ErrorTypeException && !roundEnv.isProcessingOver()) {
             // Allow an extra round to reprocess to try to resolve this type.
             stateToReprocess.add(ProcessingState.of(annotation, element));
           } else {
@@ -213,31 +219,22 @@ public abstract class BaseProcessor extends AbstractProcessor {
       }
     }
 
-    if (!delayErrors() || roundEnv.processingOver()) {
+    if (!delayErrors() || roundEnv.isProcessingOver()) {
       errorHandler.checkErrors();
     }
-
-    return claimAnnotations();
   }
 
-  /** @return the error handle for the processor. */
-  protected final ProcessorErrorHandler getErrorHandler() {
-    return errorHandler;
+  public final XProcessingEnv processingEnv() {
+    return env;
   }
 
+  // TODO(bcorso): Remove this once all usages are converted to XProcessing.
   public final ProcessingEnvironment getProcessingEnv() {
-    return processingEnv;
+    return toJavac(env);
   }
 
+  // TODO(bcorso): Remove this once all usages are converted to XProcessing.
   public final Elements getElementUtils() {
-    return elements;
-  }
-
-  public final Types getTypeUtils() {
-    return types;
-  }
-
-  public final Messager getMessager() {
-    return messager;
+    return toJavac(env).getElementUtils();
   }
 }

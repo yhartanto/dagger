@@ -16,6 +16,7 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.AnnotationMirrors.getAnnotationValue;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.getPackage;
@@ -29,6 +30,8 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.STATIC;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -88,7 +91,11 @@ public final class AggregatedDepsProcessor extends BaseProcessor {
   }
 
   @Override
-  public void processEach(TypeElement annotation, Element element) throws Exception {
+  public void processEach(XTypeElement annotation, XElement element) throws Exception {
+    processEach(toJavac(element));
+  }
+
+  private void processEach(Element element) throws Exception {
     if (!seen.add(element)) {
       return;
     }

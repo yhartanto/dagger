@@ -18,6 +18,7 @@ package dagger.hilt.processor.internal;
 
 import static com.google.common.base.Ascii.toUpperCase;
 
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.common.collect.ImmutableSet;
 import dagger.hilt.processor.internal.optionvalues.BooleanValue;
 import dagger.hilt.processor.internal.optionvalues.GradleProjectType;
@@ -126,7 +127,7 @@ public final class HiltCompilerOptions {
   private static final ImmutableSet<String> DEPRECATED_OPTIONS =
       ImmutableSet.of("dagger.hilt.android.useFragmentGetContextFix");
 
-  public static void checkWrongAndDeprecatedOptions(ProcessingEnvironment env) {
+  public static void checkWrongAndDeprecatedOptions(XProcessingEnv env) {
     Set<String> knownOptions = getProcessorOptions();
     for (String option : env.getOptions().keySet()) {
       if (knownOptions.contains(option)) {

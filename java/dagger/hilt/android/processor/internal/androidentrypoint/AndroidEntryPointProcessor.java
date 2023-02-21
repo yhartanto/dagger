@@ -16,10 +16,13 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.getGradleProjectType;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.useAggregatingRootProcessor;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
@@ -29,7 +32,6 @@ import dagger.hilt.processor.internal.optionvalues.GradleProjectType;
 import java.util.Set;
 import javax.annotation.processing.Processor;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /**
@@ -53,7 +55,11 @@ public final class AndroidEntryPointProcessor extends BaseProcessor {
   }
 
   @Override
-  public void processEach(TypeElement annotation, Element element) throws Exception {
+  public void processEach(XTypeElement annotation, XElement element) throws Exception {
+    processEach(toJavac(element));
+  }
+
+  private void processEach(Element element) throws Exception {
     AndroidEntryPointMetadata metadata = AndroidEntryPointMetadata.of(getProcessingEnv(), element);
     new InjectorEntryPointGenerator(getProcessingEnv(), metadata).generate();
     switch (metadata.androidType()) {

@@ -16,16 +16,19 @@
 
 package dagger.hilt.processor.internal;
 
-import com.google.auto.common.MoreElements;
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
+
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XMessager;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Throwables;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.processing.Messager;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
-import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic.Kind;
 
 /** Utility class to handle keeping track of errors during processing. */
@@ -39,14 +42,13 @@ final class ProcessorErrorHandler {
   private static final String FAILURE_SUFFIX =
       "\n\033[1;31m[Hilt] Processing did not complete. See error above for details.\033[0m";
 
-  private final Messager messager;
-  private final Elements elements;
-  private final List<HiltError> hiltErrors;
+  private final XProcessingEnv processingEnv;
+  private final XMessager messager;
+  private final List<HiltError> hiltErrors = new ArrayList<>();
 
-  ProcessorErrorHandler(ProcessingEnvironment env) {
-    this.messager = env.getMessager();
-    this.elements = env.getElementUtils();
-    this.hiltErrors = new ArrayList<>();
+  ProcessorErrorHandler(XProcessingEnv processingEnv) {
+    this.processingEnv = processingEnv;
+    this.messager = processingEnv.getMessager();
   }
 
   /**
@@ -66,11 +68,13 @@ final class ProcessorErrorHandler {
         hiltErrors.add(HiltError.of(badInput.getMessage()));
       }
       for (Element element : badInput.getBadElements()) {
-        hiltErrors.add(HiltError.of(badInput.getMessage(), element));
+        hiltErrors.add(HiltError.of(badInput.getMessage(), toXProcessing(element, processingEnv)));
       }
     } else if (t instanceof ErrorTypeException) {
       ErrorTypeException badInput = (ErrorTypeException) t;
-      hiltErrors.add(HiltError.of(badInput.getMessage(), badInput.getBadElement()));
+      hiltErrors.add(
+          HiltError.of(
+              badInput.getMessage(), toXProcessing(badInput.getBadElement(), processingEnv)));
     } else if (t.getMessage() != null) {
       hiltErrors.add(HiltError.of(t.getMessage() + ": " + Throwables.getStackTraceAsString(t)));
     } else {
@@ -84,16 +88,15 @@ final class ProcessorErrorHandler {
       hiltErrors.forEach(
           hiltError -> {
             if (hiltError.element().isPresent()) {
-              Element element = hiltError.element().get();
-              if (MoreElements.isType(element)) {
+              XElement element = hiltError.element().get();
+              if (isTypeElement(element)) {
                 // If the error type is a TypeElement, get a new one just in case it was thrown in a
                 // previous round we can report the correct instance. Otherwise, this leads to
                 // issues in AndroidStudio when linking an error to the proper element.
                 // TODO(bcorso): Consider only allowing TypeElement errors when delaying errors,
                 // or maybe even removing delayed errors altogether.
                 element =
-                    elements.getTypeElement(
-                        MoreElements.asType(element).getQualifiedName().toString());
+                    processingEnv.requireTypeElement(asTypeElement(element).getQualifiedName());
               }
               messager.printMessage(Kind.ERROR, hiltError.message(), element);
             } else {
@@ -110,17 +113,17 @@ final class ProcessorErrorHandler {
       return of(message, Optional.empty());
     }
 
-    static HiltError of(String message, Element element) {
+    static HiltError of(String message, XElement element) {
       return of(message, Optional.of(element));
     }
 
-    private static HiltError of(String message, Optional<Element> element) {
+    private static HiltError of(String message, Optional<XElement> element) {
       return new AutoValue_ProcessorErrorHandler_HiltError(
           FAILURE_PREFIX + message + FAILURE_SUFFIX, element);
     }
 
     abstract String message();
 
-    abstract Optional<Element> element();
+    abstract Optional<XElement> element();
   }
 }

@@ -16,10 +16,12 @@
 
 package dagger.hilt.processor.internal.generatesrootinput;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static com.google.testing.compile.Compiler.javac;
 
+import androidx.room.compiler.processing.XRoundEnv;
 import com.google.auto.common.MoreElements;
 import com.google.common.truth.Correspondence;
 import com.google.testing.compile.Compilation;
@@ -31,7 +33,6 @@ import dagger.hilt.processor.internal.BaseProcessor;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.element.Element;
 import javax.tools.JavaFileObject;
@@ -59,9 +60,9 @@ public final class GeneratesRootInputProcessorTest {
     }
 
     @Override
-    protected void postRoundProcess(RoundEnvironment roundEnv) throws Exception {
+    protected void postRoundProcess(XRoundEnv roundEnv) throws Exception {
       if (generatedClasses > 0) {
-        elementsToWaitFor.addAll(generatesRootInputs.getElementsToWaitFor(roundEnv));
+        elementsToWaitFor.addAll(generatesRootInputs.getElementsToWaitFor(toJavac(roundEnv)));
       }
       if (generatedClasses < GENERATED_CLASSES) {
         TypeSpec typeSpec =

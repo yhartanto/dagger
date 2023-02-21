@@ -26,19 +26,17 @@ import javax.lang.model.element.Element;
 public final class BadInputException extends RuntimeException {
   private final ImmutableList<Element> badElements;
 
+  public BadInputException(String message) {
+    this(message, ImmutableList.of());
+  }
+
   public BadInputException(String message, Element badElement) {
-    super(message);
-    this.badElements = ImmutableList.of(badElement);
+    this(message, ImmutableList.of(badElement));
   }
 
   public BadInputException(String message, Iterable<? extends Element> badElements) {
     super(message);
     this.badElements = ImmutableList.copyOf(badElements);
-  }
-
-  public BadInputException(String message) {
-    super(message);
-    this.badElements = ImmutableList.of();
   }
 
   public ImmutableList<Element> getBadElements() {

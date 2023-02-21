@@ -16,8 +16,11 @@
 
 package dagger.hilt.processor.internal.originatingelement;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
@@ -44,7 +47,11 @@ public final class OriginatingElementProcessor extends BaseProcessor {
   }
 
   @Override
-  public void processEach(TypeElement annotation, Element element) throws Exception {
+  public void processEach(XTypeElement annotation, XElement element) {
+    processEach(toJavac(annotation), toJavac(element));
+  }
+
+  private void processEach(TypeElement annotation, Element element) {
     ProcessorErrors.checkState(
         MoreElements.isType(element) && Processors.isTopLevel(element),
         element,

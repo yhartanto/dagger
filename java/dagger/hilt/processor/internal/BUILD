@@ -26,8 +26,8 @@ java_library(
     deps = [
         ":compiler_options",
         ":processor_errors",
-        ":processors",
-        "//third_party/java/auto:common",
+        "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:value",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
@@ -156,6 +156,7 @@ java_library(
         ":processor_errors",
         "//java/dagger/hilt/processor/internal/optionvalues",
         "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",

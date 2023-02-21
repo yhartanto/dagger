@@ -16,49 +16,50 @@
 
 package dagger.hilt.android.processor.internal.viewmodel
 
+import androidx.room.compiler.processing.XElement
+import androidx.room.compiler.processing.XRoundEnv
+import androidx.room.compiler.processing.XTypeElement
+import androidx.room.compiler.processing.compat.XConverters.toJavac
 import com.google.auto.common.MoreElements
 import com.google.auto.service.AutoService
 import dagger.hilt.android.processor.internal.AndroidClassNames
 import dagger.hilt.processor.internal.BaseProcessor
 import javax.annotation.processing.Processor
-import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.SourceVersion
 import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessorType
 
-/**
- * Annotation processor for @ViewModelInject.
- */
+/** Annotation processor for @ViewModelInject. */
 @AutoService(Processor::class)
 @IncrementalAnnotationProcessor(IncrementalAnnotationProcessorType.ISOLATING)
 class ViewModelProcessor : BaseProcessor() {
 
   private val parsedElements = mutableSetOf<TypeElement>()
 
-  override fun getSupportedAnnotationTypes() = setOf(
-    AndroidClassNames.HILT_VIEW_MODEL.toString()
-  )
+  override fun getSupportedAnnotationTypes() = setOf(AndroidClassNames.HILT_VIEW_MODEL.toString())
 
   override fun getSupportedSourceVersion() = SourceVersion.latest()
 
-  override fun processEach(annotation: TypeElement, element: Element) {
+  override fun processEach(annotation: XTypeElement, element: XElement) {
+    processEach(element.toJavac())
+  }
+
+  private fun processEach(element: Element) {
     val typeElement = MoreElements.asType(element)
     if (parsedElements.add(typeElement)) {
       ViewModelMetadata.create(
-        processingEnv,
-        typeElement,
-      )?.let { viewModelMetadata ->
-        ViewModelModuleGenerator(
           processingEnv,
-          viewModelMetadata
-        ).generate()
-      }
+          typeElement,
+        )
+        ?.let { viewModelMetadata ->
+          ViewModelModuleGenerator(processingEnv, viewModelMetadata).generate()
+        }
     }
   }
 
-  override fun postRoundProcess(roundEnv: RoundEnvironment?) {
+  override fun postRoundProcess(roundEnv: XRoundEnv) {
     parsedElements.clear()
   }
 }

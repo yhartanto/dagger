@@ -16,8 +16,11 @@
 
 package dagger.hilt.processor.internal.definecomponent;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
@@ -52,7 +55,11 @@ public final class DefineComponentProcessor extends BaseProcessor {
   }
 
   @Override
-  protected void processEach(TypeElement annotation, Element element) throws Exception {
+  public void processEach(XTypeElement annotation, XElement element) throws Exception {
+    processEach(toJavac(annotation), toJavac(element));
+  }
+
+  private void processEach(TypeElement annotation, Element element) throws Exception {
     if (ClassName.get(annotation).equals(ClassNames.DEFINE_COMPONENT)) {
       // TODO(bcorso): For cycles we currently process each element in the cycle. We should skip
       // processing of subsequent elements in a cycle, but this requires ensuring that the first

@@ -16,6 +16,7 @@
 
 package dagger.hilt.processor.internal.root;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isCrossCompilationRootValidationDisabled;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isSharedTestComponentsEnabled;
@@ -25,6 +26,9 @@ import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.AGGREGATI
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.DYNAMIC;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XRoundEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
@@ -51,7 +55,6 @@ import java.util.Arrays;
 import java.util.Set;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
-import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
@@ -88,7 +91,11 @@ public final class RootProcessor extends BaseProcessor {
   }
 
   @Override
-  public void processEach(TypeElement annotation, Element element) throws Exception {
+  public void processEach(XTypeElement annotation, XElement element) throws Exception {
+    processEach(toJavac(annotation), toJavac(element));
+  }
+
+  private void processEach(TypeElement annotation, Element element) throws Exception {
     TypeElement rootElement = MoreElements.asType(element);
     // TODO(bcorso): Move this logic into a separate isolating processor to avoid regenerating it
     // for unrelated changes in Gradle.
@@ -106,11 +113,11 @@ public final class RootProcessor extends BaseProcessor {
   }
 
   @Override
-  public void postRoundProcess(RoundEnvironment roundEnv) throws Exception {
+  public void postRoundProcess(XRoundEnv roundEnv) throws Exception {
     if (!useAggregatingRootProcessor(getProcessingEnv())) {
       return;
     }
-    ImmutableSet<Element> newElements = generatesRootInputs.getElementsToWaitFor(roundEnv);
+    ImmutableSet<Element> newElements = generatesRootInputs.getElementsToWaitFor(toJavac(roundEnv));
     if (processed) {
       checkState(
           newElements.isEmpty(),

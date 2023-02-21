@@ -16,14 +16,18 @@
 
 package dagger.hilt.android.processor.internal.bindvalue;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XRoundEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.ListMultimap;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
@@ -35,7 +39,6 @@ import dagger.internal.codegen.extension.DaggerStreams;
 import java.util.Collection;
 import java.util.Map;
 import javax.annotation.processing.Processor;
-import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -55,7 +58,7 @@ public final class BindValueProcessor extends BaseProcessor {
           .addAll(BindValueMetadata.BIND_VALUE_INTO_MAP_ANNOTATIONS)
           .build();
 
-  private final Multimap<TypeElement, Element> testRootMap = ArrayListMultimap.create();
+  private final ListMultimap<TypeElement, Element> testRootMap = ArrayListMultimap.create();
 
   @Override
   public ImmutableSet<String> getSupportedAnnotationTypes() {
@@ -65,12 +68,16 @@ public final class BindValueProcessor extends BaseProcessor {
   }
 
   @Override
-  protected void preRoundProcess(RoundEnvironment roundEnv) {
+  protected void preRoundProcess(XRoundEnv roundEnv) {
     testRootMap.clear();
   }
 
   @Override
-  public void processEach(TypeElement annotation, Element element) throws Exception {
+  public void processEach(XTypeElement annotation, XElement element) {
+    processEach(toJavac(annotation), toJavac(element));
+  }
+
+  private void processEach(TypeElement annotation, Element element) {
     ClassName annotationClassName = ClassName.get(annotation);
     Element enclosingElement = element.getEnclosingElement();
     // Restrict BindValue to the direct test class (e.g. not allowed in a base test class) because
@@ -92,7 +99,7 @@ public final class BindValueProcessor extends BaseProcessor {
   }
 
   @Override
-  public void postRoundProcess(RoundEnvironment roundEnvironment) throws Exception {
+  public void postRoundProcess(XRoundEnv roundEnv) throws Exception {
     // Generate a module for each testing class with a @BindValue field.
     for (Map.Entry<TypeElement, Collection<Element>> e : testRootMap.asMap().entrySet()) {
       BindValueMetadata metadata = BindValueMetadata.create(e.getKey(), e.getValue());

@@ -16,6 +16,7 @@
 
 package dagger.hilt.processor.internal.root;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.useAggregatingRootProcessor;
@@ -24,6 +25,9 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XRoundEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -48,7 +52,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.processing.Processor;
-import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
@@ -67,12 +70,16 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
   }
 
   @Override
-  public void processEach(TypeElement annotation, Element element) {
+  public void processEach(XTypeElement annotation, XElement element) {
+    processEach(toJavac(element));
+  }
+
+  private void processEach(Element element) {
     componentTreeDepNames.add(ClassName.get(asType(element)));
   }
 
   @Override
-  public void postRoundProcess(RoundEnvironment roundEnv) throws Exception {
+  public void postRoundProcess(XRoundEnv roundEnv) throws Exception {
     ImmutableSet<ComponentTreeDepsMetadata> componentTreeDepsToProcess =
         componentTreeDepNames.stream()
             .filter(className -> !processed.contains(className))
