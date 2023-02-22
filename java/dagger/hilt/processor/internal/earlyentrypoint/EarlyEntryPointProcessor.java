@@ -16,8 +16,7 @@
 
 package dagger.hilt.processor.internal.earlyentrypoint;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreElements.asType;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import androidx.room.compiler.processing.XElement;
@@ -27,7 +26,6 @@ import com.google.common.collect.ImmutableSet;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import javax.annotation.processing.Processor;
-import javax.lang.model.element.Element;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /** Validates {@link dagger.hilt.android.EarlyEntryPoint} usages. */
@@ -42,10 +40,6 @@ public final class EarlyEntryPointProcessor extends BaseProcessor {
 
   @Override
   public void processEach(XTypeElement annotation, XElement element) throws Exception {
-    processEach(toJavac(element));
-  }
-
-  private void processEach(Element element) throws Exception {
-    new AggregatedEarlyEntryPointGenerator(asType(element), getProcessingEnv()).generate();
+    new AggregatedEarlyEntryPointGenerator(asTypeElement(element)).generate();
   }
 }

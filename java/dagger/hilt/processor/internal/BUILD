@@ -62,6 +62,7 @@ java_library(
         ":processor_errors",
         "//java/dagger/hilt/processor/internal/kotlin",
         "//java/dagger/internal/codegen/extension",
+        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:common",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",

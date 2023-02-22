@@ -16,6 +16,8 @@
 
 package dagger.hilt.processor.internal;
 
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.auto.common.MoreElements.asPackage;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.auto.common.MoreElements.asVariable;
@@ -25,6 +27,7 @@ import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.GeneratedAnnotations;
 import com.google.auto.common.MoreElements;
@@ -92,22 +95,39 @@ public final class Processors {
 
   private static final String JAVA_CLASS = "java.lang.Class";
 
+  /** Generates the aggregating metadata class for an aggregating annotation. */
   public static void generateAggregatingClass(
       String aggregatingPackage,
       AnnotationSpec aggregatingAnnotation,
-      TypeElement element,
-      Class<?> generatedAnnotationClass,
+      XTypeElement originatingElement,
+      Class<?> generatorClass) throws IOException {
+    generateAggregatingClass(
+        aggregatingPackage,
+        aggregatingAnnotation,
+        toJavac(originatingElement),
+        generatorClass,
+        toJavac(getProcessingEnv(originatingElement)));
+  }
+
+  // TODO(bcorso): Remove this method once all usages are migrated to XProcessing.
+  /** Generates the aggregating metadata class for an aggregating annotation. */
+  public static void generateAggregatingClass(
+      String aggregatingPackage,
+      AnnotationSpec aggregatingAnnotation,
+      TypeElement originatingElement,
+      Class<?> generatorClass,
       ProcessingEnvironment env) throws IOException {
-    ClassName name = ClassName.get(aggregatingPackage, "_" + getFullEnclosedName(element));
+    ClassName name =
+        ClassName.get(aggregatingPackage, "_" + getFullEnclosedName(originatingElement));
     TypeSpec.Builder builder =
         TypeSpec.classBuilder(name)
             .addModifiers(PUBLIC)
-            .addOriginatingElement(element)
+            .addOriginatingElement(originatingElement)
             .addAnnotation(aggregatingAnnotation)
             .addJavadoc("This class should only be referenced by generated code! ")
             .addJavadoc("This class aggregates information across multiple compilations.\n");;
 
-    addGeneratedAnnotation(builder, env, generatedAnnotationClass);
+    addGeneratedAnnotation(builder, env, generatorClass);
 
     JavaFile.builder(name.packageName(), builder.build()).build().writeTo(env.getFiler());
   }
