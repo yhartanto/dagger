@@ -16,7 +16,6 @@
 
 package dagger.hilt.processor.internal.disableinstallincheck;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import androidx.room.compiler.processing.XElement;
@@ -26,9 +25,8 @@ import com.google.common.collect.ImmutableSet;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
-import dagger.hilt.processor.internal.Processors;
+import dagger.internal.codegen.xprocessing.XElements;
 import javax.annotation.processing.Processor;
-import javax.lang.model.element.Element;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /** Processes the annotations annotated with {@link dagger.hilt.migration.DisableInstallInCheck} */
@@ -42,15 +40,11 @@ public final class DisableInstallInCheckProcessor extends BaseProcessor {
 
   @Override
   public void processEach(XTypeElement annotation, XElement element) {
-    processEach(toJavac(element));
-  }
-
-  private void processEach(Element element) {
     ProcessorErrors.checkState(
-        Processors.hasAnnotation(element, ClassNames.MODULE),
+        element.hasAnnotation(ClassNames.MODULE),
         element,
         "@DisableInstallInCheck should only be used on modules. However, it was found annotating"
             + " %s",
-        element);
+        XElements.toStableString(element));
   }
 }

@@ -43,6 +43,7 @@ java_library(
         "ProcessorErrors.java",
     ],
     deps = [
+        "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:common",
         "//third_party/java/error_prone:annotations",
         "//third_party/java/guava/base",

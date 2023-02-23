@@ -16,6 +16,9 @@
 
 package dagger.hilt.processor.internal;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+
+import androidx.room.compiler.processing.XElement;
 import com.google.auto.common.MoreTypes;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -94,6 +97,7 @@ public final class ProcessorErrors {
     }
   }
 
+  // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
   /**
    * Ensures the truth of an expression involving the state of the calling instance, but not
    * involving any parameters to the calling method.
@@ -124,6 +128,34 @@ public final class ProcessorErrors {
       throw new BadInputException(
           String.format(errorMessageTemplate, errorMessageArgs), badElement);
     }
+  }
+
+  /**
+   * Ensures the truth of an expression involving the state of the calling instance, but not
+   * involving any parameters to the calling method.
+   *
+   * <p>e.g. checkState(foo.isABar(), "Failed because of %s is not a bar", foo);
+   *
+   * @param expression a boolean expression
+   * @param badElement the element that was at fault
+   * @param errorMessageTemplate a template for the exception message should the check fail. The
+   *     message is formed by replacing each {@code %s} placeholder in the template with an
+   *     argument. These are matched by position - the first {@code %s} gets {@code
+   *     errorMessageArgs[0]}, etc. Unmatched arguments will be appended to the formatted message in
+   *     square braces. Unmatched placeholders will be left as-is.
+   * @param errorMessageArgs the arguments to be substituted into the message template. Arguments
+   *     are converted to strings using {@link String#valueOf(Object)}.
+   * @throws BadInputException if {@code expression} is false
+   * @throws NullPointerException if the check fails and either {@code errorMessageTemplate} or
+   *     {@code errorMessageArgs} is null (don't let this happen)
+   */
+  @FormatMethod
+  public static void checkState(
+      boolean expression,
+      XElement badElement,
+      @Nullable @FormatString String errorMessageTemplate,
+      @Nullable Object... errorMessageArgs) {
+    checkState(expression, toJavac(badElement), errorMessageTemplate, errorMessageArgs);
   }
 
   /**
