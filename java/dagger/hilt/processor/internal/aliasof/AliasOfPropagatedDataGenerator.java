@@ -16,26 +16,22 @@
 
 package dagger.hilt.processor.internal.aliasof;
 
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.AnnotationSpec;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.TypeElement;
 
 /** Generates resource files for {@link dagger.hilt.migration.AliasOf}. */
 final class AliasOfPropagatedDataGenerator {
 
-  private final ProcessingEnvironment processingEnv;
-  private final TypeElement aliasScope;
-  private final ImmutableList<TypeElement> defineComponentScopes;
+  private final XTypeElement aliasScope;
+  private final ImmutableList<XTypeElement> defineComponentScopes;
 
   AliasOfPropagatedDataGenerator(
-      ProcessingEnvironment processingEnv,
-      TypeElement aliasScope,
-      ImmutableList<TypeElement> defineComponentScopes) {
-    this.processingEnv = processingEnv;
+      XTypeElement aliasScope,
+      ImmutableList<XTypeElement> defineComponentScopes) {
     this.aliasScope = aliasScope;
     this.defineComponentScopes = defineComponentScopes;
   }
@@ -45,16 +41,15 @@ final class AliasOfPropagatedDataGenerator {
         ClassNames.ALIAS_OF_PROPAGATED_DATA_PACKAGE,
         propagatedDataAnnotation(),
         aliasScope,
-        getClass(),
-        processingEnv);
+        getClass());
   }
 
   private AnnotationSpec propagatedDataAnnotation() {
     AnnotationSpec.Builder builder = AnnotationSpec.builder(ClassNames.ALIAS_OF_PROPAGATED_DATA);
-    for (TypeElement defineComponentScope : defineComponentScopes) {
-      builder.addMember("defineComponentScopes", "$T.class", defineComponentScope);
+    for (XTypeElement defineComponentScope : defineComponentScopes) {
+      builder.addMember("defineComponentScopes", "$T.class", defineComponentScope.getClassName());
     }
-    builder.addMember("alias", "$T.class", aliasScope);
+    builder.addMember("alias", "$T.class", aliasScope.getClassName());
     return builder.build();
   }
 }

@@ -16,11 +16,11 @@
 
 package dagger.hilt.processor.internal.aliasof;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static com.google.auto.common.MoreElements.asType;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
+import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableList;
@@ -28,12 +28,10 @@ import com.google.common.collect.ImmutableSet;
 import dagger.hilt.processor.internal.BaseProcessor;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ProcessorErrors;
-import dagger.hilt.processor.internal.Processors;
+import dagger.internal.codegen.extension.DaggerStreams;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.Set;
 import javax.annotation.processing.Processor;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /** Processes the annotations annotated with {@link dagger.hilt.migration.AliasOf} */
@@ -47,30 +45,27 @@ public final class AliasOfProcessor extends BaseProcessor {
 
   @Override
   public void processEach(XTypeElement annotation, XElement element) throws Exception {
-    processEach(toJavac(annotation), toJavac(element));
-  }
-
-  private void processEach(TypeElement annotation, Element element) throws Exception {
     ProcessorErrors.checkState(
-        Processors.hasAnnotation(element, ClassNames.SCOPE),
+        element.hasAnnotation(ClassNames.SCOPE),
         element,
         "%s should only be used on scopes." + " However, it was found annotating %s",
         annotation,
-        element);
+        XElements.toStableString(element));
 
-    AnnotationMirror annotationMirror =
-        Processors.getAnnotationMirror(element, ClassNames.ALIAS_OF);
+    XAnnotation xAnnotation = element.getAnnotation(ClassNames.ALIAS_OF);
 
-    ImmutableList<TypeElement> defineComponentScopes =
-        Processors.getAnnotationClassValues(getElementUtils(), annotationMirror, "value");
+    ImmutableList<XTypeElement> defineComponentScopes =
+        xAnnotation.getAsTypeList("value").stream()
+            .map(XType::getTypeElement)
+            .collect(DaggerStreams.toImmutableList());
 
     ProcessorErrors.checkState(
         defineComponentScopes.size() >= 1,
         element,
         "@AliasOf annotation %s must declare at least one scope to alias.",
-        annotationMirror);
+        xAnnotation.getClassName());
 
-    new AliasOfPropagatedDataGenerator(getProcessingEnv(), asType(element), defineComponentScopes)
+    new AliasOfPropagatedDataGenerator(XElements.asTypeElement(element), defineComponentScopes)
         .generate();
   }
 }

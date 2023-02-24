@@ -35,6 +35,7 @@ java_library(
         "//java/dagger/hilt/processor/internal:classnames",
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
+        "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/xprocessing",
         "//third_party/java/auto:common",
         "//third_party/java/auto:service",
