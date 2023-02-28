@@ -20,6 +20,7 @@ import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XRoundEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
@@ -44,9 +45,21 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
 public final class DefineComponentProcessor extends BaseProcessor {
-  private final DefineComponentMetadatas componentMetadatas = DefineComponentMetadatas.create();
-  private final DefineComponentBuilderMetadatas componentBuilderMetadatas =
-      DefineComponentBuilderMetadatas.create(componentMetadatas);
+  // Note: these caches should be cleared between rounds.
+  private DefineComponentMetadatas componentMetadatas;
+  private DefineComponentBuilderMetadatas componentBuilderMetadatas;
+
+  @Override
+  public void preRoundProcess(XRoundEnv roundEnv) {
+    componentMetadatas = DefineComponentMetadatas.create();
+    componentBuilderMetadatas = DefineComponentBuilderMetadatas.create(componentMetadatas);
+  }
+
+  @Override
+  public void postRoundProcess(XRoundEnv roundEnv) {
+    componentMetadatas = null;
+    componentBuilderMetadatas = null;
+  }
 
   @Override
   public Set<String> getSupportedAnnotationTypes() {

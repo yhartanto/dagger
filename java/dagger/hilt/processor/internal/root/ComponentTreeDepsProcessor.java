@@ -62,7 +62,6 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 public final class ComponentTreeDepsProcessor extends BaseProcessor {
   private final Set<ClassName> componentTreeDepNames = new HashSet<>();
   private final Set<ClassName> processed = new HashSet<>();
-  private final DefineComponents defineComponents = DefineComponents.create();
 
   @Override
   public ImmutableSet<String> getSupportedAnnotationTypes() {
@@ -87,12 +86,15 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
             .map(element -> ComponentTreeDepsMetadata.from(element, getElementUtils()))
             .collect(toImmutableSet());
 
+    DefineComponents defineComponents = DefineComponents.create();
     for (ComponentTreeDepsMetadata metadata : componentTreeDepsToProcess) {
-      processComponentTreeDeps(metadata);
+      processComponentTreeDeps(metadata, defineComponents);
     }
   }
 
-  private void processComponentTreeDeps(ComponentTreeDepsMetadata metadata) throws IOException {
+  private void processComponentTreeDeps(
+      ComponentTreeDepsMetadata metadata,
+      DefineComponents defineComponents) throws IOException {
     TypeElement metadataElement = getElementUtils().getTypeElement(metadata.name().canonicalName());
     try {
       // We choose a name for the generated components/wrapper based off of the originating element
