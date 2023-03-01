@@ -28,10 +28,8 @@ import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentBuilderMetadatas.DefineComponentBuilderMetadata;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentMetadatas.DefineComponentMetadata;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 
 /**
@@ -44,37 +42,10 @@ public final class DefineComponents {
     return new DefineComponents();
   }
 
-  private final Map<Element, ComponentDescriptor> componentDescriptors = new HashMap<>();
   private final DefineComponentMetadatas componentMetadatas = DefineComponentMetadatas.create();
   private final DefineComponentBuilderMetadatas componentBuilderMetadatas =
       DefineComponentBuilderMetadatas.create(componentMetadatas);
-
   private DefineComponents() {}
-
-  /** Returns the {@link ComponentDescriptor} for the given component element. */
-  // TODO(b/144940889): This descriptor doesn't contain the "creator" or the "installInName".
-  public ComponentDescriptor componentDescriptor(Element element) {
-    if (!componentDescriptors.containsKey(element)) {
-      componentDescriptors.put(element, uncachedComponentDescriptor(element));
-    }
-    return componentDescriptors.get(element);
-  }
-
-  private ComponentDescriptor uncachedComponentDescriptor(Element element) {
-    DefineComponentMetadata metadata = componentMetadatas.get(element);
-    ComponentDescriptor.Builder builder =
-        ComponentDescriptor.builder()
-            .component(ClassName.get(metadata.component()))
-            .scopes(metadata.scopes().stream().map(ClassName::get).collect(toImmutableSet()));
-
-
-    metadata.parentMetadata()
-        .map(DefineComponentMetadata::component)
-        .map(this::componentDescriptor)
-        .ifPresent(builder::parent);
-
-    return builder.build();
-  }
 
   /** Returns the set of aggregated {@link ComponentDescriptor}s. */
   public ImmutableSet<ComponentDescriptor> getComponentDescriptors(
