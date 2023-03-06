@@ -34,6 +34,9 @@ runs:
           ${{ runner.os }}-bazel-build-
     - name: 'Cache Gradle files'
       uses: gradle/gradle-build-action@v2
+    - name: 'Install maven version'
+      run: ./util/install-maven.sh ${{ env.USE_MAVEN_VERSION }}
+      shell: bash
     - name: 'Build and install Hilt Gradle plugin local snapshot'
       run: ./util/deploy-hilt-gradle-plugin.sh "install:install-file" "LOCAL-SNAPSHOT"
       shell: bash
