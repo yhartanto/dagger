@@ -16,7 +16,6 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.getGradleProjectType;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.useAggregatingRootProcessor;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
@@ -31,7 +30,6 @@ import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.optionvalues.GradleProjectType;
 import java.util.Set;
 import javax.annotation.processing.Processor;
-import javax.lang.model.element.Element;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
 /**
@@ -56,12 +54,8 @@ public final class AndroidEntryPointProcessor extends BaseProcessor {
 
   @Override
   public void processEach(XTypeElement annotation, XElement element) throws Exception {
-    processEach(toJavac(element));
-  }
-
-  private void processEach(Element element) throws Exception {
-    AndroidEntryPointMetadata metadata = AndroidEntryPointMetadata.of(getProcessingEnv(), element);
-    new InjectorEntryPointGenerator(getProcessingEnv(), metadata).generate();
+    AndroidEntryPointMetadata metadata = AndroidEntryPointMetadata.of(element);
+    new InjectorEntryPointGenerator(processingEnv(), metadata).generate();
     switch (metadata.androidType()) {
       case APPLICATION:
         GradleProjectType projectType = getGradleProjectType(getProcessingEnv());
@@ -83,7 +77,7 @@ public final class AndroidEntryPointProcessor extends BaseProcessor {
           // While we could always generate the application in ComponentTreeDepsProcessor, even if
           // we're using the aggregating root processor, it can lead to extraneous errors when
           // things fail before ComponentTreeDepsProcessor runs so we generate it here to avoid that
-          new ApplicationGenerator(getProcessingEnv(), metadata).generate();
+          new ApplicationGenerator(processingEnv(), metadata).generate();
         } else {
           // If we're not using the aggregating root processor, then make sure the root application
           // does not extend the generated application directly, and instead uses bytecode injection
@@ -100,21 +94,19 @@ public final class AndroidEntryPointProcessor extends BaseProcessor {
         }
         break;
       case ACTIVITY:
-        new ActivityGenerator(getProcessingEnv(), metadata).generate();
+        new ActivityGenerator(processingEnv(), metadata).generate();
         break;
       case BROADCAST_RECEIVER:
-        new BroadcastReceiverGenerator(getProcessingEnv(), metadata).generate();
+        new BroadcastReceiverGenerator(processingEnv(), metadata).generate();
         break;
       case FRAGMENT:
-        new FragmentGenerator(
-            getProcessingEnv(), metadata )
-            .generate();
+        new FragmentGenerator(processingEnv(), metadata).generate();
         break;
       case SERVICE:
-        new ServiceGenerator(getProcessingEnv(), metadata).generate();
+        new ServiceGenerator(processingEnv(), metadata).generate();
         break;
       case VIEW:
-        new ViewGenerator(getProcessingEnv(), metadata).generate();
+        new ViewGenerator(processingEnv(), metadata).generate();
         break;
       default:
         throw new IllegalStateException("Unknown Hilt type: " + metadata.androidType());

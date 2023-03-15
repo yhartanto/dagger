@@ -17,6 +17,7 @@
 package dagger.hilt.processor.internal.root;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.auto.common.MoreElements.asType;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.useAggregatingRootProcessor;
@@ -203,11 +204,8 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
     // to generate the application within AndroidEntryPointProcessor instead.
     if (!useAggregatingRootProcessor(getProcessingEnv())) {
       AndroidEntryPointMetadata metadata =
-          AndroidEntryPointMetadata.of(getProcessingEnv(), rootElement);
-      new ApplicationGenerator(
-              getProcessingEnv(),
-              metadata)
-          .generate();
+          AndroidEntryPointMetadata.of(toXProcessing(rootElement, processingEnv()));
+      new ApplicationGenerator(processingEnv(), metadata).generate();
     }
   }
 }

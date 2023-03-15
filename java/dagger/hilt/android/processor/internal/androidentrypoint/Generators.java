@@ -16,14 +16,22 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import static androidx.room.compiler.processing.JavaPoetExtKt.toAnnotationSpec;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static java.util.stream.Collectors.joining;
-import static javax.lang.model.element.Modifier.PRIVATE;
 
-import com.google.auto.common.AnnotationMirrors;
+import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XConstructorElement;
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.XVariableElement;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
@@ -37,17 +45,10 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
 import dagger.hilt.android.processor.internal.androidentrypoint.AndroidEntryPointMetadata.AndroidType;
 import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.Processors;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.util.ElementFilter;
 
 /** Helper class for writing Hilt generators. */
 final class Generators {
@@ -63,22 +64,17 @@ final class Generators {
         annotation);
   }
 
-  /**
-   * Copies all constructors with arguments to the builder.
-   */
-  static void copyConstructors(TypeElement baseClass, TypeSpec.Builder builder) {
+  /** Copies all constructors with arguments to the builder. */
+  static void copyConstructors(XTypeElement baseClass, TypeSpec.Builder builder) {
     copyConstructors(baseClass, CodeBlock.builder().build(), builder);
   }
 
-  /**
-   * Copies all constructors with arguments along with an appended body to the builder.
-   */
-  static void copyConstructors(TypeElement baseClass, CodeBlock body, TypeSpec.Builder builder) {
-    List<ExecutableElement> constructors =
-        ElementFilter.constructorsIn(baseClass.getEnclosedElements())
-            .stream()
-            .filter(constructor -> !constructor.getModifiers().contains(PRIVATE))
-            .collect(Collectors.toList());
+  /** Copies all constructors with arguments along with an appended body to the builder. */
+  static void copyConstructors(XTypeElement baseClass, CodeBlock body, TypeSpec.Builder builder) {
+    ImmutableList<XConstructorElement> constructors =
+        baseClass.getConstructors().stream()
+            .filter(constructor -> !constructor.isPrivate())
+            .collect(toImmutableList());
 
     if (constructors.size() == 1
         && getOnlyElement(constructors).getParameters().isEmpty()
@@ -91,14 +87,10 @@ final class Generators {
   }
 
   /** Returns Optional with AnnotationSpec for Nullable if found on element, empty otherwise. */
-  private static Optional<AnnotationSpec> getNullableAnnotationSpec(Element element) {
-    for (AnnotationMirror annotationMirror : element.getAnnotationMirrors()) {
-      if (annotationMirror
-          .getAnnotationType()
-          .asElement()
-          .getSimpleName()
-          .contentEquals("Nullable")) {
-        AnnotationSpec annotationSpec = AnnotationSpec.get(annotationMirror);
+  private static Optional<AnnotationSpec> getNullableAnnotationSpec(XElement element) {
+    for (XAnnotation annotation : element.getAllAnnotations()) {
+      if (annotation.getClassName().simpleName().contentEquals("Nullable")) {
+        AnnotationSpec annotationSpec = toAnnotationSpec(annotation);
         // If using the android internal Nullable, convert it to the externally-visible version.
         return AndroidClassNames.NULLABLE_INTERNAL.equals(annotationSpec.type)
             ? Optional.of(AnnotationSpec.builder(AndroidClassNames.NULLABLE).build())
@@ -112,26 +104,27 @@ final class Generators {
    * Returns a ParameterSpec of the input parameter, @Nullable annotated if existing in original
    * (this does not handle Nullable type annotations).
    */
-  private static ParameterSpec getParameterSpecWithNullable(VariableElement parameter) {
-    ParameterSpec.Builder builder = ParameterSpec.get(parameter).toBuilder();
+  private static ParameterSpec getParameterSpecWithNullable(XVariableElement parameter) {
+    ParameterSpec.Builder builder =
+        ParameterSpec.builder(parameter.getType().getTypeName(), getSimpleName(parameter));
     getNullableAnnotationSpec(parameter).ifPresent(builder::addAnnotation);
     return builder.build();
   }
 
   /**
-   * Returns a {@link MethodSpec} for a constructor matching the given {@link ExecutableElement}
-   * constructor signature, and just calls super. If the constructor is
-   * {@link android.annotation.TargetApi} guarded, adds the TargetApi as well.
+   * Returns a {@link MethodSpec} for a constructor matching the given {@link XConstructorElement}
+   * constructor signature, and just calls super. If the constructor is {@link
+   * android.annotation.TargetApi} guarded, adds the TargetApi as well.
    */
   // Example:
   //   Foo(Param1 param1, Param2 param2) {
   //     super(param1, param2);
   //   }
-  static MethodSpec copyConstructor(ExecutableElement constructor) {
+  static MethodSpec copyConstructor(XConstructorElement constructor) {
     return copyConstructor(constructor, CodeBlock.builder().build());
   }
 
-  private static MethodSpec copyConstructor(ExecutableElement constructor, CodeBlock body) {
+  private static MethodSpec copyConstructor(XConstructorElement constructor, CodeBlock body) {
     List<ParameterSpec> params =
         constructor.getParameters().stream()
             .map(Generators::getParameterSpecWithNullable)
@@ -144,26 +137,26 @@ final class Generators {
                 "super($L)", params.stream().map(param -> param.name).collect(joining(", ")))
             .addCode(body);
 
-    constructor.getAnnotationMirrors().stream()
-        .filter(a -> Processors.hasAnnotation(a, AndroidClassNames.TARGET_API))
+    constructor.getAllAnnotations().stream()
+        .filter(a -> a.getTypeElement().hasAnnotation(AndroidClassNames.TARGET_API))
         .collect(toOptional())
-        .map(AnnotationSpec::get)
+        .map(JavaPoetExtKt::toAnnotationSpec)
         .ifPresent(builder::addAnnotation);
 
     return builder.build();
   }
 
   /** Copies SuppressWarnings annotations from the annotated element to the generated element. */
-  static void copySuppressAnnotations(Element element, TypeSpec.Builder builder) {
+  static void copySuppressAnnotations(XElement element, TypeSpec.Builder builder) {
     ImmutableSet<String> suppressValues =
         SUPPRESS_ANNOTATION_PROPERTY_NAME.keySet().stream()
-            .filter(annotation -> Processors.hasAnnotation(element, annotation))
-            .map(
+            .filter(element::hasAnnotation)
+            .flatMap(
                 annotation ->
-                    AnnotationMirrors.getAnnotationValue(
-                        Processors.getAnnotationMirror(element, annotation),
-                        SUPPRESS_ANNOTATION_PROPERTY_NAME.get(annotation)))
-            .flatMap(value -> Processors.getStringArrayAnnotationValue(value).stream())
+                    element
+                        .getAnnotation(annotation)
+                        .getAsStringList(SUPPRESS_ANNOTATION_PROPERTY_NAME.get(annotation))
+                        .stream())
             .collect(toImmutableSet());
 
     if (!suppressValues.isEmpty()) {
@@ -179,11 +172,9 @@ final class Generators {
    *
    * <p>Note: For now we only copy over {@link android.annotation.TargetApi}.
    */
-  static void copyLintAnnotations(Element element, TypeSpec.Builder builder) {
-    if (Processors.hasAnnotation(element, AndroidClassNames.TARGET_API)) {
-      builder.addAnnotation(
-          AnnotationSpec.get(
-              Processors.getAnnotationMirror(element, AndroidClassNames.TARGET_API)));
+  static void copyLintAnnotations(XElement element, TypeSpec.Builder builder) {
+    if (element.hasAnnotation(AndroidClassNames.TARGET_API)) {
+      builder.addAnnotation(toAnnotationSpec(element.getAnnotation(AndroidClassNames.TARGET_API)));
     }
   }
 

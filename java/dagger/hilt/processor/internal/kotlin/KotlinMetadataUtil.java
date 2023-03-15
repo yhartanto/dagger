@@ -31,6 +31,7 @@ import static kotlinx.metadata.Flag.Class.IS_OBJECT;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XMethodElement;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.AnnotationMirrors;
 import com.google.auto.common.MoreElements;
 import com.google.common.base.Equivalence;
@@ -188,7 +189,7 @@ public final class KotlinMetadataUtil {
         .map(element -> (XMethodElement) toXProcessing(element, getProcessingEnv(fieldElement)));
   }
 
-  public boolean containsConstructorWithDefaultParam(TypeElement typeElement) {
+  public boolean containsConstructorWithDefaultParam(XTypeElement typeElement) {
     return hasMetadata(typeElement)
         && metadataFactory.create(typeElement).containsConstructorWithDefaultParam();
   }

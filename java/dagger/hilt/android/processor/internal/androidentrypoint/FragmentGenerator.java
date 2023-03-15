@@ -16,6 +16,10 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeParameterElement;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
@@ -23,12 +27,10 @@ import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import com.squareup.javapoet.TypeVariableName;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 
 /** Generates an Hilt Fragment class for the @AndroidEntryPoint annotated class. */
@@ -43,12 +45,12 @@ public final class FragmentGenerator {
           .addModifiers(Modifier.PRIVATE)
           .build();
 
-  private final ProcessingEnvironment env;
+  private final XProcessingEnv env;
   private final AndroidEntryPointMetadata metadata;
   private final ClassName generatedClassName;
 
   public FragmentGenerator(
-      ProcessingEnvironment env,
+      XProcessingEnv env,
       AndroidEntryPointMetadata metadata ) {
     this.env = env;
     this.metadata = metadata;
@@ -56,9 +58,10 @@ public final class FragmentGenerator {
   }
 
   public void generate() throws IOException {
-    JavaFile.builder(generatedClassName.packageName(), createTypeSpec())
-        .build()
-        .writeTo(env.getFiler());
+    env.getFiler()
+        .write(
+            JavaFile.builder(generatedClassName.packageName(), createTypeSpec()).build(),
+            XFiler.Mode.Isolating);
   }
 
   // @Generated("FragmentGenerator")
@@ -68,7 +71,6 @@ public final class FragmentGenerator {
   TypeSpec createTypeSpec() {
     TypeSpec.Builder builder =
         TypeSpec.classBuilder(generatedClassName.simpleName())
-            .addOriginatingElement(metadata.element())
             .superclass(metadata.baseClassName())
             .addModifiers(metadata.generatedClassModifiers())
             .addField(COMPONENT_CONTEXT_FIELD)
@@ -79,6 +81,7 @@ public final class FragmentGenerator {
             .addMethod(inflatorMethod())
             .addField(DISABLE_GET_CONTEXT_FIX_FIELD);
 
+    JavaPoetExtKt.addOriginatingElement(builder, metadata.element());
     Generators.addGeneratedBaseClassJavadoc(builder, AndroidClassNames.ANDROID_ENTRY_POINT);
     Processors.addGeneratedAnnotation(builder, env, getClass());
     Generators.copyLintAnnotations(metadata.element(), builder);
@@ -86,7 +89,7 @@ public final class FragmentGenerator {
     Generators.copyConstructors(metadata.baseElement(), builder);
 
     metadata.baseElement().getTypeParameters().stream()
-        .map(TypeVariableName::get)
+        .map(XTypeParameterElement::getTypeVariableName)
         .forEachOrdered(builder::addTypeVariable);
 
     Generators.addComponentOverride(metadata, builder);

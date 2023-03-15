@@ -16,16 +16,25 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
-import static dagger.hilt.processor.internal.HiltCompilerOptions.isAndroidSuperclassValidationDisabled;
+import static androidx.room.compiler.processing.XElementKt.isTypeElement;
+import static androidx.room.compiler.processing.XTypeKt.isVoidObject;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static dagger.hilt.processor.internal.HiltCompilerOptions.isAndroidSuperClassValidationDisabled;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
+import static dagger.internal.codegen.xprocessing.XTypeElements.isKotlinSource;
+import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 
-import com.google.auto.common.MoreElements;
-import com.google.auto.common.MoreTypes;
+import androidx.room.compiler.processing.XAnnotation;
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XType;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -33,33 +42,27 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
 import dagger.hilt.processor.internal.BadInputException;
-import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Components;
 import dagger.hilt.processor.internal.ProcessorErrors;
 import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtil;
 import dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils;
+import dagger.internal.codegen.xprocessing.XAnnotations;
+import dagger.internal.codegen.xprocessing.XElements;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 
 /** Metadata class for @AndroidEntryPoint annotated classes. */
 @AutoValue
 public abstract class AndroidEntryPointMetadata {
 
-  /** The class {@link Element} annotated with @AndroidEntryPoint. */
-  public abstract TypeElement element();
+  /** The class annotated with @AndroidEntryPoint. */
+  public abstract XTypeElement element();
 
-  /** The base class {@link Element} given to @AndroidEntryPoint. */
-  public abstract TypeElement baseElement();
+  /** The base class given to @AndroidEntryPoint. */
+  public abstract XTypeElement baseElement();
 
   /** The name of the generated base class, beginning with 'Hilt_'. */
   public abstract ClassName generatedClassName();
@@ -98,7 +101,7 @@ public abstract class AndroidEntryPointMetadata {
 
   /** Returns true if this class allows optional injection. */
   public boolean allowsOptionalInjection() {
-    return Processors.hasAnnotation(element(), AndroidClassNames.OPTIONAL_INJECT);
+    return element().hasAnnotation(AndroidClassNames.OPTIONAL_INJECT);
   }
 
   /** Returns true if any base class (transitively) allows optional injection. */
@@ -113,12 +116,12 @@ public abstract class AndroidEntryPointMetadata {
 
   /** The name of the class annotated with @AndroidEntryPoint */
   public ClassName elementClassName() {
-    return ClassName.get(element());
+    return element().getClassName();
   }
 
   /** The name of the base class given to @AndroidEntryPoint */
   public TypeName baseClassName() {
-    return TypeName.get(baseElement().asType());
+    return baseElement().getType().getTypeName();
   }
 
   /** The name of the generated injector for the Hilt class. */
@@ -152,13 +155,15 @@ public abstract class AndroidEntryPointMetadata {
    * https://discuss.kotlinlang.org/t/why-does-kotlin-prohibit-exposing-restricted-visibility-types/7047
    */
   public Modifier[] generatedClassModifiers() {
-    return isKotlinClass(element()) && element().getModifiers().contains(Modifier.PUBLIC)
+    // Note XElement#isPublic() refers to the jvm visibility. Since "internal" visibility is
+    // represented as public in the jvm, we have to check XElement#isInternal() explicitly.
+    return isKotlinSource(element()) && element().isPublic() && !element().isInternal()
         ? new Modifier[] {Modifier.ABSTRACT, Modifier.PUBLIC}
         : new Modifier[] {Modifier.ABSTRACT};
   }
 
-  private static ClassName generatedClassName(TypeElement element) {
-    return Processors.prepend(Processors.getEnclosedClassName(ClassName.get(element)), "Hilt_");
+  private static ClassName generatedClassName(XTypeElement element) {
+    return Processors.prepend(Processors.getEnclosedClassName(element.getClassName()), "Hilt_");
   }
 
   private static final ImmutableSet<ClassName> HILT_ANNOTATION_NAMES =
@@ -166,27 +171,25 @@ public abstract class AndroidEntryPointMetadata {
           AndroidClassNames.HILT_ANDROID_APP,
           AndroidClassNames.ANDROID_ENTRY_POINT);
 
-  private static ImmutableSet<? extends AnnotationMirror> hiltAnnotations(Element element) {
-    return element.getAnnotationMirrors().stream()
-        .filter(mirror -> HILT_ANNOTATION_NAMES.contains(ClassName.get(mirror.getAnnotationType())))
+  private static ImmutableSet<XAnnotation> hiltAnnotations(XElement element) {
+    return element.getAllAnnotations().stream()
+        .filter(annotation -> HILT_ANNOTATION_NAMES.contains(annotation.getClassName()))
         .collect(toImmutableSet());
   }
 
   /** Returns true if the given element has Android Entry Point metadata. */
-  public static boolean hasAndroidEntryPointMetadata(Element element) {
+  public static boolean hasAndroidEntryPointMetadata(XElement element) {
     return !hiltAnnotations(element).isEmpty();
   }
 
   /** Returns the {@link AndroidEntryPointMetadata} for a @AndroidEntryPoint annotated element. */
-  public static AndroidEntryPointMetadata of(ProcessingEnvironment env, Element element) {
-    LinkedHashSet<Element> inheritanceTrace = new LinkedHashSet<>();
-    inheritanceTrace.add(element);
-    return of(env, element, inheritanceTrace);
+  public static AndroidEntryPointMetadata of(XElement element) {
+    return of(element, Sets.newLinkedHashSet(ImmutableList.of(element)));
   }
 
   public static AndroidEntryPointMetadata manuallyConstruct(
-      TypeElement element,
-      TypeElement baseElement,
+      XTypeElement element,
+      XTypeElement baseElement,
       ClassName generatedClassName,
       boolean requiresBytecodeInjection,
       AndroidType androidType,
@@ -211,24 +214,22 @@ public abstract class AndroidEntryPointMetadata {
    * along the way.
    */
   private static AndroidEntryPointMetadata of(
-      ProcessingEnvironment env, Element element, LinkedHashSet<Element> inheritanceTrace) {
-    ImmutableSet<? extends AnnotationMirror> hiltAnnotations = hiltAnnotations(element);
+      XElement element, LinkedHashSet<XElement> inheritanceTrace) {
+    ImmutableSet<XAnnotation> hiltAnnotations = hiltAnnotations(element);
     ProcessorErrors.checkState(
         hiltAnnotations.size() == 1,
         element,
         "Expected exactly 1 of %s. Found: %s",
-        HILT_ANNOTATION_NAMES,
-        hiltAnnotations);
-    ClassName annotationClassName =
-        ClassName.get(
-            MoreTypes.asTypeElement(Iterables.getOnlyElement(hiltAnnotations).getAnnotationType()));
+        HILT_ANNOTATION_NAMES.stream().map(ClassName::canonicalName).collect(toImmutableSet()),
+        hiltAnnotations.stream().map(XAnnotations::toStableString).collect(toImmutableSet()));
+    ClassName annotationClassName = getOnlyElement(hiltAnnotations).getClassName();
 
     ProcessorErrors.checkState(
-        element.getKind() == ElementKind.CLASS,
+        isTypeElement(element) && asTypeElement(element).isClass(),
         element,
         "Only classes can be annotated with @%s",
         annotationClassName.simpleName());
-    TypeElement androidEntryPointElement = MoreElements.asType(element);
+    XTypeElement androidEntryPointElement = asTypeElement(element);
 
     ProcessorErrors.checkState(
         androidEntryPointElement.getTypeParameters().isEmpty(),
@@ -236,18 +237,18 @@ public abstract class AndroidEntryPointMetadata {
         "@%s-annotated classes cannot have type parameters.",
         annotationClassName.simpleName());
 
-    final TypeElement androidEntryPointClassValue =
-        Processors.getAnnotationClassValue(
-            env.getElementUtils(),
-            Processors.getAnnotationMirror(androidEntryPointElement, annotationClassName),
-            "value");
-    final TypeElement baseElement;
-    final ClassName generatedClassName;
+    XTypeElement androidEntryPointClassValue =
+        androidEntryPointElement
+            .getAnnotation(annotationClassName)
+            .getAsType("value")
+            .getTypeElement();
+    XTypeElement baseElement;
+    ClassName generatedClassName = generatedClassName(androidEntryPointElement);
     boolean requiresBytecodeInjection =
-        isAndroidSuperclassValidationDisabled(androidEntryPointElement, env)
-            && MoreTypes.isTypeOf(Void.class, androidEntryPointClassValue.asType());
+        isAndroidSuperClassValidationDisabled(androidEntryPointElement)
+            && isVoidObject(androidEntryPointClassValue.getType());
     if (requiresBytecodeInjection) {
-      baseElement = MoreElements.asType(env.getTypeUtils().asElement(androidEntryPointElement.getSuperclass()));
+      baseElement = androidEntryPointElement.getSuperClass().getTypeElement();
       // If this AndroidEntryPoint is a Kotlin class and its base type is also Kotlin and has
       // default values declared in its constructor then error out because for the short-form
       // usage of @AndroidEntryPoint the bytecode transformation will be done incorrectly.
@@ -263,11 +264,10 @@ public abstract class AndroidEntryPointMetadata {
               + "declaration.",
           baseElement.getQualifiedName(),
           androidEntryPointElement.getQualifiedName());
-      generatedClassName = generatedClassName(androidEntryPointElement);
     } else {
       baseElement = androidEntryPointClassValue;
       ProcessorErrors.checkState(
-          !MoreTypes.isTypeOf(Void.class, baseElement.asType()),
+          !isVoidObject(baseElement.getType()),
           androidEntryPointElement,
           "Expected @%s to have a value."
           + " Did you forget to apply the Gradle Plugin? (com.google.dagger.hilt.android)\n"
@@ -276,11 +276,7 @@ public abstract class AndroidEntryPointMetadata {
 
       // Check that the root $CLASS extends Hilt_$CLASS
       String extendsName =
-          env.getTypeUtils()
-              .asElement(androidEntryPointElement.getSuperclass())
-              .getSimpleName()
-              .toString();
-      generatedClassName = generatedClassName(androidEntryPointElement);
+          androidEntryPointElement.getSuperClass().getTypeElement().getClassName().simpleName();
       ProcessorErrors.checkState(
           extendsName.contentEquals(generatedClassName.simpleName()),
           androidEntryPointElement,
@@ -291,7 +287,7 @@ public abstract class AndroidEntryPointMetadata {
     }
 
     Optional<AndroidEntryPointMetadata> baseMetadata =
-        baseMetadata(env, androidEntryPointElement, baseElement, inheritanceTrace);
+        baseMetadata(androidEntryPointElement, baseElement, inheritanceTrace);
 
     if (baseMetadata.isPresent()) {
       return manuallyConstruct(
@@ -320,48 +316,38 @@ public abstract class AndroidEntryPointMetadata {
   }
 
   private static Optional<AndroidEntryPointMetadata> baseMetadata(
-      ProcessingEnvironment env,
-      TypeElement element,
-      TypeElement baseElement,
-      LinkedHashSet<Element> inheritanceTrace) {
+      XTypeElement element, XTypeElement baseElement, LinkedHashSet<XElement> inheritanceTrace) {
     ProcessorErrors.checkState(
         inheritanceTrace.add(baseElement),
         element,
         cyclicInheritanceErrorMessage(inheritanceTrace, baseElement));
     if (hasAndroidEntryPointMetadata(baseElement)) {
       AndroidEntryPointMetadata baseMetadata =
-          AndroidEntryPointMetadata.of(env, baseElement, inheritanceTrace);
+          AndroidEntryPointMetadata.of(baseElement, inheritanceTrace);
       checkConsistentAnnotations(element, baseMetadata);
       return Optional.of(baseMetadata);
     }
 
-    TypeMirror superClass = baseElement.getSuperclass();
+    XType superClass = baseElement.getSuperClass();
     // None type is returned if this is an interface or Object
-    if (superClass.getKind() != TypeKind.NONE && superClass.getKind() != TypeKind.ERROR) {
-      Preconditions.checkState(superClass.getKind() == TypeKind.DECLARED);
-      return baseMetadata(env, element, MoreTypes.asTypeElement(superClass), inheritanceTrace);
+    if (superClass != null && !superClass.isError()) {
+      Preconditions.checkState(isDeclared(superClass));
+      return baseMetadata(element, superClass.getTypeElement(), inheritanceTrace);
     }
 
     return Optional.empty();
   }
 
   private static String cyclicInheritanceErrorMessage(
-      LinkedHashSet<Element> inheritanceTrace, TypeElement cycleEntryPoint) {
+      LinkedHashSet<XElement> inheritanceTrace, XTypeElement cycleEntryPoint) {
     return String.format(
         "Cyclic inheritance detected. Make sure the base class of @AndroidEntryPoint "
             + "is not the annotated class itself or subclass of the annotated class.\n"
             + "The cyclic inheritance structure: %s --> %s\n",
         inheritanceTrace.stream()
-            .map(Element::asType)
-            .map(TypeMirror::toString)
+            .map(XElements::toStableString)
             .collect(Collectors.joining(" --> ")),
-        cycleEntryPoint.asType());
-  }
-
-  private static boolean isKotlinClass(TypeElement typeElement) {
-    return typeElement.getAnnotationMirrors().stream()
-        .map(mirror -> mirror.getAnnotationType())
-        .anyMatch(type -> ClassName.get(type).equals(ClassNames.KOTLIN_METADATA));
+        XElements.toStableString(cycleEntryPoint));
   }
 
   /**
@@ -438,23 +424,22 @@ public abstract class AndroidEntryPointMetadata {
       this.componentManagerInitArgs = componentManagerInitArgs;
     }
 
-    private static Type of(TypeElement element, TypeElement baseElement) {
-      if (Processors.hasAnnotation(element, AndroidClassNames.HILT_ANDROID_APP)) {
-        return forHiltAndroidApp(element, baseElement);
-      }
-      return forAndroidEntryPoint(element, baseElement);
+    private static Type of(XTypeElement element, XTypeElement baseElement) {
+      return element.hasAnnotation(AndroidClassNames.HILT_ANDROID_APP)
+          ? forHiltAndroidApp(element, baseElement)
+          : forAndroidEntryPoint(element, baseElement);
     }
 
-    private static Type forHiltAndroidApp(TypeElement element, TypeElement baseElement) {
+    private static Type forHiltAndroidApp(XTypeElement element, XTypeElement baseElement) {
       ProcessorErrors.checkState(
           Processors.isAssignableFrom(baseElement, AndroidClassNames.APPLICATION),
           element,
           "@HiltAndroidApp base class must extend Application. Found: %s",
-          baseElement);
+          XElements.toStableString(baseElement));
       return Type.APPLICATION;
     }
 
-    private static Type forAndroidEntryPoint(TypeElement element, TypeElement baseElement) {
+    private static Type forAndroidEntryPoint(XTypeElement element, XTypeElement baseElement) {
       if (Processors.isAssignableFrom(baseElement, AndroidClassNames.ACTIVITY)) {
         ProcessorErrors.checkState(
             Processors.isAssignableFrom(baseElement, AndroidClassNames.COMPONENT_ACTIVITY),
@@ -472,7 +457,7 @@ public abstract class AndroidEntryPointMetadata {
         return Type.FRAGMENT;
       } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.VIEW)) {
         boolean withFragmentBindings =
-            Processors.hasAnnotation(element, AndroidClassNames.WITH_FRAGMENT_BINDINGS);
+            element.hasAnnotation(AndroidClassNames.WITH_FRAGMENT_BINDINGS);
         return withFragmentBindings ? Type.VIEW : Type.VIEW_NO_FRAGMENT;
       } else if (Processors.isAssignableFrom(baseElement, AndroidClassNames.APPLICATION)) {
         throw new BadInputException(
@@ -487,22 +472,22 @@ public abstract class AndroidEntryPointMetadata {
   }
 
   private static void checkConsistentAnnotations(
-      TypeElement element, AndroidEntryPointMetadata baseMetadata) {
-    TypeElement baseElement = baseMetadata.element();
+      XTypeElement element, AndroidEntryPointMetadata baseMetadata) {
+    XTypeElement baseElement = baseMetadata.element();
     checkAnnotationsMatch(element, baseElement, AndroidClassNames.WITH_FRAGMENT_BINDINGS);
 
     ProcessorErrors.checkState(
         baseMetadata.allowsOptionalInjection()
-            || !Processors.hasAnnotation(element, AndroidClassNames.OPTIONAL_INJECT),
+            || !element.hasAnnotation(AndroidClassNames.OPTIONAL_INJECT),
         element,
         "@OptionalInject Hilt class cannot extend from a non-optional @AndroidEntryPoint base: %s",
-        element);
+        XElements.toStableString(element));
   }
 
   private static void checkAnnotationsMatch(
-      TypeElement element, TypeElement baseElement, ClassName annotationName) {
-    boolean isAnnotated = Processors.hasAnnotation(element, annotationName);
-    boolean isBaseAnnotated = Processors.hasAnnotation(baseElement, annotationName);
+      XTypeElement element, XTypeElement baseElement, ClassName annotationName) {
+    boolean isAnnotated = element.hasAnnotation(annotationName);
+    boolean isBaseAnnotated = baseElement.hasAnnotation(annotationName);
     ProcessorErrors.checkState(
         isAnnotated == isBaseAnnotated,
         element,

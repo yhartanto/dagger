@@ -16,6 +16,9 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -23,17 +26,15 @@ import com.squareup.javapoet.TypeSpec;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 
 /** Generates an entry point that allows for injection of the given activity */
 public final class InjectorEntryPointGenerator {
 
-  private final ProcessingEnvironment env;
+  private final XProcessingEnv env;
   private final AndroidEntryPointMetadata metadata;
 
-  public InjectorEntryPointGenerator(
-      ProcessingEnvironment env, AndroidEntryPointMetadata metadata) {
+  public InjectorEntryPointGenerator(XProcessingEnv env, AndroidEntryPointMetadata metadata) {
     this.env = env;
     this.metadata = metadata;
   }
@@ -47,7 +48,6 @@ public final class InjectorEntryPointGenerator {
     ClassName name = metadata.injectorClassName();
     TypeSpec.Builder builder =
         TypeSpec.interfaceBuilder(name.simpleName())
-            .addOriginatingElement(metadata.element())
             .addAnnotation(Processors.getOriginatingElementAnnotation(metadata.element()))
             .addAnnotation(ClassNames.GENERATED_ENTRY_POINT)
             .addAnnotation(metadata.injectorInstallInAnnotation())
@@ -60,9 +60,13 @@ public final class InjectorEntryPointGenerator {
                         Processors.upperToLowerCamel(metadata.elementClassName().simpleName()))
                     .build());
 
+    JavaPoetExtKt.addOriginatingElement(builder, metadata.element());
     Processors.addGeneratedAnnotation(builder, env, getClass());
     Generators.copyLintAnnotations(metadata.element(), builder);
     Generators.copySuppressAnnotations(metadata.element(), builder);
-    JavaFile.builder(name.packageName(), builder.build()).build().writeTo(env.getFiler());
+
+    env.getFiler()
+        .write(
+            JavaFile.builder(name.packageName(), builder.build()).build(), XFiler.Mode.Isolating);
   }
 }

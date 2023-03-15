@@ -16,6 +16,9 @@
 
 package dagger.hilt.processor.internal;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+
+import androidx.room.compiler.processing.XElement;
 import com.google.common.collect.ImmutableList;
 import javax.lang.model.element.Element;
 
@@ -28,6 +31,10 @@ public final class BadInputException extends RuntimeException {
 
   public BadInputException(String message) {
     this(message, ImmutableList.of());
+  }
+
+  public BadInputException(String message, XElement badElement) {
+    this(message, toJavac(badElement));
   }
 
   public BadInputException(String message, Element badElement) {

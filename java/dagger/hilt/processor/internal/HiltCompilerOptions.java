@@ -16,9 +16,12 @@
 
 package dagger.hilt.processor.internal;
 
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Ascii.toUpperCase;
 
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableSet;
 import dagger.hilt.processor.internal.optionvalues.BooleanValue;
 import dagger.hilt.processor.internal.optionvalues.GradleProjectType;
@@ -43,10 +46,10 @@ public final class HiltCompilerOptions {
    * a generated {@code Hilt_} class. This flag is disabled by the Hilt Gradle plugin to enable
    * bytecode transformation to change the superclass.
    */
-  public static boolean isAndroidSuperclassValidationDisabled(
-      TypeElement element, ProcessingEnvironment env) {
+  public static boolean isAndroidSuperClassValidationDisabled(XTypeElement element) {
     EnumOption<BooleanValue> option = DISABLE_ANDROID_SUPERCLASS_VALIDATION;
-    return option.get(env) == BooleanValue.TRUE;
+    XProcessingEnv processorEnv = getProcessingEnv(element);
+    return option.get(processorEnv) == BooleanValue.TRUE;
   }
 
   /**
@@ -172,6 +175,10 @@ public final class HiltCompilerOptions {
 
     String getQualifiedName() {
       return "dagger.hilt." + name;
+    }
+
+    E get(XProcessingEnv processingEnv) {
+      return get(toJavac(processingEnv));
     }
 
     E get(ProcessingEnvironment env) {

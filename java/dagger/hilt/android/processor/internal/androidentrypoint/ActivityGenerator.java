@@ -16,28 +16,29 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XFiler;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeParameterElement;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
-import com.squareup.javapoet.TypeVariableName;
 import dagger.hilt.android.processor.internal.AndroidClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Modifier;
 
 /** Generates an Hilt Activity class for the @AndroidEntryPoint annotated class. */
 public final class ActivityGenerator {
-  private final ProcessingEnvironment env;
+  private final XProcessingEnv env;
   private final AndroidEntryPointMetadata metadata;
   private final ClassName generatedClassName;
 
-  public ActivityGenerator(ProcessingEnvironment env, AndroidEntryPointMetadata metadata) {
+  public ActivityGenerator(XProcessingEnv env, AndroidEntryPointMetadata metadata) {
     this.env = env;
     this.metadata = metadata;
-
     generatedClassName = metadata.generatedClassName();
   }
 
@@ -48,10 +49,10 @@ public final class ActivityGenerator {
   public void generate() throws IOException {
     TypeSpec.Builder builder =
         TypeSpec.classBuilder(generatedClassName.simpleName())
-            .addOriginatingElement(metadata.element())
             .superclass(metadata.baseClassName())
             .addModifiers(metadata.generatedClassModifiers());
 
+    JavaPoetExtKt.addOriginatingElement(builder, metadata.element());
     Generators.addGeneratedBaseClassJavadoc(builder, AndroidClassNames.ANDROID_ENTRY_POINT);
     Processors.addGeneratedAnnotation(builder, env, getClass());
 
@@ -62,7 +63,7 @@ public final class ActivityGenerator {
       builder.addMethod(init());
 
     metadata.baseElement().getTypeParameters().stream()
-        .map(TypeVariableName::get)
+        .map(XTypeParameterElement::getTypeVariableName)
         .forEachOrdered(builder::addTypeVariable);
 
     Generators.addComponentOverride(metadata, builder);
@@ -76,9 +77,10 @@ public final class ActivityGenerator {
       builder.addMethod(getDefaultViewModelProviderFactory());
     }
 
-    JavaFile.builder(generatedClassName.packageName(), builder.build())
-        .build()
-        .writeTo(env.getFiler());
+    env.getFiler()
+        .write(
+            JavaFile.builder(generatedClassName.packageName(), builder.build()).build(),
+            XFiler.Mode.Isolating);
   }
 
   // private void init() {

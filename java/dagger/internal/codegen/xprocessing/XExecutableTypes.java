@@ -16,16 +16,34 @@
 
 package dagger.internal.codegen.xprocessing;
 
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static java.util.stream.Collectors.joining;
 
 import androidx.room.compiler.processing.XConstructorType;
 import androidx.room.compiler.processing.XExecutableType;
+import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XMethodType;
+import androidx.room.compiler.processing.XProcessingEnv;
 import com.squareup.javapoet.TypeName;
 
 /** A utility class for {@link XExecutableType} helper methods. */
 // TODO(bcorso): Consider moving these methods into XProcessing library.
 public final class XExecutableTypes {
+
+  // TODO(b/271177444): Remove this method once XProcessing supports this feature.
+  public static boolean isSubsignature(XMethodElement method1, XMethodElement method2) {
+    return isSubsignature(
+        method1.getExecutableType(), method2.getExecutableType(), getProcessingEnv(method1));
+  }
+
+  // TODO(b/271177465): Remove this method once XProcessing supports this feature.
+  public static boolean isSubsignature(
+      XExecutableType type1, XExecutableType type2, XProcessingEnv processingEnv) {
+    return toJavac(processingEnv)
+        .getTypeUtils() // ALLOW_TYPES_ELEMENTS
+        .isSubsignature(toJavac(type1), toJavac(type2));
+  }
 
   public static boolean isConstructorType(XExecutableType executableType) {
     return executableType instanceof XConstructorType;
