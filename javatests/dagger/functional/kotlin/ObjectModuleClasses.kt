@@ -64,7 +64,7 @@ class TestModuleForNesting {
 }
 
 @Module
-private object NonPublicObjectModule {
+internal object NonPublicObjectModule {
   @Provides
   fun provideInt() = 42
 }
