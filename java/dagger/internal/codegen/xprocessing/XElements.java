@@ -301,6 +301,9 @@ public final class XElements {
    * (javac/ksp).
    */
   public static String toStableString(XElement element) {
+    if (element == null) {
+      return "<null>";
+    }
     try {
       if (isTypeElement(element)) {
         return asTypeElement(element).getQualifiedName();
