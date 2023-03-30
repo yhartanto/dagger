@@ -16,8 +16,12 @@
 
 package dagger.hilt.processor.internal.earlyentrypoint;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -45,14 +49,19 @@ public abstract class AggregatedEarlyEntryPointMetadata {
   /** Returns the element annotated with {@link dagger.hilt.android.EarlyEntryPoint}. */
   public abstract TypeElement earlyEntryPoint();
 
+  /** Returns the element annotated with {@link dagger.hilt.android.EarlyEntryPoint}. */
+  public XTypeElement earlyEntryPoint(XProcessingEnv env) {
+    return toXProcessing(earlyEntryPoint(), env);
+  }
+
   /** Returns metadata for all aggregated elements in the aggregating package. */
-  public static ImmutableSet<AggregatedEarlyEntryPointMetadata> from(Elements elements) {
+  public static ImmutableSet<AggregatedEarlyEntryPointMetadata> from(XProcessingEnv env) {
     return from(
         AggregatedElements.from(
             ClassNames.AGGREGATED_EARLY_ENTRY_POINT_PACKAGE,
             ClassNames.AGGREGATED_EARLY_ENTRY_POINT,
-            elements),
-        elements);
+            env),
+        env);
   }
 
   /** Returns metadata for each aggregated element. */
@@ -61,6 +70,13 @@ public abstract class AggregatedEarlyEntryPointMetadata {
     return aggregatedElements.stream()
         .map(aggregatedElement -> create(aggregatedElement, elements))
         .collect(toImmutableSet());
+  }
+
+  /** Returns metadata for each aggregated element. */
+  public static ImmutableSet<AggregatedEarlyEntryPointMetadata> from(
+      ImmutableSet<XTypeElement> aggregatedElements, XProcessingEnv env) {
+    return from(
+        Processors.mapTypeElementsToJavac(aggregatedElements), toJavac(env).getElementUtils());
   }
 
   public static AggregatedEarlyEntryPointIr toIr(AggregatedEarlyEntryPointMetadata metadata) {

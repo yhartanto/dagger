@@ -16,21 +16,21 @@
 
 package dagger.hilt.processor.internal.root;
 
+import androidx.room.compiler.processing.XFiler.Mode;
+import androidx.room.compiler.processing.XTypeElement;
 import com.squareup.javapoet.AnnotationSpec;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import java.io.IOException;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.TypeElement;
 
 /** Generates an {@link dagger.hilt.internal.processedrootsentinel.ProcessedRootSentinel}. */
 final class ProcessedRootSentinelGenerator {
-  private final TypeElement processedRoot;
-  private final ProcessingEnvironment processingEnv;
+  private final XTypeElement processedRoot;
+  private final Mode mode;
 
-  ProcessedRootSentinelGenerator(TypeElement processedRoot, ProcessingEnvironment processingEnv) {
+  ProcessedRootSentinelGenerator(XTypeElement processedRoot, Mode mode) {
     this.processedRoot = processedRoot;
-    this.processingEnv = processingEnv;
+    this.mode = mode;
   }
 
   void generate() throws IOException {
@@ -41,6 +41,6 @@ final class ProcessedRootSentinelGenerator {
             .build(),
         processedRoot,
         getClass(),
-        processingEnv);
+        mode);
   }
 }

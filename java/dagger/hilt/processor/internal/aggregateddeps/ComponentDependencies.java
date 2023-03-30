@@ -16,9 +16,13 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -27,6 +31,8 @@ import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.earlyentrypoint.AggregatedEarlyEntryPointMetadata;
 import dagger.hilt.processor.internal.uninstallmodules.AggregatedUninstallModulesMetadata;
+import java.util.Map;
+import java.util.Map.Entry;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
@@ -40,11 +46,29 @@ public abstract class ComponentDependencies {
   /** Returns the modules for a component, without any filtering. */
   public abstract ImmutableSetMultimap<ClassName, TypeElement> modules();
 
+  /** Returns the modules for a component, without any filtering. */
+  public ImmutableSetMultimap<ClassName, XTypeElement> modules(XProcessingEnv env) {
+    ImmutableSetMultimap.Builder<ClassName, XTypeElement> builder = ImmutableSetMultimap.builder();
+    for (Entry<ClassName, TypeElement> entry : modules().entries()) {
+      builder.put(entry.getKey(), toXProcessing(entry.getValue(), env));
+    }
+    return builder.build();
+  }
+
   /** Returns the entry points associated with the given a component. */
   public abstract ImmutableSetMultimap<ClassName, TypeElement> entryPoints();
 
   /** Returns the component entry point associated with the given a component. */
   public abstract ImmutableSetMultimap<ClassName, TypeElement> componentEntryPoints();
+
+  /** Returns the component entry point associated with the given a component. */
+  public ImmutableSetMultimap<ClassName, XTypeElement> componentEntryPoints(XProcessingEnv env) {
+    ImmutableSetMultimap.Builder<ClassName, XTypeElement> builder = ImmutableSetMultimap.builder();
+    for (Map.Entry<ClassName, TypeElement> entry : componentEntryPoints().entries()) {
+      builder.put(entry.getKey(), toXProcessing(entry.getValue(), env));
+    }
+    return builder.build();
+  }
 
   @AutoValue.Builder
   abstract static class Builder {
@@ -119,5 +143,20 @@ public abstract class ComponentDependencies {
                 .collect(toImmutableSet()));
 
     return componentDependencies.build();
+  }
+
+  /** Returns the component dependencies for the given metadata. */
+  public static ComponentDependencies from(
+      ImmutableSet<ComponentDescriptor> descriptors,
+      ImmutableSet<AggregatedDepsMetadata> aggregatedDepsMetadata,
+      ImmutableSet<AggregatedUninstallModulesMetadata> aggregatedUninstallModulesMetadata,
+      ImmutableSet<AggregatedEarlyEntryPointMetadata> aggregatedEarlyEntryPointMetadata,
+      XProcessingEnv env) {
+    return from(
+        descriptors,
+        aggregatedDepsMetadata,
+        aggregatedUninstallModulesMetadata,
+        aggregatedEarlyEntryPointMetadata,
+        toJavac(env).getElementUtils());
   }
 }

@@ -25,16 +25,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static dagger.hilt.processor.internal.kotlin.KotlinMetadataUtils.getMetadataUtil;
 import static dagger.internal.codegen.extension.DaggerCollectors.toOptional;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
+import androidx.room.compiler.processing.JavaPoetExtKt;
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XConstructorElement;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XExecutableElement;
+import androidx.room.compiler.processing.XFiler.Mode;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
+import androidx.room.compiler.processing.compat.XConverters;
 import com.google.auto.common.GeneratedAnnotations;
 import com.google.auto.common.MoreElements;
 import com.google.auto.common.MoreTypes;
@@ -64,6 +68,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.AnnotationMirror;
@@ -102,32 +107,31 @@ public final class Processors {
     generateAggregatingClass(
         aggregatingPackage,
         aggregatingAnnotation,
-        toJavac(originatingElement),
+        originatingElement,
         generatorClass,
-        toJavac(getProcessingEnv(originatingElement)));
+        Mode.Isolating);
   }
 
-  // TODO(bcorso): Remove this method once all usages are migrated to XProcessing.
   /** Generates the aggregating metadata class for an aggregating annotation. */
   public static void generateAggregatingClass(
       String aggregatingPackage,
       AnnotationSpec aggregatingAnnotation,
-      TypeElement originatingElement,
+      XTypeElement originatingElement,
       Class<?> generatorClass,
-      ProcessingEnvironment env) throws IOException {
+      Mode mode) {
     ClassName name =
         ClassName.get(aggregatingPackage, "_" + getFullEnclosedName(originatingElement));
+    XProcessingEnv env = getProcessingEnv(originatingElement);
     TypeSpec.Builder builder =
         TypeSpec.classBuilder(name)
             .addModifiers(PUBLIC)
-            .addOriginatingElement(originatingElement)
             .addAnnotation(aggregatingAnnotation)
             .addJavadoc("This class should only be referenced by generated code! ")
-            .addJavadoc("This class aggregates information across multiple compilations.\n");;
-
+            .addJavadoc("This class aggregates information across multiple compilations.\n");
+    JavaPoetExtKt.addOriginatingElement(builder, originatingElement);
     addGeneratedAnnotation(builder, env, generatorClass);
 
-    JavaFile.builder(name.packageName(), builder.build()).build().writeTo(env.getFiler());
+    env.getFiler().write(JavaFile.builder(name.packageName(), builder.build()).build(), mode);
   }
 
   /** Returns a map from {@link AnnotationMirror} attribute name to {@link AnnotationValue}s */
@@ -188,6 +192,13 @@ public final class Processors {
     return Iterables.getOnlyElement(getAnnotationClassValues(elements, annotation, key));
   }
 
+  /** Returns the {@link XTypeElement} for a class attribute on an annotation. */
+  public static XTypeElement getAnnotationClassValue(XAnnotation annotation, String key) {
+    XProcessingEnv env = getProcessingEnv(annotation);
+    return toXProcessing(
+        getAnnotationClassValue(toJavac(env).getElementUtils(), toJavac(annotation), key), env);
+  }
+
   /** Returns a list of {@link XTypeElement}s for a class attribute on an annotation. */
   public static ImmutableList<XTypeElement> getAnnotationClassValues(
       XAnnotation annotation, String key) {
@@ -246,6 +257,17 @@ public final class Processors {
         getAnnotationClassValues(elements, annotation).get(key).stream()
             .map(MoreTypes::asTypeElement)
             .collect(Collectors.toList()));
+  }
+
+  /** Returns a list of {@link XTypeElement}s for a class attribute on an annotation. */
+  public static ImmutableList<XTypeElement> getOptionalAnnotationClassValues(
+      XAnnotation annotation, String key) {
+    XProcessingEnv env = getProcessingEnv(annotation);
+    return getOptionalAnnotationClassValues(
+            toJavac(env).getElementUtils(), toJavac(annotation), key)
+        .stream()
+        .map(it -> toXProcessing(it, env))
+        .collect(toImmutableList());
   }
 
   private static final class DeclaredTypeAnnotationValueVisitor
@@ -427,6 +449,14 @@ public final class Processors {
    */
   public static ClassName getEnclosedClassName(TypeElement typeElement) {
     return getEnclosedClassName(ClassName.get(typeElement));
+  }
+
+  /**
+   * Returns an equivalent class name with the {@code .} (dots) used for inner classes replaced with
+   * {@code _}.
+   */
+  public static ClassName getEnclosedClassName(XTypeElement typeElement) {
+    return getEnclosedClassName(typeElement.getClassName());
   }
 
   // TODO(kuanyingchou): Remove this method once all usages are migrated to XProcessing.
@@ -910,6 +940,26 @@ public final class Processors {
     }
 
     return topLevelType;
+  }
+
+  public static ImmutableSet<TypeElement> mapTypeElementsToJavac(
+      ImmutableSet<XTypeElement> elements) {
+    return map(elements, XConverters::toJavac);
+  }
+
+  public static ImmutableSet<XTypeElement> mapTypeElementsToXProcessing(
+      ImmutableSet<TypeElement> elements, XProcessingEnv env) {
+    return map(elements, element -> XConverters.toXProcessing(element, env));
+  }
+
+  public static ImmutableSet<XElement> mapElementsToXProcessing(
+      ImmutableSet<Element> elements, XProcessingEnv env) {
+    return map(elements, element -> XConverters.toXProcessing(element, env));
+  }
+
+  private static <T, R> ImmutableSet<R> map(
+      ImmutableSet<T> input, Function<? super T, ? extends R> transform) {
+    return input.stream().map(transform).collect(toImmutableSet());
   }
 
   private Processors() {}

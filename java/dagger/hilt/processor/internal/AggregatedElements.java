@@ -16,10 +16,13 @@
 
 package dagger.hilt.processor.internal;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
-import static javax.lang.model.element.Modifier.PUBLIC;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.common.MoreElements;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import java.util.Optional;
@@ -31,30 +34,28 @@ import javax.lang.model.util.Elements;
 public final class AggregatedElements {
 
   /** Returns the class name of the proxy or {@link Optional#empty()} if a proxy is not needed. */
-  public static Optional<ClassName> aggregatedElementProxyName(TypeElement aggregatedElement) {
-    if (aggregatedElement.getModifiers().contains(PUBLIC)) {
+  public static Optional<ClassName> aggregatedElementProxyName(XTypeElement aggregatedElement) {
+    if (aggregatedElement.isPublic() && !aggregatedElement.isInternal()) {
       // Public aggregated elements do not have proxies.
       return Optional.empty();
     }
-    ClassName name = ClassName.get(aggregatedElement);
+    ClassName name = aggregatedElement.getClassName();
     // To avoid going over the class name size limit, just prepend a single character.
     return Optional.of(name.peerClass("_" + name.simpleName()));
   }
 
   /** Returns back the set of input {@code aggregatedElements} with all proxies unwrapped. */
-  public static ImmutableSet<TypeElement> unwrapProxies(
-      ImmutableSet<TypeElement> aggregatedElements, Elements elements) {
+  public static ImmutableSet<XTypeElement> unwrapProxies(
+      ImmutableCollection<XTypeElement> aggregatedElements) {
     return aggregatedElements.stream()
-        .map(aggregatedElement -> unwrapProxy(aggregatedElement, elements))
+        .map(AggregatedElements::unwrapProxy)
         .collect(toImmutableSet());
   }
 
-  private static TypeElement unwrapProxy(TypeElement element, Elements elements) {
-    return Processors.hasAnnotation(element, ClassNames.AGGREGATED_ELEMENT_PROXY)
+  private static XTypeElement unwrapProxy(XTypeElement element) {
+    return element.hasAnnotation(ClassNames.AGGREGATED_ELEMENT_PROXY)
         ? Processors.getAnnotationClassValue(
-            elements,
-            Processors.getAnnotationMirror(element, ClassNames.AGGREGATED_ELEMENT_PROXY),
-            "value")
+            element.getAnnotation(ClassNames.AGGREGATED_ELEMENT_PROXY), "value")
         : element;
   }
 
@@ -93,6 +94,13 @@ public final class AggregatedElements {
     }
 
     return aggregatedElements;
+  }
+
+  /** Returns all aggregated elements in the aggregating package after validating them. */
+  public static ImmutableSet<XTypeElement> from(
+      String aggregatingPackage, ClassName aggregatingAnnotation, XProcessingEnv env) {
+    return Processors.mapTypeElementsToXProcessing(
+        from(aggregatingPackage, aggregatingAnnotation, toJavac(env).getElementUtils()), env);
   }
 
   private AggregatedElements() {}

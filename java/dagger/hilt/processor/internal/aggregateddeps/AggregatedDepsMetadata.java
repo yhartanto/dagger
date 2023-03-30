@@ -16,11 +16,15 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -62,6 +66,10 @@ public abstract class AggregatedDepsMetadata {
 
   public abstract TypeElement dependency();
 
+  public XTypeElement getDependency(XProcessingEnv env) {
+    return toXProcessing(dependency(), env);
+  }
+
   public abstract ImmutableSet<TypeElement> replacedDependencies();
 
   public boolean isModule() {
@@ -69,10 +77,9 @@ public abstract class AggregatedDepsMetadata {
   }
 
   /** Returns metadata for all aggregated elements in the aggregating package. */
-  public static ImmutableSet<AggregatedDepsMetadata> from(Elements elements) {
+  public static ImmutableSet<AggregatedDepsMetadata> from(XProcessingEnv env) {
     return from(
-        AggregatedElements.from(AGGREGATED_DEPS_PACKAGE, ClassNames.AGGREGATED_DEPS, elements),
-        elements);
+        AggregatedElements.from(AGGREGATED_DEPS_PACKAGE, ClassNames.AGGREGATED_DEPS, env), env);
   }
 
   /** Returns metadata for each aggregated element. */
@@ -81,6 +88,13 @@ public abstract class AggregatedDepsMetadata {
     return aggregatedElements.stream()
         .map(aggregatedElement -> create(aggregatedElement, elements))
         .collect(toImmutableSet());
+  }
+
+  /** Returns metadata for each aggregated element. */
+  public static ImmutableSet<AggregatedDepsMetadata> from(
+      ImmutableSet<XTypeElement> aggregatedElements, XProcessingEnv env) {
+    return from(
+        Processors.mapTypeElementsToJavac(aggregatedElements), toJavac(env).getElementUtils());
   }
 
   public static AggregatedDepsIr toIr(AggregatedDepsMetadata metadata) {

@@ -16,8 +16,12 @@
 
 package dagger.hilt.processor.internal.definecomponent;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -49,6 +53,10 @@ public abstract class DefineComponentClassesMetadata {
    */
   public abstract TypeElement element();
 
+  public XTypeElement element(XProcessingEnv env) {
+    return toXProcessing(element(), env);
+  }
+
   /** Returns {@code true} if this element represents a component. */
   abstract boolean isComponent();
 
@@ -58,13 +66,11 @@ public abstract class DefineComponentClassesMetadata {
   }
 
   /** Returns metadata for all aggregated elements in the aggregating package. */
-  public static ImmutableSet<DefineComponentClassesMetadata> from(Elements elements) {
+  public static ImmutableSet<DefineComponentClassesMetadata> from(XProcessingEnv env) {
     return from(
         AggregatedElements.from(
-            ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE,
-            ClassNames.DEFINE_COMPONENT_CLASSES,
-            elements),
-        elements);
+            ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE, ClassNames.DEFINE_COMPONENT_CLASSES, env),
+        env);
   }
 
   /** Returns metadata for each aggregated element. */
@@ -73,6 +79,13 @@ public abstract class DefineComponentClassesMetadata {
     return aggregatedElements.stream()
         .map(aggregatedElement -> create(aggregatedElement, elements))
         .collect(toImmutableSet());
+  }
+
+  /** Returns metadata for each aggregated element. */
+  public static ImmutableSet<DefineComponentClassesMetadata> from(
+      ImmutableSet<XTypeElement> aggregatedElements, XProcessingEnv env) {
+    return from(
+        Processors.mapTypeElementsToJavac(aggregatedElements), toJavac(env).getElementUtils());
   }
 
   private static DefineComponentClassesMetadata create(TypeElement element, Elements elements) {

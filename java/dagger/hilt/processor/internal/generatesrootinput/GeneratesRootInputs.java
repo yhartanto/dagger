@@ -16,10 +16,14 @@
 
 package dagger.hilt.processor.internal.generatesrootinput;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Suppliers.memoize;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XRoundEnv;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -60,6 +64,10 @@ public final class GeneratesRootInputs {
         .filter(element -> element != null)
         .flatMap(annotation -> roundEnv.getElementsAnnotatedWith(annotation).stream())
         .collect(toImmutableSet());
+  }
+
+  public ImmutableSet<XElement> getElementsToWaitFor(XRoundEnv roundEnv, XProcessingEnv env) {
+    return Processors.mapElementsToXProcessing(getElementsToWaitFor(toJavac(roundEnv)), env);
   }
 
   private ImmutableList<ClassName> getAnnotationList() {

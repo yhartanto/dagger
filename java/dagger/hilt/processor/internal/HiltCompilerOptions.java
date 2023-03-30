@@ -96,6 +96,15 @@ public final class HiltCompilerOptions {
   }
 
   /**
+   * Returns {@code true} if the aggregating processor is enabled (default is {@code true}).
+   *
+   * <p>Note:This is for internal use only!
+   */
+  public static boolean useAggregatingRootProcessor(XProcessingEnv env) {
+    return useAggregatingRootProcessor(toJavac(env));
+  }
+
+  /**
    * Returns project type or null if Hilt Gradle Plugin is not applied.
    *
    * <p>Note:This is for internal use only!

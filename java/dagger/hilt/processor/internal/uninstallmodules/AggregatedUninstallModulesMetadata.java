@@ -16,9 +16,13 @@
 
 package dagger.hilt.processor.internal.uninstallmodules;
 
+import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -48,19 +52,24 @@ public abstract class AggregatedUninstallModulesMetadata {
   /** Returns the test annotated with {@link dagger.hilt.android.testing.UninstallModules}. */
   public abstract TypeElement testElement();
 
+  /** Returns the test annotated with {@link dagger.hilt.android.testing.UninstallModules}. */
+  public XTypeElement testElement(XProcessingEnv env) {
+    return toXProcessing(testElement(), env);
+  }
+
   /**
    * Returns the list of uninstall modules in {@link dagger.hilt.android.testing.UninstallModules}.
    */
   public abstract ImmutableList<TypeElement> uninstallModuleElements();
 
   /** Returns metadata for all aggregated elements in the aggregating package. */
-  public static ImmutableSet<AggregatedUninstallModulesMetadata> from(Elements elements) {
+  public static ImmutableSet<AggregatedUninstallModulesMetadata> from(XProcessingEnv env) {
     return from(
         AggregatedElements.from(
             ClassNames.AGGREGATED_UNINSTALL_MODULES_PACKAGE,
             ClassNames.AGGREGATED_UNINSTALL_MODULES,
-            elements),
-        elements);
+            env),
+        env);
   }
 
   /** Returns metadata for each aggregated element. */
@@ -69,6 +78,13 @@ public abstract class AggregatedUninstallModulesMetadata {
     return aggregatedElements.stream()
         .map(aggregatedElement -> create(aggregatedElement, elements))
         .collect(toImmutableSet());
+  }
+
+  /** Returns metadata for each aggregated element. */
+  public static ImmutableSet<AggregatedUninstallModulesMetadata> from(
+      ImmutableSet<XTypeElement> aggregatedElements, XProcessingEnv env) {
+    return from(
+        Processors.mapTypeElementsToJavac(aggregatedElements), toJavac(env).getElementUtils());
   }
 
   public static AggregatedUninstallModulesIr toIr(AggregatedUninstallModulesMetadata metadata) {
