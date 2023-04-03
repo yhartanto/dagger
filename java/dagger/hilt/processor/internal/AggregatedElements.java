@@ -16,19 +16,16 @@
 
 package dagger.hilt.processor.internal;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
-import com.google.auto.common.MoreElements;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
+import dagger.internal.codegen.xprocessing.XAnnotations;
 import java.util.Optional;
-import javax.lang.model.element.PackageElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 
 /** Utility class for aggregating metadata. */
 public final class AggregatedElements {
@@ -60,47 +57,28 @@ public final class AggregatedElements {
   }
 
   /** Returns all aggregated elements in the aggregating package after validating them. */
-  public static ImmutableSet<TypeElement> from(
-      String aggregatingPackage, ClassName aggregatingAnnotation, Elements elements) {
-    PackageElement packageElement = elements.getPackageElement(aggregatingPackage);
-
-    if (packageElement == null) {
-      return ImmutableSet.of();
-    }
-
-    ImmutableSet<TypeElement> aggregatedElements =
-        packageElement.getEnclosedElements().stream()
-            .map(MoreElements::asType)
+  public static ImmutableSet<XTypeElement> from(
+      String aggregatingPackage, ClassName aggregatingAnnotation, XProcessingEnv env) {
+    ImmutableSet<XTypeElement> aggregatedElements =
+        env.getTypeElementsFromPackage(aggregatingPackage).stream()
             // We're only interested in returning the original deps here. Proxies will be generated
             // (if needed) and swapped just before generating @ComponentTreeDeps.
-            .filter(
-                element -> !Processors.hasAnnotation(element, ClassNames.AGGREGATED_ELEMENT_PROXY))
+            .filter(element -> !element.hasAnnotation(ClassNames.AGGREGATED_ELEMENT_PROXY))
             .collect(toImmutableSet());
 
-    ProcessorErrors.checkState(
-        !aggregatedElements.isEmpty(),
-        packageElement,
-        "No dependencies found. Did you remove code in package %s?",
-        packageElement);
-
-    for (TypeElement aggregatedElement : aggregatedElements) {
+    for (XTypeElement aggregatedElement : aggregatedElements) {
       ProcessorErrors.checkState(
-          Processors.hasAnnotation(aggregatedElement, aggregatingAnnotation),
+          aggregatedElement.hasAnnotation(aggregatingAnnotation),
           aggregatedElement,
           "Expected element, %s, to be annotated with @%s, but only found: %s.",
-          aggregatedElement.getSimpleName(),
+          aggregatedElement.getName(),
           aggregatingAnnotation,
-          aggregatedElement.getAnnotationMirrors());
+          aggregatedElement.getAllAnnotations().stream()
+              .map(XAnnotations::toStableString)
+              .collect(toImmutableList()));
     }
 
     return aggregatedElements;
-  }
-
-  /** Returns all aggregated elements in the aggregating package after validating them. */
-  public static ImmutableSet<XTypeElement> from(
-      String aggregatingPackage, ClassName aggregatingAnnotation, XProcessingEnv env) {
-    return Processors.mapTypeElementsToXProcessing(
-        from(aggregatingPackage, aggregatingAnnotation, toJavac(env).getElementUtils()), env);
   }
 
   private AggregatedElements() {}
