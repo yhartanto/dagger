@@ -16,28 +16,21 @@
 
 package dagger.hilt.processor.internal.uninstallmodules;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
+import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.AggregatedElements;
-import dagger.hilt.processor.internal.AnnotationValues;
 import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.root.ir.AggregatedUninstallModulesIr;
 import java.util.stream.Collectors;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 
 /**
  * A class that represents the values stored in an
@@ -47,20 +40,15 @@ import javax.lang.model.util.Elements;
 public abstract class AggregatedUninstallModulesMetadata {
 
   /** Returns the aggregating element */
-  public abstract TypeElement aggregatingElement();
+  public abstract XTypeElement aggregatingElement();
 
   /** Returns the test annotated with {@link dagger.hilt.android.testing.UninstallModules}. */
-  public abstract TypeElement testElement();
-
-  /** Returns the test annotated with {@link dagger.hilt.android.testing.UninstallModules}. */
-  public XTypeElement testElement(XProcessingEnv env) {
-    return toXProcessing(testElement(), env);
-  }
+  public abstract XTypeElement testElement();
 
   /**
    * Returns the list of uninstall modules in {@link dagger.hilt.android.testing.UninstallModules}.
    */
-  public abstract ImmutableList<TypeElement> uninstallModuleElements();
+  public abstract ImmutableList<XTypeElement> uninstallModuleElements();
 
   /** Returns metadata for all aggregated elements in the aggregating package. */
   public static ImmutableSet<AggregatedUninstallModulesMetadata> from(XProcessingEnv env) {
@@ -68,48 +56,36 @@ public abstract class AggregatedUninstallModulesMetadata {
         AggregatedElements.from(
             ClassNames.AGGREGATED_UNINSTALL_MODULES_PACKAGE,
             ClassNames.AGGREGATED_UNINSTALL_MODULES,
-            env),
-        env);
+            env));
   }
 
   /** Returns metadata for each aggregated element. */
   public static ImmutableSet<AggregatedUninstallModulesMetadata> from(
-      ImmutableSet<TypeElement> aggregatedElements, Elements elements) {
+      ImmutableSet<XTypeElement> aggregatedElements) {
     return aggregatedElements.stream()
-        .map(aggregatedElement -> create(aggregatedElement, elements))
+        .map(aggregatedElement -> create(aggregatedElement, getProcessingEnv(aggregatedElement)))
         .collect(toImmutableSet());
-  }
-
-  /** Returns metadata for each aggregated element. */
-  public static ImmutableSet<AggregatedUninstallModulesMetadata> from(
-      ImmutableSet<XTypeElement> aggregatedElements, XProcessingEnv env) {
-    return from(
-        Processors.mapTypeElementsToJavac(aggregatedElements), toJavac(env).getElementUtils());
   }
 
   public static AggregatedUninstallModulesIr toIr(AggregatedUninstallModulesMetadata metadata) {
     return new AggregatedUninstallModulesIr(
-        ClassName.get(metadata.aggregatingElement()),
-        ClassName.get(metadata.testElement()).canonicalName(),
+        metadata.aggregatingElement().getClassName(),
+        metadata.testElement().getClassName().canonicalName(),
         metadata.uninstallModuleElements().stream()
-            .map(ClassName::get)
+            .map(XTypeElement::getClassName)
             .map(ClassName::canonicalName)
             .collect(Collectors.toList()));
   }
 
-  private static AggregatedUninstallModulesMetadata create(TypeElement element, Elements elements) {
-    AnnotationMirror annotationMirror =
-        Processors.getAnnotationMirror(element, ClassNames.AGGREGATED_UNINSTALL_MODULES);
-
-    ImmutableMap<String, AnnotationValue> values =
-        Processors.getAnnotationValues(elements, annotationMirror);
+  private static AggregatedUninstallModulesMetadata create(
+      XTypeElement element, XProcessingEnv env) {
+    XAnnotation annotationMirror = element.getAnnotation(ClassNames.AGGREGATED_UNINSTALL_MODULES);
 
     return new AutoValue_AggregatedUninstallModulesMetadata(
         element,
-        elements.getTypeElement(AnnotationValues.getString(values.get("test"))),
-        AnnotationValues.getAnnotationValues(values.get("uninstallModules")).stream()
-            .map(AnnotationValues::getString)
-            .map(elements::getTypeElement)
+        env.requireTypeElement(annotationMirror.getAsString("test")),
+        annotationMirror.getAsStringList("uninstallModules").stream()
+            .map(env::requireTypeElement)
             .collect(toImmutableList()));
   }
 }

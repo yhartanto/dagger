@@ -119,11 +119,11 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
       ComponentDependencies deps =
           ComponentDependencies.from(
               componentDescriptors,
-              AggregatedDepsMetadata.from(metadata.aggregatedDeps(), processingEnv()),
+              AggregatedDepsMetadata.from(metadata.aggregatedDeps()),
               AggregatedUninstallModulesMetadata.from(
-                  metadata.aggregatedUninstallModulesDeps(), processingEnv()),
+                  metadata.aggregatedUninstallModulesDeps()),
               AggregatedEarlyEntryPointMetadata.from(
-                  metadata.aggregatedEarlyEntryPointDeps(), processingEnv()),
+                  metadata.aggregatedEarlyEntryPointDeps()),
               processingEnv());
       AliasOfs aliasOfs =
           AliasOfs.create(

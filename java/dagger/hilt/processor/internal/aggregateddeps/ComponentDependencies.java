@@ -16,8 +16,6 @@
 
 package dagger.hilt.processor.internal.aggregateddeps;
 
-import static androidx.room.compiler.processing.compat.XConverters.toJavac;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
@@ -31,10 +29,6 @@ import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.ComponentDescriptor;
 import dagger.hilt.processor.internal.earlyentrypoint.AggregatedEarlyEntryPointMetadata;
 import dagger.hilt.processor.internal.uninstallmodules.AggregatedUninstallModulesMetadata;
-import java.util.Map;
-import java.util.Map.Entry;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.Elements;
 
 /** Represents information needed to create a component (i.e. modules, entry points, etc) */
 @AutoValue
@@ -44,39 +38,21 @@ public abstract class ComponentDependencies {
   }
 
   /** Returns the modules for a component, without any filtering. */
-  public abstract ImmutableSetMultimap<ClassName, TypeElement> modules();
-
-  /** Returns the modules for a component, without any filtering. */
-  public ImmutableSetMultimap<ClassName, XTypeElement> modules(XProcessingEnv env) {
-    ImmutableSetMultimap.Builder<ClassName, XTypeElement> builder = ImmutableSetMultimap.builder();
-    for (Entry<ClassName, TypeElement> entry : modules().entries()) {
-      builder.put(entry.getKey(), toXProcessing(entry.getValue(), env));
-    }
-    return builder.build();
-  }
+  public abstract ImmutableSetMultimap<ClassName, XTypeElement> modules();
 
   /** Returns the entry points associated with the given a component. */
-  public abstract ImmutableSetMultimap<ClassName, TypeElement> entryPoints();
+  public abstract ImmutableSetMultimap<ClassName, XTypeElement> entryPoints();
 
   /** Returns the component entry point associated with the given a component. */
-  public abstract ImmutableSetMultimap<ClassName, TypeElement> componentEntryPoints();
-
-  /** Returns the component entry point associated with the given a component. */
-  public ImmutableSetMultimap<ClassName, XTypeElement> componentEntryPoints(XProcessingEnv env) {
-    ImmutableSetMultimap.Builder<ClassName, XTypeElement> builder = ImmutableSetMultimap.builder();
-    for (Map.Entry<ClassName, TypeElement> entry : componentEntryPoints().entries()) {
-      builder.put(entry.getKey(), toXProcessing(entry.getValue(), env));
-    }
-    return builder.build();
-  }
+  public abstract ImmutableSetMultimap<ClassName, XTypeElement> componentEntryPoints();
 
   @AutoValue.Builder
   abstract static class Builder {
-    abstract ImmutableSetMultimap.Builder<ClassName, TypeElement> modulesBuilder();
+    abstract ImmutableSetMultimap.Builder<ClassName, XTypeElement> modulesBuilder();
 
-    abstract ImmutableSetMultimap.Builder<ClassName, TypeElement> entryPointsBuilder();
+    abstract ImmutableSetMultimap.Builder<ClassName, XTypeElement> entryPointsBuilder();
 
-    abstract ImmutableSetMultimap.Builder<ClassName, TypeElement> componentEntryPointsBuilder();
+    abstract ImmutableSetMultimap.Builder<ClassName, XTypeElement> componentEntryPointsBuilder();
 
     abstract ComponentDependencies build();
   }
@@ -87,16 +63,16 @@ public abstract class ComponentDependencies {
       ImmutableSet<AggregatedDepsMetadata> aggregatedDepsMetadata,
       ImmutableSet<AggregatedUninstallModulesMetadata> aggregatedUninstallModulesMetadata,
       ImmutableSet<AggregatedEarlyEntryPointMetadata> aggregatedEarlyEntryPointMetadata,
-      Elements elements) {
-    ImmutableSet<TypeElement> uninstalledModules =
-        ImmutableSet.<TypeElement>builder()
+      XProcessingEnv env) {
+    ImmutableSet<XTypeElement> uninstalledModules =
+        ImmutableSet.<XTypeElement>builder()
             .addAll(
                 aggregatedUninstallModulesMetadata.stream()
                     .flatMap(metadata -> metadata.uninstallModuleElements().stream())
                     // @AggregatedUninstallModules always references the user module, so convert to
                     // the generated public wrapper if needed.
                     // TODO(bcorso): Consider converting this to the public module in the processor.
-                    .map(module -> PkgPrivateMetadata.publicModule(module, elements))
+                    .map(module -> PkgPrivateMetadata.publicModule(module))
                     .collect(toImmutableSet()))
             .addAll(
                 aggregatedDepsMetadata.stream()
@@ -108,8 +84,8 @@ public abstract class ComponentDependencies {
     ImmutableSet<ClassName> componentNames =
         descriptors.stream().map(ComponentDescriptor::component).collect(toImmutableSet());
     for (AggregatedDepsMetadata metadata : aggregatedDepsMetadata) {
-      for (TypeElement componentElement : metadata.componentElements()) {
-        ClassName componentName = ClassName.get(componentElement);
+      for (XTypeElement componentElement : metadata.componentElements()) {
+        ClassName componentName = componentElement.getClassName();
         checkState(
             componentNames.contains(componentName), "%s is not a valid Component.", componentName);
         switch (metadata.dependencyType()) {
@@ -139,24 +115,9 @@ public abstract class ComponentDependencies {
                 // @AggregatedEarlyEntryPointMetadata always references the user module, so convert
                 // to the generated public wrapper if needed.
                 // TODO(bcorso): Consider converting this to the public module in the processor.
-                .map(entryPoint -> PkgPrivateMetadata.publicEarlyEntryPoint(entryPoint, elements))
+                .map(PkgPrivateMetadata::publicEarlyEntryPoint)
                 .collect(toImmutableSet()));
 
     return componentDependencies.build();
-  }
-
-  /** Returns the component dependencies for the given metadata. */
-  public static ComponentDependencies from(
-      ImmutableSet<ComponentDescriptor> descriptors,
-      ImmutableSet<AggregatedDepsMetadata> aggregatedDepsMetadata,
-      ImmutableSet<AggregatedUninstallModulesMetadata> aggregatedUninstallModulesMetadata,
-      ImmutableSet<AggregatedEarlyEntryPointMetadata> aggregatedEarlyEntryPointMetadata,
-      XProcessingEnv env) {
-    return from(
-        descriptors,
-        aggregatedDepsMetadata,
-        aggregatedUninstallModulesMetadata,
-        aggregatedEarlyEntryPointMetadata,
-        toJavac(env).getElementUtils());
   }
 }

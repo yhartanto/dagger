@@ -103,14 +103,14 @@ public final class RootMetadata {
   }
 
   public ImmutableSet<XTypeElement> modules(ClassName componentName) {
-    return deps.modules(env).get(componentName).stream().collect(toImmutableSet());
+    return deps.modules().get(componentName).stream().collect(toImmutableSet());
   }
 
   public ImmutableSet<TypeName> entryPoints(ClassName componentName) {
     return ImmutableSet.<TypeName>builder()
         .addAll(
             deps.entryPoints().get(componentName).stream()
-                .map(ClassName::get)
+                .map(XTypeElement::getClassName)
                 .collect(toImmutableSet()))
         .add(
             root.isTestRoot() && componentName.equals(ClassNames.SINGLETON_COMPONENT)

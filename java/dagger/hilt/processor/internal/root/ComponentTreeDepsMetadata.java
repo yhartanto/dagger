@@ -102,18 +102,18 @@ abstract class ComponentTreeDepsMetadata {
   }
 
   /** Returns all modules included in a component tree deps. */
-  public ImmutableSet<XTypeElement> modules(XProcessingEnv env) {
-    return AggregatedDepsMetadata.from(aggregatedDeps(), env).stream()
+  public ImmutableSet<XTypeElement> modules() {
+    return AggregatedDepsMetadata.from(aggregatedDeps()).stream()
         .filter(AggregatedDepsMetadata::isModule)
-        .map(metadata -> metadata.getDependency(env))
+        .map(AggregatedDepsMetadata::dependency)
         .collect(toImmutableSet());
   }
 
   /** Returns all entry points included in a component tree deps. */
-  public ImmutableSet<XTypeElement> entrypoints(XProcessingEnv env) {
-    return AggregatedDepsMetadata.from(aggregatedDeps(), env).stream()
+  public ImmutableSet<XTypeElement> entrypoints() {
+    return AggregatedDepsMetadata.from(aggregatedDeps()).stream()
         .filter(dependency -> !dependency.isModule())
-        .map(metadata -> metadata.getDependency(env))
+        .map(AggregatedDepsMetadata::dependency)
         .collect(toImmutableSet());
   }
 
