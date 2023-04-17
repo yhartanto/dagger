@@ -130,7 +130,7 @@ public final class XElements {
 
   /**
    * Returns the closest enclosing element that is a {@link XTypeElement} or throws an {@link
-   * IllegalStateException} if one doesn't exists.
+   * IllegalStateException} if one doesn't exist.
    */
   public static XTypeElement closestEnclosingTypeElement(XElement element) {
     return optionalClosestEnclosingTypeElement(element)
@@ -377,6 +377,10 @@ public final class XElements {
       return "TYPE_PARAMETER";
     }
     return element.kindName();
+  }
+
+  public static String packageName(XElement element) {
+    return element.getClosestMemberContainer().asClassName().getPackageName();
   }
 
   private XElements() {}
