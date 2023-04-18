@@ -20,7 +20,6 @@ import androidx.room.compiler.processing.XTypeElement;
 import com.squareup.javapoet.AnnotationSpec;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
-import java.io.IOException;
 
 /** Generates an {@link dagger.hilt.internal.aggregatedroot.AggregatedRoot}. */
 final class AggregatedRootGenerator {
@@ -35,7 +34,7 @@ final class AggregatedRootGenerator {
     this.rootAnnotation = rootAnnotation;
   }
 
-  void generate() throws IOException {
+  void generate() {
     AnnotationSpec.Builder aggregatedRootAnnotation =
         AnnotationSpec.builder(ClassNames.AGGREGATED_ROOT)
             .addMember("root", "$S", rootElement.getQualifiedName())

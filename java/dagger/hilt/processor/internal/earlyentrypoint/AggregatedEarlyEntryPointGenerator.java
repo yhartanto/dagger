@@ -20,7 +20,6 @@ import androidx.room.compiler.processing.XTypeElement;
 import com.squareup.javapoet.AnnotationSpec;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
-import java.io.IOException;
 
 /**
  * Generates an {@link dagger.hilt.android.internal.earlyentrypoint.AggregatedEarlyEntryPoint}
@@ -33,7 +32,7 @@ final class AggregatedEarlyEntryPointGenerator {
     this.earlyEntryPoint = earlyEntryPoint;
   }
 
-  void generate() throws IOException {
+  void generate() {
     Processors.generateAggregatingClass(
         ClassNames.AGGREGATED_EARLY_ENTRY_POINT_PACKAGE,
         AnnotationSpec.builder(ClassNames.AGGREGATED_EARLY_ENTRY_POINT)

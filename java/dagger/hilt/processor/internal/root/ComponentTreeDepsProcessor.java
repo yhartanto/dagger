@@ -78,7 +78,7 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
             .map(element -> ComponentTreeDepsMetadata.from(element, processingEnv()))
             .collect(toImmutableSet());
 
-    DefineComponents defineComponents = DefineComponents.create(processingEnv());
+    DefineComponents defineComponents = DefineComponents.create();
     for (ComponentTreeDepsMetadata metadata : componentTreeDepsToProcess) {
       processComponentTreeDeps(metadata, defineComponents);
     }
@@ -114,7 +114,7 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
 
       ImmutableSet<ComponentDescriptor> componentDescriptors =
           defineComponents.getComponentDescriptors(
-              DefineComponentClassesMetadata.from(metadata.defineComponentDeps(), processingEnv()));
+              DefineComponentClassesMetadata.from(metadata.defineComponentDeps()));
       ComponentTree tree = ComponentTree.from(componentDescriptors);
       ComponentDependencies deps =
           ComponentDependencies.from(
@@ -127,8 +127,7 @@ public final class ComponentTreeDepsProcessor extends BaseProcessor {
               processingEnv());
       AliasOfs aliasOfs =
           AliasOfs.create(
-              AliasOfPropagatedDataMetadata.from(metadata.aliasOfDeps(), processingEnv()),
-              componentDescriptors);
+              AliasOfPropagatedDataMetadata.from(metadata.aliasOfDeps()), componentDescriptors);
       RootMetadata rootMetadata = RootMetadata.create(root, tree, deps, aliasOfs, processingEnv());
 
       generateComponents(metadata, rootMetadata, componentNames);

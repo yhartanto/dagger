@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.AnnotationSpec;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
-import java.io.IOException;
 
 /** Generates resource files for {@link dagger.hilt.migration.AliasOf}. */
 final class AliasOfPropagatedDataGenerator {
@@ -36,7 +35,7 @@ final class AliasOfPropagatedDataGenerator {
     this.defineComponentScopes = defineComponentScopes;
   }
 
-  void generate() throws IOException {
+  void generate() {
     Processors.generateAggregatingClass(
         ClassNames.ALIAS_OF_PROPAGATED_DATA_PACKAGE,
         propagatedDataAnnotation(),

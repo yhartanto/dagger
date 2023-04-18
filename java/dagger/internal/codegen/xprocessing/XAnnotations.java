@@ -136,6 +136,11 @@ public final class XAnnotations {
     }
   }
 
+  /** Returns the value of the given [key] as a type element. */
+  public static XTypeElement getAsTypeElement(XAnnotation annotation, String key) {
+    return annotation.getAsType(key).getTypeElement();
+  }
+
   /** Returns the value of the given [key] as a list of type elements. */
   public static ImmutableList<XTypeElement> getAsTypeElementList(
       XAnnotation annotation, String key) {

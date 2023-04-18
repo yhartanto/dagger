@@ -28,6 +28,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 import static kotlinx.metadata.Flag.Class.IS_COMPANION_OBJECT;
 import static kotlinx.metadata.Flag.Class.IS_OBJECT;
 
+import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XMethodElement;
@@ -89,11 +90,26 @@ public final class KotlinMetadataUtil {
         .collect(toImmutableList());
   }
 
+  // TODO(kuanyingchou): Consider replacing it with `XAnnotated.getAnnotationsAnnotatedWith()`
+  //  once b/278077018 is resolved.
+  /**
+   * Returns the annotations on the given {@code element} annotated with {@code annotationName}.
+   *
+   * <p>Note: If the given {@code element} is a non-static field this method will return annotations
+   * on both the backing field and the associated synthetic property (if one exists).
+   */
+  public ImmutableList<XAnnotation> getAnnotationsAnnotatedWith(
+      XElement element, ClassName annotationName) {
+    return getAnnotationsAnnotatedWith(toJavac(element), annotationName).stream()
+        .map(annotationMirror -> toXProcessing(annotationMirror, getProcessingEnv(element)))
+        .collect(toImmutableList());
+  }
+
   /**
    * Returns the annotations on the given {@code element} that match the {@code annotationName}.
    *
-   * <p>Note: If the given {@code element} is a non-static field this method will return
-   * annotations on both the backing field and the associated synthetic property (if one exists).
+   * <p>Note: If the given {@code element} is a non-static field this method will return annotations
+   * on both the backing field and the associated synthetic property (if one exists).
    */
   private ImmutableList<AnnotationMirror> getAnnotations(Element element) {
     // Currently, we avoid trying to get annotations from properties on object class's (i.e.

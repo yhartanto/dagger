@@ -51,7 +51,7 @@ public final class AggregatedElements {
 
   private static XTypeElement unwrapProxy(XTypeElement element) {
     return element.hasAnnotation(ClassNames.AGGREGATED_ELEMENT_PROXY)
-        ? Processors.getAnnotationClassValue(
+        ? XAnnotations.getAsTypeElement(
             element.getAnnotation(ClassNames.AGGREGATED_ELEMENT_PROXY), "value")
         : element;
   }

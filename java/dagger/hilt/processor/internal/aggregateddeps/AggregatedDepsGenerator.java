@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.Processors;
-import java.io.IOException;
 import java.util.Optional;
 
 /**
@@ -52,7 +51,7 @@ final class AggregatedDepsGenerator {
     this.replacedDependencies = replacedDependencies;
   }
 
-  void generate() throws IOException {
+  void generate() {
     Processors.generateAggregatingClass(
         AGGREGATING_PACKAGE, aggregatedDepsAnnotation(), dependency, getClass());
   }

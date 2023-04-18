@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.AnnotationSpec;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
-import java.io.IOException;
 
 /**
  * Generates an {@link dagger.hilt.android.internal.uninstallmodules.AggregatedUninstallModules}
@@ -39,7 +38,7 @@ final class AggregatedUninstallModulesGenerator {
     this.uninstallModuleElements = uninstallModuleElements;
   }
 
-  void generate() throws IOException {
+  void generate() {
     Processors.generateAggregatingClass(
         ClassNames.AGGREGATED_UNINSTALL_MODULES_PACKAGE,
         aggregatedUninstallModulesAnnotation(),

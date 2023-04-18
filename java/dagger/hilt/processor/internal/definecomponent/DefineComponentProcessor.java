@@ -29,7 +29,6 @@ import dagger.hilt.processor.internal.ClassNames;
 import dagger.hilt.processor.internal.Processors;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentBuilderMetadatas.DefineComponentBuilderMetadata;
 import dagger.hilt.processor.internal.definecomponent.DefineComponentMetadatas.DefineComponentMetadata;
-import java.io.IOException;
 import javax.annotation.processing.Processor;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
@@ -78,7 +77,7 @@ public final class DefineComponentProcessor extends BaseProcessor {
     }
   }
 
-  private void generateFile(String member, XTypeElement typeElement) throws IOException {
+  private void generateFile(String member, XTypeElement typeElement) {
     Processors.generateAggregatingClass(
         ClassNames.DEFINE_COMPONENT_CLASSES_PACKAGE,
         AnnotationSpec.builder(ClassNames.DEFINE_COMPONENT_CLASSES)
