@@ -75,7 +75,7 @@ public final class BindsTypeChecker {
         return methodParameterType(parameterizedSetType, "add");
       case SET_VALUES:
         // TODO(b/211774331): The left hand side type should be limited to Set types.
-        // NOTE: We rewrap the LHS to use java.util.Set before looking for the addAll() method
+        // NOTE - method
         // because Kotlin source may be using kotlin.collection.Set which does not include addAll().
         return methodParameterType(rewrapType(leftHandSide,  TypeNames.SET), "addAll");
       case MAP:
