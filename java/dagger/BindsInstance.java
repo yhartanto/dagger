@@ -52,7 +52,18 @@ import java.lang.annotation.Target;
  *
  * <p>will allow clients of the builder or factory to pass their own instances of {@code Foo} and
  * {@code Bar}, and those instances can be injected within the component as {@code Foo} or
- * {@code @Blue Bar}, respectively.
+ * {@code @Blue Bar}, respectively. It's important to note that unlike in factories, the methods in
+ * builders should only accept and bind a single parameter each. Using the following will result in
+ * an error:
+ *
+ * <pre>
+ *   {@literal @Component.Builder}
+ *   interface Builder {
+ *     // Error! Builder methods can only have one parameter
+ *     {@literal @BindsInstance} Builder fooAndBar(Foo foo, {@literal @Blue} Bar bar);
+ *     ...
+ *   }
+ * </pre>
  *
  * <p>{@code @BindsInstance} arguments may not be {@code null} unless the parameter is annotated
  * with {@code @Nullable}.
