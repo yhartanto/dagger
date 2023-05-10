@@ -84,6 +84,9 @@ configurations {
 }
 
 shadowJar {
+    // This transform is needed so that services get relocated/shaded as well.
+    mergeServiceFiles()
+
     archiveClassifier = "" // postfix for output jar
     configurations = [project.configurations.shaded]
     transform(ManifestMerger.class)

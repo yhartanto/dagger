@@ -77,7 +77,6 @@ gen_maven_artifact(
         "//java/dagger/hilt/processor/internal/uninstallmodules:aggregated_uninstall_modules_metadata",
     ],
     artifact_target_maven_deps = [
-        "com.google.auto:auto-common",
         "com.google.code.findbugs:jsr305",
         "com.google.dagger:dagger-compiler",
         "com.google.dagger:dagger",
@@ -91,7 +90,6 @@ gen_maven_artifact(
         "javax.inject:javax.inject",
         "net.ltgt.gradle.incap:incap",
         "org.jetbrains.kotlin:kotlin-stdlib",
-        "org.jetbrains.kotlinx:kotlinx-metadata-jvm",
     ],
     javadoc_android_api_level = 32,
     javadoc_root_packages = [
@@ -102,10 +100,6 @@ gen_maven_artifact(
     javadoc_srcs = [
         "//java/dagger/hilt:hilt_processing_filegroup",
     ],
-    # The shaded deps are added using jarjar, but they won't be shaded until later
-    # due to: https://github.com/google/dagger/issues/2765. For the shaded rules see
-    # util/deploy-hilt.sh
-    shaded_deps = ["//third_party/java/auto:common"],
 )
 
 filegroup(

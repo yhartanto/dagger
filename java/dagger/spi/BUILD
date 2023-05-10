@@ -62,7 +62,6 @@ gen_maven_artifact(
         "//java/dagger/spi/model",
     ],
     artifact_target_maven_deps = [
-        "com.google.auto:auto-common",
         "com.google.code.findbugs:jsr305",
         "com.google.dagger:dagger-producers",
         "com.google.dagger:dagger",
@@ -82,6 +81,7 @@ gen_maven_artifact(
     # util/deploy-dagger.sh
     shaded_deps = [
         "//third_party/java/auto:common",
+        "@maven//:org_jetbrains_kotlinx_kotlinx_metadata_jvm",
         "//java/dagger/internal/codegen/xprocessing:xprocessing-jar",
     ],
 )

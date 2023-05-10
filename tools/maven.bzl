@@ -20,6 +20,11 @@ load(":maven_info.bzl", "MavenInfo", "collect_maven_info")
 load("@google_bazel_common//tools/javadoc:javadoc.bzl", "javadoc_library")
 load("@google_bazel_common//tools/jarjar:jarjar.bzl", "jarjar_library")
 
+SHADED_MAVEN_DEPS = [
+    "com.google.auto:auto-common",
+    "org.jetbrains.kotlinx:kotlinx-metadata-jvm",
+]
+
 def pom_file(name, targets, artifact_name, artifact_id, packaging = None, **kwargs):
     default_pom_file(
         name = name,
@@ -34,7 +39,12 @@ def pom_file(name, targets, artifact_name, artifact_id, packaging = None, **kwar
             "{artifact_id}": artifact_id,
             "{packaging}": packaging or "jar",
         },
-        excluded_artifacts = ["com.google.auto:auto-common"],
+        # NOTE: The shaded maven dependencies are excluded from every Dagger pom file.
+        # Thus, if a Dagger artifact needs the dependencies it must jarjar the dependency
+        # into the artifact itself using the gen_maven_artifact.shaded_deps or get it from
+        # a transitive Dagger artifact as a dependency. In addition, the artifact must add
+        # the shade rules in the deploy scripts, e.g. deploy-dagger.sh.
+        excluded_artifacts = SHADED_MAVEN_DEPS,
         **kwargs
     )
 
@@ -54,7 +64,6 @@ def gen_maven_artifact(
         javadoc_exclude_packages = None,
         javadoc_android_api_level = None,
         shaded_deps = None,
-        shaded_rules = None,
         manifest = None,
         lint_deps = None,
         proguard_specs = None):
@@ -282,7 +291,8 @@ def _validate_maven_deps_impl(ctx):
     actual_maven_deps = [_strip_artifact_version(artifact) for artifact in maven_nearest_artifacts]
     _validate_list(
         "artifact_target_maven_deps",
-        actual_maven_deps,
+        # Exclude shaded maven deps from this list since they're not actual dependencies.
+        [dep for dep in actual_maven_deps if dep not in SHADED_MAVEN_DEPS],
         expected_maven_deps,
         ctx.attr.banned_maven_deps,
     )

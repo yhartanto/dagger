@@ -88,7 +88,6 @@ gen_maven_artifact(
         "//java/dagger/internal/codegen/xprocessing",
     ],
     artifact_target_maven_deps = [
-        "com.google.auto:auto-common",
         "com.google.code.findbugs:jsr305",
         "com.google.dagger:dagger-producers",
         "com.google.dagger:dagger-spi",
@@ -103,7 +102,6 @@ gen_maven_artifact(
         "net.ltgt.gradle.incap:incap",
         "org.checkerframework:checker-compat-qual",
         "org.jetbrains.kotlin:kotlin-stdlib",
-        "org.jetbrains.kotlinx:kotlinx-metadata-jvm",
     ],
     javadoc_root_packages = ["dagger.internal.codegen"],
     # The javadocs should only include ComponentProcessor.java, since that is the only class used

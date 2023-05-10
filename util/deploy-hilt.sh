@@ -52,7 +52,7 @@ _deploy \
   ""
 
 _deploy \
-  "com.google.auto.common,dagger.hilt.android.shaded.auto.common;androidx.room.compiler,dagger.spi.shaded.androidx.room.compiler" \
+  "com.google.auto.common,dagger.spi.shaded.auto.common;androidx.room.compiler,dagger.spi.shaded.androidx.room.compiler;kotlinx.metadata,dagger.spi.shaded.kotlinx.metadata" \
   java/dagger/hilt/processor/artifact.jar \
   java/dagger/hilt/processor/pom.xml \
   java/dagger/hilt/processor/artifact-src.jar \
@@ -60,7 +60,7 @@ _deploy \
   ""
 
 _deploy \
-  "com.google.auto.common,dagger.hilt.android.shaded.auto.common;androidx.room.compiler,dagger.spi.shaded.androidx.room.compiler" \
+  "com.google.auto.common,dagger.spi.shaded.auto.common;androidx.room.compiler,dagger.spi.shaded.androidx.room.compiler;kotlinx.metadata,dagger.spi.shaded.kotlinx.metadata" \
   java/dagger/hilt/android/processor/artifact.jar \
   java/dagger/hilt/android/processor/pom.xml \
   java/dagger/hilt/android/processor/artifact-src.jar \
