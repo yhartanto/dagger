@@ -17,7 +17,6 @@
 package dagger.hilt.processor.internal;
 
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
-import static androidx.room.compiler.processing.compat.XConverters.toXProcessing;
 import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 
 import androidx.room.compiler.processing.XElement;
@@ -71,9 +70,7 @@ final class ProcessorErrorHandler {
       }
     } else if (t instanceof ErrorTypeException) {
       ErrorTypeException badInput = (ErrorTypeException) t;
-      hiltErrors.add(
-          HiltError.of(
-              badInput.getMessage(), toXProcessing(badInput.getBadElement(), processingEnv)));
+      hiltErrors.add(HiltError.of(badInput.getMessage(), badInput.getBadElement()));
     } else if (t.getMessage() != null) {
       hiltErrors.add(HiltError.of(t.getMessage() + ": " + Throwables.getStackTraceAsString(t)));
     } else {

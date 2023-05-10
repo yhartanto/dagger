@@ -16,7 +16,7 @@
 
 package dagger.hilt.processor.internal;
 
-import javax.lang.model.element.Element;
+import androidx.room.compiler.processing.XElement;
 
 /**
  * Exception to throw when a required {@link Element} is or inherits from an error kind.
@@ -24,14 +24,14 @@ import javax.lang.model.element.Element;
  * <p>Includes element to point to for the cause of the error
  */
 public final class ErrorTypeException extends RuntimeException {
-  private final Element badElement;
+  private final XElement badElement;
 
-  public ErrorTypeException(String message, Element badElement) {
+  public ErrorTypeException(String message, XElement badElement) {
     super(message);
     this.badElement = badElement;
   }
 
-  public Element getBadElement() {
+  public XElement getBadElement() {
     return badElement;
   }
 }
