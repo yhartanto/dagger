@@ -18,6 +18,7 @@ package dagger.internal.codegen.validation;
 
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toKS;
+import static androidx.room.compiler.processing.compat.XConverters.toKSResolver;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
@@ -256,7 +257,7 @@ public final class SpiModelBindingGraphConverter {
       case JAVAC:
         return DaggerProcessingEnv.fromJavac(toJavac(env));
       case KSP:
-        return DaggerProcessingEnv.fromKsp(toKS(env));
+        return DaggerProcessingEnv.fromKsp(toKS(env), toKSResolver(env));
     }
     throw new IllegalStateException(
         String.format("Backend %s is not supported yet.", env.getBackend()));

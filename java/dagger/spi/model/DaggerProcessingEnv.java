@@ -17,6 +17,7 @@
 package dagger.spi.model;
 
 import com.google.auto.value.AutoValue;
+import com.google.devtools.ksp.processing.Resolver;
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment;
 import javax.annotation.Nullable;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -32,11 +33,11 @@ public abstract class DaggerProcessingEnv {
   }
 
   public static DaggerProcessingEnv fromJavac(ProcessingEnvironment env) {
-    return new AutoValue_DaggerProcessingEnv(env, null);
+    return new AutoValue_DaggerProcessingEnv(env, null, null);
   }
 
-  public static DaggerProcessingEnv fromKsp(SymbolProcessorEnvironment env) {
-    return new AutoValue_DaggerProcessingEnv(null, env);
+  public static DaggerProcessingEnv fromKsp(SymbolProcessorEnvironment env, Resolver resolver) {
+    return new AutoValue_DaggerProcessingEnv(null, env, resolver);
   }
 
   /**
@@ -48,6 +49,9 @@ public abstract class DaggerProcessingEnv {
 
   @Nullable
   public abstract SymbolProcessorEnvironment ksp();
+
+  @Nullable
+  public abstract Resolver resolver();
 
   /** Returns the backend used in this compilation. */
   public DaggerProcessingEnv.Backend backend() {
