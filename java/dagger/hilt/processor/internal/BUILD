@@ -56,7 +56,6 @@ java_library(
 java_library(
     name = "processors",
     srcs = [
-        "AnnotationValues.java",
         "Processors.java",
     ],
     deps = [
@@ -65,7 +64,6 @@ java_library(
         "//java/dagger/hilt/processor/internal/kotlin",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/xprocessing",
-        "//third_party/java/auto:common",
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
