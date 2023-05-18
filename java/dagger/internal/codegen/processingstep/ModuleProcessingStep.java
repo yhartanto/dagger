@@ -130,7 +130,11 @@ final class ModuleProcessingStep extends TypeCheckingProcessingStep<XTypeElement
         inaccessibleMapKeyProxyGenerator.generate(bindsMethodBinding(module, method), messager);
       }
     }
-    moduleConstructorProxyGenerator.generate(module, messager);
+    // We should never need to generate a constructor proxy for a companion object since we never
+    // need to call a companion object's constructor.
+    if (!module.isCompanionObject()) {
+      moduleConstructorProxyGenerator.generate(module, messager);
+    }
   }
 
   private <B extends ContributionBinding> void generate(

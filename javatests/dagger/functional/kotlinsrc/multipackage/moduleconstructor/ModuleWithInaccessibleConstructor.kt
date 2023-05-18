@@ -27,4 +27,9 @@ internal constructor() {
   private val i: Int = Random.nextInt()
 
   @Provides fun i(): Int = i
+
+  // This is a regression test for b/283164293
+  private companion object {
+    fun someMethod(): String = "someString"
+  }
 }
