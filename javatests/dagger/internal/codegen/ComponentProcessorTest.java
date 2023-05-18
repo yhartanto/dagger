@@ -153,10 +153,12 @@ public class ComponentProcessorTest {
                 .put("dagger.privateMemberValidation", "WARNING")
                 .buildOrThrow())
         .compile(
-            subject -> {
-              subject.hasErrorCount(1);
-              subject.hasErrorContaining("Dagger does not support injection into private classes");
-            });
+            subject ->
+                // Because it is just a warning until it is used, the factory still gets generated
+                // which has errors from referencing the private class, so there are extra errors.
+                // Hence we don't assert on the number of errors.
+                subject.hasErrorContaining(
+                    "Dagger does not support injection into private classes"));
   }
 
   @Test

@@ -73,8 +73,6 @@ public final class AliasOfProcessorTest {
             .compile(root, defineComponent, scope);
 
     assertThat(compilation).failed();
-    // One extra error for the missing Hilt_MyApp reference
-    assertThat(compilation).hadErrorCount(2);
     assertThat(compilation)
         .hadErrorContaining(
             "@DefineComponent test.ChildComponent, references invalid scope(s) annotated with"

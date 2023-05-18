@@ -729,13 +729,16 @@ public class AssistedFactoryErrorsTest {
     CompilerTests.daggerCompiler(foo)
         .withProcessingOptions(compilerMode.processorOptions())
         .compile(
-            subject -> {
-              subject.hasErrorCount(1);
-              subject.hasErrorContaining(
-                      "A type with an @AssistedInject-annotated constructor cannot be scoped")
-                  .onSource(foo)
-                  .onLine(8);
-            });
+            subject ->
+                // Don't assert on the number of errors as Foo_Factory_Impl can also be created
+                // and have errors from the missing Foo_Factory.
+                // TODO(erichang): don't generate the factory impls if there are errors with the
+                // assisted type
+                subject
+                    .hasErrorContaining(
+                        "A type with an @AssistedInject-annotated constructor cannot be scoped")
+                    .onSource(foo)
+                    .onLine(8));
   }
 
   @Test
