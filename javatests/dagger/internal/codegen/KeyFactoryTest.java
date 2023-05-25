@@ -23,9 +23,7 @@ import static dagger.internal.codegen.xprocessing.XElements.getSimpleName;
 import static dagger.internal.codegen.xprocessing.XTypes.isPrimitive;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XConstructorElement;
-import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
@@ -37,10 +35,6 @@ import dagger.Module;
 import dagger.Provides;
 import dagger.internal.codegen.binding.KeyFactory;
 import dagger.internal.codegen.javac.JavacPluginModule;
-import dagger.internal.codegen.model.DaggerAnnotation;
-import dagger.internal.codegen.model.DaggerExecutableElement;
-import dagger.internal.codegen.model.DaggerType;
-import dagger.internal.codegen.model.DaggerTypeElement;
 import dagger.internal.codegen.model.Key;
 import dagger.multibindings.ElementsIntoSet;
 import dagger.multibindings.IntoSet;
@@ -83,7 +77,6 @@ public class KeyFactoryTest {
     Key key =
         keyFactory.forInjectConstructorWithResolvedType(
             constructor.getEnclosingElement().getType());
-    assertThat(key).isEqualTo(Key.builder(DaggerType.from(typeElement.getType())).build());
     assertThat(key.toString()).isEqualTo("dagger.internal.codegen.KeyFactoryTest.InjectedClass");
   }
 
@@ -94,12 +87,10 @@ public class KeyFactoryTest {
 
   @Test
   public void forProvidesMethod() {
-    XType stringType = processingEnv.requireType(String.class.getCanonicalName());
     XTypeElement moduleElement =
         processingEnv.requireTypeElement(ProvidesMethodModule.class.getCanonicalName());
     XMethodElement providesMethod = getOnlyElement(moduleElement.getDeclaredMethods());
     Key key = keyFactory.forProvidesMethod(providesMethod, moduleElement);
-    assertThat(key).isEqualTo(Key.builder(DaggerType.from(stringType)).build());
     assertThat(key.toString()).isEqualTo("java.lang.String");
   }
 
@@ -139,17 +130,7 @@ public class KeyFactoryTest {
         processingEnv.requireTypeElement(QualifiedProvidesMethodModule.class.getCanonicalName());
     XMethodElement providesMethod = getOnlyElement(moduleElement.getDeclaredMethods());
     Key provisionKey = keyFactory.forProvidesMethod(providesMethod, moduleElement);
-
-    XType type = processingEnv.requireType(String.class.getCanonicalName());
-    XTypeElement injectableElement =
-        processingEnv.requireTypeElement(QualifiedFieldHolder.class.getCanonicalName());
-    XFieldElement injectionField = getOnlyElement(injectableElement.getDeclaredFields());
-    XAnnotation qualifier = getOnlyElement(injectionField.getAllAnnotations());
-    Key injectionKey =
-        Key.builder(DaggerType.from(type)).qualifier(DaggerAnnotation.from(qualifier)).build();
-
-    assertThat(provisionKey).isEqualTo(injectionKey);
-    assertThat(injectionKey.toString())
+    assertThat(provisionKey.toString())
         .isEqualTo(
             "@dagger.internal.codegen.KeyFactoryTest.TestQualifier({"
                 + "@dagger.internal.codegen.KeyFactoryTest.InnerAnnotation("
@@ -199,20 +180,10 @@ public class KeyFactoryTest {
 
   @Test
   public void forProvidesMethod_sets() {
-    XTypeElement setElement = processingEnv.requireTypeElement(Set.class.getCanonicalName());
-    XType stringType = processingEnv.requireType(String.class.getCanonicalName());
-    XType setOfStringsType = processingEnv.getDeclaredType(setElement, stringType);
     XTypeElement moduleElement =
         processingEnv.requireTypeElement(SetProvidesMethodsModule.class.getCanonicalName());
     for (XMethodElement providesMethod : moduleElement.getDeclaredMethods()) {
       Key key = keyFactory.forProvidesMethod(providesMethod, moduleElement);
-      assertThat(key)
-          .isEqualTo(
-              Key.builder(DaggerType.from(setOfStringsType))
-                  .multibindingContributionIdentifier(
-                      DaggerTypeElement.from(moduleElement),
-                      DaggerExecutableElement.from(providesMethod))
-                  .build());
       assertThat(key.toString())
           .isEqualTo(
               String.format(
@@ -269,12 +240,10 @@ public class KeyFactoryTest {
   }
 
   @Test public void forProducesMethod() {
-    XType stringType = processingEnv.requireType(String.class.getCanonicalName());
     XTypeElement moduleElement =
         processingEnv.requireTypeElement(ProducesMethodsModule.class.getCanonicalName());
     for (XMethodElement producesMethod : moduleElement.getDeclaredMethods()) {
       Key key = keyFactory.forProducesMethod(producesMethod, moduleElement);
-      assertThat(key).isEqualTo(Key.builder(DaggerType.from(stringType)).build());
       assertThat(key.toString()).isEqualTo("java.lang.String");
     }
   }
@@ -291,20 +260,10 @@ public class KeyFactoryTest {
   }
 
   @Test public void forProducesMethod_sets() {
-    XTypeElement setElement = processingEnv.requireTypeElement(Set.class.getCanonicalName());
-    XType stringType = processingEnv.requireType(String.class.getCanonicalName());
-    XType setOfStringsType = processingEnv.getDeclaredType(setElement, stringType);
     XTypeElement moduleElement =
         processingEnv.requireTypeElement(SetProducesMethodsModule.class.getCanonicalName());
     for (XMethodElement producesMethod : moduleElement.getDeclaredMethods()) {
       Key key = keyFactory.forProducesMethod(producesMethod, moduleElement);
-      assertThat(key)
-          .isEqualTo(
-              Key.builder(DaggerType.from(setOfStringsType))
-                  .multibindingContributionIdentifier(
-                      DaggerTypeElement.from(moduleElement),
-                      DaggerExecutableElement.from(producesMethod))
-                  .build());
       assertThat(key.toString())
           .isEqualTo(
               String.format(

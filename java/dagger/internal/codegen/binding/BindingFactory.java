@@ -69,7 +69,6 @@ import dagger.internal.codegen.binding.ProductionBinding.ProductionKind;
 import dagger.internal.codegen.javapoet.TypeNames;
 import dagger.internal.codegen.model.BindingKind;
 import dagger.internal.codegen.model.DaggerAnnotation;
-import dagger.internal.codegen.model.DaggerType;
 import dagger.internal.codegen.model.DependencyRequest;
 import dagger.internal.codegen.model.Key;
 import dagger.internal.codegen.model.RequestKind;
@@ -162,12 +161,12 @@ public final class BindingFactory {
     XMethodType factoryMethodType = factoryMethod.asMemberOf(factoryType);
     return ProvisionBinding.builder()
         .contributionType(ContributionType.UNIQUE)
-        .key(Key.builder(DaggerType.from(factoryType)).build())
+        .key(keyFactory.forType(factoryType))
         .bindingElement(factory)
         .provisionDependencies(
             ImmutableSet.of(
                 DependencyRequest.builder()
-                    .key(Key.builder(DaggerType.from(factoryMethodType.getReturnType())).build())
+                    .key(keyFactory.forType(factoryMethodType.getReturnType()))
                     .kind(RequestKind.PROVIDER)
                     .build()))
         .kind(ASSISTED_FACTORY)
