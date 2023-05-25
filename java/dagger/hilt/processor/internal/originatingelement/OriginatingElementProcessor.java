@@ -18,16 +18,8 @@ package dagger.hilt.processor.internal.originatingelement;
 
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
-import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.XElementKt;
-import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ImmutableSet;
-import dagger.hilt.processor.internal.BaseProcessor;
-import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.ProcessorErrors;
-import dagger.hilt.processor.internal.Processors;
-import dagger.internal.codegen.xprocessing.XElements;
+import dagger.hilt.processor.internal.JavacBaseProcessingStepProcessor;
 import javax.annotation.processing.Processor;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
@@ -37,33 +29,9 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
  */
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
-public final class OriginatingElementProcessor extends BaseProcessor {
-
+public final class OriginatingElementProcessor extends JavacBaseProcessingStepProcessor {
   @Override
-  public ImmutableSet<String> getSupportedAnnotationTypes() {
-    return ImmutableSet.of(ClassNames.ORIGINATING_ELEMENT.toString());
-  }
-
-  @Override
-  public void processEach(XTypeElement annotation, XElement element) {
-    ProcessorErrors.checkState(
-        XElementKt.isTypeElement(element) && Processors.isTopLevel(element),
-        element,
-        "@%s should only be used to annotate top-level types, but found: %s",
-        annotation.getClassName().simpleName(),
-        XElements.toStableString(element));
-
-    XTypeElement topLevelClassElement =
-        element.getAnnotation(ClassNames.ORIGINATING_ELEMENT)
-            .getAsType("topLevelClass")
-            .getTypeElement();
-
-    // TODO(bcorso): ProcessorErrors should allow us to point to the annotation too.
-    ProcessorErrors.checkState(
-        Processors.isTopLevel(topLevelClassElement),
-        element,
-        "@%s.topLevelClass value should be a top-level class, but found: %s",
-        annotation.getClassName().simpleName(),
-        topLevelClassElement.getClassName());
+  public OriginatingElementProcessingStep processingStep() {
+    return new OriginatingElementProcessingStep(getXProcessingEnv());
   }
 }

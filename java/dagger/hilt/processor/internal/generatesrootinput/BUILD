@@ -27,6 +27,7 @@ java_plugin(
 java_library(
     name = "processor_lib",
     srcs = [
+        "GeneratesRootInputProcessingStep.java",
         "GeneratesRootInputProcessor.java",
         "GeneratesRootInputPropagatedDataGenerator.java",
     ],

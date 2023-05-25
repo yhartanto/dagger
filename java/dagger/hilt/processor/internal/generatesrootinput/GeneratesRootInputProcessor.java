@@ -16,19 +16,10 @@
 
 package dagger.hilt.processor.internal.generatesrootinput;
 
-import static androidx.room.compiler.processing.XElementKt.isTypeElement;
-import static dagger.internal.codegen.xprocessing.XElements.asTypeElement;
 import static net.ltgt.gradle.incap.IncrementalAnnotationProcessorType.ISOLATING;
 
-import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.service.AutoService;
-import com.google.common.collect.ImmutableSet;
-import dagger.hilt.processor.internal.BaseProcessor;
-import dagger.hilt.processor.internal.ClassNames;
-import dagger.hilt.processor.internal.ProcessorErrors;
-import dagger.internal.codegen.xprocessing.XElements;
-import java.util.Set;
+import dagger.hilt.processor.internal.JavacBaseProcessingStepProcessor;
 import javax.annotation.processing.Processor;
 import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
 
@@ -38,23 +29,9 @@ import net.ltgt.gradle.incap.IncrementalAnnotationProcessor;
  */
 @IncrementalAnnotationProcessor(ISOLATING)
 @AutoService(Processor.class)
-public final class GeneratesRootInputProcessor extends BaseProcessor {
-
+public final class GeneratesRootInputProcessor extends JavacBaseProcessingStepProcessor {
   @Override
-  public Set<String> getSupportedAnnotationTypes() {
-    return ImmutableSet.of(ClassNames.GENERATES_ROOT_INPUT.toString());
-  }
-
-  @Override
-  public void processEach(XTypeElement annotation, XElement element) throws Exception {
-    ProcessorErrors.checkState(
-        isTypeElement(element) && asTypeElement(element).isAnnotationClass(),
-        element,
-        "%s should only annotate other annotations. However, it was found annotating %s",
-        XElements.toStableString(annotation),
-        XElements.toStableString(element));
-
-    new GeneratesRootInputPropagatedDataGenerator(this.processingEnv(),
-        asTypeElement(element)).generate();
+  public GeneratesRootInputProcessingStep processingStep() {
+    return new GeneratesRootInputProcessingStep(getXProcessingEnv());
   }
 }
