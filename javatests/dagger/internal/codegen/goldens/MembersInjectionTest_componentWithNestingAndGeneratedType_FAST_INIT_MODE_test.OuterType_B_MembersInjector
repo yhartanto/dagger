@@ -40,3 +40,4 @@ public final class OuterType_B_MembersInjector implements MembersInjector<OuterT
     ((OuterType.B) instance).a = (OuterType.A) a;
   }
 }
+

@@ -37,3 +37,4 @@ public final class SimpleType_Factory implements Factory<SimpleType> {
     private static final SimpleType_Factory INSTANCE = new SimpleType_Factory();
   }
 }
+
