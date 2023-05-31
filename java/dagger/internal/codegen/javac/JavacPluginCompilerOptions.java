@@ -140,4 +140,9 @@ final class JavacPluginCompilerOptions extends CompilerOptions {
   public boolean generatedClassExtendsComponent() {
     return false;
   }
+
+  @Override
+  public boolean ignoreProvisionKeyWildcards() {
+    return false;
+  }
 }

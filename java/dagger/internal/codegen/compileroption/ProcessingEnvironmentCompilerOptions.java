@@ -213,6 +213,11 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
   }
 
   @Override
+  public boolean ignoreProvisionKeyWildcards() {
+    return false;
+  }
+
+  @Override
   public boolean strictMultibindingValidation() {
     return isEnabled(STRICT_MULTIBINDING_VALIDATION);
   }
@@ -352,6 +357,8 @@ public final class ProcessingEnvironmentCompilerOptions extends CompilerOptions 
     STRICT_SUPERFICIAL_VALIDATION(ENABLED),
 
     GENERATED_CLASS_EXTENDS_COMPONENT,
+
+    IGNORE_PROVISION_KEY_WILDCARDS,
 
     VALIDATE_TRANSITIVE_COMPONENT_DEPENDENCIES(ENABLED)
     ;

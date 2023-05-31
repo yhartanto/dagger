@@ -150,4 +150,13 @@ public abstract class CompilerOptions {
    * eventually become the default and enforced.
    */
   public abstract boolean strictMultibindingValidation();
+
+  /**
+   * Returns {@code true} if we should ignore the variance in provision key types.
+   *
+   * <p>By enabling this flag, Dagger will no longer allow provisioning multiple keys that only
+   * differ by the key type's variance (a.k.a. wildcards). As an example, the provisioning a binding
+   * for {@code Foo<? extends Bar>} and {@code Foo<Bar>} would result in a duplicate binding error.
+   */
+  public abstract boolean ignoreProvisionKeyWildcards();
 }

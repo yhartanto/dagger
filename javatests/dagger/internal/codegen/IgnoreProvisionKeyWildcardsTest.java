@@ -19,6 +19,7 @@ package dagger.internal.codegen;
 import androidx.room.compiler.processing.util.CompilationResultSubject;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import dagger.testing.compile.CompilerTests;
 import java.util.function.Consumer;
 import org.junit.Test;
@@ -27,18 +28,24 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
-public class DuplicateBindingsVarianceTest {
-  @Parameters(name = "{0}")
+public class IgnoreProvisionKeyWildcardsTest {
+  @Parameters(name = "isIgnoreProvisionKeyWildcardsEnabled={0}")
   public static ImmutableList<Object[]> parameters() {
-    return CompilerMode.TEST_PARAMETERS;
+    return ImmutableList.of(new Object[] {false});
   }
 
   private static final Joiner NEW_LINES = Joiner.on("\n");
+  private static final Joiner NEW_LINES_FOR_ERROR_MSG = Joiner.on("\n      ");
 
-  private final CompilerMode compilerMode;
+  private final boolean isIgnoreProvisionKeyWildcardsEnabled;
+  private final ImmutableMap<String, String> processingOptions;
 
-  public DuplicateBindingsVarianceTest(CompilerMode compilerMode) {
-    this.compilerMode = compilerMode;
+  public IgnoreProvisionKeyWildcardsTest(boolean  isIgnoreProvisionKeyWildcardsEnabled) {
+    this.isIgnoreProvisionKeyWildcardsEnabled = isIgnoreProvisionKeyWildcardsEnabled;
+    processingOptions =
+        isIgnoreProvisionKeyWildcardsEnabled
+            ? ImmutableMap.of("dagger.ignoreProvisionKeyWildcards", "enabled")
+            : ImmutableMap.of();
   }
 
   @Test
@@ -65,10 +72,93 @@ public class DuplicateBindingsVarianceTest {
             "}",
             "@Module",
             "object MyModule {",
-            "  @Provides fun fooExtends(): Foo<out Bar> { return object:Foo<Bar> {} }",
-            "  @Provides fun foo(): Foo<Bar> { return object:Foo<Bar> {} }",
+            "  @Provides fun fooExtends(): Foo<out Bar> = TODO()",
+            "  @Provides fun foo(): Foo<Bar> = TODO()",
             "}"),
-        subject -> subject.hasErrorCount(0));
+        subject -> {
+          if (isIgnoreProvisionKeyWildcardsEnabled) {
+            subject.hasErrorCount(1);
+            subject.hasErrorContaining(
+                NEW_LINES_FOR_ERROR_MSG.join(
+                    "Foo<? extends Bar> is bound multiple times:",
+                    "        @Provides Foo<Bar> MyModule.foo()",
+                    "        @Provides Foo<? extends Bar> MyModule.fooExtends()",
+                    "    in component: [MyComponent]"));
+          } else {
+            subject.hasErrorCount(0);
+          }
+        });
+  }
+
+  @Test
+  public void testProvidesUniqueBindingsWithMatchingWildcardArguments() {
+    compile(
+        /* javaComponentClass = */
+        NEW_LINES.join(
+            "@Component(modules = MyModule.class)",
+            "interface MyComponent {",
+            "  Map<Foo<? extends Bar>, Foo<? extends Bar>> mapFooExtendsBarFooExtendsBar();",
+            "  Map<Foo<? extends Bar>, Foo<Bar>> mapFooExtendsBarFooBar();",
+            "  Map<Foo<Bar>, Foo<? extends Bar>> mapFooBarFooExtendsBar();",
+            "  Map<Foo<Bar>, Foo<Bar>> mapFooBarFooBar();",
+            "}",
+            "@Module",
+            "class MyModule {",
+            "  @Provides",
+            "  Map<Foo<? extends Bar>, Foo<? extends Bar>> mapFooExtendsBarFooExtendsBar() {",
+            "    return null; ",
+            "  }",
+            "  @Provides",
+            "  Map<Foo<? extends Bar>, Foo<Bar>> mapFooExtendsBarFooBar() {",
+            "    return null;",
+            "  }",
+            "  @Provides",
+            "  Map<Foo<Bar>, Foo<? extends Bar>> mapFooBarFooExtendsBar() {",
+            "    return null;",
+            "  }",
+            "  @Provides",
+            "  Map<Foo<Bar>, Foo<Bar>> mapFooBarFooBar() {",
+            "    return null;",
+            "  }",
+            "}"),
+        /* kotlinComponentClass = */
+        NEW_LINES.join(
+            "@Component(modules = [MyModule::class])",
+            "interface MyComponent {",
+            "  fun mapFooExtendsBarFooExtendsBar(): Map<Foo<out Bar>, Foo<out Bar>>",
+            "  fun mapFooExtendsBarFooBar(): Map<Foo<out Bar>, Foo<Bar>>",
+            "  fun mapFooBarFooExtendsBar(): Map<Foo<Bar>, Foo<out Bar>>",
+            "  fun mapFooBarFooBar(): Map<Foo<Bar>, Foo<Bar>>",
+            "}",
+            "@Module",
+            "class MyModule {",
+            "  @Provides",
+            "  fun mapFooExtendsBarFooExtendsBar(): Map<Foo<out Bar>, Foo<out Bar>> = TODO()",
+            "  @Provides",
+            "  fun mapFooExtendsBarFooBar(): Map<Foo<out Bar>, Foo<Bar>> = TODO()",
+            "  @Provides",
+            "  fun mapFooBarFooExtendsBar(): Map<Foo<Bar>, Foo<out Bar>> = TODO()",
+            "  @Provides",
+            "  fun mapFooBarFooBar(): Map<Foo<Bar>, Foo<Bar>> = TODO()",
+            "}"),
+        subject -> {
+          if (isIgnoreProvisionKeyWildcardsEnabled) {
+            subject.hasErrorCount(1);
+            subject.hasErrorContaining(
+                NEW_LINES_FOR_ERROR_MSG.join(
+                    "Map<Foo<? extends Bar>,Foo<? extends Bar>> is bound multiple times:",
+                    "        @Provides Map<Foo<Bar>,Foo<Bar>> MyModule.mapFooBarFooBar()",
+                    "        @Provides Map<Foo<Bar>,Foo<? extends Bar>> "
+                        + "MyModule.mapFooBarFooExtendsBar()",
+                    "        @Provides Map<Foo<? extends Bar>,Foo<Bar>> "
+                        + "MyModule.mapFooExtendsBarFooBar()",
+                    "        @Provides Map<Foo<? extends Bar>,Foo<? extends Bar>> "
+                        + "MyModule.mapFooExtendsBarFooExtendsBar()",
+                    "    in component: [MyComponent]"));
+          } else {
+            subject.hasErrorCount(0);
+          }
+        });
   }
 
   @Test
@@ -98,7 +188,20 @@ public class DuplicateBindingsVarianceTest {
             "  @Multibinds fun setExtends(): Set<Foo<out Bar>>",
             "  @Multibinds fun set(): Set<Foo<Bar>>",
             "}"),
-        subject -> subject.hasErrorCount(0));
+        subject -> {
+          if (isIgnoreProvisionKeyWildcardsEnabled) {
+            subject.hasErrorCount(1);
+            subject.hasErrorContaining(
+                NEW_LINES_FOR_ERROR_MSG.join(
+                    "Set<Foo<? extends Bar>> has incompatible bindings or declarations:",
+                    "    Set bindings and declarations:",
+                    "        @Multibinds Set<Foo<Bar>> MyModule.set()",
+                    "        @Multibinds Set<Foo<? extends Bar>> MyModule.setExtends()",
+                    "    in component: [MyComponent]"));
+          } else {
+            subject.hasErrorCount(0);
+          }
+        });
   }
 
   @Test
@@ -125,10 +228,23 @@ public class DuplicateBindingsVarianceTest {
             "}",
             "@Module",
             "object MyModule {",
-            "  @Provides @IntoSet fun setExtends(): Foo<out Bar> { return object:Foo<Bar> {} }",
-            "  @Provides @IntoSet fun set(): Foo<Bar> { return object:Foo<Bar> {} }",
+            "  @Provides @IntoSet fun setExtends(): Foo<out Bar> = TODO()",
+            "  @Provides @IntoSet fun set(): Foo<Bar> = TODO()",
             "}"),
-        subject -> subject.hasErrorCount(0));
+        subject -> {
+          if (isIgnoreProvisionKeyWildcardsEnabled) {
+            subject.hasErrorCount(1);
+            subject.hasErrorContaining(
+                NEW_LINES_FOR_ERROR_MSG.join(
+                    "Set<Foo<? extends Bar>> has incompatible bindings or declarations:",
+                    "    Set bindings and declarations:",
+                    "        @Provides @IntoSet Foo<Bar> MyModule.set()",
+                    "        @Provides @IntoSet Foo<? extends Bar> MyModule.setExtends()",
+                    "    in component: [MyComponent]"));
+          } else {
+            subject.hasErrorCount(0);
+          }
+        });
   }
 
   @Test
@@ -158,7 +274,20 @@ public class DuplicateBindingsVarianceTest {
             "  @Multibinds fun mapExtends():Map<String, Foo<out Bar>>",
             "  @Multibinds fun map(): Map<String, Foo<Bar>>",
             "}"),
-        subject -> subject.hasErrorCount(0));
+        subject -> {
+          if (isIgnoreProvisionKeyWildcardsEnabled) {
+            subject.hasErrorCount(1);
+            subject.hasErrorContaining(
+                NEW_LINES_FOR_ERROR_MSG.join(
+                    "Map<String,Foo<? extends Bar>> has incompatible bindings or declarations:",
+                    "    Map bindings and declarations:",
+                    "        @Multibinds Map<String,Foo<Bar>> MyModule.map()",
+                    "        @Multibinds Map<String,Foo<? extends Bar>> MyModule.mapExtends()",
+                    "    in component: [MyComponent]"));
+          } else {
+            subject.hasErrorCount(0);
+          }
+        });
   }
 
   @Test
@@ -188,7 +317,20 @@ public class DuplicateBindingsVarianceTest {
             "  @Multibinds fun mapExtends():Map<Foo<out Bar>, String>",
             "  @Multibinds fun map(): Map<Foo<Bar>, String>",
             "}"),
-        subject -> subject.hasErrorCount(0));
+        subject -> {
+          if (isIgnoreProvisionKeyWildcardsEnabled) {
+            subject.hasErrorCount(1);
+            subject.hasErrorContaining(
+                NEW_LINES_FOR_ERROR_MSG.join(
+                    "Map<Foo<? extends Bar>,String> has incompatible bindings or declarations:",
+                    "    Map bindings and declarations:",
+                    "        @Multibinds Map<Foo<Bar>,String> MyModule.map()",
+                    "        @Multibinds Map<Foo<? extends Bar>,String> MyModule.mapExtends()",
+                    "    in component: [MyComponent]"));
+          } else {
+            subject.hasErrorCount(0);
+          }
+        });
   }
 
   @Test
@@ -218,7 +360,19 @@ public class DuplicateBindingsVarianceTest {
             "  @BindsOptionalOf fun fooExtends(): Foo<out Bar>",
             "  @BindsOptionalOf fun foo(): Foo<Bar>",
             "}"),
-        subject -> subject.hasErrorCount(0));
+        subject -> {
+          if (isIgnoreProvisionKeyWildcardsEnabled) {
+            subject.hasErrorCount(1);
+            subject.hasErrorContaining(
+                NEW_LINES_FOR_ERROR_MSG.join(
+                    "Optional<Foo<? extends Bar>> is bound multiple times:",
+                    "    @BindsOptionalOf Foo<Bar> MyModule.foo()",
+                    "    @BindsOptionalOf Foo<? extends Bar> MyModule.fooExtends()",
+                    "in component: [MyComponent]"));
+          } else {
+            subject.hasErrorCount(0);
+          }
+        });
   }
 
   private void compile(
@@ -246,13 +400,18 @@ public class DuplicateBindingsVarianceTest {
                 "interface Foo<T> {}",
                 "",
                 "class Bar {}"))
-        .withProcessingOptions(compilerMode.processorOptions())
+        .withProcessingOptions(processingOptions)
         .compile(onCompilationResult);
 
     // Compile with Kotlin sources
     CompilerTests.daggerCompiler(
             CompilerTests.kotlinSource(
                 "test.MyComponent.kt",
+                // TODO(bcorso): See if there's a better way to fix the following error.
+                //
+                //   Error: Cannot inline bytecode built with JVM target 11 into bytecode that is
+                //          being built with JVM target 1.8
+                "@file:Suppress(\"INLINE_FROM_HIGHER_PLATFORM\")",
                 "package test",
                 "",
                 "import dagger.BindsOptionalOf",
@@ -269,7 +428,7 @@ public class DuplicateBindingsVarianceTest {
                 "interface Foo<T>",
                 "",
                 "class Bar"))
-        .withProcessingOptions(compilerMode.processorOptions())
+        .withProcessingOptions(processingOptions)
         .compile(onCompilationResult);
   }
 }
