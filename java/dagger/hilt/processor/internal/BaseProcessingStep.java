@@ -16,19 +16,16 @@
 
 package dagger.hilt.processor.internal;
 
-import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XProcessingStep;
 import androidx.room.compiler.processing.XRoundEnv;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  * Implements default configurations for ProcessingSteps, and provides structure for exception
@@ -98,16 +95,13 @@ public abstract class BaseProcessingStep implements XProcessingStep {
       XProcessingEnv env,
       Map<String, ? extends Set<? extends XElement>> elementsByAnnotation,
       boolean isLastRound) {
-    ImmutableMap<String, ClassName> annotationClassNamesByName =
-        annotationClassNames().stream()
-            .collect(toImmutableMap(ClassName::canonicalName, Function.identity()));
     ImmutableSet.Builder<XElement> elementsToReprocessBuilder = ImmutableSet.builder();
-    for (String annotationName : annotations()) {
-      Set<? extends XElement> elements = elementsByAnnotation.get(annotationName);
+    for (ClassName annotationName : annotationClassNames()) {
+      Set<? extends XElement> elements = elementsByAnnotation.get(annotationName.canonicalName());
       if (elements != null) {
         for (XElement element : elements) {
           try {
-            processEach(annotationClassNamesByName.get(annotationName), element);
+            processEach(annotationName, element);
           } catch (Exception e) {
             if (e instanceof ErrorTypeException && !isLastRound) {
               // Allow an extra round to reprocess to try to resolve this type.
