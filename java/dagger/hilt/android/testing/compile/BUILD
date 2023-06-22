@@ -25,6 +25,7 @@ java_library(
     deps = [
         "//java/dagger/hilt/android/processor/internal/androidentrypoint:processor_lib",
         "//java/dagger/hilt/android/processor/internal/customtestapplication:processor_lib",
+        "//java/dagger/hilt/processor/internal:hilt_processing_env_configs",
         "//java/dagger/hilt/processor/internal/aggregateddeps:processor_lib",
         "//java/dagger/hilt/processor/internal/aliasof:processor_lib",
         "//java/dagger/hilt/processor/internal/definecomponent:processor_lib",
@@ -35,10 +36,13 @@ java_library(
         "//java/dagger/hilt/processor/internal/root:root_processor_lib",
         "//java/dagger/hilt/processor/internal/uninstallmodules:processor_lib",
         "//java/dagger/internal/codegen:processor",
+        "//java/dagger/internal/codegen/xprocessing",
         "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//java/dagger/testing/compile",
+        "//third_party/java/auto:value",
         "//third_party/java/compile_testing",
         "//third_party/java/guava/collect",
         "//third_party/java/junit",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )

@@ -22,10 +22,12 @@ java_library(
     srcs = [
         "BaseProcessingStep.java",
         "JavacBaseProcessingStepProcessor.java",
+        "KspBaseProcessingStepProcessor.java",
         "ProcessorErrorHandler.java",
     ],
     deps = [
         ":compiler_options",
+        ":hilt_processing_env_configs",
         ":processor_errors",
         "//java/dagger/internal/codegen/extension",
         "//java/dagger/internal/codegen/xprocessing",
@@ -33,6 +35,15 @@ java_library(
         "//third_party/java/guava/base",
         "//third_party/java/guava/collect",
         "//third_party/java/javapoet",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
+    ],
+)
+
+java_library(
+    name = "hilt_processing_env_configs",
+    srcs = ["HiltProcessingEnvConfigs.java"],
+    deps = [
+        "//java/dagger/internal/codegen/xprocessing",
     ],
 )
 

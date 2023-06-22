@@ -17,7 +17,6 @@
 package dagger.hilt.processor.internal;
 
 import androidx.room.compiler.processing.XProcessingEnv;
-import androidx.room.compiler.processing.XProcessingEnvConfig;
 import androidx.room.compiler.processing.XProcessingStep;
 import androidx.room.compiler.processing.XRoundEnv;
 import androidx.room.compiler.processing.javac.JavacBasicAnnotationProcessor;
@@ -28,13 +27,10 @@ import javax.lang.model.SourceVersion;
 
 /** A JavacBasicAnnotationProcessor that contains a single BaseProcessingStep. */
 public abstract class JavacBaseProcessingStepProcessor extends JavacBasicAnnotationProcessor {
-  private static final XProcessingEnvConfig PROCESSING_ENV_CONFIG =
-      new XProcessingEnvConfig.Builder().disableAnnotatedElementValidation(true).build();
-
   private BaseProcessingStep processingStep;
 
   public JavacBaseProcessingStepProcessor() {
-    super(PROCESSING_ENV_CONFIG);
+    super(HiltProcessingEnvConfigs.CONFIGS);
   }
 
   @Override

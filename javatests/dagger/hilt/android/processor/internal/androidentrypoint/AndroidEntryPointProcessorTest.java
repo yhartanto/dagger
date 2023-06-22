@@ -19,8 +19,12 @@ package dagger.hilt.android.processor.internal.androidentrypoint;
 import static com.google.testing.compile.CompilationSubject.assertThat;
 import static dagger.hilt.android.testing.compile.HiltCompilerTests.compiler;
 
+import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.util.CompilationResultSubject;
+import androidx.room.compiler.processing.util.Source;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.JavaFileObjects;
+import dagger.hilt.android.testing.compile.HiltCompilerTests;
 import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,11 +32,31 @@ import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class AndroidEntryPointProcessorTest {
+  @Test
+  public void testAndroidEntryPoint() {
+    Source testActivity =
+        HiltCompilerTests.javaSource(
+            "test.MyActivity",
+            "package test;",
+            "",
+            "import androidx.activity.ComponentActivity;",
+            "import dagger.hilt.android.AndroidEntryPoint;",
+            "",
+            "@AndroidEntryPoint(ComponentActivity.class)",
+            "public class MyActivity extends Hilt_MyActivity {}");
+
+    HiltCompilerTests.hiltCompiler(testActivity)
+        .compile(
+            (CompilationResultSubject subject) -> {
+              subject.hasErrorCount(0);
+              subject.generatedSourceFileWithPath("test/Hilt_MyActivity.java");
+            });
+  }
 
   @Test
   public void missingBaseClass() {
-    JavaFileObject testActivity =
-        JavaFileObjects.forSourceLines(
+    Source testActivity =
+        HiltCompilerTests.javaSource(
             "test.MyActivity",
             "package test;",
             "",
@@ -41,17 +65,20 @@ public class AndroidEntryPointProcessorTest {
             "",
             "@AndroidEntryPoint",
             "public class MyActivity extends ComponentActivity { }");
-    Compilation compilation = compiler().compile(testActivity);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("Expected @AndroidEntryPoint to have a value.")
-        ;
+    HiltCompilerTests.hiltCompiler(testActivity)
+        .compile(
+            (CompilationResultSubject subject) -> {
+              subject.hasErrorCount(1);
+              subject
+                  .hasErrorContaining("Expected @AndroidEntryPoint to have a value.")
+                  ;
+            });
   }
 
   @Test
   public void incorrectSuperclass() {
-    JavaFileObject testActivity =
-        JavaFileObjects.forSourceLines(
+    Source testActivity =
+        HiltCompilerTests.javaSource(
             "test.MyActivity",
             "package test;",
             "",
@@ -60,13 +87,21 @@ public class AndroidEntryPointProcessorTest {
             "",
             "@AndroidEntryPoint(ComponentActivity.class)",
             "public class MyActivity extends ComponentActivity { }");
-    Compilation compilation = compiler().compile(testActivity);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@AndroidEntryPoint class expected to extend Hilt_MyActivity. "
-                + "Found: ComponentActivity")
-        ;
+    HiltCompilerTests.hiltCompiler(testActivity)
+        .compile(
+            (CompilationResultSubject subject) -> {
+              // TODO(b/288210593): Add this check back to KSP once this bug is fixed.
+              if (HiltCompilerTests.backend(subject) == XProcessingEnv.Backend.KSP) {
+                subject.hasErrorCount(0);
+              } else {
+                subject.hasErrorCount(1);
+                subject
+                    .hasErrorContaining(
+                        "@AndroidEntryPoint class expected to extend Hilt_MyActivity. "
+                            + "Found: ComponentActivity")
+                    ;
+              }
+            });
   }
 
   @Test
@@ -150,8 +185,8 @@ public class AndroidEntryPointProcessorTest {
 
   @Test
   public void checkAndroidEntryPointOnApplicationRecommendsHiltAndroidApp() {
-    JavaFileObject testActivity =
-        JavaFileObjects.forSourceLines(
+    Source testActivity =
+        HiltCompilerTests.javaSource(
             "test.MyApplication",
             "package test;",
             "",
@@ -160,10 +195,20 @@ public class AndroidEntryPointProcessorTest {
             "",
             "@AndroidEntryPoint(Application.class)",
             "public class MyApplication extends Hilt_MyApplication { }");
-    Compilation compilation = compiler().compile(testActivity);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining("@AndroidEntryPoint cannot be used on an Application. "
-            + "Use @HiltAndroidApp instead.");
+    HiltCompilerTests.hiltCompiler(testActivity)
+        .compile(
+            (CompilationResultSubject subject) -> {
+              if (HiltCompilerTests.backend(subject) == XProcessingEnv.Backend.KSP) {
+                subject.hasErrorCount(1);
+              } else {
+                // Javac has an extra error due to the missing symbol.
+                subject.hasErrorCount(2);
+                subject.hasErrorContaining(
+                    "cannot find symbol\n      symbol: class Hilt_MyApplication");
+              }
+              subject.hasErrorContaining(
+                  "@AndroidEntryPoint cannot be used on an Application. "
+                      + "Use @HiltAndroidApp instead.");
+            });
   }
 }

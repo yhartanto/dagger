@@ -18,6 +18,7 @@ package dagger.hilt.android.processor.internal.androidentrypoint;
 
 import static androidx.room.compiler.processing.XElementKt.isTypeElement;
 import static androidx.room.compiler.processing.XTypeKt.isVoidObject;
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static dagger.hilt.processor.internal.HiltCompilerOptions.isAndroidSuperClassValidationDisabled;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
@@ -27,6 +28,7 @@ import static dagger.internal.codegen.xprocessing.XTypes.isDeclared;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
+import androidx.room.compiler.processing.XProcessingEnv;
 import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
@@ -277,13 +279,17 @@ public abstract class AndroidEntryPointMetadata {
       // Check that the root $CLASS extends Hilt_$CLASS
       String extendsName =
           androidEntryPointElement.getSuperClass().getTypeElement().getClassName().simpleName();
-      ProcessorErrors.checkState(
-          extendsName.contentEquals(generatedClassName.simpleName()),
-          androidEntryPointElement,
-          "@%s class expected to extend %s. Found: %s",
-          annotationClassName.simpleName(),
-          generatedClassName.simpleName(),
-          extendsName);
+
+      // TODO(b/288210593): Add this check back to KSP once this bug is fixed.
+      if (getProcessingEnv(androidEntryPointElement).getBackend() == XProcessingEnv.Backend.JAVAC) {
+        ProcessorErrors.checkState(
+            extendsName.contentEquals(generatedClassName.simpleName()),
+            androidEntryPointElement,
+            "@%s class expected to extend %s. Found: %s",
+            annotationClassName.simpleName(),
+            generatedClassName.simpleName(),
+            extendsName);
+      }
     }
 
     Optional<AndroidEntryPointMetadata> baseMetadata =

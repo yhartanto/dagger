@@ -72,6 +72,7 @@ gen_maven_artifact(
         "//java/dagger/hilt/processor/internal:component_descriptor",
         "//java/dagger/hilt/processor/internal:component_names",
         "//java/dagger/hilt/processor/internal:components",
+        "//java/dagger/hilt/processor/internal:hilt_processing_env_configs",
         "//java/dagger/hilt/processor/internal:processor_errors",
         "//java/dagger/hilt/processor/internal:processors",
         "//java/dagger/hilt/processor/internal/aggregateddeps:component_dependencies",
