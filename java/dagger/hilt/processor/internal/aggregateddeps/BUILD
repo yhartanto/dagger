@@ -39,6 +39,7 @@ java_library(
         "AggregatedDepsGenerator.java",
         "AggregatedDepsProcessingStep.java",
         "AggregatedDepsProcessor.java",
+        "KspAggregatedDepsProcessor.java",
         "PkgPrivateEntryPointGenerator.java",
         "PkgPrivateModuleGenerator.java",
     ],
@@ -56,6 +57,7 @@ java_library(
         "//third_party/java/guava/collect",
         "//third_party/java/incap",
         "//third_party/java/javapoet",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )
 
