@@ -16,13 +16,8 @@
 
 package dagger.hilt.processor.internal.definecomponent;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static com.google.testing.compile.Compiler.javac;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.Compiler;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.util.Source;
+import dagger.hilt.android.testing.compile.HiltCompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -32,8 +27,8 @@ public final class DefineComponentProcessorTest {
 
   @Test
   public void testDefineComponentOutput() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        HiltCompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -46,8 +41,8 @@ public final class DefineComponentProcessorTest {
             "  static int staticMethod() { return staticField; }",
             "}");
 
-    JavaFileObject builder =
-        JavaFileObjects.forSourceLines(
+    Source builder =
+        HiltCompilerTests.javaSource(
             "test.FooComponentBuilder",
             "package test;",
             "",
@@ -61,42 +56,57 @@ public final class DefineComponentProcessorTest {
             "  FooComponent create();",
             "}");
 
-    JavaFileObject componentOutput =
-        JavaFileObjects.forSourceLines(
+    Source componentOutput =
+        HiltCompilerTests.javaSource(
             "dagger.hilt.processor.internal.definecomponent.codegen._test_FooComponent",
             "package dagger.hilt.processor.internal.definecomponent.codegen;",
             "",
-            "@DefineComponentClasses(component = \"test.FooComponent\")",
-            "@Generated(\"" + DefineComponentProcessingStep.class.getName() + "\")",
-            "public class _test_FooComponent {}");
+            "import dagger.hilt.internal.definecomponent.DefineComponentClasses;",
+            "import javax.annotation.processing.Generated;",
+            "",
+            "/**",
+            " * This class should only be referenced by generated code! This class aggregates "
+                + "information across multiple compilations.",
+            " */",
+            "@DefineComponentClasses(",
+            "    component = \"test.FooComponent\"",
+            ")",
+            "@Generated(\"dagger.hilt.processor.internal.definecomponent.DefineComponentProcessingStep\")",
+            "public class _test_FooComponent {",
+            "}");
 
-    JavaFileObject builderOutput =
-        JavaFileObjects.forSourceLines(
+    Source builderOutput =
+        HiltCompilerTests.javaSource(
             "dagger.hilt.processor.internal.definecomponent.codegen._test_FooComponentBuilder",
             "package dagger.hilt.processor.internal.definecomponent.codegen;",
             "",
-            "@DefineComponentClasses(builder = \"test.FooComponentBuilder\")",
-            "@Generated(\"" + DefineComponentProcessingStep.class.getName() + "\")",
-            "public class _test_FooComponentBuilder {}");
+            "import dagger.hilt.internal.definecomponent.DefineComponentClasses;",
+            "import javax.annotation.processing.Generated;",
+            "",
+            "/**",
+            " * This class should only be referenced by generated code! This class aggregates "
+                + "information across multiple compilations.",
+            " */",
+            "@DefineComponentClasses(",
+            "    builder = \"test.FooComponentBuilder\"",
+            ")",
+            "@Generated(\"dagger.hilt.processor.internal.definecomponent.DefineComponentProcessingStep\")",
+            "public class _test_FooComponentBuilder {",
+            "}");
 
-    Compilation compilation = compiler().compile(component, builder);
-    assertThat(compilation).succeeded();
-    assertThat(compilation)
-        .generatedSourceFile(sourceName(componentOutput))
-        .containsElementsIn(componentOutput);
-    assertThat(compilation)
-        .generatedSourceFile(sourceName(builderOutput))
-        .containsElementsIn(builderOutput);
-  }
-
-  private static String sourceName(JavaFileObject fileObject) {
-    return fileObject.getName().replace(".java", "").replace('.', '/');
+    HiltCompilerTests.hiltCompiler(component, builder)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(0);
+              subject.generatedSource(componentOutput);
+              subject.generatedSource(builderOutput);
+            });
   }
 
   @Test
   public void testDefineComponentClass_fails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        HiltCompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -106,18 +116,19 @@ public final class DefineComponentProcessorTest {
             "@DefineComponent( parent = SingletonComponent.class )",
             "abstract class FooComponent {}");
 
-    Compilation compilation = compiler().compile(component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DefineComponent is only allowed on interfaces. Found: test.FooComponent");
+    HiltCompilerTests.hiltCompiler(component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@DefineComponent is only allowed on interfaces. Found: test.FooComponent");
+            });
   }
 
   @Test
   public void testDefineComponentWithTypeParameters_fails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        HiltCompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -127,17 +138,19 @@ public final class DefineComponentProcessorTest {
             "@DefineComponent( parent = SingletonComponent.class )",
             "interface FooComponent<T> {}");
 
-    Compilation compilation = compiler().compile(component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining("@DefineComponent test.FooComponent<T>, cannot have type parameters.");
+    HiltCompilerTests.hiltCompiler(component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@DefineComponent test.FooComponent<T>, cannot have type parameters.");
+            });
   }
 
   @Test
   public void testDefineComponentWithInvalidComponent_fails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        HiltCompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -147,20 +160,21 @@ public final class DefineComponentProcessorTest {
             "@DefineComponent( parent = ApplicationContext.class )",
             "interface FooComponent {}");
 
-    Compilation compilation = compiler().compile(component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DefineComponent test.FooComponent, references a type not annotated with "
-                + "@DefineComponent: dagger.hilt.android.qualifiers.ApplicationContext")
-        .inFile(component);
+    HiltCompilerTests.hiltCompiler(component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                      "@DefineComponent test.FooComponent, references a type not annotated with "
+                          + "@DefineComponent: dagger.hilt.android.qualifiers.ApplicationContext")
+                  .onSource(component);
+            });
   }
 
   @Test
   public void testDefineComponentExtendsInterface_fails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        HiltCompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -172,19 +186,20 @@ public final class DefineComponentProcessorTest {
             "@DefineComponent( parent = SingletonComponent.class )",
             "interface FooComponent extends Foo {}");
 
-    Compilation compilation = compiler().compile(component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DefineComponent test.FooComponent, cannot extend a super class or interface."
-                + " Found: [test.Foo]");
+    HiltCompilerTests.hiltCompiler(component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@DefineComponent test.FooComponent, cannot extend a super class or interface."
+                      + " Found: [test.Foo]");
+            });
   }
 
   @Test
   public void testDefineComponentNonStaticMethod_fails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        HiltCompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -196,19 +211,20 @@ public final class DefineComponentProcessorTest {
             "  int nonStaticMethod();",
             "}");
 
-    Compilation compilation = compiler().compile(component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DefineComponent test.FooComponent, cannot have non-static methods. "
-                + "Found: [nonStaticMethod()]");
+    HiltCompilerTests.hiltCompiler(component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@DefineComponent test.FooComponent, cannot have non-static methods. "
+                      + "Found: [nonStaticMethod()]");
+            });
   }
 
   @Test
   public void testDefineComponentDependencyCycle_fails() {
-    JavaFileObject component1 =
-        JavaFileObjects.forSourceLines(
+    Source component1 =
+        HiltCompilerTests.javaSource(
             "test.Component1",
             "package test;",
             "",
@@ -217,8 +233,8 @@ public final class DefineComponentProcessorTest {
             "@DefineComponent(parent = Component2.class)",
             "interface Component1 {}");
 
-    JavaFileObject component2 =
-        JavaFileObjects.forSourceLines(
+    Source component2 =
+        HiltCompilerTests.javaSource(
             "test.Component2",
             "package test;",
             "",
@@ -227,21 +243,21 @@ public final class DefineComponentProcessorTest {
             "@DefineComponent(parent = Component1.class)",
             "interface Component2 {}");
 
-    Compilation compilation = compiler().compile(component1, component2);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(2);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DefineComponent cycle: test.Component1 -> test.Component2 -> test.Component1");
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DefineComponent cycle: test.Component2 -> test.Component1 -> test.Component2");
+    HiltCompilerTests.hiltCompiler(component1, component2)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(2);
+              subject.hasErrorContaining(
+                  "@DefineComponent cycle: test.Component1 -> test.Component2 -> test.Component1");
+              subject.hasErrorContaining(
+                  "@DefineComponent cycle: test.Component2 -> test.Component1 -> test.Component2");
+            });
   }
 
   @Test
   public void testDefineComponentNoParent_fails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        HiltCompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -249,15 +265,20 @@ public final class DefineComponentProcessorTest {
             "",
             "@DefineComponent",
             "interface FooComponent {}");
-    Compilation compilation = compiler().compile(component);
-    assertThat(compilation)
-        .hadErrorContaining("@DefineComponent test.FooComponent is missing a parent declaration.");
+
+    HiltCompilerTests.hiltCompiler(component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@DefineComponent test.FooComponent is missing a parent declaration.");
+            });
   }
 
   @Test
   public void testDefineComponentBuilderClass_fails() {
-    JavaFileObject builder =
-        JavaFileObjects.forSourceLines(
+    Source builder =
+        HiltCompilerTests.javaSource(
             "test.FooComponentBuilder",
             "package test;",
             "",
@@ -266,19 +287,20 @@ public final class DefineComponentProcessorTest {
             "@DefineComponent.Builder",
             "abstract class FooComponentBuilder {}");
 
-    Compilation compilation = compiler().compile(builder);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DefineComponent.Builder is only allowed on interfaces. "
-                + "Found: test.FooComponentBuilder");
+    HiltCompilerTests.hiltCompiler(builder)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@DefineComponent.Builder is only allowed on interfaces. "
+                      + "Found: test.FooComponentBuilder");
+            });
   }
 
   @Test
   public void testDefineComponentBuilderWithTypeParameters_fails() {
-    JavaFileObject builder =
-        JavaFileObjects.forSourceLines(
+    Source builder =
+        HiltCompilerTests.javaSource(
             "test.FooComponentBuilder",
             "package test;",
             "",
@@ -287,19 +309,20 @@ public final class DefineComponentProcessorTest {
             "@DefineComponent.Builder",
             "interface FooComponentBuilder<T> {}");
 
-    Compilation compilation = compiler().compile(builder);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DefineComponent.Builder test.FooComponentBuilder<T>, cannot have type "
-                + "parameters.");
+    HiltCompilerTests.hiltCompiler(builder)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@DefineComponent.Builder test.FooComponentBuilder<T>, cannot have type "
+                      + "parameters.");
+            });
   }
 
   @Test
   public void testDefineComponentBuilderExtendsInterface_fails() {
-    JavaFileObject builder =
-        JavaFileObjects.forSourceLines(
+    Source builder =
+        HiltCompilerTests.javaSource(
             "test.FooComponentBuilder",
             "package test;",
             "",
@@ -310,19 +333,20 @@ public final class DefineComponentProcessorTest {
             "@DefineComponent.Builder",
             "interface FooComponentBuilder extends Foo {}");
 
-    Compilation compilation = compiler().compile(builder);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DefineComponent.Builder test.FooComponentBuilder, cannot extend a super class "
-                + "or interface. Found: [test.Foo]");
+    HiltCompilerTests.hiltCompiler(builder)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@DefineComponent.Builder test.FooComponentBuilder, cannot extend a super class "
+                      + "or interface. Found: [test.Foo]");
+            });
   }
 
   @Test
   public void testDefineComponentBuilderNoBuilderMethod_fails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        HiltCompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -331,19 +355,20 @@ public final class DefineComponentProcessorTest {
             "@DefineComponent.Builder",
             "interface FooComponentBuilder {}");
 
-    Compilation compilation = compiler().compile(component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DefineComponent.Builder test.FooComponentBuilder, must have exactly 1 build "
-                + "method that takes no parameters. Found: []");
+    HiltCompilerTests.hiltCompiler(component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@DefineComponent.Builder test.FooComponentBuilder, must have exactly 1 build "
+                      + "method that takes no parameters. Found: []");
+            });
   }
 
   @Test
   public void testDefineComponentBuilderPrimitiveReturnType_fails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        HiltCompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -354,19 +379,20 @@ public final class DefineComponentProcessorTest {
             "  int nonStaticMethod();",
             "}");
 
-    Compilation compilation = compiler().compile(component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DefineComponent.Builder method, test.FooComponentBuilder#nonStaticMethod(), "
-                + "must return a @DefineComponent type. Found: int");
+    HiltCompilerTests.hiltCompiler(component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@DefineComponent.Builder method, test.FooComponentBuilder#nonStaticMethod(), "
+                      + "must return a @DefineComponent type. Found: int");
+            });
   }
 
   @Test
   public void testDefineComponentBuilderWrongReturnType_fails() {
-    JavaFileObject component =
-        JavaFileObjects.forSourceLines(
+    Source component =
+        HiltCompilerTests.javaSource(
             "test.FooComponent",
             "package test;",
             "",
@@ -379,16 +405,13 @@ public final class DefineComponentProcessorTest {
             "  Foo build();",
             "}");
 
-    Compilation compilation = compiler().compile(component);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@DefineComponent.Builder method, test.FooComponentBuilder#build(), must return "
-                + "a @DefineComponent type. Found: test.Foo");
-  }
-
-  private static Compiler compiler() {
-    return javac().withProcessors(new DefineComponentProcessor());
+    HiltCompilerTests.hiltCompiler(component)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@DefineComponent.Builder method, test.FooComponentBuilder#build(), must return "
+                      + "a @DefineComponent type. Found: test.Foo");
+            });
   }
 }

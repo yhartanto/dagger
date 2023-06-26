@@ -15,28 +15,23 @@
 # Description:
 #   Tests for Hilt's DefineComponentProcessor
 
-load("//:build_defs.bzl", "DOCLINT_HTML_AND_SYNTAX")
-load("//:test_defs.bzl", "GenJavaTests")
+load("//java/dagger/testing/compile:macros.bzl", "compiler_test")
 
 package(default_visibility = ["//:src"])
 
-GenJavaTests(
-    name = "hilt_processor_tests",
-    srcs = glob(["*.java"]),
-    functional = False,
-    javacopts = DOCLINT_HTML_AND_SYNTAX,
-    deps = [
-        "//:dagger_with_compiler",
+compiler_test(
+    name = "DefineComponentProcessorTest",
+    srcs = ["DefineComponentProcessorTest.java"],
+    compiler_deps = [
         "//java/dagger/hilt:entry_point",
         "//java/dagger/hilt:install_in",
         "//java/dagger/hilt/android/components",
         "//java/dagger/hilt/android/qualifiers",
-        "//java/dagger/hilt/processor/internal/definecomponent:define_components",
-        "//java/dagger/hilt/processor/internal/definecomponent:processor_lib",
-        "//javatests/dagger/hilt/processor/internal:generated_import",
-        "//third_party/java/compile_testing",
+    ],
+    deps = [
+        "//java/dagger/hilt/android/testing/compile",
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/junit",
-        "//third_party/java/truth",
     ],
 )
 
