@@ -27,6 +27,7 @@ java_plugin(
 java_library(
     name = "processor_lib",
     srcs = [
+        "KspOriginatingElementProcessor.java",
         "OriginatingElementProcessingStep.java",
         "OriginatingElementProcessor.java",
     ],
@@ -40,6 +41,7 @@ java_library(
         "//third_party/java/guava/collect",
         "//third_party/java/incap",
         "//third_party/java/javapoet",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )
 

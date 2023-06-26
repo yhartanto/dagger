@@ -16,12 +16,10 @@
 
 package dagger.hilt.processor.internal.originatingelement;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.hilt.android.testing.compile.HiltCompilerTests.compiler;
+import static dagger.hilt.android.testing.compile.HiltCompilerTests.hiltCompiler;
 
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.util.Source;
+import dagger.hilt.android.testing.compile.HiltCompilerTests;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -31,14 +29,10 @@ public class OriginatingElementProcessorTest {
 
   @Test
   public void originatingElementOnInnerClass_fails() {
-    JavaFileObject outer1 =
-        JavaFileObjects.forSourceLines(
-            "test.Outer1",
-            "package test;",
-            "",
-            "class Outer1 {}");
-    JavaFileObject outer2 =
-        JavaFileObjects.forSourceLines(
+    Source outer1 =
+        HiltCompilerTests.javaSource("test.Outer1", "package test;", "", "class Outer1 {}");
+    Source outer2 =
+        HiltCompilerTests.javaSource(
             "test.Outer2",
             "package test;",
             "",
@@ -48,26 +42,23 @@ public class OriginatingElementProcessorTest {
             "  @OriginatingElement(topLevelClass = Outer1.class)",
             "  static class Inner {}",
             "}");
-    Compilation compilation = compiler().compile(outer1, outer2);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "@OriginatingElement should only be used to annotate top-level types, but found: "
-            + "test.Outer2.Inner");
+    hiltCompiler(outer1, outer2)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "@OriginatingElement should only be used to annotate top-level types, but found: "
+                      + "test.Outer2.Inner");
+            });
   }
 
   @Test
   public void originatingElementValueWithInnerClass_fails() {
-    JavaFileObject outer1 =
-        JavaFileObjects.forSourceLines(
-            "test.Outer1",
-            "package test;",
-            "",
-            "class Outer1 {",
-            "  static class Inner {}",
-            "}");
-    JavaFileObject outer2 =
-        JavaFileObjects.forSourceLines(
+    Source outer1 =
+        HiltCompilerTests.javaSource(
+            "test.Outer1", "package test;", "", "class Outer1 {", "  static class Inner {}", "}");
+    Source outer2 =
+        HiltCompilerTests.javaSource(
             "test.Outer2",
             "package test;",
             "",
@@ -75,11 +66,13 @@ public class OriginatingElementProcessorTest {
             "",
             "@OriginatingElement(topLevelClass = Outer1.Inner.class)",
             "class Outer2 {}");
-    Compilation compilation = compiler().compile(outer1, outer2);
-    assertThat(compilation).failed();
-    assertThat(compilation)
-        .hadErrorContaining(
-            "OriginatingElement.topLevelClass value should be a top-level class, but found: "
-            + "test.Outer1.Inner");
+    hiltCompiler(outer1, outer2)
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "OriginatingElement.topLevelClass value should be a top-level class, but found: "
+                      + "test.Outer1.Inner");
+            });
   }
 }

@@ -43,6 +43,7 @@ import dagger.hilt.processor.internal.definecomponent.DefineComponentProcessor;
 import dagger.hilt.processor.internal.earlyentrypoint.EarlyEntryPointProcessor;
 import dagger.hilt.processor.internal.earlyentrypoint.KspEarlyEntryPointProcessor;
 import dagger.hilt.processor.internal.generatesrootinput.GeneratesRootInputProcessor;
+import dagger.hilt.processor.internal.originatingelement.KspOriginatingElementProcessor;
 import dagger.hilt.processor.internal.originatingelement.OriginatingElementProcessor;
 import dagger.hilt.processor.internal.root.ComponentTreeDepsProcessor;
 import dagger.hilt.processor.internal.root.RootProcessor;
@@ -161,7 +162,8 @@ public final class HiltCompilerTests {
         new KspAliasOfProcessor.Provider(),
         new KspAggregatedDepsProcessor.Provider(),
         new KspComponentProcessor.Provider(),
-        new KspEarlyEntryPointProcessor.Provider());
+        new KspEarlyEntryPointProcessor.Provider(),
+        new KspOriginatingElementProcessor.Provider());
   }
 
   /** Used to compile Hilt sources and inspect the compiled results. */
