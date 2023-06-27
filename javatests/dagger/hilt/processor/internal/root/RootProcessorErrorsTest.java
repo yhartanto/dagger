@@ -16,15 +16,11 @@
 
 package dagger.hilt.processor.internal.root;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-
+import androidx.room.compiler.processing.util.Source;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.Compiler;
-import com.google.testing.compile.JavaFileObjects;
+import com.google.common.collect.ImmutableMap;
 import dagger.hilt.android.testing.compile.HiltCompilerTests;
-import javax.tools.JavaFileObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -44,18 +40,16 @@ public final class RootProcessorErrorsTest {
     this.disableCrossCompilationRootValidation = disableCrossCompilationRootValidation;
   }
 
-  private Compiler compiler() {
-    return HiltCompilerTests.compiler()
-        .withOptions(
-            String.format(
-                "-Adagger.hilt.disableCrossCompilationRootValidation=%s",
-                disableCrossCompilationRootValidation));
+  private ImmutableMap<String, String> processorOptions() {
+    return ImmutableMap.of(
+        "dagger.hilt.disableCrossCompilationRootValidation",
+        Boolean.toString(disableCrossCompilationRootValidation));
   }
 
   @Test
   public void multipleAppRootsTest() {
-    JavaFileObject appRoot1 =
-        JavaFileObjects.forSourceLines(
+    Source appRoot1 =
+        HiltCompilerTests.javaSource(
             "test.AppRoot1",
             "package test;",
             "",
@@ -65,8 +59,8 @@ public final class RootProcessorErrorsTest {
             "@HiltAndroidApp(Application.class)",
             "public class AppRoot1 extends Hilt_AppRoot1 {}");
 
-    JavaFileObject appRoot2 =
-        JavaFileObjects.forSourceLines(
+    Source appRoot2 =
+        HiltCompilerTests.javaSource(
             "test.AppRoot2",
             "package test;",
             "",
@@ -76,20 +70,22 @@ public final class RootProcessorErrorsTest {
             "@HiltAndroidApp(Application.class)",
             "public class AppRoot2 extends Hilt_AppRoot2 {}");
 
-    // This test case should fail independent of disableCrossCompilationRootValidation.
-    Compilation compilation = compiler().compile(appRoot1, appRoot2);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Cannot process multiple app roots in the same compilation unit: "
-                + "test.AppRoot1, test.AppRoot2");
+    HiltCompilerTests.hiltCompiler(appRoot1, appRoot2)
+        .withProcessorOptions(processorOptions())
+        .compile(
+            subject -> {
+              // This test case should fail independent of disableCrossCompilationRootValidation.
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "Cannot process multiple app roots in the same compilation unit: "
+                      + "test.AppRoot1, test.AppRoot2");
+            });
   }
 
   @Test
   public void appRootWithTestRootTest() {
-    JavaFileObject appRoot =
-        JavaFileObjects.forSourceLines(
+    Source appRoot =
+        HiltCompilerTests.javaSource(
             "test.AppRoot",
             "package test;",
             "",
@@ -99,8 +95,8 @@ public final class RootProcessorErrorsTest {
             "@HiltAndroidApp(Application.class)",
             "public class AppRoot extends Hilt_AppRoot {}");
 
-    JavaFileObject testRoot =
-        JavaFileObjects.forSourceLines(
+    Source testRoot =
+        HiltCompilerTests.javaSource(
             "test.TestRoot",
             "package test;",
             "",
@@ -109,14 +105,16 @@ public final class RootProcessorErrorsTest {
             "@HiltAndroidTest",
             "public class TestRoot {}");
 
-    // This test case should fail independent of disableCrossCompilationRootValidation.
-    Compilation compilation = compiler().compile(appRoot, testRoot);
-    assertThat(compilation).failed();
-    assertThat(compilation).hadErrorCount(1);
-    assertThat(compilation)
-        .hadErrorContaining(
-            "Cannot process test roots and app roots in the same compilation unit:"
-                + "\n    App root in this compilation unit: test.AppRoot"
-                + "\n    Test roots in this compilation unit: test.TestRoot");
+    HiltCompilerTests.hiltCompiler(appRoot, testRoot)
+        .withProcessorOptions(processorOptions())
+        .compile(
+            subject -> {
+              // This test case should fail independent of disableCrossCompilationRootValidation.
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "Cannot process test roots and app roots in the same compilation unit:"
+                      + "\n    App root in this compilation unit: test.AppRoot"
+                      + "\n    Test roots in this compilation unit: test.TestRoot");
+            });
   }
 }

@@ -33,6 +33,7 @@ java_library(
         "ComponentTreeDepsProcessingStep.java",
         "ComponentTreeDepsProcessor.java",
         "EarlySingletonComponentCreatorGenerator.java",
+        "KspComponentTreeDepsProcessor.java",
         "RootFileFormatter.java",
         "RootGenerator.java",
         "TestComponentDataGenerator.java",
@@ -62,6 +63,7 @@ java_library(
         "//third_party/java/guava/graph",
         "//third_party/java/incap",
         "//third_party/java/javapoet",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )
 
@@ -79,6 +81,7 @@ java_library(
     srcs = [
         "AggregatedRootGenerator.java",
         "ComponentTreeDepsGenerator.java",
+        "KspRootProcessor.java",
         "ProcessedRootSentinelGenerator.java",
         "RootProcessingStep.java",
         "RootProcessor.java",
@@ -109,6 +112,7 @@ java_library(
         "//third_party/java/guava/collect",
         "//third_party/java/incap",
         "//third_party/java/javapoet",
+        "@maven//:com_google_devtools_ksp_symbol_processing_api",
     ],
 )
 

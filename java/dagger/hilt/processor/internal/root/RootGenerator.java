@@ -23,7 +23,9 @@ import static javax.lang.model.element.Modifier.PUBLIC;
 import static javax.lang.model.element.Modifier.STATIC;
 
 import androidx.room.compiler.processing.JavaPoetExtKt;
+import androidx.room.compiler.processing.XFiler.Mode;
 import androidx.room.compiler.processing.XProcessingEnv;
+import androidx.room.compiler.processing.XProcessingEnv.Backend;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -127,10 +129,15 @@ final class RootGenerator {
               .build());
     }
 
-    RootFileFormatter.write(
+    JavaFile componentsWrapperJavaFile =
         JavaFile.builder(componentsWrapperClassName.packageName(), componentsWrapper.build())
-            .build(),
-        env);
+            .build();
+    // TODO(danysantiago): Support formatting in KSP: b/288572563
+    if (env.getBackend() == Backend.KSP) {
+      env.getFiler().write(componentsWrapperJavaFile, Mode.Isolating);
+    } else {
+      RootFileFormatter.write(componentsWrapperJavaFile, env);
+    }
   }
 
   private static ComponentTree filterDescriptors(ComponentTree componentTree) {

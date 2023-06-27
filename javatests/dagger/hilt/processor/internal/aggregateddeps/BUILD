@@ -38,7 +38,9 @@ compiler_test(
         "//java/dagger/hilt/android/testing/compile",
         "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//javatests/dagger/hilt/processor/internal:generated_import",
+        "//third_party/java/guava/collect",
         "//third_party/java/junit",
+        "//third_party/java/truth",
     ],
 )
 

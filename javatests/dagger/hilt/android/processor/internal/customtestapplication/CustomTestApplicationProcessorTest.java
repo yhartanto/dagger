@@ -16,17 +16,26 @@
 
 package dagger.hilt.android.processor.internal.customtestapplication;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import com.google.common.collect.ImmutableList;
 import dagger.hilt.android.testing.compile.HiltCompilerTests;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class CustomTestApplicationProcessorTest {
 
+  @Rule public TemporaryFolder tempFolderRule = new TemporaryFolder();
+
   @Test
   public void validBaseClass_succeeds() {
-    HiltCompilerTests.hiltCompiler(
+    // TODO(danysantiago): Add KSP test once b/288966076 is resolved.
+    HiltCompilerTests.compileWithKapt(
+        ImmutableList.of(
             HiltCompilerTests.javaSource(
                 "test.HiltTest",
                 "package test;",
@@ -37,8 +46,9 @@ public class CustomTestApplicationProcessorTest {
                 "",
                 "@CustomTestApplication(Application.class)",
                 "@HiltAndroidTest",
-                "public class HiltTest {}"))
-        .compile(subject -> subject.hasErrorCount(0));
+                "public class HiltTest {}")),
+        tempFolderRule,
+        result -> assertThat(result.getSuccess()).isTrue());
   }
 
   @Test

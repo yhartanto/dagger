@@ -29,6 +29,8 @@ compiler_test(
     ],
     deps = [
         "//java/dagger/hilt/android/testing/compile",
+        "//third_party/java/guava/collect",
         "//third_party/java/junit",
+        "//third_party/java/truth",
     ],
 )
