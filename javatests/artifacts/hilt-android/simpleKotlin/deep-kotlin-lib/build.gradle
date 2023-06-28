@@ -1,16 +1,14 @@
 plugins {
-    id 'java-library'
     id 'kotlin'
-    id 'kotlin-kapt'
+    id 'com.google.devtools.ksp'
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+kotlin {
+    jvmToolchain(11)
 }
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation "com.google.dagger:hilt-core:LOCAL-SNAPSHOT"
-    kapt "com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT"
+    ksp "com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT"
 }
