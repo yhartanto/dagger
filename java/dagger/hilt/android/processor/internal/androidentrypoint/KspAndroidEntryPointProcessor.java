@@ -16,6 +16,7 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
+import com.google.auto.service.AutoService;
 import com.google.devtools.ksp.processing.SymbolProcessor;
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment;
 import com.google.devtools.ksp.processing.SymbolProcessorProvider;
@@ -37,6 +38,7 @@ public final class KspAndroidEntryPointProcessor extends KspBaseProcessingStepPr
   }
 
   /** Provides the {@link KspAndroidEntryPointProcessor}. */
+  @AutoService(SymbolProcessorProvider.class)
   public static final class Provider implements SymbolProcessorProvider {
     @Override
     public SymbolProcessor create(SymbolProcessorEnvironment symbolProcessorEnvironment) {

@@ -31,6 +31,7 @@ class KspViewModelProcessor(symbolProcessorEnvironment: SymbolProcessorEnvironme
   override fun processingStep(): BaseProcessingStep = ViewModelProcessingStep(xProcessingEnv)
 
   /** Provides the [KspViewModelProcessor]. */
+  @AutoService(SymbolProcessorProvider::class)
   class Provider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
       return KspViewModelProcessor(environment)

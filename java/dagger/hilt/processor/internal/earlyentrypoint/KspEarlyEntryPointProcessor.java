@@ -16,6 +16,7 @@
 
 package dagger.hilt.processor.internal.earlyentrypoint;
 
+import com.google.auto.service.AutoService;
 import com.google.devtools.ksp.processing.SymbolProcessor;
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment;
 import com.google.devtools.ksp.processing.SymbolProcessorProvider;
@@ -34,6 +35,7 @@ public final class KspEarlyEntryPointProcessor extends KspBaseProcessingStepProc
   }
 
   /** Provides the {@link KspEarlyEntryPointProcessor}. */
+  @AutoService(SymbolProcessorProvider.class)
   public static final class Provider implements SymbolProcessorProvider {
     @Override
     public SymbolProcessor create(SymbolProcessorEnvironment symbolProcessorEnvironment) {
