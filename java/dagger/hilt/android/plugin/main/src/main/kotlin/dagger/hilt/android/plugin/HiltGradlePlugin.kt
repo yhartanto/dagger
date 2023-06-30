@@ -89,7 +89,7 @@ class HiltGradlePlugin @Inject constructor(
     }
     configureDependencyTransforms(project)
     configureCompileClasspath(project, hiltExtension)
-    configureBytecodeTransformASM(project, hiltExtension)
+    configureBytecodeTransformASM(project)
     configureAggregatingTask(project, hiltExtension)
     configureProcessorFlags(project, hiltExtension)
   }
@@ -241,16 +241,8 @@ class HiltGradlePlugin @Inject constructor(
     project.dependencies.add(compileOnlyConfigName, artifactView.files)
   }
 
-  private fun configureBytecodeTransformASM(project: Project, hiltExtension: HiltExtension) {
-    var warnAboutLocalTestsFlag = false
+  private fun configureBytecodeTransformASM(project: Project) {
     fun registerTransform(androidComponent: ComponentCompat) {
-      if (hiltExtension.enableTransformForLocalTests && !warnAboutLocalTestsFlag) {
-        project.logger.warn(
-          "The Hilt configuration option 'enableTransformForLocalTests' is no longer necessary " +
-            "when com.android.tools.build:gradle:4.2.0+ is used."
-        )
-        warnAboutLocalTestsFlag = true
-      }
       androidComponent.transformClassesWith(
         classVisitorFactoryImplClass = AndroidEntryPointClassVisitor.Factory::class.java,
         scope = InstrumentationScope.PROJECT
@@ -466,14 +458,16 @@ class HiltGradlePlugin @Inject constructor(
       .flatMap { configuration ->
         configuration.dependencies.map { dependency -> dependency.group to dependency.name }
       }.toSet()
+    fun getMissingDepMsg(depCoordinate: String): String =
+      "The Hilt Android Gradle plugin is applied but no $depCoordinate dependency was found."
     if (!dependencies.contains(LIBRARY_GROUP to "hilt-android")) {
-      error(missingDepError("$LIBRARY_GROUP:hilt-android"))
+      error(getMissingDepMsg("$LIBRARY_GROUP:hilt-android"))
     }
     if (
       !dependencies.contains(LIBRARY_GROUP to "hilt-android-compiler") &&
       !dependencies.contains(LIBRARY_GROUP to "hilt-compiler")
     ) {
-      error(missingDepError("$LIBRARY_GROUP:hilt-compiler"))
+      error(getMissingDepMsg("$LIBRARY_GROUP:hilt-compiler"))
     }
   }
 
@@ -481,14 +475,10 @@ class HiltGradlePlugin @Inject constructor(
       = extensions.findByType(BaseExtension::class.java)
 
   companion object {
-    val ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String::class.java)
+    private val ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String::class.java)
     const val DAGGER_ARTIFACT_TYPE_VALUE = "jar-for-dagger"
     const val AGGREGATED_HILT_ARTIFACT_TYPE_VALUE = "aggregated-jar-for-hilt"
 
     const val LIBRARY_GROUP = "com.google.dagger"
-
-    val missingDepError: (String) -> String = { depCoordinate ->
-      "The Hilt Android Gradle plugin is applied but no $depCoordinate dependency was found."
-    }
   }
 }
