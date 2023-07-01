@@ -16,23 +16,22 @@
 
 package dagger.hilt.android.processor.internal.androidentrypoint;
 
-import static com.google.testing.compile.CompilationSubject.assertThat;
-import static dagger.hilt.android.testing.compile.HiltCompilerTests.compiler;
-
-import com.google.testing.compile.Compilation;
-import com.google.testing.compile.JavaFileObjects;
-import javax.tools.JavaFileObject;
+import androidx.room.compiler.processing.util.Source;
+import dagger.hilt.android.testing.compile.HiltCompilerTests;
+import dagger.testing.golden.GoldenFileRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class ActivityGeneratorTest {
+  @Rule public GoldenFileRule goldenFileRule = new GoldenFileRule();
 
   @Test
   public void generate_componentActivity() {
-    JavaFileObject myActivity =
-        JavaFileObjects.forSourceLines(
+    Source myActivity =
+        HiltCompilerTests.javaSource(
             "test.MyActivity",
             "package test;",
             "",
@@ -42,14 +41,13 @@ public class ActivityGeneratorTest {
             "@AndroidEntryPoint(ComponentActivity.class)",
             "public class MyActivity extends Hilt_MyActivity {",
             "}");
-    Compilation compilation = compiler().compile(myActivity);
-    assertThat(compilation).succeeded();
+    HiltCompilerTests.hiltCompiler(myActivity).compile(subject -> subject.hasErrorCount(0));
   }
 
   @Test
   public void generate_baseHiltComponentActivity() {
-    JavaFileObject baseActivity =
-        JavaFileObjects.forSourceLines(
+    Source baseActivity =
+        HiltCompilerTests.javaSource(
             "test.BaseActivity",
             "package test;",
             "",
@@ -59,8 +57,8 @@ public class ActivityGeneratorTest {
             "@AndroidEntryPoint(ComponentActivity.class)",
             "public class BaseActivity extends Hilt_BaseActivity {",
             "}");
-    JavaFileObject myActivity =
-        JavaFileObjects.forSourceLines(
+    Source myActivity =
+        HiltCompilerTests.javaSource(
             "test.MyActivity",
             "package test;",
             "",
@@ -70,7 +68,7 @@ public class ActivityGeneratorTest {
             "@AndroidEntryPoint(BaseActivity.class)",
             "public class MyActivity extends Hilt_MyActivity {",
             "}");
-    Compilation compilation = compiler().compile(baseActivity, myActivity);
-    assertThat(compilation).succeeded();
+    HiltCompilerTests.hiltCompiler(baseActivity, myActivity)
+        .compile(subject -> subject.hasErrorCount(0));
   }
 }
