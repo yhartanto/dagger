@@ -16,23 +16,25 @@
 
 package dagger.hilt.processor.internal.kotlin;
 
+import static androidx.room.compiler.processing.XElementKt.isField;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
+import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
+import static dagger.internal.codegen.xprocessing.XElements.asField;
+import static dagger.internal.codegen.xprocessing.XElements.isStatic;
 
 import androidx.room.compiler.processing.XAnnotation;
 import androidx.room.compiler.processing.XElement;
-import androidx.room.compiler.processing.XElementKt;
-import androidx.room.compiler.processing.XExecutableElement;
 import androidx.room.compiler.processing.XFieldElement;
 import androidx.room.compiler.processing.XMethodElement;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import dagger.hilt.processor.internal.ClassNames;
 import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.internal.codegen.xprocessing.XElements;
 import java.util.Optional;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 
 /** Utility class for interacting with Kotlin Metadata. */
@@ -75,20 +77,37 @@ public final class KotlinMetadataUtil {
    * on both the backing field and the associated synthetic property (if one exists).
    */
   private ImmutableList<XAnnotation> getAnnotations(XElement element) {
-    // Currently, we avoid trying to get annotations from properties on object class's (i.e.
-    // properties with static jvm backing fields) due to issues explained in CL/336150864.
-    // Instead, just return the annotations on the element.
-    if (!XElementKt.isField(element) || XElements.isStatic(element)) {
-      return ImmutableList.copyOf(element.getAllAnnotations());
+    ImmutableList<XAnnotation> annotations = ImmutableList.copyOf(element.getAllAnnotations());
+    ImmutableList<XAnnotation> syntheticAnnotations = getSyntheticPropertyAnnotations(element);
+    if (syntheticAnnotations.isEmpty()) {
+      return annotations;
     }
-    // Dedupe any annotation that appears on both the field and the property
-    return Stream.concat(
-            element.getAllAnnotations().stream(),
-            getSyntheticPropertyAnnotations(XElements.asField(element)).stream())
-        .map(XAnnotations.equivalence()::wrap)
-        .distinct()
-        .map(Equivalence.Wrapper::get)
-        .collect(toImmutableList());
+    // Dedupe any annotation that appears on both the field and the property.
+    // Note: we reduce the number of annotations we have to dedupe by only checking equivalence on
+    // annotations that have the same class name as a synthetic annotation. This avoids hitting
+    // TypeNotPresentException on annotation values with error types unless it has the same class
+    // name as a synthetic annotation.
+    ImmutableSet<ClassName> syntheticAnnotationClassNames =
+        syntheticAnnotations.stream()
+            .map(XAnnotations::getClassName)
+            .collect(toImmutableSet());
+    ImmutableSet<Equivalence.Wrapper<XAnnotation>> annotationEquivalenceWrappers =
+        annotations.stream()
+            .filter(annotation -> syntheticAnnotationClassNames.contains(annotation.getClassName()))
+            .map(XAnnotations.equivalence()::wrap)
+            .collect(toImmutableSet());
+    ImmutableList<XAnnotation> uniqueSyntheticAnnotations =
+        syntheticAnnotations.stream()
+            .map(XAnnotations.equivalence()::wrap)
+            .filter(wrapper -> !annotationEquivalenceWrappers.contains(wrapper))
+            .map(Equivalence.Wrapper::get)
+            .collect(toImmutableList());
+    return uniqueSyntheticAnnotations.isEmpty()
+        ? annotations
+        : ImmutableList.<XAnnotation>builder()
+            .addAll(annotations)
+            .addAll(uniqueSyntheticAnnotations)
+            .build();
   }
 
   /**
@@ -97,12 +116,18 @@ public final class KotlinMetadataUtil {
    * <p>Note that this method only looks for additional annotations in the synthetic property
    * method, if any, of a Kotlin property and not for annotations in its backing field.
    */
-  private ImmutableList<XAnnotation> getSyntheticPropertyAnnotations(XFieldElement field) {
+  private ImmutableList<XAnnotation> getSyntheticPropertyAnnotations(XElement element) {
+    // Currently, we avoid trying to get annotations from properties on object class's (i.e.
+    // properties with static jvm backing fields) due to issues explained in CL/336150864.
+    if (!isField(element) || isStatic(element)) {
+      return ImmutableList.of();
+    }
+    XFieldElement field = asField(element);
     return hasMetadata(field)
         ? metadataFactory
             .create(field)
             .getSyntheticAnnotationMethod(field)
-            .map(XExecutableElement::getAllAnnotations)
+            .map(XMethodElement::getAllAnnotations)
             .map(ImmutableList::copyOf)
             .orElse(ImmutableList.<XAnnotation>of())
         : ImmutableList.of();
