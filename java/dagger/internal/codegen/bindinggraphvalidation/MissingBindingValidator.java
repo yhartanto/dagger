@@ -124,7 +124,11 @@ final class MissingBindingValidator extends ValidationBindingGraphPlugin {
                   wildcardAlternatives.stream()
                       .map(
                           binding -> binding.key().type() + " in [" + binding.componentPath() + "]")
-                      .collect(toImmutableSet())));
+                      .collect(toImmutableSet())))
+                  + "\n(In Kotlin source, a type like 'Set<Foo>' may"
+                  + " be translated as 'Set<? extends Foo>'. To avoid this implicit"
+                  + " conversion you can add '@JvmSuppressWildcards' on the associated type"
+                  + " argument, e.g. 'Set<@JvmSuppressWildcards Foo>'.)";
     }
 
     List<ComponentPath> alternativeComponents =
