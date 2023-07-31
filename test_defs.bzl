@@ -31,7 +31,6 @@ _FUNCTIONAL_BUILD_VARIANTS = {
     "Shards": ["-Adagger.keysPerComponentShard=2"],
     "FastInit": ["-Adagger.fastInit=enabled"],
     "FastInit_Shards": ["-Adagger.fastInit=enabled", "-Adagger.keysPerComponentShard=2"],
-    "IgnoreProvisionKeyWildcards": ["-Adagger.ignoreProvisionKeyWildcards=enabled"],
 }
 
 def GenKtLibrary(

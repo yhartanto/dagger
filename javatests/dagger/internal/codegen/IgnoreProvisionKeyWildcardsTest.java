@@ -57,7 +57,7 @@ public class IgnoreProvisionKeyWildcardsTest {
     processingOptions =
         isIgnoreProvisionKeyWildcardsEnabled
             ? ImmutableMap.of("dagger.ignoreProvisionKeyWildcards", "enabled")
-            : ImmutableMap.of();
+            : ImmutableMap.of("dagger.ignoreProvisionKeyWildcards", "disabled");
   }
 
   @Test
