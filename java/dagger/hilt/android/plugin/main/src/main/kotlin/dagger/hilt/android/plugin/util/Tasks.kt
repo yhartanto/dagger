@@ -38,6 +38,16 @@ internal fun addKaptTaskProcessorOptions(
   component: ComponentCompat,
   produceArgProvider: (Task) -> CommandLineArgumentProvider
 ) = project.plugins.withId("kotlin-kapt") {
+  checkClass("org.jetbrains.kotlin.gradle.internal.KaptTask") {
+    """
+    The KAPT plugin was detected to be applied but its task class could not be found.
+
+    This is an indicator that the Hilt Gradle Plugin is using a different class loader because
+    it was declared at the root while KAPT was declared in a sub-project. To fix this, declare
+    both plugins in the same scope, i.e. either at the root (without applying them) or at the
+    sub-projects.
+    """.trimIndent()
+  }
   project.tasks.withType(KaptTask::class.java) { task ->
     if (task.name == "kapt${component.name.capitalize()}Kotlin") {
       val argProvider = produceArgProvider.invoke(task)
@@ -60,10 +70,30 @@ internal fun addKspTaskProcessorOptions(
   component: ComponentCompat,
   produceArgProvider: (Task) -> CommandLineArgumentProvider
 ) = project.plugins.withId("com.google.devtools.ksp") {
+  checkClass("com.google.devtools.ksp.gradle.KspTaskJvm") {
+    """
+    The KSP plugin was detected to be applied but its task class could not be found.
+
+    This is an indicator that the Hilt Gradle Plugin is using a different class loader because
+    it was declared at the root while KSP was declared in a sub-project. To fix this, declare
+    both plugins in the same scope, i.e. either at the root (without applying them) or at the
+    sub-projects.
+
+    See https://github.com/google/dagger/issues/3965 for more details.
+    """.trimIndent()
+  }
   project.tasks.withType(KspTaskJvm::class.java) { task ->
     if (task.name == "ksp${component.name.capitalize()}Kotlin") {
       task.commandLineArgumentProviders.add(produceArgProvider.invoke(task))
     }
+  }
+}
+
+private inline fun checkClass(fqn: String, msg: () -> String) {
+  try {
+    Class.forName(fqn)
+  } catch (ex: ClassNotFoundException) {
+    throw IllegalStateException(msg.invoke(), ex)
   }
 }
 
