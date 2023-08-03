@@ -114,8 +114,9 @@ compiler_test(
     ],
     deps = [
         "//java/dagger/hilt/android/testing/compile",
-        "//third_party/java/compile_testing",
+        "//java/dagger/internal/codegen/xprocessing:xprocessing-testing",
         "//third_party/java/guava/base",
+        "//third_party/java/guava/collect",
         "//third_party/java/junit",
         "//third_party/java/truth",
     ],
