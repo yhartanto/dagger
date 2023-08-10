@@ -243,4 +243,33 @@ public class AssistedInjectErrorsTest {
         .withProcessingOptions(compilerMode.processorOptions())
         .compile(subject -> subject.hasErrorCount(0));
   }
+
+  @Test
+  public void testMultipleAssistedInjectedConstructors() {
+    Source foo =
+        CompilerTests.kotlinSource(
+            "test.Foo.kt",
+            "package test;",
+            "",
+            "import dagger.assisted.Assisted",
+            "import dagger.assisted.AssistedInject",
+            "import dagger.assisted.AssistedFactory",
+            "",
+            "class Foo @AssistedInject constructor(@Assisted i: Int) {",
+            "",
+            "  @AssistedInject",
+            "  constructor(s: String, @Assisted i: Int): this(i) {}",
+            "}");
+
+    CompilerTests.daggerCompiler(foo)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "Type test.Foo may only contain one injected constructor."
+                      + " Found: [@dagger.assisted.AssistedInject test.Foo(int),"
+                      + " @dagger.assisted.AssistedInject test.Foo(String, int)]");
+            });
+  }
 }
