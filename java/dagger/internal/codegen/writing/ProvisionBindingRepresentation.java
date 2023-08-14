@@ -59,7 +59,6 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
     FrameworkInstanceSupplier frameworkInstanceSupplier = null;
     switch (FrameworkInstanceKind.from(binding, compilerMode)) {
       case SWITCHING_PROVIDER:
-      case EXPERIMENTAL_SWITCHING_PROVIDER:
         frameworkInstanceSupplier = switchingProviderInstanceSupplierFactory.create(binding);
         break;
       case STATIC_FACTORY:
@@ -81,9 +80,6 @@ final class ProvisionBindingRepresentation implements BindingRepresentation {
   }
 
   private boolean usesDirectInstanceExpression(RequestKind requestKind) {
-    if (compilerMode.isExperimentalMergedMode()) {
-      return false;
-    }
     if (requestKind != RequestKind.INSTANCE && requestKind != RequestKind.FUTURE) {
       return false;
     }

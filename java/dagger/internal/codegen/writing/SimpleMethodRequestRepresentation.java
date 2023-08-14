@@ -19,7 +19,6 @@ package dagger.internal.codegen.writing;
 import static androidx.room.compiler.processing.XElementKt.isConstructor;
 import static androidx.room.compiler.processing.XElementKt.isMethod;
 import static com.google.common.base.Preconditions.checkArgument;
-import static dagger.internal.codegen.binding.BindingRequest.bindingRequest;
 import static dagger.internal.codegen.javapoet.CodeBlocks.makeParametersCodeBlock;
 import static dagger.internal.codegen.javapoet.TypeNames.rawTypeName;
 import static dagger.internal.codegen.langmodel.Accessibility.isTypeAccessibleFrom;
@@ -58,7 +57,6 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
   private final MembersInjectionMethods membersInjectionMethods;
   private final ComponentRequirementExpressions componentRequirementExpressions;
   private final ShardImplementation shardImplementation;
-  private final boolean isExperimentalMergedMode;
 
   @AssistedInject
   SimpleMethodRequestRepresentation(
@@ -80,8 +78,6 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
     this.membersInjectionMethods = membersInjectionMethods;
     this.componentRequirementExpressions = componentRequirementExpressions;
     this.shardImplementation = componentImplementation.shardImplementation(binding);
-    this.isExperimentalMergedMode =
-        componentImplementation.compilerMode().isExperimentalMergedMode();
   }
 
   @Override
@@ -146,12 +142,8 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
   }
 
   private Expression dependencyArgument(DependencyRequest dependency, ClassName requestingClass) {
-    return isExperimentalMergedMode
-        ? componentRequestRepresentations
-            .getExperimentalSwitchingProviderDependencyRepresentation(bindingRequest(dependency))
-            .getDependencyExpression(dependency.kind(), provisionBinding)
-        : componentRequestRepresentations.getDependencyArgumentExpression(
-            dependency, requestingClass);
+    return componentRequestRepresentations.getDependencyArgumentExpression(
+        dependency, requestingClass);
   }
 
   private Expression injectMembers(CodeBlock instance, ClassName requestingClass) {
@@ -167,11 +159,8 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
         instance = CodeBlock.of("($T) ($T) $L", keyType, rawTypeName(keyType), instance);
       }
     }
-    return isExperimentalMergedMode
-        ? membersInjectionMethods.getInjectExpressionExperimental(
-            provisionBinding, instance, requestingClass)
-        : membersInjectionMethods.getInjectExpression(
-            provisionBinding.key(), instance, requestingClass);
+    return membersInjectionMethods.getInjectExpression(
+        provisionBinding.key(), instance, requestingClass);
   }
 
   private Optional<CodeBlock> moduleReference(ClassName requestingClass) {
@@ -180,11 +169,7 @@ final class SimpleMethodRequestRepresentation extends RequestRepresentation {
             .contributingModule()
             .map(XTypeElement::getType)
             .map(ComponentRequirement::forModule)
-            .map(
-                module ->
-                    isExperimentalMergedMode
-                        ? CodeBlock.of("(($T) dependencies[0])", module.type().getTypeName())
-                        : componentRequirementExpressions.getExpression(module, requestingClass))
+            .map(module -> componentRequirementExpressions.getExpression(module, requestingClass))
         : Optional.empty();
   }
 

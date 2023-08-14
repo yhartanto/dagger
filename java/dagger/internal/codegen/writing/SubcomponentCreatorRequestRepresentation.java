@@ -20,29 +20,23 @@ import static dagger.internal.codegen.javapoet.CodeBlocks.toParametersCodeBlock;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.FieldSpec;
 import dagger.assisted.Assisted;
 import dagger.assisted.AssistedFactory;
 import dagger.assisted.AssistedInject;
 import dagger.internal.codegen.binding.ContributionBinding;
 import dagger.internal.codegen.javapoet.Expression;
 import dagger.internal.codegen.writing.ComponentImplementation.ShardImplementation;
-import java.util.ArrayList;
-import java.util.List;
 
 /** A binding expression for a subcomponent creator that just invokes the constructor. */
 final class SubcomponentCreatorRequestRepresentation extends RequestRepresentation {
   private final ShardImplementation shardImplementation;
   private final ContributionBinding binding;
-  private final boolean isExperimentalMergedMode;
 
   @AssistedInject
   SubcomponentCreatorRequestRepresentation(
       @Assisted ContributionBinding binding, ComponentImplementation componentImplementation) {
     this.binding = binding;
     this.shardImplementation = componentImplementation.shardImplementation(binding);
-    this.isExperimentalMergedMode =
-        componentImplementation.compilerMode().isExperimentalMergedMode();
   }
 
   @Override
@@ -51,20 +45,9 @@ final class SubcomponentCreatorRequestRepresentation extends RequestRepresentati
         binding.key().type().xprocessing(),
         "new $T($L)",
         shardImplementation.getSubcomponentCreatorSimpleName(binding.key()),
-        isExperimentalMergedMode
-            ? getDependenciesExperimental()
-            : shardImplementation.componentFieldsByImplementation().values().stream()
-                .map(field -> CodeBlock.of("$N", field))
-                .collect(toParametersCodeBlock()));
-  }
-
-  private CodeBlock getDependenciesExperimental() {
-    List<CodeBlock> expressions = new ArrayList<>();
-    int index = 0;
-    for (FieldSpec field : shardImplementation.componentFieldsByImplementation().values()) {
-      expressions.add(CodeBlock.of("($T) dependencies[$L]", field.type, index++));
-    }
-    return expressions.stream().collect(toParametersCodeBlock());
+        shardImplementation.componentFieldsByImplementation().values().stream()
+            .map(field -> CodeBlock.of("$N", field))
+            .collect(toParametersCodeBlock()));
   }
 
   CodeBlock getDependencyExpressionArguments() {

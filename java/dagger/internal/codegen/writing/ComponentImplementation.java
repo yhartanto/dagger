@@ -111,15 +111,10 @@ public final class ComponentImplementation {
   /** Compiler Modes. */
   public enum CompilerMode {
     DEFAULT,
-    FAST_INIT,
-    EXPERIMENTAL_MERGED_MODE;
+    FAST_INIT;
 
     public boolean isFastInit() {
       return this == CompilerMode.FAST_INIT;
-    }
-
-    public boolean isExperimentalMergedMode() {
-      return this == CompilerMode.EXPERIMENTAL_MERGED_MODE;
     }
   }
 
@@ -311,11 +306,7 @@ public final class ComponentImplementation {
     this.messager = messager;
     XTypeElement typeElement = rootComponentImplementation().componentDescriptor().typeElement();
     this.compilerMode =
-        compilerOptions.fastInit(typeElement)
-            ? CompilerMode.FAST_INIT
-            : (compilerOptions.experimentalMergedMode(typeElement)
-                ? CompilerMode.EXPERIMENTAL_MERGED_MODE
-                : CompilerMode.DEFAULT);
+        compilerOptions.fastInit(typeElement) ? CompilerMode.FAST_INIT : CompilerMode.DEFAULT;
   }
 
   /**
@@ -464,7 +455,6 @@ public final class ComponentImplementation {
     private final UniqueNameSet assistedParamNames = new UniqueNameSet();
     private final List<CodeBlock> initializations = new ArrayList<>();
     private final SwitchingProviders switchingProviders;
-    private final ExperimentalSwitchingProviders experimentalSwitchingProviders;
     private final Map<Key, CodeBlock> cancellations = new LinkedHashMap<>();
     private final Map<XVariableElement, String> uniqueAssistedName = new LinkedHashMap<>();
     private final List<CodeBlock> componentRequirementInitializations = new ArrayList<>();
@@ -481,8 +471,6 @@ public final class ComponentImplementation {
     private ShardImplementation(ClassName name) {
       this.name = name;
       this.switchingProviders = new SwitchingProviders(this, processingEnv);
-      this.experimentalSwitchingProviders =
-          new ExperimentalSwitchingProviders(this, componentRequestRepresentationsProvider);
 
       if (graph.componentDescriptor().isProduction()) {
         claimMethodName(CANCELLATION_LISTENER_METHOD_NAME);
@@ -515,11 +503,6 @@ public final class ComponentImplementation {
     /** Returns the {@link SwitchingProviders} class for this shard. */
     public SwitchingProviders getSwitchingProviders() {
       return switchingProviders;
-    }
-
-    /** Returns the {@link ExperimentalSwitchingProviders} class for this shard. */
-    public ExperimentalSwitchingProviders getExperimentalSwitchingProviders() {
-      return experimentalSwitchingProviders;
     }
 
     /** Returns the {@link ComponentImplementation} that owns this shard. */

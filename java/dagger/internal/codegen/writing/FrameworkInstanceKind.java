@@ -19,21 +19,17 @@ package dagger.internal.codegen.writing;
 import static dagger.internal.codegen.model.BindingKind.DELEGATE;
 
 import dagger.internal.codegen.binding.ContributionBinding;
-import dagger.internal.codegen.model.BindingKind;
 import dagger.internal.codegen.writing.ComponentImplementation.CompilerMode;
 
 /** Generation mode for satisfying framework request to Provision Binding. */
 enum FrameworkInstanceKind {
   SWITCHING_PROVIDER,
-  EXPERIMENTAL_SWITCHING_PROVIDER,
   STATIC_FACTORY,
   PROVIDER_FIELD;
 
   public static FrameworkInstanceKind from(ContributionBinding binding, CompilerMode compilerMode) {
     if (usesSwitchingProvider(binding, compilerMode)) {
-      if (compilerMode.isExperimentalMergedMode()) {
-        return EXPERIMENTAL_SWITCHING_PROVIDER;
-      } else if (compilerMode.isFastInit()) {
+      if (compilerMode.isFastInit()) {
         return SWITCHING_PROVIDER;
       } else {
         throw new IllegalStateException(
@@ -48,12 +44,7 @@ enum FrameworkInstanceKind {
 
   private static boolean usesSwitchingProvider(
       ContributionBinding binding, CompilerMode compilerMode) {
-    if (!compilerMode.isFastInit() && !compilerMode.isExperimentalMergedMode()) {
-      return false;
-    }
-    // TODO(wanyingd): remove this check once we allow inaccessible types in merged mode.
-    if (compilerMode.isExperimentalMergedMode()
-        && binding.kind().equals(BindingKind.ASSISTED_FACTORY)) {
+    if (!compilerMode.isFastInit()) {
       return false;
     }
     switch (binding.kind()) {
@@ -100,10 +91,9 @@ enum FrameworkInstanceKind {
         return true;
       case PROVISION:
         return !compilerMode.isFastInit()
-            && !compilerMode.isExperimentalMergedMode()
             && !binding.requiresModuleInstance();
       case INJECTION:
-        return !compilerMode.isFastInit() && !compilerMode.isExperimentalMergedMode();
+        return !compilerMode.isFastInit();
       default:
         return false;
     }

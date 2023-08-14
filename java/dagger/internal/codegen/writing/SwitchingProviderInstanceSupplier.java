@@ -46,11 +46,9 @@ final class SwitchingProviderInstanceSupplier implements FrameworkInstanceSuppli
           unscopedDirectInstanceRequestRepresentationFactory) {
     ShardImplementation shardImplementation = componentImplementation.shardImplementation(binding);
     FrameworkInstanceCreationExpression frameworkInstanceCreationExpression =
-        componentImplementation.compilerMode().isExperimentalMergedMode()
-            ? shardImplementation.getExperimentalSwitchingProviders()
-                .newFrameworkInstanceCreationExpression(
-                    binding, unscopedDirectInstanceRequestRepresentationFactory.create(binding))
-            : shardImplementation.getSwitchingProviders().newFrameworkInstanceCreationExpression(
+        shardImplementation
+            .getSwitchingProviders()
+            .newFrameworkInstanceCreationExpression(
                 binding, unscopedDirectInstanceRequestRepresentationFactory.create(binding));
     this.frameworkInstanceSupplier =
         new FrameworkFieldInitializer(

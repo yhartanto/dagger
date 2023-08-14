@@ -24,16 +24,6 @@ public abstract class CompilerOptions {
   public abstract boolean usesProducers();
 
   /**
-   * Returns true if the experimental Android mode is enabled.
-   *
-   * <p><b>Warning: Do Not use! This flag is for internal, experimental use only!</b>
-   *
-   * <p>Issues related to this flag will not be supported. This flag could break your build, cause
-   * memory leaks in your app, or cause other unknown issues at runtime.
-   */
-  public abstract boolean experimentalMergedMode(XTypeElement element);
-
-  /**
    * Returns true if the fast initialization flag, {@code fastInit}, is enabled.
    *
    * <p>If enabled, the generated code will attempt to optimize for fast component initialization.

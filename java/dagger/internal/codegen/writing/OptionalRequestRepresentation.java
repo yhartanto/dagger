@@ -39,7 +39,6 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
   private final ProvisionBinding binding;
   private final ComponentRequestRepresentations componentRequestRepresentations;
   private final XProcessingEnv processingEnv;
-  private final boolean isExperimentalMergedMode;
 
   @AssistedInject
   OptionalRequestRepresentation(
@@ -50,8 +49,6 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
     this.binding = binding;
     this.componentRequestRepresentations = componentRequestRepresentations;
     this.processingEnv = processingEnv;
-    this.isExperimentalMergedMode =
-        componentImplementation.compilerMode().isExperimentalMergedMode();
   }
 
   @Override
@@ -78,15 +75,9 @@ final class OptionalRequestRepresentation extends RequestRepresentation {
     DependencyRequest dependency = getOnlyElement(binding.dependencies());
 
     CodeBlock dependencyExpression =
-        isExperimentalMergedMode
-            ? componentRequestRepresentations
-                .getExperimentalSwitchingProviderDependencyRepresentation(
-                    bindingRequest(dependency))
-                .getDependencyExpression(dependency.kind(), binding)
-                .codeBlock()
-            : componentRequestRepresentations
-                .getDependencyExpression(bindingRequest(dependency), requestingClass)
-                .codeBlock();
+        componentRequestRepresentations
+            .getDependencyExpression(bindingRequest(dependency), requestingClass)
+            .codeBlock();
 
     return isTypeAccessibleFrom(
             dependency.key().type().xprocessing(), requestingClass.packageName())

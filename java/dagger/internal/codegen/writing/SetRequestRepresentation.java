@@ -47,7 +47,6 @@ final class SetRequestRepresentation extends RequestRepresentation {
   private final BindingGraph graph;
   private final ComponentRequestRepresentations componentRequestRepresentations;
   private final XProcessingEnv processingEnv;
-  private final boolean isExperimentalMergedMode;
 
   @AssistedInject
   SetRequestRepresentation(
@@ -60,8 +59,6 @@ final class SetRequestRepresentation extends RequestRepresentation {
     this.graph = graph;
     this.componentRequestRepresentations = componentRequestRepresentations;
     this.processingEnv = processingEnv;
-    this.isExperimentalMergedMode =
-        componentImplementation.compilerMode().isExperimentalMergedMode();
   }
 
   @Override
@@ -139,14 +136,7 @@ final class SetRequestRepresentation extends RequestRepresentation {
       DependencyRequest dependency, ClassName requestingClass) {
     RequestRepresentation bindingExpression =
         componentRequestRepresentations.getRequestRepresentation(bindingRequest(dependency));
-    CodeBlock expression =
-        isExperimentalMergedMode
-            ? componentRequestRepresentations
-                .getExperimentalSwitchingProviderDependencyRepresentation(
-                    bindingRequest(dependency))
-                .getDependencyExpression(dependency.kind(), binding)
-                .codeBlock()
-            : bindingExpression.getDependencyExpression(requestingClass).codeBlock();
+    CodeBlock expression = bindingExpression.getDependencyExpression(requestingClass).codeBlock();
 
     // TODO(b/211774331): Type casting should be Set after contributions to Set multibinding are
     // limited to be Set.

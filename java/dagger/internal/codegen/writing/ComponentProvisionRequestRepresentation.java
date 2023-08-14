@@ -36,7 +36,6 @@ final class ComponentProvisionRequestRepresentation extends RequestRepresentatio
   private final BindingGraph bindingGraph;
   private final ComponentRequirementExpressions componentRequirementExpressions;
   private final CompilerOptions compilerOptions;
-  private final boolean isExperimentalMergedMode;
 
   @AssistedInject
   ComponentProvisionRequestRepresentation(
@@ -49,16 +48,11 @@ final class ComponentProvisionRequestRepresentation extends RequestRepresentatio
     this.bindingGraph = bindingGraph;
     this.componentRequirementExpressions = componentRequirementExpressions;
     this.compilerOptions = compilerOptions;
-    this.isExperimentalMergedMode =
-        componentImplementation.compilerMode().isExperimentalMergedMode();
   }
 
   @Override
   Expression getDependencyExpression(ClassName requestingClass) {
-    CodeBlock componentDependency =
-        isExperimentalMergedMode
-            ? CodeBlock.of("(($T) dependencies[0])", componentRequirement().type().getTypeName())
-            : getComponentRequirementExpression(requestingClass);
+    CodeBlock componentDependency = getComponentRequirementExpression(requestingClass);
     CodeBlock invocation =
         CodeBlock.of(
             "$L.$L()", componentDependency, asMethod(binding.bindingElement().get()).getJvmName());
