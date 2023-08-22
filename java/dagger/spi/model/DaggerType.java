@@ -16,21 +16,14 @@
 
 package dagger.spi.model;
 
-import com.google.auto.value.AutoValue;
 import com.google.devtools.ksp.symbol.KSType;
+import com.google.errorprone.annotations.DoNotMock;
 import javax.annotation.Nullable;
 import javax.lang.model.type.TypeMirror;
 
 /** Wrapper type for a type. */
-@AutoValue
+@DoNotMock("Only use real implementations created by Dagger")
 public abstract class DaggerType {
-  public static DaggerType fromJavac(TypeMirror type) {
-    return new AutoValue_DaggerType(type, null);
-  }
-
-  public static DaggerType fromKsp(KSType type) {
-    return new AutoValue_DaggerType(null, type);
-  }
 
   /** Java representation for the type, returns {@code null} not using java annotation processor. */
   @Nullable
@@ -40,23 +33,6 @@ public abstract class DaggerType {
   @Nullable
   public abstract KSType ksp();
 
-  public DaggerProcessingEnv.Backend backend() {
-    if (java() != null) {
-      return DaggerProcessingEnv.Backend.JAVAC;
-    } else if (ksp() != null) {
-      return DaggerProcessingEnv.Backend.KSP;
-    }
-    throw new AssertionError("Unexpected backend");
-  }
-
-  @Override
-  public String toString() {
-    switch (backend()) {
-      case JAVAC:
-        return java().toString();
-      case KSP:
-        return ksp().toString();
-    }
-    throw new IllegalStateException(String.format("Backend %s not supported yet.", backend()));
-  }
+  /** Returns the backend used in this compilation. */
+  public abstract DaggerProcessingEnv.Backend backend();
 }

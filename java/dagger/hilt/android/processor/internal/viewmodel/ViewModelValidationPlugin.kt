@@ -20,7 +20,6 @@ import com.google.auto.service.AutoService
 import com.google.common.graph.EndpointPair
 import com.google.common.graph.ImmutableNetwork
 import dagger.hilt.android.processor.internal.AndroidClassNames
-import dagger.hilt.processor.internal.asElement
 import dagger.hilt.processor.internal.getQualifiedName
 import dagger.hilt.processor.internal.hasAnnotation
 import dagger.spi.model.Binding
@@ -48,8 +47,7 @@ class ViewModelValidationPlugin : BindingGraphPlugin {
       val target: Node = pair.target()
       val source: Node = pair.source()
       if (
-        target is Binding &&
-        isHiltViewModelBinding(target) && !isInternalHiltViewModelUsage(source)
+        target is Binding && isHiltViewModelBinding(target) && !isInternalHiltViewModelUsage(source)
       ) {
         diagnosticReporter.reportDependency(
           Kind.ERROR,
@@ -67,7 +65,7 @@ class ViewModelValidationPlugin : BindingGraphPlugin {
     // Make sure this is from an @Inject constructor rather than an overridden binding like an
     // @Provides and that the class is annotated with @HiltViewModel.
     return target.kind() == BindingKind.INJECTION &&
-      target.key().type().asElement().hasAnnotation(AndroidClassNames.HILT_VIEW_MODEL)
+      target.key().type().hasAnnotation(AndroidClassNames.HILT_VIEW_MODEL)
   }
 
   private fun isInternalHiltViewModelUsage(source: Node): Boolean {

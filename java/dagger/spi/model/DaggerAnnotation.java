@@ -16,25 +16,14 @@
 
 package dagger.spi.model;
 
-import com.google.auto.common.AnnotationMirrors;
-import com.google.auto.value.AutoValue;
 import com.google.devtools.ksp.symbol.KSAnnotation;
+import com.google.errorprone.annotations.DoNotMock;
 import javax.annotation.Nullable;
 import javax.lang.model.element.AnnotationMirror;
 
 /** Wrapper type for an annotation. */
-@AutoValue
+@DoNotMock("Only use real implementations created by Dagger")
 public abstract class DaggerAnnotation {
-  public static DaggerAnnotation fromJavac(
-      DaggerTypeElement annotationTypeElement, AnnotationMirror annotation) {
-    return new AutoValue_DaggerAnnotation(annotationTypeElement, annotation, null);
-  }
-
-  public static DaggerAnnotation fromKsp(
-      DaggerTypeElement annotationTypeElement, KSAnnotation ksp) {
-    return new AutoValue_DaggerAnnotation(annotationTypeElement, null, ksp);
-  }
-
   public abstract DaggerTypeElement annotationTypeElement();
 
   /**
@@ -55,16 +44,5 @@ public abstract class DaggerAnnotation {
       return DaggerProcessingEnv.Backend.KSP;
     }
     throw new AssertionError("Unexpected backend");
-  }
-
-  @Override
-  public String toString() {
-    switch (backend()) {
-      case JAVAC:
-        return AnnotationMirrors.toString(java());
-      case KSP:
-        return ksp().toString();
-    }
-    throw new IllegalStateException(String.format("Backend %s not supported yet.", backend()));
   }
 }

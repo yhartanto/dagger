@@ -130,7 +130,7 @@ public abstract class Key {
     private static MultibindingContributionIdentifier create(
         DaggerTypeElement contributingModule, DaggerExecutableElement bindingMethod) {
       return new AutoValue_Key_MultibindingContributionIdentifier(
-          contributingModule.qualifiedName(), bindingMethod.simpleName());
+          qualifiedName(contributingModule), simpleName(bindingMethod));
     }
 
     /** Returns the module containing the multibinding method. */
@@ -149,5 +149,25 @@ public abstract class Key {
     public final String toString() {
       return String.format("%s#%s", contributingModule(), bindingMethod());
     }
+  }
+
+  static String qualifiedName(DaggerTypeElement element) {
+    switch (element.backend()) {
+      case JAVAC:
+        return element.java().getQualifiedName().toString();
+      case KSP:
+        return element.ksp().getQualifiedName().asString();
+    }
+    throw new IllegalStateException("Unknown backend: " + element.backend());
+  }
+
+  private static String simpleName(DaggerExecutableElement element) {
+    switch (element.backend()) {
+      case JAVAC:
+        return element.java().getSimpleName().toString();
+      case KSP:
+        return element.ksp().getSimpleName().asString();
+    }
+    throw new IllegalStateException("Unknown backend: " + element.backend());
   }
 }

@@ -89,7 +89,7 @@ public abstract class ComponentPath {
 
   @Override
   public final String toString() {
-    return components().stream().map(DaggerTypeElement::qualifiedName).collect(joining(" → "));
+    return components().stream().map(Key::qualifiedName).collect(joining(" → "));
   }
 
   @Memoized

@@ -18,6 +18,7 @@ package dagger.spi.model;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.auto.common.MoreElements;
 import com.google.auto.value.AutoValue;
 
 /** A representation of a {@link javax.inject.Scope}. */
@@ -42,8 +43,16 @@ public abstract class Scope {
    * Returns {@code true} if {@code scopeAnnotationType} is a {@link javax.inject.Scope} annotation.
    */
   public static boolean isScope(DaggerTypeElement scopeAnnotationType) {
-    return scopeAnnotationType.hasAnnotation(SCOPE)
-        || scopeAnnotationType.hasAnnotation(SCOPE_JAVAX);
+    switch (scopeAnnotationType.backend()) {
+      case JAVAC:
+        return MoreElements.isAnnotationPresent(scopeAnnotationType.java(), SCOPE)
+            || MoreElements.isAnnotationPresent(scopeAnnotationType.java(), SCOPE_JAVAX);
+      case KSP:
+        return KspUtilsKt.hasAnnotation(scopeAnnotationType.ksp(), SCOPE)
+            || KspUtilsKt.hasAnnotation(scopeAnnotationType.ksp(), SCOPE_JAVAX);
+    }
+    throw new IllegalStateException(
+        String.format("Backend %s not supported yet.", scopeAnnotationType.backend()));
   }
 
   private boolean isScope(String annotationName) {

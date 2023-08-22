@@ -16,6 +16,7 @@
 
 package dagger.internal.codegen.validation;
 
+import static androidx.room.compiler.processing.compat.XConverters.getProcessingEnv;
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toKS;
 import static androidx.room.compiler.processing.compat.XConverters.toKSResolver;
@@ -31,6 +32,7 @@ import androidx.room.compiler.processing.XType;
 import androidx.room.compiler.processing.XTypeElement;
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
+import com.google.common.base.Equivalence;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.graph.EndpointPair;
@@ -38,7 +40,16 @@ import com.google.common.graph.ImmutableNetwork;
 import com.google.common.graph.MutableNetwork;
 import com.google.common.graph.Network;
 import com.google.common.graph.NetworkBuilder;
+import com.google.devtools.ksp.processing.Resolver;
+import com.google.devtools.ksp.processing.SymbolProcessorEnvironment;
+import com.google.devtools.ksp.symbol.KSAnnotated;
+import com.google.devtools.ksp.symbol.KSAnnotation;
+import com.google.devtools.ksp.symbol.KSClassDeclaration;
+import com.google.devtools.ksp.symbol.KSFunctionDeclaration;
+import com.google.devtools.ksp.symbol.KSType;
+import dagger.internal.codegen.xprocessing.XAnnotations;
 import dagger.internal.codegen.xprocessing.XElements;
+import dagger.internal.codegen.xprocessing.XTypes;
 import dagger.spi.model.Binding;
 import dagger.spi.model.BindingGraph;
 import dagger.spi.model.BindingGraph.ChildFactoryMethodEdge;
@@ -64,6 +75,12 @@ import dagger.spi.model.Key;
 import dagger.spi.model.RequestKind;
 import dagger.spi.model.Scope;
 import java.util.Optional;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic;
 
 /** A Utility class for converting to the {@link BindingGraph} used by external plugins. */
@@ -141,19 +158,20 @@ public final class SpiModelBindingGraphConverter {
     }
   }
 
-  private static Key toSpiModel(dagger.internal.codegen.model.Key key, XProcessingEnv env) {
+  private static Key toSpiModel(dagger.internal.codegen.model.Key key) {
     Key.Builder builder =
-        Key.builder(toSpiModel(key.type().xprocessing(), env))
-            .qualifier(key.qualifier().map(qualifier -> toSpiModel(qualifier.xprocessing(), env)));
+        Key.builder(toSpiModel(key.type().xprocessing()))
+            .qualifier(key.qualifier().map(qualifier -> toSpiModel(qualifier.xprocessing())));
     if (key.multibindingContributionIdentifier().isPresent()) {
       return builder
           .multibindingContributionIdentifier(
               toSpiModel(
-                  key.multibindingContributionIdentifier().get().contributingModule().xprocessing(),
-                  env),
+                  key.multibindingContributionIdentifier()
+                      .get()
+                      .contributingModule()
+                      .xprocessing()),
               toSpiModel(
-                  key.multibindingContributionIdentifier().get().bindingMethod().xprocessing(),
-                  env))
+                  key.multibindingContributionIdentifier().get().bindingMethod().xprocessing()))
           .build();
     }
     return builder.build().withoutMultibindingContributionIdentifier();
@@ -169,98 +187,50 @@ public final class SpiModelBindingGraphConverter {
 
   @SuppressWarnings("CheckReturnValue")
   private static DependencyRequest toSpiModel(
-      dagger.internal.codegen.model.DependencyRequest request, XProcessingEnv env) {
+      dagger.internal.codegen.model.DependencyRequest request) {
     DependencyRequest.Builder builder =
         DependencyRequest.builder()
             .kind(toSpiModel(request.kind()))
-            .key(toSpiModel(request.key(), env))
+            .key(toSpiModel(request.key()))
             .isNullable(request.isNullable());
 
-    request
-        .requestElement()
-        .ifPresent(e -> builder.requestElement(toSpiModel(e.xprocessing(), env)));
+    request.requestElement().ifPresent(e -> builder.requestElement(toSpiModel(e.xprocessing())));
     return builder.build();
   }
 
-  private static Scope toSpiModel(dagger.internal.codegen.model.Scope scope, XProcessingEnv env) {
-    return Scope.scope(toSpiModel(scope.scopeAnnotation().xprocessing(), env));
+  private static Scope toSpiModel(dagger.internal.codegen.model.Scope scope) {
+    return Scope.scope(toSpiModel(scope.scopeAnnotation().xprocessing()));
   }
 
-  private static ComponentPath toSpiModel(
-      dagger.internal.codegen.model.ComponentPath path, XProcessingEnv env) {
+  private static ComponentPath toSpiModel(dagger.internal.codegen.model.ComponentPath path) {
     return ComponentPath.create(
         path.components().stream()
-            .map(component -> toSpiModel(component.xprocessing(), env))
+            .map(component -> toSpiModel(component.xprocessing()))
             .collect(toImmutableList()));
   }
 
-  private static DaggerTypeElement toSpiModel(XTypeElement typeElement, XProcessingEnv env) {
-    switch (env.getBackend()) {
-      case JAVAC:
-        return DaggerTypeElement.fromJavac(toJavac(typeElement));
-      case KSP:
-        return DaggerTypeElement.fromKsp(toKS(typeElement));
-    }
-    throw new IllegalStateException(
-        String.format("Backend %s is not supported yet.", env.getBackend()));
+  private static DaggerTypeElement toSpiModel(XTypeElement typeElement) {
+    return DaggerTypeElementImpl.from(typeElement);
   }
 
-  private static DaggerType toSpiModel(XType type, XProcessingEnv env) {
-    switch (env.getBackend()) {
-      case JAVAC:
-        return DaggerType.fromJavac(toJavac(type));
-      case KSP:
-        return DaggerType.fromKsp(toKS(type));
-    }
-    throw new IllegalStateException(
-        String.format("Backend %s is not supported yet.", env.getBackend()));
+  private static DaggerType toSpiModel(XType type) {
+    return DaggerTypeImpl.from(type);
   }
 
-  static DaggerAnnotation toSpiModel(XAnnotation annotation, XProcessingEnv env) {
-    DaggerTypeElement typeElement = toSpiModel(annotation.getTypeElement(), env);
-
-    switch (env.getBackend()) {
-      case JAVAC:
-        return DaggerAnnotation.fromJavac(typeElement, toJavac(annotation));
-      case KSP:
-        return DaggerAnnotation.fromKsp(typeElement, toKS(annotation));
-    }
-    throw new IllegalStateException(
-        String.format("Backend %s is not supported yet.", env.getBackend()));
+  static DaggerAnnotation toSpiModel(XAnnotation annotation) {
+    return DaggerAnnotationImpl.from(annotation);
   }
 
-  private static DaggerElement toSpiModel(XElement element, XProcessingEnv env) {
-    switch (env.getBackend()) {
-      case JAVAC:
-        return DaggerElement.fromJavac(toJavac(element));
-      case KSP:
-        return DaggerElement.fromKsp(XElements.toKSAnnotated(element));
-    }
-    throw new IllegalStateException(
-        String.format("Backend %s is not supported yet.", env.getBackend()));
+  private static DaggerElement toSpiModel(XElement element) {
+    return DaggerElementImpl.from(element);
   }
 
-  private static DaggerExecutableElement toSpiModel(
-      XExecutableElement executableElement, XProcessingEnv env) {
-    switch (env.getBackend()) {
-      case JAVAC:
-        return DaggerExecutableElement.fromJava(toJavac(executableElement));
-      case KSP:
-        return DaggerExecutableElement.fromKsp(toKS(executableElement));
-    }
-    throw new IllegalStateException(
-        String.format("Backend %s is not supported yet.", env.getBackend()));
+  private static DaggerExecutableElement toSpiModel(XExecutableElement executableElement) {
+    return DaggerExecutableElementImpl.from(executableElement);
   }
 
   static DaggerProcessingEnv toSpiModel(XProcessingEnv env) {
-    switch (env.getBackend()) {
-      case JAVAC:
-        return DaggerProcessingEnv.fromJavac(toJavac(env));
-      case KSP:
-        return DaggerProcessingEnv.fromKsp(toKS(env), toKSResolver(env));
-    }
-    throw new IllegalStateException(
-        String.format("Backend %s is not supported yet.", env.getBackend()));
+    return DaggerProcessingEnvImpl.from(env);
   }
 
   private static dagger.internal.codegen.model.BindingGraph.ComponentNode toInternal(
@@ -295,14 +265,14 @@ public final class SpiModelBindingGraphConverter {
         dagger.internal.codegen.model.BindingGraph.ComponentNode componentNode,
         XProcessingEnv env) {
       return new AutoValue_SpiModelBindingGraphConverter_ComponentNodeImpl(
-          toSpiModel(componentNode.componentPath(), env),
+          toSpiModel(componentNode.componentPath()),
           componentNode.isSubcomponent(),
           componentNode.isRealComponent(),
           componentNode.entryPoints().stream()
-              .map(request -> SpiModelBindingGraphConverter.toSpiModel(request, env))
+              .map(request -> SpiModelBindingGraphConverter.toSpiModel(request))
               .collect(toImmutableSet()),
           componentNode.scopes().stream()
-              .map(request -> SpiModelBindingGraphConverter.toSpiModel(request, env))
+              .map(SpiModelBindingGraphConverter::toSpiModel)
               .collect(toImmutableSet()),
           componentNode);
     }
@@ -319,15 +289,15 @@ public final class SpiModelBindingGraphConverter {
   abstract static class BindingNodeImpl implements Binding {
     static Binding create(dagger.internal.codegen.model.Binding binding, XProcessingEnv env) {
       return new AutoValue_SpiModelBindingGraphConverter_BindingNodeImpl(
-          toSpiModel(binding.key(), env),
-          toSpiModel(binding.componentPath(), env),
+          toSpiModel(binding.key()),
+          toSpiModel(binding.componentPath()),
           binding.dependencies().stream()
-              .map(request -> SpiModelBindingGraphConverter.toSpiModel(request, env))
+              .map(request -> SpiModelBindingGraphConverter.toSpiModel(request))
               .collect(toImmutableSet()),
-          binding.bindingElement().map(element -> toSpiModel(element.xprocessing(), env)),
-          binding.contributingModule().map(module -> toSpiModel(module.xprocessing(), env)),
+          binding.bindingElement().map(element -> toSpiModel(element.xprocessing())),
+          binding.contributingModule().map(module -> toSpiModel(module.xprocessing())),
           binding.requiresModuleInstance(),
-          binding.scope().map(scope -> SpiModelBindingGraphConverter.toSpiModel(scope, env)),
+          binding.scope().map(SpiModelBindingGraphConverter::toSpiModel),
           binding.isNullable(),
           binding.isProduction(),
           toSpiModel(binding.kind()),
@@ -348,8 +318,8 @@ public final class SpiModelBindingGraphConverter {
         dagger.internal.codegen.model.BindingGraph.MissingBinding missingBinding,
         XProcessingEnv env) {
       return new AutoValue_SpiModelBindingGraphConverter_MissingBindingImpl(
-          toSpiModel(missingBinding.componentPath(), env),
-          toSpiModel(missingBinding.key(), env),
+          toSpiModel(missingBinding.componentPath()),
+          toSpiModel(missingBinding.key()),
           missingBinding);
     }
 
@@ -369,7 +339,7 @@ public final class SpiModelBindingGraphConverter {
         dagger.internal.codegen.model.BindingGraph.DependencyEdge dependencyEdge,
         XProcessingEnv env) {
       return new AutoValue_SpiModelBindingGraphConverter_DependencyEdgeImpl(
-          toSpiModel(dependencyEdge.dependencyRequest(), env),
+          toSpiModel(dependencyEdge.dependencyRequest()),
           dependencyEdge.isEntryPoint(),
           dependencyEdge);
     }
@@ -388,8 +358,7 @@ public final class SpiModelBindingGraphConverter {
         dagger.internal.codegen.model.BindingGraph.ChildFactoryMethodEdge childFactoryMethodEdge,
         XProcessingEnv env) {
       return new AutoValue_SpiModelBindingGraphConverter_ChildFactoryMethodEdgeImpl(
-          toSpiModel(childFactoryMethodEdge.factoryMethod().xprocessing(), env),
-          childFactoryMethodEdge);
+          toSpiModel(childFactoryMethodEdge.factoryMethod().xprocessing()), childFactoryMethodEdge);
     }
 
     abstract dagger.internal.codegen.model.BindingGraph.ChildFactoryMethodEdge internalDelegate();
@@ -409,7 +378,7 @@ public final class SpiModelBindingGraphConverter {
         XProcessingEnv env) {
       return new AutoValue_SpiModelBindingGraphConverter_SubcomponentCreatorBindingEdgeImpl(
           subcomponentCreatorBindingEdge.declaringModules().stream()
-              .map(module -> toSpiModel(module.xprocessing(), env))
+              .map(module -> toSpiModel(module.xprocessing()))
               .collect(toImmutableSet()),
           subcomponentCreatorBindingEdge);
     }
@@ -456,6 +425,201 @@ public final class SpiModelBindingGraphConverter {
     public ImmutableSetMultimap<Class<? extends Node>, ? extends Node> nodesByClass() {
       return super.nodesByClass();
     }
+  }
+
+  @AutoValue
+  abstract static class DaggerElementImpl extends DaggerElement {
+    public static DaggerElement from(XElement element) {
+      return new AutoValue_SpiModelBindingGraphConverter_DaggerElementImpl(element);
+    }
+
+    abstract XElement element();
+
+    @Override
+    public Element java() {
+      return toJavac(element());
+    }
+
+    @Override
+    public KSAnnotated ksp() {
+      return toKS(element());
+    }
+
+    @Override
+    public DaggerProcessingEnv.Backend backend() {
+      return getBackend(getProcessingEnv(element()));
+    }
+
+    @Override
+    public final String toString() {
+      return XElements.toStableString(element());
+    }
+  }
+
+  @AutoValue
+  abstract static class DaggerTypeElementImpl extends DaggerTypeElement {
+    public static DaggerTypeElement from(XTypeElement element) {
+      return new AutoValue_SpiModelBindingGraphConverter_DaggerTypeElementImpl(element);
+    }
+
+    abstract XTypeElement element();
+
+    @Override
+    public TypeElement java() {
+      return toJavac(element());
+    }
+
+    @Override
+    public KSClassDeclaration ksp() {
+      return toKS(element());
+    }
+
+    @Override
+    public DaggerProcessingEnv.Backend backend() {
+      return getBackend(getProcessingEnv(element()));
+    }
+
+    @Override
+    public final String toString() {
+      return XElements.toStableString(element());
+    }
+  }
+
+  @AutoValue
+  abstract static class DaggerTypeImpl extends DaggerType {
+    public static DaggerType from(XType type) {
+      return new AutoValue_SpiModelBindingGraphConverter_DaggerTypeImpl(
+          XTypes.equivalence().wrap(type));
+    }
+
+    abstract Equivalence.Wrapper<XType> type();
+
+    @Override
+    public TypeMirror java() {
+      return toJavac(type().get());
+    }
+
+    @Override
+    public KSType ksp() {
+      return toKS(type().get());
+    }
+
+    @Override
+    public DaggerProcessingEnv.Backend backend() {
+      return getBackend(getProcessingEnv(type().get()));
+    }
+
+    @Override
+    public final String toString() {
+      return XTypes.toStableString(type().get());
+    }
+  }
+
+  @AutoValue
+  abstract static class DaggerAnnotationImpl extends DaggerAnnotation {
+    public static DaggerAnnotation from(XAnnotation annotation) {
+      return new AutoValue_SpiModelBindingGraphConverter_DaggerAnnotationImpl(
+          XAnnotations.equivalence().wrap(annotation));
+    }
+
+    abstract Equivalence.Wrapper<XAnnotation> annotation();
+
+    @Override
+    public DaggerTypeElement annotationTypeElement() {
+      return DaggerTypeElementImpl.from(annotation().get().getTypeElement());
+    }
+
+    @Override
+    public AnnotationMirror java() {
+      return toJavac(annotation().get());
+    }
+
+    @Override
+    public KSAnnotation ksp() {
+      return toKS(annotation().get());
+    }
+
+    @Override
+    public DaggerProcessingEnv.Backend backend() {
+      return getBackend(getProcessingEnv(annotation().get()));
+    }
+
+    @Override
+    public final String toString() {
+      return XAnnotations.toStableString(annotation().get());
+    }
+  }
+
+  @AutoValue
+  abstract static class DaggerExecutableElementImpl extends DaggerExecutableElement {
+    public static DaggerExecutableElement from(XExecutableElement executableElement) {
+      return new AutoValue_SpiModelBindingGraphConverter_DaggerExecutableElementImpl(
+          executableElement);
+    }
+
+    abstract XExecutableElement executableElement();
+
+    @Override
+    public ExecutableElement java() {
+      return toJavac(executableElement());
+    }
+
+    @Override
+    public KSFunctionDeclaration ksp() {
+      return toKS(executableElement());
+    }
+
+    @Override
+    public DaggerProcessingEnv.Backend backend() {
+      return getBackend(getProcessingEnv(executableElement()));
+    }
+
+    @Override
+    public final String toString() {
+      return XElements.toStableString(executableElement());
+    }
+  }
+
+  private static class DaggerProcessingEnvImpl extends DaggerProcessingEnv {
+    private final XProcessingEnv env;
+
+    public static DaggerProcessingEnv from(XProcessingEnv env) {
+      return new DaggerProcessingEnvImpl(env);
+    }
+
+    DaggerProcessingEnvImpl(XProcessingEnv env) {
+      this.env = env;
+    }
+
+    @Override
+    public ProcessingEnvironment java() {
+      return toJavac(env);
+    }
+
+    @Override
+    public SymbolProcessorEnvironment ksp() {
+      return toKS(env);
+    }
+
+    @Override
+    public Resolver resolver() {
+      return toKSResolver(env);
+    }
+
+    @Override
+    public DaggerProcessingEnv.Backend backend() {
+      return getBackend(env);
+    }
+  }
+
+  private static DaggerProcessingEnv.Backend getBackend(XProcessingEnv env) {
+    switch (env.getBackend()) {
+      case JAVAC:
+        return DaggerProcessingEnv.Backend.JAVAC;
+      case KSP:
+        return DaggerProcessingEnv.Backend.KSP;
+    }
+    throw new AssertionError(String.format("Unexpected backend %s", env.getBackend()));
   }
 
   private static final class DiagnosticReporterImpl extends DiagnosticReporter {

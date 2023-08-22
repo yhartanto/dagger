@@ -18,6 +18,7 @@ package dagger.hilt.processor.internal
 
 import com.google.auto.common.MoreTypes
 import com.google.devtools.ksp.symbol.KSAnnotated
+import com.google.devtools.ksp.symbol.KSDeclaration
 import com.squareup.javapoet.ClassName
 import dagger.spi.model.DaggerAnnotation
 import dagger.spi.model.DaggerElement
@@ -25,16 +26,21 @@ import dagger.spi.model.DaggerProcessingEnv
 import dagger.spi.model.DaggerType
 
 
-fun DaggerType.asElement(): DaggerElement =
+fun DaggerType.hasAnnotation(className: ClassName): Boolean =
   when (checkNotNull(backend())) {
     DaggerProcessingEnv.Backend.JAVAC -> {
       val javaType = checkNotNull(java())
-      DaggerElement.fromJavac(MoreTypes.asElement(javaType))
+      Processors.hasAnnotation(MoreTypes.asTypeElement(javaType), className)
     }
     DaggerProcessingEnv.Backend.KSP -> {
       val kspType = checkNotNull(ksp())
-      DaggerElement.fromKsp(kspType.declaration)
+      kspType.declaration.hasAnnotation(className.canonicalName())
     }
+  }
+
+fun KSDeclaration.hasAnnotation(annotationName: String): Boolean =
+  annotations.any {
+    it.annotationType.resolve().declaration.qualifiedName?.asString().equals(annotationName)
   }
 
 fun DaggerElement.hasAnnotation(className: ClassName) =
