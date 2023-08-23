@@ -20,6 +20,7 @@ import static androidx.room.compiler.processing.compat.XConverters.getProcessing
 import static androidx.room.compiler.processing.compat.XConverters.toJavac;
 import static androidx.room.compiler.processing.compat.XConverters.toKS;
 import static androidx.room.compiler.processing.compat.XConverters.toKSResolver;
+import static com.google.common.base.Preconditions.checkState;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableList;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
@@ -269,7 +270,7 @@ public final class SpiModelBindingGraphConverter {
           componentNode.isSubcomponent(),
           componentNode.isRealComponent(),
           componentNode.entryPoints().stream()
-              .map(request -> SpiModelBindingGraphConverter.toSpiModel(request))
+              .map(SpiModelBindingGraphConverter::toSpiModel)
               .collect(toImmutableSet()),
           componentNode.scopes().stream()
               .map(SpiModelBindingGraphConverter::toSpiModel)
@@ -292,7 +293,7 @@ public final class SpiModelBindingGraphConverter {
           toSpiModel(binding.key()),
           toSpiModel(binding.componentPath()),
           binding.dependencies().stream()
-              .map(request -> SpiModelBindingGraphConverter.toSpiModel(request))
+              .map(SpiModelBindingGraphConverter::toSpiModel)
               .collect(toImmutableSet()),
           binding.bindingElement().map(element -> toSpiModel(element.xprocessing())),
           binding.contributingModule().map(module -> toSpiModel(module.xprocessing())),
@@ -436,12 +437,14 @@ public final class SpiModelBindingGraphConverter {
     abstract XElement element();
 
     @Override
-    public Element java() {
+    public Element javac() {
+      checkIsJavac(backend());
       return toJavac(element());
     }
 
     @Override
     public KSAnnotated ksp() {
+      checkIsKsp(backend());
       return toKS(element());
     }
 
@@ -465,12 +468,14 @@ public final class SpiModelBindingGraphConverter {
     abstract XTypeElement element();
 
     @Override
-    public TypeElement java() {
+    public TypeElement javac() {
+      checkIsJavac(backend());
       return toJavac(element());
     }
 
     @Override
     public KSClassDeclaration ksp() {
+      checkIsKsp(backend());
       return toKS(element());
     }
 
@@ -495,12 +500,14 @@ public final class SpiModelBindingGraphConverter {
     abstract Equivalence.Wrapper<XType> type();
 
     @Override
-    public TypeMirror java() {
+    public TypeMirror javac() {
+      checkIsJavac(backend());
       return toJavac(type().get());
     }
 
     @Override
     public KSType ksp() {
+      checkIsKsp(backend());
       return toKS(type().get());
     }
 
@@ -530,12 +537,14 @@ public final class SpiModelBindingGraphConverter {
     }
 
     @Override
-    public AnnotationMirror java() {
+    public AnnotationMirror javac() {
+      checkIsJavac(backend());
       return toJavac(annotation().get());
     }
 
     @Override
     public KSAnnotation ksp() {
+      checkIsKsp(backend());
       return toKS(annotation().get());
     }
 
@@ -560,12 +569,14 @@ public final class SpiModelBindingGraphConverter {
     abstract XExecutableElement executableElement();
 
     @Override
-    public ExecutableElement java() {
+    public ExecutableElement javac() {
+      checkIsJavac(backend());
       return toJavac(executableElement());
     }
 
     @Override
     public KSFunctionDeclaration ksp() {
+      checkIsKsp(backend());
       return toKS(executableElement());
     }
 
@@ -592,12 +603,14 @@ public final class SpiModelBindingGraphConverter {
     }
 
     @Override
-    public ProcessingEnvironment java() {
+    public ProcessingEnvironment javac() {
+      checkIsJavac(backend());
       return toJavac(env);
     }
 
     @Override
     public SymbolProcessorEnvironment ksp() {
+      checkIsKsp(backend());
       return toKS(env);
     }
 
@@ -610,6 +623,18 @@ public final class SpiModelBindingGraphConverter {
     public DaggerProcessingEnv.Backend backend() {
       return getBackend(env);
     }
+  }
+
+  private static void checkIsJavac(DaggerProcessingEnv.Backend backend) {
+    checkState(
+        backend == DaggerProcessingEnv.Backend.JAVAC,
+        "Expected JAVAC backend but was: %s", backend);
+  }
+
+  private static void checkIsKsp(DaggerProcessingEnv.Backend backend) {
+    checkState(
+        backend == DaggerProcessingEnv.Backend.KSP,
+        "Expected KSP backend but was: %s", backend);
   }
 
   private static DaggerProcessingEnv.Backend getBackend(XProcessingEnv env) {

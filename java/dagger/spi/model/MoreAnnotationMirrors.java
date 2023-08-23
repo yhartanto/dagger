@@ -35,7 +35,7 @@ final class MoreAnnotationMirrors {
    * defined in the annotation type.
    */
   public static String toStableString(DaggerAnnotation qualifier) {
-    return stableAnnotationMirrorToString(qualifier.java());
+    return stableAnnotationMirrorToString(qualifier.javac());
   }
 
   /**

@@ -154,7 +154,7 @@ public abstract class Key {
   static String qualifiedName(DaggerTypeElement element) {
     switch (element.backend()) {
       case JAVAC:
-        return element.java().getQualifiedName().toString();
+        return element.javac().getQualifiedName().toString();
       case KSP:
         return element.ksp().getQualifiedName().asString();
     }
@@ -164,7 +164,7 @@ public abstract class Key {
   private static String simpleName(DaggerExecutableElement element) {
     switch (element.backend()) {
       case JAVAC:
-        return element.java().getSimpleName().toString();
+        return element.javac().getSimpleName().toString();
       case KSP:
         return element.ksp().getSimpleName().asString();
     }

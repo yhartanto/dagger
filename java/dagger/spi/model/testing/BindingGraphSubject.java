@@ -112,7 +112,7 @@ public final class BindingGraphSubject extends Subject {
   private static String formattedType(DaggerType type) {
     switch (type.backend()) {
       case JAVAC:
-        return type.java().toString();
+        return type.javac().toString();
       case KSP:
         return type.ksp().getDeclaration().getQualifiedName().asString();
     }

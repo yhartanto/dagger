@@ -18,20 +18,23 @@ package dagger.spi.model;
 
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration;
 import com.google.errorprone.annotations.DoNotMock;
-import javax.annotation.Nullable;
 import javax.lang.model.element.ExecutableElement;
 
 /** Wrapper type for an executable element. */
 @DoNotMock("Only use real implementations created by Dagger")
 public abstract class DaggerExecutableElement {
   /**
-   * Java representation for the element, returns {@code null} not using java annotation processor.
+   * Returns the Javac representation for the executable element.
+   *
+   * @throws IllegalStateException if the current backend isn't Javac.
    */
-  @Nullable
-  public abstract ExecutableElement java();
+  public abstract ExecutableElement javac();
 
-  /** KSP declaration for the element, returns {@code null} not using KSP. */
-  @Nullable
+  /**
+   * Returns the KSP representation for the executable element.
+   *
+   * @throws IllegalStateException if the current backend isn't KSP.
+   */
   public abstract KSFunctionDeclaration ksp();
 
   /** Returns the backend used in this compilation. */

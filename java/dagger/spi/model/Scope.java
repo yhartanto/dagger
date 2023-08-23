@@ -45,8 +45,8 @@ public abstract class Scope {
   public static boolean isScope(DaggerTypeElement scopeAnnotationType) {
     switch (scopeAnnotationType.backend()) {
       case JAVAC:
-        return MoreElements.isAnnotationPresent(scopeAnnotationType.java(), SCOPE)
-            || MoreElements.isAnnotationPresent(scopeAnnotationType.java(), SCOPE_JAVAX);
+        return MoreElements.isAnnotationPresent(scopeAnnotationType.javac(), SCOPE)
+            || MoreElements.isAnnotationPresent(scopeAnnotationType.javac(), SCOPE_JAVAX);
       case KSP:
         return KspUtilsKt.hasAnnotation(scopeAnnotationType.ksp(), SCOPE)
             || KspUtilsKt.hasAnnotation(scopeAnnotationType.ksp(), SCOPE_JAVAX);

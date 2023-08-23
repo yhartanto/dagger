@@ -18,19 +18,23 @@ package dagger.spi.model;
 
 import com.google.devtools.ksp.symbol.KSType;
 import com.google.errorprone.annotations.DoNotMock;
-import javax.annotation.Nullable;
 import javax.lang.model.type.TypeMirror;
 
 /** Wrapper type for a type. */
 @DoNotMock("Only use real implementations created by Dagger")
 public abstract class DaggerType {
+  /**
+   * Returns the Javac representation for the type.
+   *
+   * @throws IllegalStateException if the current backend isn't Javac.
+   */
+  public abstract TypeMirror javac();
 
-  /** Java representation for the type, returns {@code null} not using java annotation processor. */
-  @Nullable
-  public abstract TypeMirror java();
-
-  /** KSP declaration for the type, returns {@code null} not using KSP. */
-  @Nullable
+  /**
+   * Returns the KSP representation for the type.
+   *
+   * @throws IllegalStateException if the current backend isn't KSP.
+   */
   public abstract KSType ksp();
 
   /** Returns the backend used in this compilation. */

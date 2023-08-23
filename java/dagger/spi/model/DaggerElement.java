@@ -18,20 +18,23 @@ package dagger.spi.model;
 
 import com.google.devtools.ksp.symbol.KSAnnotated;
 import com.google.errorprone.annotations.DoNotMock;
-import javax.annotation.Nullable;
 import javax.lang.model.element.Element;
 
 /** Wrapper type for an element. */
 @DoNotMock("Only use real implementations created by Dagger")
 public abstract class DaggerElement {
   /**
-   * Java representation for the element, returns {@code null} not using java annotation processor.
+   * Returns the Javac representation for the element.
+   *
+   * @throws IllegalStateException if the current backend isn't Javac.
    */
-  @Nullable
-  public abstract Element java();
+  public abstract Element javac();
 
-  /** KSP declaration for the element, returns {@code null} not using KSP. */
-  @Nullable
+  /**
+   * Returns the KSP representation for the element.
+   *
+   * @throws IllegalStateException if the current backend isn't KSP.
+   */
   public abstract KSAnnotated ksp();
 
   /** Returns the backend used in this compilation. */

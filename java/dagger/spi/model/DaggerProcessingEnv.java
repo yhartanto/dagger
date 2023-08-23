@@ -19,7 +19,6 @@ package dagger.spi.model;
 import com.google.devtools.ksp.processing.Resolver;
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment;
 import com.google.errorprone.annotations.DoNotMock;
-import javax.annotation.Nullable;
 import javax.annotation.processing.ProcessingEnvironment;
 
 /** Wrapper type for an element. */
@@ -32,18 +31,24 @@ public abstract class DaggerProcessingEnv {
   }
 
   /**
-   * Java representation for the processing environment, returns {@code null} not using java
-   * annotation processor.
+   * Returns the Javac representation for the processing environment.
+   *
+   * @throws IllegalStateException if the current backend isn't Javac.
    */
-  @Nullable
-  public abstract ProcessingEnvironment java();
+  public abstract ProcessingEnvironment javac();
 
-  /** Ksp symbol processing environment hosting symbol processors. */
-  @Nullable
+  /**
+   * Returns the KSP representation for the processing environment.
+   *
+   * @throws IllegalStateException if the current backend isn't KSP.
+   */
   public abstract SymbolProcessorEnvironment ksp();
 
-  /** Ksp resolver provides [SymbolProcessor] with access to compiler details such as Symbols. */
-  @Nullable
+  /**
+   * Returns the KSP representation for the resolver.
+   *
+   * @throws IllegalStateException if the current backend isn't KSP.
+   */
   public abstract Resolver resolver();
 
   /** Returns the backend used in this compilation. */
