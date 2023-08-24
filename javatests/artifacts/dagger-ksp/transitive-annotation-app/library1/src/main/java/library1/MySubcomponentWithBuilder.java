@@ -29,9 +29,9 @@ import library2.MyTransitiveType;
  * the classpath. In most cases, Dagger shouldn't care that the annotation isn't on the classpath
  */
 // TODO(b/219587431): Support @MyTransitiveAnnotation (Requires generating metadata).
-@MySubcomponentScope // TODO(b/269172737): Fix issue that requires reordering to build successfully.
 @MyAnnotation(MyTransitiveType.VALUE)
 @MyOtherAnnotation(MyTransitiveType.class)
+@MySubcomponentScope
 @Subcomponent(modules = MySubcomponentModule.class)
 public abstract class MySubcomponentWithBuilder {
   @MyQualifier
