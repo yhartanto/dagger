@@ -57,10 +57,15 @@ def main(argv):
 
 
 def get_created_at(cache):
-  return datetime.datetime.strptime(
-      cache['created_at'].split('.')[0],
-      '%Y-%m-%dT%H:%M:%S'
-  )
+  created_at = cache['created_at'].split('.')[0]
+  # GitHub changed its date format so support both the old and new format for
+  # now.
+  for date_format in ('%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%dT%H:%M:%S'):
+    try:
+      return datetime.datetime.strptime(created_at, date_format)
+    except ValueError:
+      pass
+  raise ValueError('no valid date format found: "%s"' % created_at)
 
 
 def delete_cache(cache):
