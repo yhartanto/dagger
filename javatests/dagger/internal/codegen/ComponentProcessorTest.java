@@ -2045,4 +2045,76 @@ public class ComponentProcessorTest {
               subject.hasWarningCount(0);
           });
   }
+
+  @Test
+  public void abstractVarFieldInComponent_failsValidation() {
+    Source component =
+        CompilerTests.kotlinSource(
+            "test.TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "",
+            "@Component(modules = [TestModule::class])",
+            "interface TestComponent {",
+            " var foo: String",
+            "}");
+
+    Source module =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class TestModule {",
+            "  @Provides",
+            "  static String provideString() { return \"hello\"; }",
+            "}");
+
+    CompilerTests.daggerCompiler(component, module)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(
+            subject -> {
+              subject.hasErrorCount(1);
+              subject.hasErrorContaining(
+                  "Cannot use 'abstract var' property in a component declaration to get a binding."
+                      + " Use 'val' or 'fun' instead: foo");
+            });
+  }
+
+  @Test
+  public void nonAbstractVarFieldInComponent_passesValidation() {
+    Source component =
+        CompilerTests.kotlinSource(
+            "test.TestComponent.kt",
+            "package test",
+            "",
+            "import dagger.Component",
+            "",
+            "@Component(modules = [TestModule::class])",
+            "abstract class TestComponent {",
+            " var foo: String = \"hello\"",
+            "}");
+
+    Source module =
+        CompilerTests.javaSource(
+            "test.TestModule",
+            "package test;",
+            "",
+            "import dagger.Module;",
+            "import dagger.Provides;",
+            "",
+            "@Module",
+            "abstract class TestModule {",
+            "  @Provides",
+            "  static String provideString() { return \"hello\"; }",
+            "}");
+
+    CompilerTests.daggerCompiler(component, module)
+        .withProcessingOptions(compilerMode.processorOptions())
+        .compile(subject -> subject.hasErrorCount(0));
+  }
 }

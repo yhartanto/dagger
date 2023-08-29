@@ -168,6 +168,7 @@ public final class ComponentValidator implements ClearableCache {
         // the remaining checks will likely just output unhelpful noise in such cases.
         return report.addError(invalidTypeError(), component).build();
       }
+      validateFields();
       validateUseOfCancellationPolicy();
       validateIsAbstractType();
       validateCreators();
@@ -206,6 +207,18 @@ public final class ComponentValidator implements ClearableCache {
       return String.format(
           "@%s may only be applied to an interface or abstract class",
           componentKind().annotation().simpleName());
+    }
+
+    private void validateFields() {
+      component.getDeclaredMethods().stream()
+          .filter(method -> method.isKotlinPropertySetter() && method.isAbstract())
+          .forEach(
+              method ->
+                  report.addError(
+                      String.format(
+                          "Cannot use 'abstract var' property in a component declaration to get a"
+                              + " binding. Use 'val' or 'fun' instead: %s",
+                          method.getPropertyName())));
     }
 
     private void validateCreators() {
