@@ -57,6 +57,9 @@ import java.util.Set;
 public final class RootProcessingStep extends BaseProcessingStep {
 
   private boolean processed;
+  // TODO(b/297889547) do not run preProcess and postProcess if supported annotation isn't present
+  // in the environment.
+  private boolean hasElementsToProcess = false;
   private GeneratesRootInputs generatesRootInputs;
 
   public RootProcessingStep(XProcessingEnv env) {
@@ -75,6 +78,7 @@ public final class RootProcessingStep extends BaseProcessingStep {
 
   @Override
   public void processEach(ClassName annotation, XElement element) throws Exception {
+    hasElementsToProcess = true;
     XTypeElement rootElement = XElements.asTypeElement(element);
     // TODO(bcorso): Move this logic into a separate isolating processor to avoid regenerating it
     // for unrelated changes in Gradle.
@@ -93,6 +97,9 @@ public final class RootProcessingStep extends BaseProcessingStep {
 
   @Override
   protected void postProcess(XProcessingEnv env, XRoundEnv roundEnv) throws Exception {
+    if (!hasElementsToProcess) {
+      return;
+    }
     if (!useAggregatingRootProcessor(processingEnv())) {
       return;
     }
