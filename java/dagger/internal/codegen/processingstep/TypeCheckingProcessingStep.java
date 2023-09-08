@@ -23,6 +23,7 @@ import static dagger.internal.codegen.extension.DaggerStreams.toImmutableMap;
 import static dagger.internal.codegen.extension.DaggerStreams.toImmutableSet;
 import static javax.tools.Diagnostic.Kind.ERROR;
 
+import androidx.room.compiler.codegen.XTypeName;
 import androidx.room.compiler.processing.XElement;
 import androidx.room.compiler.processing.XMessager;
 import androidx.room.compiler.processing.XProcessingEnv;
@@ -46,6 +47,10 @@ import javax.inject.Inject;
  * TypeNotPresentException} is thrown.
  */
 abstract class TypeCheckingProcessingStep<E extends XElement> implements XProcessingStep {
+
+  // Force XTypeName loaded to avoid deadlock caused by XTypeName and XClassName
+  // See https://issuetracker.google.com/issues/299506163 for more information
+  private final static XTypeName COMPANION = XTypeName.Companion.getANY_OBJECT();
 
   private final List<String> lastDeferredErrorMessages = new ArrayList<>();
   @Inject XMessager messager;
